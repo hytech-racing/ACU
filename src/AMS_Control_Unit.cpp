@@ -123,90 +123,10 @@ BMS_detailed_temperatures bms_detailed_temperatures; // message class containing
 ACU_shunt_measurements acu_shunt_measurements;
 CCU_status ccu_status;
 
-void setup() {
-  // put your setup code here, to run once:
-  pinMode(6, OUTPUT);
-  pinMode(5, OUTPUT);
-  
-  digitalWrite(6, HIGH); //write Teensy_OK pin high
-
-  //chip select defines
-  pinMode(CHIP_SELECT_GROUP_ONE, OUTPUT); 
-  pinMode(CHIP_SELECT_GROUP_TWO, OUTPUT); 
-  digitalWrite(CHIP_SELECT_GROUP_ONE, HIGH);
-  digitalWrite(CHIP_SELECT_GROUP_TWO, HIGH);
-  
-  pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
-  Serial.begin(115200);
-  SPI.begin();
-  TELEM_CAN.begin();
-  TELEM_CAN.setBaudRate(500000);
-//  TELEM_CAN.setBaudRate(1000000);    // Test CAN capacity 1,000,000 baud
-  ENERGY_METER_CAN.begin();
-  ENERGY_METER_CAN.setBaudRate(500000);
-  ENERGY_METER_CAN.enableMBInterrupts();
-  ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
-  for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
-    TELEM_CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
-  }
-  // initialize the PEC table
-  LTC6811_2::init_PEC15_Table();
-  // add 12 (TOTAL_IC) instances of LTC6811_2 to the object array, each addressed appropriately
-  for (int i = 0; i < TOTAL_IC; i++) {
-    ic[i] = LTC6811_2(i);
-    switch(i) {
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 10:
-      case 11:
-        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
-        break;
-
-      case 0:
-      case 1:
-      case 6:
-      case 7:
-      case 8:
-      case 9:
-        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
-        break;
-    }
-  }
-  bms_status.set_state(BMS_STATE_DISCHARGING);
-  parse_CAN_CCU_status();
-
-  analogReadResolution(12);
-
-}
-void loop() {
-  // put your main code here, to run repeatedly:
-  TELEM_CAN.events();
-  ENERGY_METER_CAN.events();
-  parse_CAN_CCU_status();
-  if (charging_timer.check() && bms_status.get_state() == BMS_STATE_CHARGING) {
-    bms_status.set_state(BMS_STATE_DISCHARGING);
-  }
-  read_voltages();
-  read_gpio();
-  send_acu_shunt_measurements();
-  write_CAN_messages();
-  if (print_timer.check()) {
-    print_voltages();
-    print_gpios();
-    print_timer.reset();
-  }
-  if (bms_status.get_state() == BMS_STATE_CHARGING && BALANCE_ON && ccu_status.get_charger_enabled()  == true && gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] <= 80) {
-    balance_cells();
-    currently_balancing = true;
-  }
-  else {
-    currently_balancing = false;
-  }
-
-//  forward_CAN_em();
-}
+void voltage_fault_check();
+void temp_fault_check();
+void write_CAN_detailed_voltages();
+void write_CAN_detailed_temps();
 
 inline void forward_CAN_em() {
   if (timer_CAN_em_forward.check()) {
@@ -720,4 +640,89 @@ void print_gpios() {
     Serial.println();
   }
   Serial.println("------------------------------------------------------------------------------------------------------------------------------------------------------------");
+}
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(6, OUTPUT);
+  pinMode(5, OUTPUT);
+  
+  digitalWrite(6, HIGH); //write Teensy_OK pin high
+
+  //chip select defines
+  pinMode(CHIP_SELECT_GROUP_ONE, OUTPUT); 
+  pinMode(CHIP_SELECT_GROUP_TWO, OUTPUT); 
+  digitalWrite(CHIP_SELECT_GROUP_ONE, HIGH);
+  digitalWrite(CHIP_SELECT_GROUP_TWO, HIGH);
+  
+  pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
+  Serial.begin(115200);
+  SPI.begin();
+  TELEM_CAN.begin();
+  TELEM_CAN.setBaudRate(500000);
+//  TELEM_CAN.setBaudRate(1000000);    // Test CAN capacity 1,000,000 baud
+  ENERGY_METER_CAN.begin();
+  ENERGY_METER_CAN.setBaudRate(500000);
+  ENERGY_METER_CAN.enableMBInterrupts();
+  ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
+  for (int i = 0; i < 64; i++) { // Fill all filter slots with Charger Control Unit message filter
+    TELEM_CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), ID_CCU_STATUS); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
+  }
+  // initialize the PEC table
+  LTC6811_2::init_PEC15_Table();
+  // add 12 (TOTAL_IC) instances of LTC6811_2 to the object array, each addressed appropriately
+  for (int i = 0; i < TOTAL_IC; i++) {
+    ic[i] = LTC6811_2(i);
+    switch(i) {
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 10:
+      case 11:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
+        break;
+
+      case 0:
+      case 1:
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
+        break;
+    }
+  }
+  bms_status.set_state(BMS_STATE_DISCHARGING);
+  parse_CAN_CCU_status();
+
+  analogReadResolution(12);
+
+}
+void loop() {
+  // put your main code here, to run repeatedly:
+  TELEM_CAN.events();
+  ENERGY_METER_CAN.events();
+  parse_CAN_CCU_status();
+  if (charging_timer.check() && bms_status.get_state() == BMS_STATE_CHARGING) {
+    bms_status.set_state(BMS_STATE_DISCHARGING);
+  }
+  read_voltages();
+  read_gpio();
+  send_acu_shunt_measurements();
+  write_CAN_messages();
+  if (print_timer.check()) {
+    print_voltages();
+    print_gpios();
+    print_timer.reset();
+  }
+  if (bms_status.get_state() == BMS_STATE_CHARGING && BALANCE_ON && ccu_status.get_charger_enabled()  == true && gpio_temps[max_board_temp_location[0]][max_board_temp_location[1]] <= 80) {
+    balance_cells();
+    currently_balancing = true;
+  }
+  else {
+    currently_balancing = false;
+  }
+
+//  forward_CAN_em();
 }
