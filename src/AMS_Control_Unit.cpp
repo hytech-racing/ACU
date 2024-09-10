@@ -468,7 +468,7 @@ void write_CAN_messages() {
     TELEM_CAN.write(msg);
   }
   // Write BMS_status message
-  if (can_bms_status_timer > 100) {
+  if (can_bms_status_timer > 250) {
     msg.id = ID_BMS_STATUS;
     msg.len = sizeof(bms_status);
     bms_status.write(msg.buf);
@@ -476,7 +476,7 @@ void write_CAN_messages() {
     can_bms_status_timer = 0;
   }
   // Write BMS_voltages message
-  if (can_bms_voltages_timer > 5) {
+  if (can_bms_voltages_timer > 100) {
     msg.id = ID_BMS_VOLTAGES;
     msg.len = sizeof(bms_voltages);
     bms_voltages.write(msg.buf);
@@ -484,7 +484,7 @@ void write_CAN_messages() {
     can_bms_voltages_timer = 0;
   }
   // Write BMS_temperatures message
-  if (can_bms_temps_timer > 25) {
+  if (can_bms_temps_timer > 300) {
     msg.id = ID_BMS_TEMPERATURES;
     msg.len = sizeof(bms_temperatures);
     bms_temperatures.write(msg.buf);
@@ -492,7 +492,7 @@ void write_CAN_messages() {
     can_bms_temps_timer = 0;
   }
   // Write BMS_onboard_temperatures message
-  if (can_bms_onboard_temps_timer > 50) {
+  if (can_bms_onboard_temps_timer > 200) {
     msg.id = ID_BMS_ONBOARD_TEMPERATURES;
     msg.len = sizeof(bms_onboard_temperatures);
     bms_onboard_temperatures.write(msg.buf);
@@ -500,11 +500,11 @@ void write_CAN_messages() {
     can_bms_onboard_temps_timer = 0;
   }
   // write detailed voltages for one IC group
-  if (can_bms_detailed_voltages_timer > 10) {
+  if (can_bms_detailed_voltages_timer > 100) {
     write_CAN_detailed_voltages();
     can_bms_detailed_voltages_timer = 0;
   }
-  if (can_bms_detailed_temps_timer > 40) {
+  if (can_bms_detailed_temps_timer > 300) {
     write_CAN_detailed_temps();
     can_bms_detailed_temps_timer = 0;
   }
