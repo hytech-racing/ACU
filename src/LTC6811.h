@@ -12,6 +12,7 @@
  * NOTE: Because the broadcast command will provide 8 bytes of data per command call from EACH IC,
  * Each instance LTC6811 will represent functionality for all ICs on a particular chip select
  * Therefore, the data stored in one instance will only hold HALF. One for chip_select 9 and the other for 10
+ * During instantiation, we need to make sure that the addresses are assigned for each LTC6811
  */
 
 /* Library Includes */

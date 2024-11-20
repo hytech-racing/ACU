@@ -85,10 +85,11 @@ void LTC6811::read_voltages()
             Serial.print("There is a pec error!");
         }
         // Now we're going to convert the buffers into usable data
+
         int cell_count = (i % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
         for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
         {
-            uint16_t* cell_voltage_buffer;
+            uint16_t *cell_voltage_buffer;
             switch (cell_Index / 3) // There are 4 groups of CELL VOLTAGES, each with 3 cells
             {
             case 0:
@@ -147,9 +148,38 @@ void LTC6811::read_GPIOs()
         {
             Serial.print("There is a pec error!");
         }
+
+        // At this point, all of the data has been read and put into the IC_buffer container
+        // Now we have to convert it into tangible data
+        for (int gpio_Index = 0; gpio_Index < 6; gpio_Index++)
+        {
+            uint16_t* gpio_voltage_buf;
+            switch (gpio_Index / 3) // There are 4 groups of CELL VOLTAGES, each with 3 cells
+            {
+            case 0:
+                gpio_voltage_buf = IC_buffer[i].gpio_voltage_A;
+                break;
+            case 1:
+                gpio_voltage_buf = IC_buffer[i].gpio_voltage_B;
+                break;
+            }
+            IC_data[i].gpio_voltage[gpio_Index] = gpio_voltage_buf[gpio_Index % 3];
+            if ((i % 2) && gpio_Index == 4)
+            {
+                IC_data[i].gpio_temperatures[gpio_Index] = -66.875 + 218.75 * (IC_data[i].gpio_voltage[gpio_Index] / 50000.0); // caculation for SHT31 temperature in C
+            }
+            else if (gpio_Index == 4)
+            {
+                IC_data[i].gpio_temperatures[gpio_Index] = -12.5 + 125 * (IC_data[i].gpio_voltage[gpio_Index]) / 50000.0; // humidity calculation
+            }
+            else if (gpio_Index < 4)
+            {
+                float thermistor_resistance = (2740 / (IC_data[i].gpio_voltage[gpio_Index] / 50000.0)) - 2740;
+                IC_data[i].gpio_temperatures[gpio_Index] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 273.15; // calculation for thermistor temperature in C
+                total_thermistor_temps += IC_data[i].gpio_temperatures[gpio_Index];
+            }
+        }
     }
-    // At this point, all of the data has been read and put into the IC_buffer container
-    // Now we have to convert it into tangible data
 }
 
 /* -------------------- WRITING DATA FUNCTIONS -------------------- */
@@ -212,6 +242,7 @@ void LTC6811::start_GPIO_ADC_conversion()
 void LTC6811::print_voltage_data()
 {
     // 6 ICs, 21 Cell voltages for every 2 ICs, 63 Cells per chip select
+    
 }
 
 void LTC6811::print_GPIO_data()
