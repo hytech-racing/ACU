@@ -7,7 +7,7 @@
 */
 /* Interface Includes */
 #include <SPI.h>
-#include "DataContainer.h"
+#include "Configuration.h"
 
 /**
  * Sends a SPI command to write data to the registers

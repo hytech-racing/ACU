@@ -1,5 +1,5 @@
-#ifndef __LTC6811_H__
-#define __LTC6811_H__
+#ifndef __BMSDriverGroup_H__
+#define __BMSDriverGroup_H__
 /**
  * PREAMBLE:
  * This file is designed to hold all of the functions that will allow communication with the Teensy.
@@ -26,22 +26,24 @@
 #include <SPI.h>
 #include <string.h>
 #include <stdio.h>
-#include "LTC6811_1.h"
-#include "LTC6811_2.h"
-#include "DataContainer.h"
+#include "Configuration.h"
 #include "LTCSPIInterface.h"
 
-class LTC6811
+class BMSDriverGroup
 {
 public:
+    BMSDriverGroup() = default;
+    BMSDriverGroup(int cs, int ic_num) : chip_select(cs),
+                                         ic_count(ic_num) {};
+
     /* -------------------- SETUP FUNCTIONS -------------------- */
 
     /**
-     * SETUP: ONLY CALLED ONCE at initialization. LTC6811 only needs to set up the PEC table
+     * INIT: ONLY CALLED ONCE at initialization. LTC6811 only needs to set up the PEC table
      * @post We should have initialized the PEC by calling generate_PEC_table(), so every other time
      * we need to find the PEC it will be much faster.
      */
-    void setup();
+    void init();
 
     /**
      * PEC:
@@ -119,10 +121,20 @@ public:
     void print_voltage_data();
 
     /**
+     * @post resets the max, min data holders to outside bound
+     */
+    void reset_voltage_data();
+
+    /**
      * Prints all the GPIO information
      * Every temperature, humidity, the maximum temperature, and locations of those
      */
     void print_GPIO_data();
+
+    /**
+     * @post resets the max, min data holders to outside bound
+     */
+    void reset_GPIO_data();
 
     /* -------------------- SETTER FUNCTIONS -------------------- */
 
@@ -138,7 +150,7 @@ public:
      * This function is a setter for the address
      * @param integer input address
      */
-    void set_address(int ic_index, int address) { *this->address = address; }
+    void set_address(int *addr) { this->address = addr; }
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
 
@@ -190,6 +202,27 @@ public:
      */
     IC_Buffers_s get_IC_buffer() { return *this->IC_buffer; }
 
+    /**
+     * @return 2 byte broadcast command
+     */
+    uint8_t *generate_broadcast_command(CMD_CODES_e cmd_code) {
+        uint8_t cmd[2] = {((uint8_t)cmd_code) >> 8, (uint8_t)cmd_code};
+        return cmd;
+    }
+
+    /**
+     * @return 2 byte address command
+     */
+    uint8_t *generate_address_command(CMD_CODES_e cmd_code, int address) {
+        uint8_t cmd[2] = {(uint8_t)(get_cmd_address(address) | (uint8_t)cmd_code >> 8), (uint8_t)cmd_code};
+        return cmd;
+    }
+
+    /**
+     * @return usable command address for LTC6811_2
+    */
+    uint8_t get_cmd_address(int address) { return 0x80 | (address << 3); }
+
 private:
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
@@ -200,9 +233,15 @@ private:
      * We will need this for both models of the IC
      * This determines where we get our signals from on the Arduino
      * It can only be 9 or 10
-     *
+     * NOTE: needs to be initialized
      */
     int chip_select;
+
+    /**
+     * Stores number of ICs on the chip select line: 6
+     * NOTE: needs to be initialized
+     */
+    int ic_count;
 
     /**
      * Stores all 63 cells of data in a 2D array.
@@ -210,7 +249,7 @@ private:
      * BUT since each instance of LTC6811 will only have half, then we will hold 6 sets of data points
      * NOTE: THIS IS THE PROCESSED DATA
      */
-    IC_Voltage_Temp_Data_s IC_data[TOTAL_IC / 2];
+    IC_Voltage_Temp_Data_s IC_data[total_ic / 2];
 
     /**
      * Stores Register Group Bytes, 6 bytes each
@@ -218,7 +257,7 @@ private:
      * But we don't need that functionality for our purposes
      * NOTE: THIS IS THE RAW DATA
      */
-    IC_Buffers_s IC_buffer[TOTAL_IC / 2];
+    IC_Buffers_s IC_buffer[total_ic / 2];
 
     /**
      * Stores where the max voltage location is
@@ -231,6 +270,15 @@ private:
     IC_Cell_Location_s min_voltage_location;
 
     /**
+     * Stores locations of max min GPIO data
+     */
+    IC_Cell_Location_s max_board_temp_location;
+    IC_Cell_Location_s min_board_temp_location;
+    IC_Cell_Location_s max_thermistor_location;
+    IC_Cell_Location_s max_humidity_location;
+    IC_Cell_Location_s min_thermistor_location;
+
+    /**
      * We will only end up using the address if this is a LTC6811-2
      * NOTE: But if we are, we need to call a setup function to instatiate each with the correct addresses
      * BMS Segments 1, 4, and 5 are on chip select 9
@@ -238,7 +286,7 @@ private:
      * Those segments correspond to 2 ICs each, so the instance with chip_select 9
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
      */
-    int address[TOTAL_IC / 2];
+    int *address;
 
     /**
      * Stores whether an the AMS system is balancing, true or false.
@@ -260,6 +308,15 @@ private:
      * Stores the min voltage of all 63 cells
      */
     uint16_t min_voltage;
+
+    /**
+     * Stores max, min data for gpio data
+     */
+    uint16_t max_humidity = 0;
+    uint16_t max_thermistor_voltage = 0;
+    uint16_t min_thermistor_voltage = 65535;
+    uint16_t max_board_temp_voltage = 0;
+    uint16_t min_board_temp_voltage = 65535;
 
     /**
      * Stores the total temperature of the 3 boards

@@ -6,7 +6,7 @@
 */
 
 /* System Includes */
-#include "DataContainer.h"
+#include "Configuration.h"
 
 /**
  * @pre voltage data has been gathered
@@ -25,5 +25,10 @@ bool check_temperature_faults();
  * @post updates configuration bytes and sends configuration command 
 */
 void balance_cells();
+
+/**
+ * 
+*/
+void columb_counting();
 
 #endif
