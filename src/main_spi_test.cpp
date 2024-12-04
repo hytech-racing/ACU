@@ -20,5 +20,6 @@ void loop() {
         Serial.println("Entered loop!");
         timer = 0;
         //BMSGroup.read_data(dcto_read, cell_balance_statuses);
+        
     }    
 }

@@ -157,6 +157,8 @@ private:
      */
     std::array<uint8_t, 2> _calculate_specific_PEC(uint8_t *data, int length);
 
+    void _override_default_address(std::array<int, num_chips>);
+
     /**
      * Generates a formmatted 2 byte array for the Command bytes
      * @return unsigned 8 bit array of length 2

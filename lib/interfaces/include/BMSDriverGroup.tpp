@@ -23,7 +23,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
         cs++;
     }
     for (size_t j = 0; j < num_chips; j++)
-    {
+    {   
+        address[j] = j; // For the most part
         switch (j)
         {
         case 2:
@@ -45,6 +46,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
             break;
         }
     }
+    std::array<int, num_chips> test_address = {4};
+    _override_default_address(test_address);
 }
 
 // this implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
@@ -103,10 +106,17 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast(const 
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
     _write_configuration(dcto_read, cell_balance_statuses);
     _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
+    _start_GPIO_ADC_conversion();
     std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_1_to_3;
     std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_4_to_6;
     std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_7_to_9;
     std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_10_to_12;
+    std::array<uint8_t, 8 * num_chips> data_in_auxillaries_1_to_3;
+    std::array<uint8_t, 8 * num_chips> data_in_auxillaries_4_to_6;
+    std::array<uint8_t, 4> cmd_pec;
+    std::array<uint8_t, 8> buffer_in;
+    int count = 0;
+
 
     return data_in;
 }
@@ -189,7 +199,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const st
         // HUMIDITY AND TEMPERATURES
 
         count = 0; // reset count var
-        for (int gpio_Index = 0; gpio_Index < 6; gpio_Index++)
+        for (int gpio_Index = 0; gpio_Index < 6; gpio_Index++) // There are only five Auxillary ports
         {
             std::array<uint8_t, 2> data_in_gpio_voltage;
             int sub_index = gpio_Index / 3;
@@ -418,4 +428,9 @@ std::array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects>::_generate_CM
     std::copy(cmd.data(), cmd.data() + 2, cmd_pec.data()); // Copy first two bytes (cmd)
     std::copy(pec.data(), pec.data() + 2, cmd_pec.data() + 2);           // Copy next two bytes (pec)
     return cmd_pec;
+}
+
+template <size_t num_chips, size_t num_chip_selects>
+void BMSDriverGroup<num_chips, num_chip_selects>::_override_default_address(std::array<int, num_chips> addr) {
+    std::copy(addr.data(), addr.data() + num_chips, address.data());
 }
