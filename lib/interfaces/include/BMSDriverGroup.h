@@ -78,7 +78,7 @@ public:
      * AND record the maximum value and locations
      */
     // void read_thermistor_and_humidity();
-    BMSData read_data(const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses);
+    BMSData read_data(const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
@@ -87,7 +87,7 @@ public:
      * @pre needs access to undervoltage, overvoltage, configuration MACROS, and discharge data
      * @post sends packaged data over SPI
      */
-    void _write_configuration(uint8_t dcto_mode, const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses);
+    void _write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
 private:
     /**
@@ -108,9 +108,9 @@ private:
     void _start_wakeup_protocol();
 
 
-    BMSData _read_data_through_broadcast(const std::array<bool, 12> &cell_balance_statuses);
+    BMSData _read_data_through_broadcast(const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
-    BMSData _read_data_through_address(const std::array<bool, 12> &cell_balance_statuses);
+    BMSData _read_data_through_address(const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
     /**
      * @post resets the max, min data holders to outside bound
@@ -122,9 +122,9 @@ private:
      */
     void _reset_GPIO_data();
 
-    void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses);
+    void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
-    void _write_config_through_address(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses);
+    void _write_config_through_address(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
     /**
      * Writes command to start cell voltage ADC converion
@@ -139,7 +139,7 @@ private:
      */
     void _start_GPIO_ADC_conversion();
 
-    void _start_ADC_conversion_through_broadcast(std::array<uint8_t, 2> cmd_code);
+    void _start_ADC_conversion_through_broadcast(const std::array<uint8_t, 2> &cmd_code);
 
     void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
 
