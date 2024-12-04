@@ -16,6 +16,26 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
     _generate_PEC_table();
     for (int i = 0; i < num_chip_selects; i++)
     {
+        switch (i)
+        {
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 10:
+        case 11:
+            chip_select[i] = 10;
+            break;
+
+        case 0:
+        case 1:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+            chip_select[i] = 10;
+            break;
+        }
         pinMode(chip_select[i], OUTPUT);
         digitalWrite(chip_select[i], HIGH);
     }
@@ -59,6 +79,7 @@ template <size_t num_chips, size_t num_chip_selects>
 typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
 BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<bool, 12> &cell_balance_statuses)
 {
+    BMSData data_to_return;
 
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
     __write_configuration(dcto_read);
@@ -100,7 +121,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<bool, 12
             // Serial.print("There is a pec error!");
         }
         // Now we're going to convert the buffers into usable data
-        reset_voltage_data();
+        _reset_voltage_data();
         int cell_count = (i % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
         for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
         {
@@ -143,9 +164,9 @@ BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<bool, 12
     _start_wakeup_protocol();
     _write_configuration(dcto_read);
     _start_cell_voltage_ADC_conversion();
-    uint8_t cmd_and_pec[4];
-    uint8_t data_in_A[num_chips * 8];
-    uint8_t data_in_B[num_chips * 8];
+    std::array<uint8_t, 4> cmd_and_pec;
+    std::array<uint8_t, num_chips * 8> data_in_A;
+    std::array<uint8_t, num_chips * 8> data_in_B;
     // Every time we call a READ command, we will take in 48 bytes->(6 buffer + 2 pec)* #ICs(6) = 48
     _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, cmd_and_pec, 0);    // 24 bytes
     read_registers_command(this->chip_select, cmd_and_pec, num_chips, data_in_A); // 48 bytes
@@ -299,14 +320,14 @@ template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_start_GPIO_ADC_conversion()
 {
     uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_GPIO_ADC_CONVERSION | (adc_mode_gpio_conversion << 7) | static_cast<uint8_t>(adc_conversion_gpio_select_mode);
-    uint8_t cmd[2];
+    std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd && 0xFF;
     uint8_t pec[2];
     _calculate_specific_PEC(cmd, 2, pec);
     // SPI function will take care of how many times we need to send this message
     uint8_t cmd_and_pec[4];
-    std::copy(cmd, cmd + 2, cmd_and_pec);     // Copy first two bytes (cmd)
+    std::copy(cmd.data(), cmd.data() + 2, cmd_and_pec);     // Copy first two bytes (cmd)
     std::copy(pec, pec + 2, cmd_and_pec + 2); // Copy next two bytes (pec)
     non_register_command(this->chip_select, cmd_and_pec, num_chips);
     delay(gpio_adc_conversion_time_ms); // us
@@ -336,11 +357,11 @@ std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects>::_generate_fo
 {
     std::array<uint8_t, 2> cmd;
 #ifdef USING_LTC6811_1
-    cmd[0] = (uint8_t) command >> 8;
-    cmd[1] = (uint8_t) command;
+    cmd[0] = (uint8_t)command >> 8;
+    cmd[1] = (uint8_t)command;
 #else
-    cmd[0] = (uint8_t) get_cmd_address(address) | (uint8_t) command >> 8;
-    cmd[1] = (uint8_t) command;
+    cmd[0] = (uint8_t)get_cmd_address(address) | (uint8_t)command >> 8;
+    cmd[1] = (uint8_t)command;
 #endif
     return cmd;
 }

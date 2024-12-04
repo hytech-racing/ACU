@@ -19,7 +19,7 @@
  * @param buffer_pec 12 bytes of data, 2 bytes x 6 ICs of PEC data
 */
 template <size_t buffer_size>
-void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data, int ic_count);
+void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data);
 
 /**
  * Sends a SPI command to read registers
@@ -28,14 +28,15 @@ void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const s
  * @return the data we read
 */
 template <size_t buffer_size>
-std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, int ic_count);
+std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec);
 
 /**
  * Sends a SPI command to initiate some functionality of the device
  * @param cs chip select
  * @param cmd_and_pec 4 bytes if using _1 model, 24 bytes for _2 model 
 */
-void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, int ic_count);
+template <size_t data_size>
+void adc_conversion_command(int cs, const std::array<uint8_t, data_size> &cmd_and_pec);
 
 /**
  * Transfers bytes (uint8_t) of arbritrary length on to the SPI line

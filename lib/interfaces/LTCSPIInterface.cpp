@@ -3,49 +3,59 @@
 #include "Configuration.h"
 #include <Arduino.h>
 
-
-void send_SPI_write_registers_command(int cs, uint8_t* cmd_and_pec, uint8_t* buffer_and_pec, int ic_count) {
+template <size_t buffer_size>
+void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
     write_and_delay_LOW(cs, 2);
-    transfer_SPI_data(cmd_and_pec, 4);
-    transfer_SPI_data(buffer_and_pec, 8);
+
+    transfer_SPI_data<4>(cmd_and_pec);
+    transfer_SPI_data<buffer_size>(data);
+
     write_and_delay_HIGH(cs, 2);   
     SPI.endTransaction();
 }
 
-void send_SPI_read_registers_command(int cs, uint8_t* cmd_and_pec, int ic_count, uint8_t* received) {
+template <size_t buffer_size>
+std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec) {
+    std::array<uint8_t, buffer_size> read_in;
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompts SPI enable
     write_and_delay_LOW(cs, 2);
-    transfer_SPI_data(cmd_and_pec, 4);
-    for (int i = 0; i < ic_count; i++) {
-        receive_SPI_data(8, received);
-    }
+    transfer_SPI_data<4>(cmd_and_pec);
+    
+    read_in = receive_SPI_data<buffer_size>();
+
     write_and_delay_HIGH(cs, 2); 
     SPI.endTransaction();
+    return read_in;
 }
 
-void send_SPI_non_register_command(int cs, uint8_t* cmd_and_pec, int ic_count) {
+template <size_t data_size>
+void adc_conversion_command(int cs, const std::array<uint8_t, data_size> &cmd_and_pec) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
     write_and_delay_LOW(cs, 2);
-    transfer_SPI_data(cmd_and_pec, 4);
+    transfer_SPI_data<data_size>(cmd_and_pec);
     write_and_delay_HIGH(cs, 2);
     // End Message
     SPI.endTransaction();
 }
 
-void transfer_SPI_data(uint8_t *data, int length) {
-    for (int i = 0; i < length; i++) {
+template <size_t data_size>
+void transfer_SPI_data(const std::array<uint8_t, data_size> &data) {
+    for (int i = 0; i < data_size; i++) {
         SPI.transfer(data[i]);
     }
 }
 
-void receive_SPI_data(int data_length, uint8_t* received) {
-    for (int i = 0; i < data_length; i++) {
-        received[i] = SPI.transfer(0); // transfer dummy value over SPI in order to read bytes into data
+template <size_t data_size>
+std::array<uint8_t, data_size> receive_SPI_data() {
+    std::array<uint8_t, data_size> data_in;
+    for (int i = 0; i < data_size; i++) {
+        data_in[i] = SPI.transfer(0); // transfer dummy value over SPI in order to read bytes into data
     }
+    return data_in;
 }
 
 void write_and_delay_LOW(int cs, int delay_microSeconds) {
