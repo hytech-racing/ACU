@@ -47,8 +47,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
     }
 }
 
-// this implementation is straight from:
-// on page <>, section:
+// this implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
+// on page <76>, section: Applications Information
 template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_generate_PEC_table()
 {
@@ -73,21 +73,23 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_generate_PEC_table()
 
 template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_start_wakeup_protocol()
-{
-    write_and_delay_LOW(this->chip_select, 1);
-    SPI.transfer(0);
-    write_and_delay_HIGH(this->chip_select, 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+{   
+    for (int cs = 0; cs < num_chip_selects; cs++) {
+        _write_and_delay_LOW(chip_select[cs], 1);
+        SPI.transfer(0);
+        _write_and_delay_HIGH(chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+    }
 }
 
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects>
 typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
-BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<bool, 12> &cell_balance_statuses)
+BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses)
 {
 
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
-    __write_configuration(dcto_read);
+    _write_configuration(dcto_read);
     _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? ms
     uint8_t data_in_cell_voltages_0_to_3[num_chips * 8];
     uint8_t data_in_cell_voltages_4_to_6[num_chips * 8];
@@ -268,12 +270,12 @@ typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
 BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast(const std::array<bool, 12> &cell_balance_statuses) {
     BMSData data_in;
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
-    __write_configuration(dcto_read);
+    _write_configuration(dcto_read, cell_balance_statuses);
     _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? ms
-    uint8_t data_in_cell_voltages_0_to_3[num_chips * 8];
-    uint8_t data_in_cell_voltages_4_to_6[num_chips * 8];
-    uint8_t data_in_cell_voltages_7_to_9[num_chips * 8];
-    uint8_t data_in_cell_voltages_10_to_12[num_chips * 8];
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_0_to_3;
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_4_to_6;
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_7_to_9;
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_10_to_12;
 
     return data_in;
 }
@@ -283,13 +285,14 @@ typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
 BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const std::array<bool, 12> &cell_balance_statuses) {
     BMSData data_in;
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
-    __write_configuration(dcto_read);
+    _write_configuration(dcto_read, cell_balance_statuses);
     _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? ms
-    uint8_t data_in_cell_voltages_0_to_3[num_chips * 8];
-    uint8_t data_in_cell_voltages_4_to_6[num_chips * 8];
-    uint8_t data_in_cell_voltages_7_to_9[num_chips * 8];
-    uint8_t data_in_cell_voltages_10_to_12[num_chips * 8];
-
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_0_to_3;
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_4_to_6;
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_7_to_9;
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_10_to_12;
+    
+    
     return data_in;
 }
 
@@ -316,30 +319,59 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_reset_GPIO_data()
 /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_write_configuration(uint8_t dcto_mode, const std::array<bool, 12> &cell_balance_statuses)
-{
-    uint8_t cmd_and_pec[4];
-    _generate_CMD_PEC(CMD_CODES_e::WRITE_CONFIG, cmd_and_pec);
-    uint8_t buffer_format[6]; // This buffer processing can be seen in more detail on page 62 of the data sheet
+void BMSDriverGroup<num_chips, num_chip_selects>::_write_configuration(uint8_t dcto_mode, const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses)
+{   
+    std::array<uint8_t, 6> buffer_format; // This buffer processing can be seen in more detail on page 62 of the data sheet
     buffer_format[0] = (gpios_enabled << 3) | (static_cast<int>(device_refup_mode) << 2) | static_cast<int>(adcopt);
     buffer_format[1] = (under_voltage_threshold & 0x0FF);
     buffer_format[2] = ((over_voltage_threshold & 0x00F) << 4) | ((under_voltage_threshold & 0xF00) >> 8);
     buffer_format[3] = ((over_voltage_threshold & 0xFF0) >> 4);
-    uint8_t buffer_and_pec[num_chips * 8]; // 48 bytes, 8 bytes per IC(6)
-    // Regardless of IC model, we will need to send 6 x 6 bytes of buffer and 2 x 6 bytes of buffer pec
-    uint8_t ic_buffer_pec[2];
+    _start_wakeup_protocol();
+#ifdef USING_LTC6811_1
+    _write_config_through_broadcast(dcto_mode, buffer_format, cell_balance_statuses);
+#else
+    _write_config_through_address(dcto_mode, buffer_format, cell_balance_statuses);
+#endif
+}
 
-    for (int i = 0; i < num_chips; i++)
-    {
-        buffer_format[4] = ((reinterpret_cast<uint16_t>(cell_balance_statuses) & 0x0FF));
-        buffer_format[5] = ((dcto_mode & 0x0F) << 4) | ((reinterpret_cast<uint16_t>(cell_balance_statuses) & 0xF00) >> 8);
-        _calculate_specific_PEC(buffer_format, 6, ic_buffer_pec);
-        std::copy(buffer_format, buffer_format + 6, buffer_and_pec + (i * 8));
-        std::copy(ic_buffer_pec, ic_buffer_pec + 2, buffer_and_pec + (i * 8) + 6);
+template <size_t num_chips, size_t num_chip_selects>
+void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses) {
+    std::array<uint8_t, 4> cmd_and_pec;
+    std::array<uint8_t, (1 + num_chips) / 2 * 8> full_buffer;
+    std::array<uint8_t, 2> temp_pec;
+    
+    // Needs to be sent on each chip select line
+    for (int cs = 0; cs < num_chip_selects; cs++) {
+        cmd_and_pec = _generate_CMD_PEC(CMD_CODES_e::WRITE_CONFIG, -1);
+        int j = 0;
+        for (int i = 0; i < num_chips; i++) { // Find chips with the same CS
+            if (chip_select_per_chip[i] == chip_select[cs] && j < (num_chips + 1) / 2) {
+                buffer_format[4] = ((reinterpret_cast<uint16_t>(cell_balance_statuses[i]) & 0x0FF));
+                buffer_format[5] = ((dcto_mode & 0x0F) << 4) | ((reinterpret_cast<uint16_t>(cell_balance_statuses[i]) & 0xF00) >> 8);
+                temp_pec = _calculate_specific_PEC(buffer_format, 6);
+                std::copy(buffer_format.data(), buffer_format.data() + 6, full_buffer.data() + (j * 8));
+                std::copy(temp_pec.data(), temp_pec.data() + 2, full_buffer.data() + 6 + (j * 8));
+            }
+        }
+        write_registers_command<(sizeof(full_buffer))>(chip_select[cs], cmd_and_pec, full_buffer); 
     }
+}
 
-    // send message on SPI
-    write_registers_command(this->chip_select, cmd_and_pec, buffer_and_pec, num_chips);
+template <size_t num_chips, size_t num_chip_selects>
+void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_address(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses) {
+    // Need to manipulate the command code to have address, therefore have to send command num_chips times
+    std::array<uint8_t, 4> cmd_and_pec;
+    std::array<uint8_t, 8> full_buffer;
+    std::array<uint8_t, 2> temp_pec;
+    for (int i = 0; i < num_chips; i++) {
+        cmd_and_pec = _generate_CMD_PEC(CMD_CODES_e::WRITE_CONFIG, i);
+        buffer_format[4] = ((reinterpret_cast<uint16_t>(cell_balance_statuses[i]) & 0x0FF));
+        buffer_format[5] = ((dcto_mode & 0x0F) << 4) | ((reinterpret_cast<uint16_t>(cell_balance_statuses[i]) & 0xF00) >> 8);
+        temp_pec = _calculate_specific_PEC(buffer_format, 6);
+        std::copy(buffer_format.data(), buffer_format.data() + 6, full_buffer.data());
+        std::copy(temp_pec.data(), temp_pec.data() + 2, full_buffer.data() + 6);
+        write_registers_command<8>(chip_select_per_chip[i], cmd_and_pec, full_buffer);
+    }
 }
 
 template <size_t num_chips, size_t num_chip_selects>
