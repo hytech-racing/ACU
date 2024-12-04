@@ -142,17 +142,17 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const st
     int count = 0;
     for (int chip = 0; chip < num_chips; chip++) {
         _start_wakeup_protocol();
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, chip);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A,address[chip]);
         data_in_cell_voltages_1_to_3 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, chip);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B,address[chip]);
         data_in_cell_voltages_4_to_6 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, chip);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C,address[chip]);
         data_in_cell_voltages_7_to_9 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, chip);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D,address[chip]);
         data_in_cell_voltages_10_to_12 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, chip);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A,address[chip]);
         data_in_auxillaries_1_to_3 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, chip);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A,address[chip]);
         data_in_auxillaries_4_to_6 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
 
         // DEBUG: Check to see that the PEC is what we expect it to be
@@ -321,7 +321,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_address(
     std::array<uint8_t, 8> full_buffer;
     std::array<uint8_t, 2> temp_pec;
     for (int i = 0; i < num_chips; i++) {
-        cmd_and_pec = _generate_CMD_PEC(CMD_CODES_e::WRITE_CONFIG, i);
+        cmd_and_pec = _generate_CMD_PEC(CMD_CODES_e::WRITE_CONFIG, address[i]);
         buffer_format[4] = ((reinterpret_cast<uint16_t>(cell_balance_statuses[i]) & 0x0FF));
         buffer_format[5] = ((dcto_mode & 0x0F) << 4) | ((reinterpret_cast<uint16_t>(cell_balance_statuses[i]) & 0xF00) >> 8);
         temp_pec = _calculate_specific_PEC(buffer_format, 6);
@@ -375,7 +375,7 @@ template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code) {
     // Need to manipulate the command code to have address, therefore have to send command num_chips times
     for (int i = 0; i < num_chips; i++) {
-        cmd_code[0] = _get_cmd_address(i) | cmd_code[0]; // Make sure address is embedded in each cmd_code send
+        cmd_code[0] = _get_cmd_address(address[i]) | cmd_code[0]; // Make sure address is embedded in each cmd_code send
         std::array<uint8_t, 2> pec = _calculate_specific_PEC(cmd_code, 2);
         std::array<uint8_t, 4> cmd_and_pec;
         std::copy(cmd_code.data(), cmd_code.data() + 2, cmd_and_pec.data());     // Copy first two bytes (cmd)
