@@ -17,6 +17,9 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
     int cs = 9;
     for (int i = 0; i < num_chip_selects; i++) {
         chip_select[i] = cs;
+        //chip select defines
+        pinMode(cs, OUTPUT); 
+        digitalWrite(cs, HIGH);  
         cs++;
     }
     for (int j = 0; j < num_chips; j++)
@@ -343,35 +346,26 @@ template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_start_cell_voltage_ADC_conversion()
 {
     uint16_t adc_cmd = (uint16_t) CMD_CODES_e::START_CV_ADC_CONVERSION | (adc_mode_cv_conversion << 7) | (discharge_permitted << 4) | static_cast<uint8_t>(adc_conversion_cell_select_mode);
-    std::array<uint8_t, 2> cmd;
-    cmd[0] = (adc_cmd >> 8) & 0xFF;
-    cmd[1] = adc_cmd && 0xFF;
+    std::array<uint8_t, 2> cmd = {(adc_cmd >> 8) & 0xFF, adc_cmd & 0xFF};
 #ifdef USING_LTC6811_1
     _start_ADC_conversion_through_broadcast(cmd);
 #else
     _start_ADC_conversion_through_address(cmd);
 #endif
-    delay(cv_adc_conversion_time_ms); // us
+    delay(cv_adc_conversion_time_us); // us
 }
 
 template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_start_GPIO_ADC_conversion()
 {
     uint16_t adc_cmd = (uint16_t) CMD_CODES_e::START_GPIO_ADC_CONVERSION | (adc_mode_gpio_conversion << 7) | static_cast<uint8_t>(adc_conversion_gpio_select_mode);
-    std::array<uint8_t, 2> cmd;
-    cmd[0] = (adc_cmd >> 8) & 0xFF;
-    cmd[1] = adc_cmd && 0xFF;
+    std::array<uint8_t, 2> cmd = {(adc_cmd >> 8) & 0xFF, adc_cmd & 0xFF};
 #ifdef USING_LTC6811_1
     _start_ADC_conversion_through_broadcast(cmd);
 #else
     _start_ADC_conversion_through_address(cmd);
 #endif
-    std::array<uint8_t, 2> pec = _calculate_specific_PEC(cmd, 2);
-    std::array<uint8_t, 4> cmd_and_pec;
-    std::copy(cmd.data(), cmd.data() + 2, cmd_and_pec.data());     // Copy first two bytes (cmd)
-    std::copy(pec.data(), pec.data() + 2, cmd_and_pec.data() + 2); // Copy next two bytes (pec)
-    adc_conversion_command<4>(this->chip_select, cmd_and_pec, num_chips);
-    delay(gpio_adc_conversion_time_ms); // us
+    delay(gpio_adc_conversion_time_us); // us
 }
 
 template <size_t num_chips, size_t num_chip_selects>
@@ -381,9 +375,10 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_
     std::array<uint8_t, 4> cmd_and_pec;
     std::copy(cmd_code.data(), cmd_code.data() + 2, cmd_and_pec.data());     // Copy first two bytes (cmd)
     std::copy(pec.data(), pec.data() + 2, cmd_and_pec.data() + 2); // Copy next two bytes (pec)
+    
     // Needs to be sent on each chip select line
     for (int cs = 0; cs < num_chip_selects; cs++) {
-        adc_conversion_command<4>(chip_select[cs], cmd_and_pec, num_chips); 
+        adc_conversion_command<4>(chip_select[cs], cmd_and_pec); 
     }
 }
 
@@ -391,7 +386,12 @@ template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code) {
     // Need to manipulate the command code to have address, therefore have to send command num_chips times
     for (int i = 0; i < num_chips; i++) {
-        
+        cmd_code[0] = _get_cmd_address(i) | cmd_code[0]; // Make sure address is embedded in each cmd_code send
+        std::array<uint8_t, 2> pec = _calculate_specific_PEC(cmd_code, 2);
+        std::array<uint8_t, 4> cmd_and_pec;
+        std::copy(cmd_code.data(), cmd_code.data() + 2, cmd_and_pec.data());     // Copy first two bytes (cmd)
+        std::copy(pec.data(), pec.data() + 2, cmd_and_pec.data() + 2); // Copy next two bytes (pec)
+        adc_conversion_command<4>(chip_select_per_chip[i], cmd_and_pec);
     }
 }
 
