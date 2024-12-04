@@ -8,6 +8,8 @@
 /* Interface Includes */
 #include <SPI.h>
 #include "Configuration.h"
+#include <stddef.h>
+#include <array>
 
 /**
  * Sends a SPI command to write data to the registers
@@ -16,7 +18,8 @@
  * @param buffer 36 bytes of data, 6 bytes x 6 ICs of data
  * @param buffer_pec 12 bytes of data, 2 bytes x 6 ICs of PEC data
 */
-void send_SPI_write_registers_command(int cs, uint8_t* cmd_and_pec, uint8_t* buffer_and_pec);
+template <size_t buffer_size>
+void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data, int ic_count);
 
 /**
  * Sends a SPI command to read registers
@@ -24,28 +27,31 @@ void send_SPI_write_registers_command(int cs, uint8_t* cmd_and_pec, uint8_t* buf
  * @param cmd_and_pec 4 bytes if using _1 model, 4 x 6 bytes for _2 model 
  * @return the data we read
 */
-uint8_t* send_SPI_read_registers_command(int cs, uint8_t* cmd_and_pec);
+template <size_t buffer_size>
+std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, int ic_count);
 
 /**
  * Sends a SPI command to initiate some functionality of the device
  * @param cs chip select
  * @param cmd_and_pec 4 bytes if using _1 model, 24 bytes for _2 model 
 */
-void send_SPI_non_register_command(int cs, uint8_t* cmd_and_pec);
+void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, int ic_count);
 
 /**
  * Transfers bytes (uint8_t) of arbritrary length on to the SPI line
  * @param data input buffer of size length
  * @param length length of buffer, number of bytes
 */
-void transfer_SPI_data(uint8_t *data, int length);
+template <size_t data_size>
+void transfer_SPI_data(const std::array<uint8_t, data_size> &data);
 
 /**
  * Receives SPI data
  * @param length length of data we expect to receive
  * @return data we are receiving instantaneously
 */
-uint8_t* receive_SPI_data(int length);
+template <size_t data_size>
+std::array<uint8_t, data_size> receive_SPI_data();
 
 /**
  * Writes a LOW on one of the chip selects, then delays

@@ -9,14 +9,7 @@
 
 // Change to USING_LTC6811-#, where # is 1 or 2 depending on what's being used on the car
 // #define USING_LTC6811_2
-#define USING_LTC6811_1
-
-// DON'T EDIT THIS IF ELSE
-#ifdef USING_LTC6811_1
-    const int data_in_count = 48;  // 48 because each IC provides 8 bytes of data each
-#else
-    const int data_in_count = 8;
-#endif
+#define USING_LTC6811_2
 
 /* CONSTANT Definitions */
 /**
