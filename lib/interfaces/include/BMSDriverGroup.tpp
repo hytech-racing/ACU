@@ -79,7 +79,6 @@ template <size_t num_chips, size_t num_chip_selects>
 typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
 BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<bool, 12> &cell_balance_statuses)
 {
-    BMSData data_to_return;
 
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
     __write_configuration(dcto_read);
@@ -248,6 +247,30 @@ BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<bool, 12
             }
         }
     }
+
+    _reset_voltage_data();
+    _reset_GPIO_data();
+#ifdef USING_LTC6811_1
+    return _read_data_through_broadcast(cell_balance_statuses);
+#else
+    return _read_data_through_address(cell_balance_statuses);
+#endif
+}
+
+template <size_t num_chips, size_t num_chip_selects>
+typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
+BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast(const std::array<bool, 12> &cell_balance_statuses) {
+    BMSData data_to_return;
+    
+    return bms_return;
+}
+
+template <size_t num_chips, size_t num_chip_selects>
+typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
+BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const std::array<bool, 12> &cell_balance_statuses) {
+    BMSData data_to_return;
+
+    return bms_return;
 }
 
 template <size_t num_chips, size_t num_chip_selects>

@@ -78,6 +78,10 @@ public:
     // void read_thermistor_and_humidity();
     BMSData read_data(const std::array<bool, 12> &cell_balance_statuses);
 
+    BMSData _read_data_through_broadcast(const std::array<bool, 12> &cell_balance_statuses);
+
+    BMSData _read_data_through_address(const std::array<bool, 12> &cell_balance_statuses);
+
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
     /**

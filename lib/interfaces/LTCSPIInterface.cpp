@@ -7,12 +7,12 @@ template <size_t buffer_size>
 void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
-    write_and_delay_LOW(cs, 2);
+    _write_and_delay_LOW(cs, 2);
 
-    transfer_SPI_data<4>(cmd_and_pec);
-    transfer_SPI_data<buffer_size>(data);
+    _transfer_SPI_data<4>(cmd_and_pec);
+    _transfer_SPI_data<buffer_size>(data);
 
-    write_and_delay_HIGH(cs, 2);   
+    _write_and_delay_HIGH(cs, 2);   
     SPI.endTransaction();
 }
 
@@ -21,12 +21,12 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
     std::array<uint8_t, buffer_size> read_in;
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompts SPI enable
-    write_and_delay_LOW(cs, 2);
-    transfer_SPI_data<4>(cmd_and_pec);
+    _write_and_delay_LOW(cs, 2);
+    _transfer_SPI_data<4>(cmd_and_pec);
     
-    read_in = receive_SPI_data<buffer_size>();
+    read_in = _receive_SPI_data<buffer_size>();
 
-    write_and_delay_HIGH(cs, 2); 
+    _write_and_delay_HIGH(cs, 2); 
     SPI.endTransaction();
     return read_in;
 }
@@ -35,9 +35,9 @@ template <size_t data_size>
 void adc_conversion_command(int cs, const std::array<uint8_t, data_size> &cmd_and_pec) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
-    write_and_delay_LOW(cs, 2);
-    transfer_SPI_data<data_size>(cmd_and_pec);
-    write_and_delay_HIGH(cs, 2);
+    _write_and_delay_LOW(cs, 2);
+    _transfer_SPI_data<data_size>(cmd_and_pec);
+    _write_and_delay_HIGH(cs, 2);
     // End Message
     SPI.endTransaction();
 }
