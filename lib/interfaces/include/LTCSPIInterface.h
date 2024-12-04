@@ -44,7 +44,7 @@ void adc_conversion_command(int cs, const std::array<uint8_t, data_size> &cmd_an
  * @param length length of buffer, number of bytes
 */
 template <size_t data_size>
-void transfer_SPI_data(const std::array<uint8_t, data_size> &data);
+void _transfer_SPI_data(const std::array<uint8_t, data_size> &data);
 
 /**
  * Receives SPI data
@@ -52,18 +52,18 @@ void transfer_SPI_data(const std::array<uint8_t, data_size> &data);
  * @return data we are receiving instantaneously
 */
 template <size_t data_size>
-std::array<uint8_t, data_size> receive_SPI_data();
+std::array<uint8_t, data_size> _receive_SPI_data();
 
 /**
  * Writes a LOW on one of the chip selects, then delays
  * @param cs the chip select we are writing to
  * @param delay time in microseconds
 */
-void write_and_delay_LOW(int cs, int delay_microSeconds);
+void _write_and_delay_LOW(int cs, int delay_microSeconds);
 
 /**
  * Writes a HIGH on one of the chip selects, then delay
  * @param cs the chip select we are writing to
  * @param delay time in microseconds
 */
-void write_and_delay_HIGH(int cs, int delay_microSeconds);
+void _write_and_delay_HIGH(int cs, int delay_microSeconds);

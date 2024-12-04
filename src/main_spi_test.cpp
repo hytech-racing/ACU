@@ -19,6 +19,6 @@ void loop() {
     if (timer.can_bms_voltages_timer > 1000) {
         Serial.println("Entered loop!");
         timer.can_bms_voltages_timer = 0;
-        BMSGroup.read_data(dcto_read, cell_balance_statuses);
+        //BMSGroup.read_data(dcto_read, cell_balance_statuses);
     }    
 }

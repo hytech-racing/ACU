@@ -43,14 +43,14 @@ void adc_conversion_command(int cs, const std::array<uint8_t, data_size> &cmd_an
 }
 
 template <size_t data_size>
-void transfer_SPI_data(const std::array<uint8_t, data_size> &data) {
+void _transfer_SPI_data(const std::array<uint8_t, data_size> &data) {
     for (int i = 0; i < data_size; i++) {
         SPI.transfer(data[i]);
     }
 }
 
 template <size_t data_size>
-std::array<uint8_t, data_size> receive_SPI_data() {
+std::array<uint8_t, data_size> _receive_SPI_data() {
     std::array<uint8_t, data_size> data_in;
     for (int i = 0; i < data_size; i++) {
         data_in[i] = SPI.transfer(0); // transfer dummy value over SPI in order to read bytes into data
@@ -58,12 +58,12 @@ std::array<uint8_t, data_size> receive_SPI_data() {
     return data_in;
 }
 
-void write_and_delay_LOW(int cs, int delay_microSeconds) {
+void _write_and_delay_LOW(int cs, int delay_microSeconds) {
     digitalWrite(cs, LOW);
     delayMicroseconds(delay_microSeconds);
 }
 
-void write_and_delay_HIGH(int cs, int delay_microSeconds) {
+void _write_and_delay_HIGH(int cs, int delay_microSeconds) {
     digitalWrite(cs, HIGH);
     delayMicroseconds(delay_microSeconds);
 }
