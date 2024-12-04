@@ -41,7 +41,7 @@ public:
     struct BMSData
     {
         std::array<std::array<std::optional<volt>, 12>, num_chips> voltages;
-        std::array<std::array<celcius, 4 * num_chips> cell_temperatures;
+        std::array<celcius, 4 * num_chips> cell_temperatures;
         std::array<float, (num_chips + 1) / 2> humidity;
         std::array<float, (num_chips + 1) / 2> board_temperatures;
         float min_voltage;

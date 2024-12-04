@@ -15,14 +15,14 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
     // We only call this once during setup to instantiate the variable pec15Table, a pointer to an array
     _generate_PEC_table();
     int cs = 9;
-    for (int i = 0; i < num_chip_selects; i++) {
+    for (size_t i = 0; i < num_chip_selects; i++) {
         chip_select[i] = cs;
         //chip select defines
         pinMode(cs, OUTPUT); 
         digitalWrite(cs, HIGH);  
         cs++;
     }
-    for (int j = 0; j < num_chips; j++)
+    for (size_t j = 0; j < num_chips; j++)
     {
         switch (j)
         {
@@ -200,7 +200,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const st
                 break;
             }
             
-            uint16_t gpio_in = (uint16_t) data_in_cell_voltage.data();
+            uint16_t gpio_in = (uint16_t) data_in_gpio_voltage.data();
 
             if ((chip % 2) && gpio_Index == 4)
             {   
@@ -223,7 +223,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const st
             else if (gpio_Index < 4)
             {
                 float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
-                bms_data.temperatures[count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 273.15; // calculation for thermistor temperature in C
+                bms_data.cell_temperatures[count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 273.15; // calculation for thermistor temperature in C
                 total_thermistor_temps += gpio_in;
                 if (gpio_in > max_thermistor_voltage)
                 {
@@ -239,7 +239,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const st
     bms_data.max_voltage = this->max_voltage;
     bms_data.total_voltage = this->total_voltage;
     bms_data.average_cell_temperature = this->total_thermistor_temps / count;
-    return data_in;
+    return bms_data;
 }
 
 template <size_t num_chips, size_t num_chip_selects>
@@ -255,10 +255,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_reset_GPIO_data()
 {
     max_humidity = 0;
     max_thermistor_voltage = 0;
-    min_thermistor_voltage = 65535;
     max_board_temp_voltage = 0;
     min_board_temp_voltage = 65535;
-    total_board_temps = 0;
     total_thermistor_temps = 0;
 }
 
