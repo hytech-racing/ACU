@@ -220,7 +220,7 @@ private:
     /**
      * Stores the total voltage of all 63 cells
      */
-    uint16_t total_voltage;
+    uint32_t total_voltage;
 
     /**
      * Stores the max voltage of all 63 cells

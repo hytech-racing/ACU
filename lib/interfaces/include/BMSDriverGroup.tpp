@@ -148,6 +148,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const st
         // DEBUG: Check to see that the PEC is what we expect it to be
 
         int cell_count = (chip % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
+        std::array<uint16_t, 12> chip_voltages_in;
         for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
         {
             std::array<uint8_t, 2> data_in_cell_voltage;
@@ -155,32 +156,34 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const st
             switch (sub_index) // There are 4 groups of CELL VOLTAGES, each with 3 cells
             {
             case 0:
-                std::copy(data_in_cell_voltages_1_to_3.data() + ((sub_index % 3) * 2), data_in_cell_voltages_1_to_3.data() + 2 + ((sub_index % 3) * 2), data_in_cell_voltage.data());
+                std::copy(data_in_cell_voltages_1_to_3.data() + ((cell_Index % 3) * 2), data_in_cell_voltages_1_to_3.data() + 2 + ((cell_Index % 3) * 2), data_in_cell_voltage.data());
                 break;
             case 1:
-                std::copy(data_in_cell_voltages_4_to_6.data() + ((sub_index % 3) * 2), data_in_cell_voltages_4_to_6.data() + 2 + ((sub_index % 3) * 2), data_in_cell_voltage.data());
+                std::copy(data_in_cell_voltages_4_to_6.data() + ((cell_Index % 3) * 2), data_in_cell_voltages_4_to_6.data() + 2 + ((cell_Index % 3) * 2), data_in_cell_voltage.data());
                 break;
             case 2:
-                std::copy(data_in_cell_voltages_7_to_9.data() + ((sub_index % 3) * 2), data_in_cell_voltages_7_to_9.data() + 2 + ((sub_index % 3) * 2), data_in_cell_voltage.data());
+                std::copy(data_in_cell_voltages_7_to_9.data() + ((cell_Index % 3) * 2), data_in_cell_voltages_7_to_9.data() + 2 + ((cell_Index % 3) * 2), data_in_cell_voltage.data());
                 break;
             case 3:
-                std::copy(data_in_cell_voltages_10_to_12.data() + ((sub_index % 3) * 2), data_in_cell_voltages_10_to_12.data() + 2 + ((sub_index % 3) * 2), data_in_cell_voltage.data());
+                std::copy(data_in_cell_voltages_10_to_12.data() + ((cell_Index % 3) * 2), data_in_cell_voltages_10_to_12.data() + 2 + ((cell_Index % 3) * 2), data_in_cell_voltage.data());
                 break; // We will never get here for odd indexed ICs
             }
-
-            bms_data.voltages[count] = (uint16_t) data_in_cell_voltage.data(); // This is wrong
-            total_voltage += bms_data.voltages[count];
-            if (bms_data.voltages[count] < min_voltage)
+            
+            uint16_t voltage_in = (uint16_t) data_in_cell_voltage.data();
+            chip_voltages_in[cell_Index] = voltage_in;
+            total_voltage += voltage_in;
+            if (voltage_in < min_voltage)
             {
-                min_voltage = bms_data.voltages[count];
+                min_voltage = voltage_in;
                 bms_data.min_voltage_cell_id = count;
             }
-            if (bms_data.voltages[count] > max_voltage)
+            if (voltage_in > max_voltage)
             {
-                max_voltage = bms_data.voltages[count];
+                max_voltage = voltage_in;
                 bms_data.max_voltage_cell_id = count;
             }
             count++;
+            bms_data.voltages[chip_voltages_in];
         }
 
         // HUMIDITY AND TEMPERATURES
@@ -193,10 +196,10 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const st
             switch (sub_index) // There are 2 groups of AUXILLARIES, each with 3 2-byte gpio data
             {
             case 0:
-                std::copy(data_in_auxillaries_1_to_3.data() + ((sub_index % 3) * 2), data_in_auxillaries_1_to_3.data() + 2 + ((sub_index % 3) * 2), data_in_gpio_voltage.data());
+                std::copy(data_in_auxillaries_1_to_3.data() + ((gpio_Index % 3) * 2), data_in_auxillaries_1_to_3.data() + 2 + ((gpio_Index % 3) * 2), data_in_gpio_voltage.data());
                 break;
             case 1:
-                std::copy(data_in_auxillaries_4_to_6.data() + ((sub_index % 3) * 2), data_in_auxillaries_4_to_6.data() + 2 + ((sub_index % 3) * 2), data_in_gpio_voltage.data());
+                std::copy(data_in_auxillaries_4_to_6.data() + ((gpio_Index % 3) * 2), data_in_auxillaries_4_to_6.data() + 2 + ((gpio_Index % 3) * 2), data_in_gpio_voltage.data());
                 break;
             }
             
