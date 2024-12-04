@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include "BMSDriverGroup.h"
 
-Elapsed_Timers_s timer;
+elapsedMillis timer = 0;
 BMSDriverGroup<1, 2> BMSGroup;
 
 void setup() {
@@ -16,9 +16,9 @@ void loop() {
     //Serial.print("Timer:");
     //Serial.println(timer.can_bms_voltages_timer);
     std::array<bool, 12> cell_balance_statuses;
-    if (timer.can_bms_voltages_timer > 1000) {
+    if (timer > 1000) {
         Serial.println("Entered loop!");
-        timer.can_bms_voltages_timer = 0;
+        timer = 0;
         //BMSGroup.read_data(dcto_read, cell_balance_statuses);
     }    
 }

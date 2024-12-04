@@ -14,9 +14,14 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
 {
     // We only call this once during setup to instantiate the variable pec15Table, a pointer to an array
     _generate_PEC_table();
-    for (int i = 0; i < num_chip_selects; i++)
+    int cs = 9;
+    for (int i = 0; i < num_chip_selects; i++) {
+        chip_select[i] = cs;
+        cs++;
+    }
+    for (int j = 0; j < num_chips; j++)
     {
-        switch (i)
+        switch (j)
         {
         case 2:
         case 3:
@@ -24,7 +29,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
         case 5:
         case 10:
         case 11:
-            chip_select[i] = 10;
+            chip_select_per_chip[j] = 10;
             break;
 
         case 0:
@@ -33,11 +38,9 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
         case 7:
         case 8:
         case 9:
-            chip_select[i] = 10;
+            chip_select_per_chip[j] = 10;
             break;
         }
-        pinMode(chip_select[i], OUTPUT);
-        digitalWrite(chip_select[i], HIGH);
     }
 }
 
@@ -260,17 +263,31 @@ BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<bool, 12
 template <size_t num_chips, size_t num_chip_selects>
 typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
 BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast(const std::array<bool, 12> &cell_balance_statuses) {
-    BMSData data_to_return;
-    
-    return bms_return;
+    BMSData data_in;
+    _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
+    __write_configuration(dcto_read);
+    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? ms
+    uint8_t data_in_cell_voltages_0_to_3[num_chips * 8];
+    uint8_t data_in_cell_voltages_4_to_6[num_chips * 8];
+    uint8_t data_in_cell_voltages_7_to_9[num_chips * 8];
+    uint8_t data_in_cell_voltages_10_to_12[num_chips * 8];
+
+    return data_in;
 }
 
 template <size_t num_chips, size_t num_chip_selects>
 typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
 BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const std::array<bool, 12> &cell_balance_statuses) {
-    BMSData data_to_return;
+    BMSData data_in;
+    _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
+    __write_configuration(dcto_read);
+    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? ms
+    uint8_t data_in_cell_voltages_0_to_3[num_chips * 8];
+    uint8_t data_in_cell_voltages_4_to_6[num_chips * 8];
+    uint8_t data_in_cell_voltages_7_to_9[num_chips * 8];
+    uint8_t data_in_cell_voltages_10_to_12[num_chips * 8];
 
-    return bms_return;
+    return data_in;
 }
 
 template <size_t num_chips, size_t num_chip_selects>
@@ -325,43 +342,66 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_write_configuration(uint8_t d
 template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_start_cell_voltage_ADC_conversion()
 {
-    uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_CV_ADC_CONVERSION | (adc_mode_cv_conversion << 7) | (discharge_permitted << 4) | static_cast<uint8_t>(adc_conversion_cell_select_mode);
-    uint8_t cmd[2];
+    uint16_t adc_cmd = (uint16_t) CMD_CODES_e::START_CV_ADC_CONVERSION | (adc_mode_cv_conversion << 7) | (discharge_permitted << 4) | static_cast<uint8_t>(adc_conversion_cell_select_mode);
+    std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd && 0xFF;
-    uint8_t pec[2];
-    _calculate_specific_PEC(cmd, 2, pec);
-    // SPI function will take care of how many times we need to send this message
-    uint8_t cmd_and_pec[4];
-    std::copy(cmd, cmd + 2, cmd_and_pec);     // Copy first two bytes (cmd)
-    std::copy(pec, pec + 2, cmd_and_pec + 2); // Copy next two bytes (pec)
-    non_register_command(this->chip_select, cmd_and_pec, num_chips);
+#ifdef USING_LTC6811_1
+    _start_ADC_conversion_through_broadcast(cmd);
+#else
+    _start_ADC_conversion_through_address(cmd);
+#endif
     delay(cv_adc_conversion_time_ms); // us
 }
 
 template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_start_GPIO_ADC_conversion()
 {
-    uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_GPIO_ADC_CONVERSION | (adc_mode_gpio_conversion << 7) | static_cast<uint8_t>(adc_conversion_gpio_select_mode);
+    uint16_t adc_cmd = (uint16_t) CMD_CODES_e::START_GPIO_ADC_CONVERSION | (adc_mode_gpio_conversion << 7) | static_cast<uint8_t>(adc_conversion_gpio_select_mode);
     std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd && 0xFF;
-    uint8_t pec[2];
-    _calculate_specific_PEC(cmd, 2, pec);
-    // SPI function will take care of how many times we need to send this message
-    uint8_t cmd_and_pec[4];
-    std::copy(cmd.data(), cmd.data() + 2, cmd_and_pec);     // Copy first two bytes (cmd)
-    std::copy(pec, pec + 2, cmd_and_pec + 2); // Copy next two bytes (pec)
-    non_register_command(this->chip_select, cmd_and_pec, num_chips);
+#ifdef USING_LTC6811_1
+    _start_ADC_conversion_through_broadcast(cmd);
+#else
+    _start_ADC_conversion_through_address(cmd);
+#endif
+    std::array<uint8_t, 2> pec = _calculate_specific_PEC(cmd, 2);
+    std::array<uint8_t, 4> cmd_and_pec;
+    std::copy(cmd.data(), cmd.data() + 2, cmd_and_pec.data());     // Copy first two bytes (cmd)
+    std::copy(pec.data(), pec.data() + 2, cmd_and_pec.data() + 2); // Copy next two bytes (pec)
+    adc_conversion_command<4>(this->chip_select, cmd_and_pec, num_chips);
     delay(gpio_adc_conversion_time_ms); // us
+}
+
+template <size_t num_chips, size_t num_chip_selects>
+void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_broadcast(std::array<uint8_t, 2> cmd_code) {
+    // Leave the command code as is
+    std::array<uint8_t, 2> pec = _calculate_specific_PEC(cmd_code, 2);
+    std::array<uint8_t, 4> cmd_and_pec;
+    std::copy(cmd_code.data(), cmd_code.data() + 2, cmd_and_pec.data());     // Copy first two bytes (cmd)
+    std::copy(pec.data(), pec.data() + 2, cmd_and_pec.data() + 2); // Copy next two bytes (pec)
+    // Needs to be sent on each chip select line
+    for (int cs = 0; cs < num_chip_selects; cs++) {
+        adc_conversion_command<4>(chip_select[cs], cmd_and_pec, num_chips); 
+    }
+}
+
+template <size_t num_chips, size_t num_chip_selects>
+void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code) {
+    // Need to manipulate the command code to have address, therefore have to send command num_chips times
+    for (int i = 0; i < num_chips; i++) {
+        
+    }
 }
 
 /* -------------------- GETTER FUNCTIONS -------------------- */
 
 // This implementation is taken directly from the data sheet linked here: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
 template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_calculate_specific_PEC(uint8_t *data, int length, uint8_t *pec)
+std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects>::_calculate_specific_PEC(uint8_t *data, int length)
 {
+    std::array<uint8_t, 2> pec;
     uint16_t remainder;
     uint16_t addr;
     remainder = 0x10; // PEC seed
@@ -373,6 +413,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_calculate_specific_PEC(uint8_
     remainder = remainder * 2; // The CRC15 has a 0 in the LSB so the final value must be multiplied by 2
     pec[0] = (uint8_t)((remainder >> 8) & 0xFF);
     pec[1] = (uint8_t)(remainder & 0xFF);
+    return pec;
 }
 
 template <size_t num_chips, size_t num_chip_selects>
@@ -390,17 +431,12 @@ std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects>::_generate_fo
 }
 
 template <size_t num_chips, size_t num_chip_selects>
-std::array<uint8_t, 4 * num_chips> BMSDriverGroup<num_chips, num_chip_selects>::_generate_CMD_PEC(CMD_CODES_e command, int ic_index)
+std::array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects>::_generate_CMD_PEC(CMD_CODES_e command, int ic_index)
 {
-    std::array<uint8_t, 4 * num_chips> cmd_pec;
-    std::array<uint8_t, 2> cmd;
-    uint8_t pec[2];
-    for (int i = 0; i < num_chips; i++)
-    {
-        cmd = _generate_formatted_CMD(command, i);
-        _calculate_specific_PEC(cmd, 2, pec);
-        std::copy(cmd.data(), cmd.data() + 2, cmd_pec.data() + (i * 4)); // Copy first two bytes (cmd)
-        std::copy(pec, pec + 2, cmd_pec.data() + 2 + (i * 4));           // Copy next two bytes (pec)
-    }
+    std::array<uint8_t, 4> cmd_pec;
+    std::array<uint8_t, 2> cmd = _generate_formatted_CMD(command, ic_index);
+    std::array<uint8_t, 2> pec = _calculate_specific_PEC(cmd, 2);
+    std::copy(cmd.data(), cmd.data() + 2, cmd_pec.data()); // Copy first two bytes (cmd)
+    std::copy(pec.data(), pec.data() + 2, cmd_pec.data() + 2);           // Copy next two bytes (pec)
     return cmd_pec;
 }

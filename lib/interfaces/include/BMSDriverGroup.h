@@ -1,5 +1,6 @@
 #ifndef __BMSDriverGroup_H__
 #define __BMSDriverGroup_H__
+
 /**
  * PREAMBLE:
  * This file is designed to hold all of the functions that will allow communication with the Teensy.
@@ -78,10 +79,6 @@ public:
     // void read_thermistor_and_humidity();
     BMSData read_data(const std::array<bool, 12> &cell_balance_statuses);
 
-    BMSData _read_data_through_broadcast(const std::array<bool, 12> &cell_balance_statuses);
-
-    BMSData _read_data_through_address(const std::array<bool, 12> &cell_balance_statuses);
-
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
     /**
@@ -90,19 +87,6 @@ public:
      * @post sends packaged data over SPI
      */
     void _write_configuration(uint8_t dcto_mode, const std::array<bool, 12> &cell_balance_statuses);
-
-    /**
-     * Writes command to start cell voltage ADC converion
-     * @post packaged data transferred over SPI, need to delay before we can read
-     */
-    void _start_cell_voltage_ADC_conversion();
-
-    /**
-     * Writes command to start GPIO ADC conversion
-     * @post packaged data transfered over SPI, need to delay before we can read
-     * This means that we have to call a delay before continuing.
-     */
-    void _start_GPIO_ADC_conversion();
 
 private:
     /**
@@ -122,6 +106,11 @@ private:
      */
     void _start_wakeup_protocol();
 
+
+    BMSData _read_data_through_broadcast(const std::array<bool, 12> &cell_balance_statuses);
+
+    BMSData _read_data_through_address(const std::array<bool, 12> &cell_balance_statuses);
+
     /**
      * @post resets the max, min data holders to outside bound
      */
@@ -131,6 +120,23 @@ private:
      * @post resets the max, min data holders to outside bound
      */
     void _reset_GPIO_data();
+
+    /**
+     * Writes command to start cell voltage ADC converion
+     * @post packaged data transferred over SPI, need to delay before we can read
+     */
+    void _start_cell_voltage_ADC_conversion();
+
+    /**
+     * Writes command to start GPIO ADC conversion
+     * @post packaged data transfered over SPI, need to delay before we can read
+     * This means that we have to call a delay before continuing.
+     */
+    void _start_GPIO_ADC_conversion();
+
+    void _start_ADC_conversion_through_broadcast(std::array<uint8_t, 2> cmd_code);
+
+    void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
 
     /* -------------------- SETTER FUNCTIONS -------------------- */
 
@@ -144,7 +150,7 @@ private:
      * @param length length of data
      * @return unsigned 16 bit PEC, array of uint8_t of length 2
      */
-    void _calculate_specific_PEC(uint8_t *data, int length, uint8_t *pec);
+    std::array<uint8_t, 2> _calculate_specific_PEC(uint8_t *data, int length);
 
     /**
      * Generates a formmatted 2 byte array for the Command bytes
@@ -156,7 +162,7 @@ private:
      * Generates Command and PEC as one byte array of length 4: CMD0, CMD1, PEC0, PEC1
      * @return unsigned 8 bit, length 4
      */
-    std::array<uint8_t, 4 * num_chips> _generate_CMD_PEC(CMD_CODES_e command, int ic_index);
+    std::array<uint8_t, 4> _generate_CMD_PEC(CMD_CODES_e command, int ic_index);
 
     /**
      * @return usable command address for LTC6811_2
@@ -175,6 +181,14 @@ private:
      * NOTE: needs to be initialized
      */
     std::array<int, num_chip_selects> chip_select;
+
+    /**
+     * We will need this for both models of the IC
+     * This determines where we get our signals from on the Arduino
+     * It can only be 9 or 10
+     * NOTE: needs to be initialized
+     */
+    std::array<int, num_chips> chip_select_per_chip;
 
     /**
      * Stores number of ICs on the chip select line: 6
