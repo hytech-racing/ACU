@@ -87,175 +87,6 @@ template <size_t num_chips, size_t num_chip_selects>
 typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
 BMSDriverGroup<num_chips, num_chip_selects>::read_data(const std::array<std::array<bool, 12>, num_chips> &cell_balance_statuses)
 {
-
-    _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
-    _write_configuration(dcto_read);
-    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? ms
-    uint8_t data_in_cell_voltages_0_to_3[num_chips * 8];
-    uint8_t data_in_cell_voltages_4_to_6[num_chips * 8];
-    uint8_t data_in_cell_voltages_7_to_9[num_chips * 8];
-    uint8_t data_in_cell_voltages_10_to_12[num_chips * 8];
-#ifdef USING_LTC6811_1
-    uint8_t cmd_and_pec[4];
-#else
-    uint8_t cmd_and_pec[4 * num_chips];
-#endif
-
-    // Every time we call a READ command, we will take in 48 bytes->(6 buffer + 2 pec)* #ICs(6) = 48
-    _start_wakeup_protocol();
-    _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, cmd_and_pec);                          // 24 bytes
-    read_registers_command(this->chip_select, cmd_and_pec, num_chips, data_in_cell_voltages_0_to_3); // 48 bytes
-    _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, cmd_and_pec);
-    read_registers_command(this->chip_select, cmd_and_pec, num_chips, data_in_cell_voltages_4_to_6); // 48 bytes
-    _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, cmd_and_pec);
-    read_registers_command(this->chip_select, cmd_and_pec, num_chips, data_in_cell_voltages_7_to_9); // 48 bytes
-    _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, cmd_and_pec);
-    read_registers_command(this->chip_select, cmd_and_pec, num_chips, data_in_cell_voltages_10_to_12); // 48 bytes
-
-    for (int i = 0; i < num_chips; i++)
-    {
-        std::copy(data_in_cell_voltages_0_to_3 + (i * 8), data_in_cell_voltages_0_to_3 + (i * 8) + 6, IC_buffer[i].cell_voltage_A);
-        std::copy(data_in_cell_voltages_4_to_6 + (i * 8), data_in_cell_voltages_4_to_6 + (i * 8) + 6, IC_buffer[i].cell_voltage_B);
-        std::copy(data_in_cell_voltages_7_to_9 + (i * 8), data_in_cell_voltages_7_to_9 + (i * 8) + 6, IC_buffer[i].cell_voltage_C);
-        std::copy(data_in_cell_voltages_10_to_12 + (i * 8), data_in_cell_voltages_10_to_12 + (i * 8) + 6, IC_buffer[i].cell_voltage_D);
-        // Should check for PEC error, this is just for A
-        uint8_t data_A[6];
-        std::copy(data_in_cell_voltages_0_to_3 + (i * 8), data_in_cell_voltages_0_to_3 + (i * 8) + 6, data_A);
-        uint8_t pec_A[2];
-        _calculate_specific_PEC(data_A, 6, pec_A);
-        if (pec_A[0] != data_in_cell_voltages_0_to_3[i * 8 + 6] || pec_A[0] != data_in_cell_voltages_0_to_3[i * 8 + 7])
-        {
-            // Serial.print("There is a pec error!");
-        }
-        // Now we're going to convert the buffers into usable data
-        _reset_voltage_data();
-        int cell_count = (i % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
-        for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
-        {
-            uint16_t *cell_voltage_buffer;
-            switch (cell_Index / 3) // There are 4 groups of CELL VOLTAGES, each with 3 cells
-            {
-            case 0:
-                cell_voltage_buffer = IC_buffer[i].cell_voltage_A;
-                break;
-            case 1:
-                cell_voltage_buffer = IC_buffer[i].cell_voltage_B;
-                break;
-            case 2:
-                cell_voltage_buffer = IC_buffer[i].cell_voltage_C;
-                break;
-            case 3:
-                cell_voltage_buffer = IC_buffer[i].cell_voltage_D;
-                break; // We will never get here for odd indexed ICs
-            }
-
-            data_to_return.cell_voltage[cell_Index] = cell_voltage_buffer[cell_Index % 3];
-            total_voltage += IC_data[i].cell_voltage[cell_Index];
-            if (IC_data[i].cell_voltage[cell_Index] < min_voltage)
-            {
-                min_voltage = IC_data[i].cell_voltage[cell_Index];
-                min_voltage_location.icIndex = i;
-                min_voltage_location.cellIndex = cell_Index;
-            }
-            if (IC_data[i].cell_voltage[cell_Index] > max_voltage)
-            {
-                max_voltage = IC_data[i].cell_voltage[cell_Index];
-                max_voltage_location.icIndex = i;
-                max_voltage_location.cellIndex = cell_Index;
-            }
-        }
-    }
-
-    // Reading Thermistor and Humidity Data
-
-    _start_wakeup_protocol();
-    _write_configuration(dcto_read);
-    _start_cell_voltage_ADC_conversion();
-    std::array<uint8_t, 4> cmd_and_pec;
-    std::array<uint8_t, num_chips * 8> data_in_A;
-    std::array<uint8_t, num_chips * 8> data_in_B;
-    // Every time we call a READ command, we will take in 48 bytes->(6 buffer + 2 pec)* #ICs(6) = 48
-    _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, cmd_and_pec, 0);    // 24 bytes
-    read_registers_command(this->chip_select, cmd_and_pec, num_chips, data_in_A); // 48 bytes
-    _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, cmd_and_pec, 0);
-    read_registers_command(this->chip_select, cmd_and_pec, num_chips, data_in_B); // 48 bytes
-    for (int i = 0; i < num_chips; i++)
-    {
-        std::copy(data_in_A + (i * 8), data_in_A + (i * 8) + 6, IC_buffer[i].gpio_voltage_A);
-        std::copy(data_in_B + (i * 8), data_in_B + (i * 8) + 6, IC_buffer[i].gpio_voltage_B);
-        // Should check for PEC error
-        uint8_t *data_A;
-        std::copy(data_in_A + (i * 8), data_in_A + (i * 8) + 6, data_A);
-        uint8_t pec_A[2];
-        _calculate_specific_PEC(data_A, 6, pec_A);
-        if (pec_A[0] != data_in_A[i * 8 + 6] || pec_A[0] != data_in_A[i * 8 + 7])
-        {
-            Serial.print("There is a pec error!");
-        }
-
-        // At this point, all of the data has been read and put into the IC_buffer container
-        // Now we have to convert it into tangible data
-        _reset_GPIO_data();
-        for (int gpio_Index = 0; gpio_Index < 6; gpio_Index++)
-        {
-            uint16_t *gpio_voltage_buf;
-            switch (gpio_Index / 3) // There are 4 groups of CELL VOLTAGES, each with 3 cells
-            {
-            case 0:
-                gpio_voltage_buf = IC_buffer[i].gpio_voltage_A;
-                break;
-            case 1:
-                gpio_voltage_buf = IC_buffer[i].gpio_voltage_B;
-                break;
-            }
-            IC_data[i].gpio_voltage[gpio_Index] = gpio_voltage_buf[gpio_Index % 3];
-            if ((i % 2) && gpio_Index == 4)
-            {
-                IC_data[i].gpio_temperatures[gpio_Index] = -66.875 + 218.75 * (IC_data[i].gpio_voltage[gpio_Index] / 50000.0); // caculation for SHT31 temperature in C
-                if (IC_data[i].gpio_voltage[gpio_Index] > max_board_temp_voltage)
-                {
-                    max_board_temp_voltage = IC_data[i].gpio_voltage[gpio_Index];
-                    max_board_temp_location.icIndex = i;
-                    max_board_temp_location.cellIndex = gpio_Index;
-                }
-                if (IC_data[i].gpio_voltage[gpio_Index] < min_board_temp_voltage)
-                {
-                    min_board_temp_voltage = IC_data[i].gpio_voltage[gpio_Index];
-                    min_board_temp_location.icIndex = i;
-                    min_board_temp_location.cellIndex = gpio_Index;
-                }
-            }
-            else if (gpio_Index == 4)
-            {
-                IC_data[i].gpio_temperatures[gpio_Index] = -12.5 + 125 * (IC_data[i].gpio_voltage[gpio_Index]) / 50000.0; // humidity calculation
-                if (IC_data[i].gpio_voltage[gpio_Index] > max_humidity)
-                {
-                    max_humidity = IC_data[i].gpio_voltage[gpio_Index];
-                    max_humidity_location.icIndex = i;
-                    max_humidity_location.cellIndex = gpio_Index;
-                }
-            }
-            else if (gpio_Index < 4)
-            {
-                float thermistor_resistance = (2740 / (IC_data[i].gpio_voltage[gpio_Index] / 50000.0)) - 2740;
-                IC_data[i].gpio_temperatures[gpio_Index] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 273.15; // calculation for thermistor temperature in C
-                total_thermistor_temps += IC_data[i].gpio_temperatures[gpio_Index];
-                if (IC_data[i].gpio_voltage[gpio_Index] > max_thermistor_voltage)
-                {
-                    max_thermistor_voltage = IC_data[i].gpio_voltage[gpio_Index];
-                    max_thermistor_location.icIndex = i;
-                    max_thermistor_location.cellIndex = gpio_Index;
-                }
-                if (IC_data[i].gpio_voltage[gpio_Index] < min_thermistor_voltage)
-                {
-                    min_thermistor_voltage = IC_data[i].gpio_voltage[gpio_Index];
-                    min_thermistor_location.icIndex = i;
-                    min_thermistor_location.cellIndex = gpio_Index;
-                }
-            }
-        }
-    }
-
     _reset_voltage_data();
     _reset_GPIO_data();
 #ifdef USING_LTC6811_1
@@ -271,8 +102,8 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast(const 
     BMSData data_in;
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
     _write_configuration(dcto_read, cell_balance_statuses);
-    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? ms
-    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_0_to_3;
+    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
+    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_1_to_3;
     std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_4_to_6;
     std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_7_to_9;
     std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_10_to_12;
@@ -283,16 +114,131 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast(const 
 template <size_t num_chips, size_t num_chip_selects>
 typename BMSDriverGroup<num_chips, num_chip_selects>::BMSData
 BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address(const std::array<bool, 12> &cell_balance_statuses) {
-    BMSData data_in;
+    BMSData bms_data;
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
     _write_configuration(dcto_read, cell_balance_statuses);
-    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? ms
-    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_0_to_3;
-    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_4_to_6;
-    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_7_to_9;
-    std::array<uint8_t, 8 * num_chips> data_in_cell_voltages_10_to_12;
-    
-    
+    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
+    // _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
+    // _write_configuration(dcto_read, cell_balance_statuses);
+    _start_GPIO_ADC_conversion();
+    std::array<uint8_t, 8> data_in_cell_voltages_1_to_3;
+    std::array<uint8_t, 8> data_in_cell_voltages_4_to_6;
+    std::array<uint8_t, 8> data_in_cell_voltages_7_to_9;
+    std::array<uint8_t, 8> data_in_cell_voltages_10_to_12;
+    std::array<uint8_t, 8> data_in_auxillaries_1_to_3;
+    std::array<uint8_t, 8> data_in_auxillaries_4_to_6;
+    std::array<uint8_t, 4> cmd_pec;
+    std::array<uint8_t, 8> buffer_in;
+    int count = 0;
+    for (int chip = 0; chip < num_chips; chip++) {
+        _start_wakeup_protocol();
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, chip);
+        data_in_cell_voltages_1_to_3 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, chip);
+        data_in_cell_voltages_4_to_6 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, chip);
+        data_in_cell_voltages_7_to_9 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, chip);
+        data_in_cell_voltages_10_to_12 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, chip);
+        data_in_auxillaries_1_to_3 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
+        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, chip);
+        data_in_auxillaries_4_to_6 = read_registers_command<8>(chip_select_per_chip[chip], cmd_pec);
+
+        // DEBUG: Check to see that the PEC is what we expect it to be
+
+        int cell_count = (chip % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
+        for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
+        {
+            std::array<uint8_t, 2> data_in_cell_voltage;
+            int sub_index = cell_Index / 3;
+            switch (sub_index) // There are 4 groups of CELL VOLTAGES, each with 3 cells
+            {
+            case 0:
+                std::copy(data_in_cell_voltages_1_to_3.data() + ((sub_index % 3) * 2), data_in_cell_voltages_1_to_3.data() + 2 + ((sub_index % 3) * 2), data_in_cell_voltage.data());
+                break;
+            case 1:
+                std::copy(data_in_cell_voltages_4_to_6.data() + ((sub_index % 3) * 2), data_in_cell_voltages_4_to_6.data() + 2 + ((sub_index % 3) * 2), data_in_cell_voltage.data());
+                break;
+            case 2:
+                std::copy(data_in_cell_voltages_7_to_9.data() + ((sub_index % 3) * 2), data_in_cell_voltages_7_to_9.data() + 2 + ((sub_index % 3) * 2), data_in_cell_voltage.data());
+                break;
+            case 3:
+                std::copy(data_in_cell_voltages_10_to_12.data() + ((sub_index % 3) * 2), data_in_cell_voltages_10_to_12.data() + 2 + ((sub_index % 3) * 2), data_in_cell_voltage.data());
+                break; // We will never get here for odd indexed ICs
+            }
+
+            bms_data.voltages[count] = (uint16_t) data_in_cell_voltage.data(); // This is wrong
+            total_voltage += bms_data.voltages[count];
+            if (bms_data.voltages[count] < min_voltage)
+            {
+                min_voltage = bms_data.voltages[count];
+                bms_data.min_voltage_cell_id = count;
+            }
+            if (bms_data.voltages[count] > max_voltage)
+            {
+                max_voltage = bms_data.voltages[count];
+                bms_data.max_voltage_cell_id = count;
+            }
+            count++;
+        }
+
+        // HUMIDITY AND TEMPERATURES
+
+        count = 0; // reset count var
+        for (int gpio_Index = 0; gpio_Index < 6; gpio_Index++)
+        {
+            std::array<uint8_t, 2> data_in_gpio_voltage;
+            int sub_index = gpio_Index / 3;
+            switch (sub_index) // There are 2 groups of AUXILLARIES, each with 3 2-byte gpio data
+            {
+            case 0:
+                std::copy(data_in_auxillaries_1_to_3.data() + ((sub_index % 3) * 2), data_in_auxillaries_1_to_3.data() + 2 + ((sub_index % 3) * 2), data_in_gpio_voltage.data());
+                break;
+            case 1:
+                std::copy(data_in_auxillaries_4_to_6.data() + ((sub_index % 3) * 2), data_in_auxillaries_4_to_6.data() + 2 + ((sub_index % 3) * 2), data_in_gpio_voltage.data());
+                break;
+            }
+            
+            uint16_t gpio_in = (uint16_t) data_in_cell_voltage.data();
+
+            if ((chip % 2) && gpio_Index == 4)
+            {   
+                bms_data.board_temperatures[(chip + 2) / 2] = -66.875 + 218.75 * (gpio_in / 50000.0); // caculation for SHT31 temperature in C
+                if (gpio_in > max_board_temp_voltage)
+                {
+                    max_board_temp_voltage = gpio_in;
+                    bms_data.max_board_temperature_segment_id = (chip + 2) / 2; // Because each segment only has 1 humidity and 1 board temp sensor
+                }
+            }
+            else if (gpio_Index == 4)
+            {
+                bms_data.humidity[(chip + 2) / 2] = -12.5 + 125 * (gpio_in) / 50000.0; // humidity calculation
+                if (gpio_in > max_humidity)
+                {
+                    max_humidity = gpio_in;
+                    bms_data.max_board_temperature_segment_id = (chip + 2) / 2;
+                }
+            }
+            else if (gpio_Index < 4)
+            {
+                float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
+                bms_data.temperatures[count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 273.15; // calculation for thermistor temperature in C
+                total_thermistor_temps += gpio_in;
+                if (gpio_in > max_thermistor_voltage)
+                {
+                    max_thermistor_voltage = gpio_in;
+                    bms_data.max_cell_temperature_cell_id = count;
+                }
+            }
+            count++;
+        }
+    }
+
+    bms_data.min_voltage = this->min_voltage;
+    bms_data.max_voltage = this->max_voltage;
+    bms_data.total_voltage = this->total_voltage;
+    bms_data.average_cell_temperature = this->total_thermistor_temps / count;
     return data_in;
 }
 

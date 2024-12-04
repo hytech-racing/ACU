@@ -41,15 +41,16 @@ public:
     struct BMSData
     {
         std::array<std::array<std::optional<volt>, 12>, num_chips> voltages;
-        std::array<std::array<std::optional<celcius>, 4>, num_chips> temperatures;
-        std::array<float, num_chips> humidity;
+        std::array<std::array<celcius, 4 * num_chips> cell_temperatures;
+        std::array<float, (num_chips + 1) / 2> humidity;
+        std::array<float, (num_chips + 1) / 2> board_temperatures;
         float min_voltage;
         float max_voltage;
         size_t min_voltage_cell_id; // 0 - 125
         size_t max_voltage_cell_id; // 0 - 125
-        size_t max_board_temperature_segment_id; // 0 - 11
-        size_t max_humidity_segment_id; // 0 - 11
-        size_t max_cell_temperature_cell_id; // 0 - 125
+        size_t max_board_temperature_segment_id; // 0 - 5
+        size_t max_humidity_segment_id; // 0 - 5
+        size_t max_cell_temperature_cell_id; // 0 - 47
         float total_voltage;
         float average_cell_temperature;
     };
@@ -236,14 +237,14 @@ private:
      */
     uint16_t max_humidity = 0;
     uint16_t max_thermistor_voltage = 0;
-    uint16_t min_thermistor_voltage = 65535;
+    // uint16_t min_thermistor_voltage = 65535;
     uint16_t max_board_temp_voltage = 0;
     uint16_t min_board_temp_voltage = 65535;
 
     /**
      * Stores the total temperature of the 3 boards
      */
-    float total_board_temps;
+    //float total_board_temps;
 
     /**
      * Stores the total temperature of the thermistors on 3 boards
