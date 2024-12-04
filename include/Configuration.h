@@ -1,12 +1,6 @@
 #ifndef __CONFIGURATION_H__
 #define __CONFIGURATION_H__
 
-/* Library Includes */
-#include <string.h>
-#include <stdint.h>
-#include "FlexCAN_T4.h"
-#include "hytech.h"
-
 // Change to USING_LTC6811-#, where # is 1 or 2 depending on what's being used on the car
 // #define USING_LTC6811_2
 #define USING_LTC6811_2
@@ -91,56 +85,6 @@ enum class ADC_MODE_e : uint8_t {
 	FAST = 0x1,
 	NORMAL = 0x2,
 	FILTERED = 0x3
-};
-
-
-/* STRUCT Definitions */
-struct Fault_State_s {
-    bool is_flagged;
-    int fault_counter;
-};
-
-struct IC_Cell_Location_s {
-    int icIndex;
-    int cellIndex;
-};
-
-struct IC_Voltage_Temp_Data_s {
-    // There are 12 cell voltages per IC we CAN record. For some, we might only use 9
-    uint16_t cell_voltage[12];
-    // For each IC, we want to record if we decide to balance / discharge it
-    bool balance_status[12];
-    // There are 6 gpio voltages per IC we want to record
-    uint16_t gpio_voltage[6];
-    // Thus, there are 6 floating point temperatures   
-    float gpio_temperatures[6];
-};
-
-struct IC_Buffers_s {
-    uint16_t cell_voltage_A[3];
-    uint16_t cell_voltage_B[3];
-    uint16_t cell_voltage_C[3];
-    uint16_t cell_voltage_D[3];
-    uint16_t gpio_voltage_A[3];
-    uint16_t gpio_voltage_B[3];
-    uint8_t config_byte[6];
-};
-
-struct IC_Config_s {
-    int chip_select;
-#ifdef USING_LTC6811_2
-    int address; 
-#endif
-};
-
-struct Elapsed_Timers_s {
-    elapsedMillis can_bms_status_timer = 0;
-    elapsedMillis can_bms_detailed_voltages_timer = 2;
-    elapsedMillis can_bms_detailed_temps_timer = 4;
-    elapsedMillis can_bms_voltages_timer = 6;
-    elapsedMillis can_bms_temps_timer = 8;
-    elapsedMillis can_bms_onboard_temps_timer = 10;
-    elapsedMicros CC_integrator_timer = 0; // Timer used to provide estimation of pack charge from shunt current
 };
 
 #endif

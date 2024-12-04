@@ -357,11 +357,11 @@ std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects>::_generate_fo
 {
     std::array<uint8_t, 2> cmd;
 #ifdef USING_LTC6811_1
-    cmd[0] = (uint8_t)command >> 8;
-    cmd[1] = (uint8_t)command;
+    cmd[0] = (uint8_t) command >> 8;
+    cmd[1] = (uint8_t) command;
 #else
-    cmd[0] = (uint8_t)get_cmd_address(address) | (uint8_t)command >> 8;
-    cmd[1] = (uint8_t)command;
+    cmd[0] = (uint8_t) get_cmd_address(address) | (uint8_t)command >> 8;
+    cmd[1] = (uint8_t) command;
 #endif
     return cmd;
 }
@@ -379,6 +379,5 @@ std::array<uint8_t, 4 * num_chips> BMSDriverGroup<num_chips, num_chip_selects>::
         std::copy(cmd.data(), cmd.data() + 2, cmd_pec.data() + (i * 4)); // Copy first two bytes (cmd)
         std::copy(pec, pec + 2, cmd_pec.data() + 2 + (i * 4));           // Copy next two bytes (pec)
     }
-
     return cmd_pec;
 }
