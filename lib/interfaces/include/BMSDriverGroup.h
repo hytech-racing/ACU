@@ -1,6 +1,6 @@
 #ifndef __BMSDriverGroup_H__
 #define __BMSDriverGroup_H__
-
+#include "LTCSPIInterface.h"
 /**
  * PREAMBLE:
  * This file is designed to hold all of the functions that will allow communication with the Teensy.

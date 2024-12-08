@@ -1,3 +1,6 @@
+#ifndef __MESSAGE_INTERFACE_H__
+#define __MESSAGE_INTERFACE_H__
+
 #include "FlexCAN_T4.h"
 #include <Arduino.h>
 #include "hytech.h"
@@ -48,3 +51,5 @@ void write_detailed_temperatures_data();
  * Writes the shunt / current measurements onto the TELEM_CAN line
 */
 void write_shunt_measurements();
+
+#endif

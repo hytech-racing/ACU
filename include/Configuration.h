@@ -3,7 +3,7 @@
 
 // Change to USING_LTC6811-#, where # is 1 or 2 depending on what's being used on the car
 // #define USING_LTC6811_2
-#define USING_LTC6811_2
+#define USING_LTC6811_1
 
 /* CONSTANT Definitions */
 /**

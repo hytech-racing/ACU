@@ -31,12 +31,11 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
     return read_in;
 }
 
-template <size_t data_size>
-void adc_conversion_command(int cs, const std::array<uint8_t, data_size> &cmd_and_pec) {
+void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
     _write_and_delay_LOW(cs, 2);
-    _transfer_SPI_data<data_size>(cmd_and_pec);
+    _transfer_SPI_data<4>(cmd_and_pec);
     _write_and_delay_HIGH(cs, 2);
     // End Message
     SPI.endTransaction();
@@ -44,7 +43,7 @@ void adc_conversion_command(int cs, const std::array<uint8_t, data_size> &cmd_an
 
 template <size_t data_size>
 void _transfer_SPI_data(const std::array<uint8_t, data_size> &data) {
-    for (int i = 0; i < data_size; i++) {
+    for (size_t i = 0; i < data_size; i++) {
         SPI.transfer(data[i]);
     }
 }
@@ -52,7 +51,7 @@ void _transfer_SPI_data(const std::array<uint8_t, data_size> &data) {
 template <size_t data_size>
 std::array<uint8_t, data_size> _receive_SPI_data() {
     std::array<uint8_t, data_size> data_in;
-    for (int i = 0; i < data_size; i++) {
+    for (size_t i = 0; i < data_size; i++) {
         data_in[i] = SPI.transfer(0); // transfer dummy value over SPI in order to read bytes into data
     }
     return data_in;

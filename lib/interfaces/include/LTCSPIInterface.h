@@ -1,3 +1,5 @@
+#ifndef LTCSPIINTERFFACE
+#define LTCSPIINTERFFACE
 /**
  * PREAMBLE:
  * This file will only contain 3 functions
@@ -28,15 +30,14 @@ void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const s
  * @return the data we read
 */
 template <size_t buffer_size>
-std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec);
+inline std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec);
 
 /**
  * Sends a SPI command to initiate some functionality of the device
  * @param cs chip select
  * @param cmd_and_pec 4 bytes if using _1 model, 24 bytes for _2 model 
 */
-template <size_t data_size>
-void adc_conversion_command(int cs, const std::array<uint8_t, data_size> &cmd_and_pec);
+void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec);
 
 /**
  * Transfers bytes (uint8_t) of arbritrary length on to the SPI line
@@ -67,3 +68,6 @@ void _write_and_delay_LOW(int cs, int delay_microSeconds);
  * @param delay time in microseconds
 */
 void _write_and_delay_HIGH(int cs, int delay_microSeconds);
+
+#include <LTCSPIInterface.tpp>
+#endif
