@@ -31,7 +31,7 @@ void loop() {
         Serial.println("Entered loop!");
         Serial.println();
         timer = 0;
-        auto data = BMSGroup.read_data(cell_balance_statuses);
+        auto data = BMSGroup.read_data();
         Serial.print("Total Voltage: ");
         Serial.println(data.total_voltage);
         // Serial.print("Minimum Voltage: ");

@@ -61,7 +61,7 @@ public:
     };
 
     BMSDriverGroup(LTC6811_Type_e t) : 
-        ltc_type(t) {};
+        _chip_type(t) {};
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -81,10 +81,11 @@ public:
      * NOTE: Conversions are different depending on which we are reading.
      * @pre in order to actually "read" anything, we need to call wakeup() and send data over SPI
      * @post store all temperature data into the board_temperatures container
+     * @param
      * AND record the maximum value and locations
      */
     // void read_thermistor_and_humidity();
-    BMSData read_data(const std::array<uint16_t, num_chips> &cell_balance_statuses);
+    BMSData read_data();
 
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
@@ -207,7 +208,14 @@ private:
      * Holds type of LTC6811 being used
      * Replaces the 
     */
-    LTC6811_Type_e ltc_type;
+    LTC6811_Type_e _chip_type;
+
+    /**
+     * Stores the balance statuses for all the chips
+     * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
+     * out of the 16 bits
+    */
+    std::array<uint16_t, num_chips> cell_discharge_en;
 };
 
 #include <BMSDriverGroup.tpp>
