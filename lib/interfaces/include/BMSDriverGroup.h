@@ -32,6 +32,11 @@
 #include <cstdint>
 #include <optional>
 
+enum class LTC6811_Type_e {
+        LTC6811_1 = 0,
+        LTC6811_2
+};
+
 template <size_t num_chips, size_t num_chip_selects>
 class BMSDriverGroup
 {
@@ -55,7 +60,8 @@ public:
         float average_cell_temperature;
     };
 
-    BMSDriverGroup() {};
+    BMSDriverGroup(LTC6811_Type_e t) : 
+        ltc_type(t) {};
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -111,16 +117,6 @@ private:
     BMSData _read_data_through_broadcast(const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
     BMSData _read_data_through_address(const std::array<uint16_t, num_chips> &cell_balance_statuses);
-
-    /**
-     * @post resets the max, min data holders to outside bound
-     */
-    void _reset_voltage_data();
-
-    /**
-     * @post resets the max, min data holders to outside bound
-     */
-    void _reset_GPIO_data();
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
@@ -179,7 +175,7 @@ private:
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
      */
-    uint16_t pec15Table[256];
+    uint16_t _pec15Table[256];
 
     /**
      * We will need this for both models of the IC
@@ -187,7 +183,7 @@ private:
      * It can only be 9 or 10
      * NOTE: needs to be initialized
      */
-    std::array<int, num_chip_selects> chip_select;
+    std::array<int, num_chip_selects> _chip_select;
 
     /**
      * We will need this for both models of the IC
@@ -195,13 +191,7 @@ private:
      * It can only be 9 or 10
      * NOTE: needs to be initialized
      */
-    std::array<int, num_chips> chip_select_per_chip;
-
-    /**
-     * Stores number of ICs on the chip select line: 6
-     * NOTE: needs to be initialized
-     */
-    int ic_count;
+    std::array<int, num_chips> _chip_select_per_chip;
 
     /**
      * We will only end up using the address if this is a LTC6811-2
@@ -211,47 +201,13 @@ private:
      * Those segments correspond to 2 ICs each, so the instance with chip_select 9
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
      */
-    std::array<int, num_chips> address;
+    std::array<int, num_chips> _address;
 
     /**
-     * Stores whether an the AMS system is balancing, true or false.
-     * Depends on if we are charging / discharging or in a 0 fault state
-     */
-    bool currently_balancing;
-
-    /**
-     * Stores the total voltage of all 63 cells
-     */
-    uint32_t total_voltage;
-
-    /**
-     * Stores the max voltage of all 63 cells
-     */
-    uint16_t max_voltage;
-
-    /**
-     * Stores the min voltage of all 63 cells
-     */
-    uint16_t min_voltage;
-
-    /**
-     * Stores max, min data for gpio data
-     */
-    uint16_t max_humidity = 0;
-    uint16_t max_thermistor_voltage = 0;
-    // uint16_t min_thermistor_voltage = 65535;
-    uint16_t max_board_temp_voltage = 0;
-    uint16_t min_board_temp_voltage = 65535;
-
-    /**
-     * Stores the total temperature of the 3 boards
-     */
-    //float total_board_temps;
-
-    /**
-     * Stores the total temperature of the thermistors on 3 boards
-     */
-    float total_thermistor_temps;
+     * Holds type of LTC6811 being used
+     * Replaces the 
+    */
+    LTC6811_Type_e ltc_type;
 };
 
 #include <BMSDriverGroup.tpp>

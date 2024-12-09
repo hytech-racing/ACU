@@ -9,7 +9,7 @@
 #include <string>
 
 elapsedMillis timer = 0;
-BMSDriverGroup<1,1> BMSGroup;
+BMSDriverGroup<1,1> BMSGroup = BMSDriverGroup<1,1>(LTC6811_Type_e::LTC6811_1);
 
 void print_voltages() {
     
@@ -18,7 +18,6 @@ void print_voltages() {
 void setup() {
     Serial.begin(115200);
     SPI.begin();
-    BMSGroup = BMSDriverGroup<1,1>();
     BMSGroup.init();
 }
 
@@ -35,7 +34,7 @@ void loop() {
         auto data = BMSGroup.read_data(cell_balance_statuses);
         Serial.print("Total Voltage: ");
         Serial.println(data.total_voltage);
-        //Serial.print("Minimum Voltage: ");
+        // Serial.print("Minimum Voltage: ");
         // Serial.println(data.min_voltage);
         // Serial.print("Maxmimum Voltage: ");
         // Serial.println(data.max_voltage);
