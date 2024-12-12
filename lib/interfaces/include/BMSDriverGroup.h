@@ -36,6 +36,17 @@ struct BMSData
         float average_cell_temperature;
 };
 
+struct ReferenceMaxMin
+{
+    uint32_t total_voltage = 0;
+    uint16_t max_voltage = 0;
+    uint16_t min_voltage = 65535;
+    uint16_t max_humidity = 0;
+    uint16_t max_thermistor_voltage = 0;
+    uint16_t max_board_temp_voltage = 0;
+    float total_thermistor_temps = 0;
+};
+
 template <size_t num_chips, size_t num_chip_selects>
 class BMSDriverGroup
 {
@@ -99,6 +110,10 @@ private:
     BMSDriverData _read_data_through_broadcast();
 
     BMSDriverData _read_data_through_address();
+
+    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t gpio_count, size_t chip_num);
+
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t cell_count, size_t cell_Index);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
