@@ -30,7 +30,7 @@ void loop() {
     //Serial.println(timer.can_bms_voltages_timer);
     std::array<uint16_t, 1> cell_balance_statuses;
     cell_balance_statuses[0] = 0x0;
-    if (timer > 500) {  // Can't be more than 1000 or t sleep will disable itself -> will notice initial update, but that's it.
+    if (timer > 1000) {  // Can't be more than 1500 or t sleep will disable itself -> will notice initial update, but that's it.
         Serial.println("Entered loop!");
         //Serial.println();
         timer = 0;

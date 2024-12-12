@@ -89,7 +89,8 @@ private:
     /**
      * WAKEUP:
      * The Wakeup protocol will move the device from the SLEEP to STANDBY / REFUP state
-     * Reference pages 51-52 on the data sheet for specific information.
+     * Using the "more robust wakeup" method of sending pair of long isoSPI pulses
+     * Reference pages 51-52 on the data sheet for specific information. 
      * @pre we don't care; for us, it's good to perform a wakeup to guarantee proper data propogation
      * @post essentially sets connected pin to LOW for period of time, then to HIGH for period of time
      */

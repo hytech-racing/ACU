@@ -81,7 +81,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_start_wakeup_protocol()
 {
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        _write_and_delay_LOW(_chip_select[cs], 1);
+        _write_and_delay_LOW(_chip_select[cs], 400); 
         SPI.transfer(0);
         _write_and_delay_HIGH(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
     }
@@ -201,7 +201,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast()
 
             // Humidity and Temperature Data
 
-            for (int gpio_Index = 0; gpio_Index < 6; gpio_Index++) // There are only five Auxillary ports
+            for (int gpio_Index = 0; gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
             {
                 std::array<uint8_t, 2> data_in_gpio_voltage;
                 int sub_index = chip * 8 + (gpio_Index % 3) * 2;
@@ -326,8 +326,10 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address()
             }
 
             uint16_t voltage_in = data_in_cell_voltage[0] << 8 | data_in_cell_voltage[1];
+            
             Serial.print(voltage_in);
             Serial.print("\t");
+            
             chip_voltages_in[cell_Index] = voltage_in;
             total_voltage += voltage_in;
             if (voltage_in < min_voltage)
@@ -346,7 +348,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address()
 
         // HUMIDITY AND TEMPERATURES
 
-        for (int gpio_Index = 0; gpio_Index < 6; gpio_Index++) // There are only five Auxillary ports
+        for (int gpio_Index = 0; gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
         {
             std::array<uint8_t, 2> data_in_gpio_voltage;
             int sub_index = (gpio_Index % 3) * 2;
@@ -433,7 +435,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_broadcas
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         size_t j = 0;
-        for (size_t i = 0; i < num_chips; i++)
+        for (size_t i = num_chips - 1; i >= 0; i--) // This needs to be flipped because when writing a command, primary device holds the last bytes
         { // Find chips with the same CS
             if (_chip_select_per_chip[i] == _chip_select[cs]) // This could be an optimization:  && j < (num_chips + 1) / 2)
             {   
@@ -442,6 +444,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_broadcas
                 temp_pec = _calculate_specific_PEC(buffer_format.data(), 6);
                 std::copy(buffer_format.data(), buffer_format.data() + 6, full_buffer.data() + (j * 8));
                 std::copy(temp_pec.data(), temp_pec.data() + 2, full_buffer.data() + 6 + (j * 8));
+                j++;
             }
         }
         write_registers_command<num_chips / num_chip_selects * 8>(_chip_select[cs], cmd_and_pec, full_buffer);
