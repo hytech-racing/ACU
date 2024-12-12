@@ -1,12 +1,6 @@
 #ifndef LTCSPIINTERFFACE
 #define LTCSPIINTERFFACE
-/**
- * PREAMBLE:
- * This file will only contain 3 functions
- * 1. Sending SPI Commands for WRITING Registers
- * 2. Sending SPI Commands for READING Registers
- * 3. Sending SPI Commands to initiate device functionality, ADC conversions in our case 
-*/
+
 /* Interface Includes */
 #include <SPI.h>
 #include "Configuration.h"

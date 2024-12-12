@@ -1,19 +1,10 @@
 #ifndef __MESSAGE_INTERFACE_H__
 #define __MESSAGE_INTERFACE_H__
 
+/* Library En cludes*/
 #include "FlexCAN_T4.h"
 #include <Arduino.h>
 #include "hytech.h"
-
-#ifndef CAN_Enabled
-// Un-comment line below if using CAN
-#define CAN_Enabled
-#endif
-
-#ifndef ETHERNET_Enabled
-// Un-comment line below if using Ethernet
-//#define ETHERNET_Enabled
-#endif
 
 /**
  * Forwards the Charger Control Unit (CCU) data over onto the TELEM_CAN line
