@@ -100,7 +100,7 @@ BMSDriverGroup<num_chips, num_chip_selects>::read_data()
     write_configuration(dcto_read, cell_discharge_en);
     _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
     _start_GPIO_ADC_conversion();
-
+    
     if (_chip_type == LTC6811_Type_e::LTC6811_1)
     {
         return _read_data_through_broadcast();
@@ -117,7 +117,8 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast()
 {
     ReferenceMaxMin max_min_reference;
     BMSDriverData bms_data;
-    constexpr size_t data_size = 8 * num_chips / num_chip_selects;
+    constexpr size_t data_size = 6 * (num_chips / num_chip_selects);
+    // constexpr size_t voltage_data_size = 4 * data_size;
     std::array<uint8_t, data_size> data_in_cell_voltages_1_to_3;
     std::array<uint8_t, data_size> data_in_cell_voltages_4_to_6;
     std::array<uint8_t, data_size> data_in_cell_voltages_7_to_9;
@@ -126,8 +127,8 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast()
     std::array<uint8_t, data_size> data_in_auxillaries_4_to_6;
     std::array<uint8_t, 4> cmd_pec;
 
-    int battery_cell_count = 0;
-    int gpio_count = 0;
+    size_t battery_cell_count = 0;
+    size_t gpio_count = 0;
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         _start_wakeup_protocol();
@@ -177,13 +178,12 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast()
                     break; // We will never get here for odd indexed ICs
                 }
 
-                uint16_t voltage_in = data_in_cell_voltage[0] << 8 | data_in_cell_voltage[1];
-                
-                Serial.print(voltage_in);
+                uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
+                chip_voltages_in[cell_Index] = voltage_in;
+                Serial.print(voltage_in / 10000.0, 4);
                 Serial.print("\t");
-
-                _store_voltage_data(bms_data, max_min_reference, chip_voltages_in, voltage_in, battery_cell_count, cell_Index);
-                battery_cell_count++;
+                _store_voltage_data(bms_data, max_min_reference, chip_voltages_in, voltage_in, battery_cell_count);
+                
             }
             std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages[cs * num_chips / num_chip_selects + chip].data());
 
@@ -204,7 +204,6 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast()
                 }
                 uint16_t gpio_in = data_in_gpio_voltage[0] << 8 | data_in_gpio_voltage[1];
                 _store_temperature_humidity_data(bms_data, max_min_reference, gpio_in, gpio_Index, gpio_count, chip);
-                gpio_count++;
             }
         }
     }
@@ -222,29 +221,30 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address()
 {
     ReferenceMaxMin max_min_reference;
     BMSDriverData bms_data;
-    std::array<uint8_t, 8> data_in_cell_voltages_1_to_3;
-    std::array<uint8_t, 8> data_in_cell_voltages_4_to_6;
-    std::array<uint8_t, 8> data_in_cell_voltages_7_to_9;
-    std::array<uint8_t, 8> data_in_cell_voltages_10_to_12;
+    std::array<uint8_t, 24> data_in_cell_voltages_1_to_12;
     std::array<uint8_t, 8> data_in_auxillaries_1_to_3;
     std::array<uint8_t, 8> data_in_auxillaries_4_to_6;
     std::array<uint8_t, 4> cmd_pec;
-    int battery_cell_count = 0;
-    int gpio_count = 0;
+    size_t battery_cell_count = 0;
+    size_t gpio_count = 0;
     for (size_t chip = 0; chip < num_chips; chip++)
     {
         _start_wakeup_protocol();
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, chip);
-        data_in_cell_voltages_1_to_3 = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        auto data_in_3_cell_voltages = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        std::copy(data_in_3_cell_voltages.begin(), data_in_3_cell_voltages.begin() + 6, data_in_cell_voltages_1_to_12.begin());
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, chip);
-        data_in_cell_voltages_4_to_6 = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        data_in_3_cell_voltages = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        std::copy(data_in_3_cell_voltages.begin(), data_in_3_cell_voltages.begin() + 6, data_in_cell_voltages_1_to_12.begin() + 6);
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, chip);
-        data_in_cell_voltages_7_to_9 = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        data_in_3_cell_voltages = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        std::copy(data_in_3_cell_voltages.begin(), data_in_3_cell_voltages.begin() + 6, data_in_cell_voltages_1_to_12.begin() + 12);
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, chip);
-        data_in_cell_voltages_10_to_12 = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        data_in_3_cell_voltages = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        std::copy(data_in_3_cell_voltages.begin(), data_in_3_cell_voltages.begin() + 6, data_in_cell_voltages_1_to_12.begin() + 18);
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, chip);
         data_in_auxillaries_1_to_3 = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
@@ -259,30 +259,15 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address()
         for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
         {
             std::array<uint8_t, 2> data_in_cell_voltage;
-            int sub_index = (cell_Index % 3) * 2;
-            switch (cell_Index / 3) // There are 4 groups of CELL VOLTAGES, each with 3 cells
-            {
-            case 0:
-                std::copy(data_in_cell_voltages_1_to_3.data() + (sub_index), data_in_cell_voltages_1_to_3.data() + 2 + (sub_index), data_in_cell_voltage.data());
-                break;
-            case 1:
-                std::copy(data_in_cell_voltages_4_to_6.data() + (sub_index), data_in_cell_voltages_4_to_6.data() + 2 + (sub_index), data_in_cell_voltage.data());
-                break;
-            case 2:
-                std::copy(data_in_cell_voltages_7_to_9.data() + (sub_index), data_in_cell_voltages_7_to_9.data() + 2 + (sub_index), data_in_cell_voltage.data());
-                break;
-            case 3:
-                std::copy(data_in_cell_voltages_10_to_12.data() + (sub_index), data_in_cell_voltages_10_to_12.data() + 2 + ((cell_Index % 3) * 2), data_in_cell_voltage.data());
-                break; // We will never get here for odd indexed ICs
-            }
+            auto start = data_in_cell_voltages_1_to_12.begin() + (cell_Index * 2);
+            auto end = start + 2;
+            std::copy(start, end, data_in_cell_voltage.begin());
 
-            uint16_t voltage_in = data_in_cell_voltage[0] << 8 | data_in_cell_voltage[1];
-
-            Serial.print(voltage_in);
-            Serial.print("\t");
+            uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
+            chip_voltages_in[cell_Index] = voltage_in;
+            Serial.print(voltage_in / 10000.0, 4); Serial.print("V\t");
+            _store_voltage_data(bms_data, max_min_reference, chip_voltages_in, voltage_in, battery_cell_count);
             
-            _store_voltage_data(bms_data, max_min_reference, chip_voltages_in, voltage_in, battery_cell_count, cell_Index);
-            battery_cell_count++;
         }
         std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages[chip].data());
 
@@ -304,7 +289,6 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address()
 
             uint16_t gpio_in = data_in_gpio_voltage[0] << 8 | data_in_gpio_voltage[1];
             _store_temperature_humidity_data(bms_data, max_min_reference, gpio_in, gpio_Index, gpio_count, chip);
-            gpio_count++;
         }
     }
 
@@ -316,10 +300,9 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address()
 }
 
 template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t cell_count, size_t cell_Index)
+void BMSDriverGroup<num_chips, num_chip_selects>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t &cell_count)
 {
-    chip_voltages_in[cell_Index] = voltage_in;
-    max_min_reference.max_board_temp_voltage += voltage_in;
+    max_min_reference.total_voltage += voltage_in;
     if (voltage_in < max_min_reference.min_voltage)
     {
         max_min_reference.min_voltage = voltage_in;
@@ -330,10 +313,11 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_store_voltage_data(BMSDriverD
         max_min_reference.max_voltage = voltage_in;
         bms_data.max_voltage_cell_id = cell_count;
     }
+    cell_count++;
 }
 
 template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t gpio_count, size_t chip_num)
+void BMSDriverGroup<num_chips, num_chip_selects>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
 {
     if (gpio_Index < 4)
     {
@@ -345,6 +329,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_store_temperature_humidity_da
             max_min_reference.max_thermistor_voltage = gpio_in;
             bms_data.max_cell_temperature_cell_id = gpio_count;
         }
+        gpio_count++;
     }
     else if ((chip_num % 2) && gpio_Index == 4)
     {
@@ -378,7 +363,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::write_configuration(uint8_t dc
     buffer_format[1] = (under_voltage_threshold & 0x0FF);
     buffer_format[2] = ((over_voltage_threshold & 0x00F) << 4) | ((under_voltage_threshold & 0xF00) >> 8);
     buffer_format[3] = ((over_voltage_threshold & 0xFF0) >> 4);
-
+    
     if (_chip_type == LTC6811_Type_e::LTC6811_1)
     {
         _write_config_through_broadcast(dcto_mode, buffer_format, cell_balance_statuses);
@@ -400,7 +385,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_broadcas
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         size_t j = 0;
-        for (size_t i = num_chips - 1; i >= 0; i--)           // This needs to be flipped because when writing a command, primary device holds the last bytes
+        for (int i = num_chips - 1; i >= 0; i--)           // This needs to be flipped because when writing a command, primary device holds the last bytes
         {                                                     // Find chips with the same CS
             if (_chip_select_per_chip[i] == _chip_select[cs]) // This could be an optimization:  && j < (num_chips + 1) / 2)
             {
