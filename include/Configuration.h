@@ -38,48 +38,4 @@ const uint16_t CRC15_POLY = 0x4599;             // Used for calculating the PEC 
 const int cv_adc_conversion_time_us = 13;
 const int gpio_adc_conversion_time_us = 3.1;
 
-/* ENUM Definitions */
-// Command Codes 
-enum class CMD_CODES_e {
-    // WRITES
-    WRITE_CONFIG = 0x1,
-    WRITE_S_CONTROL = 0x14,
-    WRITE_PWM = 0x20,
-    WRITE_COMM = 0x721,
-    // READS
-    READ_CONFIG = 0x2,
-    READ_CELL_VOLTAGE_GROUP_A = 0x4,
-    READ_CELL_VOLTAGE_GROUP_B = 0x6,
-    READ_CELL_VOLTAGE_GROUP_C = 0x8,
-    READ_CELL_VOLTAGE_GROUP_D = 0xA,
-    READ_GPIO_VOLTAGE_GROUP_A = 0xC,
-    READ_GPIO_VOLTAGE_GROUP_B = 0xE,
-    READ_STATUS_GROUP_A = 0x10,
-    READ_STATUS_GROUP_B = 0x12,  
-    READ_S_CONTROL = 0x16,
-    READ_PWM = 0x22,
-    READ_COMM = 0x722,
-    // STARTS
-    START_S_CONTROL = 0x19,
-    START_CV_ADC_CONVERSION = 0x260,
-    START_GPIO_ADC_CONVERSION = 0x460,
-    START_CV_GPIO_ADC_CONVERSION = 0x46F,
-    START_CV_SC_CONVERSION = 0x467,
-    START_COMM = 0x723,
-    // CLEARS
-    CLEAR_S_CONTROL = 0x18,
-    CLEAR_GPIOS = 0x712,
-    CLEAR_STATUS = 0x713,
-    // POLL ADC STATUS, DIAGNOSE MUX
-    POLL_ADC_STATUS = 0x714,
-    DIAGNOSE_MUX_POLL_STATUS = 0x715
-}; 
-
-enum class ADC_MODE_e : uint8_t {
-	MODE_ZERO = 0x0,
-	FAST = 0x1,
-	NORMAL = 0x2,
-	FILTERED = 0x3
-};
-
 #endif
