@@ -38,4 +38,8 @@ const uint16_t CRC15_POLY = 0x4599;             // Used for calculating the PEC 
 const int cv_adc_conversion_time_us = 13;
 const int gpio_adc_conversion_time_us = 3.1;
 
+/* PIN Definitions */
+const int teensy_to_vehicle_watchdog_pin = 5;
+const int teensy_OK_pin = 6;
+
 #endif

@@ -10,51 +10,43 @@
 #include "MessageInterface.h"
 #include "hytech.h"
 
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> ENERGY_METER_CAN;
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> TELEM_CAN;
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> energy_meter_can;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> telem_can;
 
-/* AMS CAN messages */
-BMS_STATUS_t bms_status_;
-BMS_TEMPS_t bms_temperatures_;
-ACU_SHUNT_MEASUREMENTS_t acu_shunt_measurements_;
-BMS_VOLTAGES_t bms_voltages_;
-BMS_DETAILED_VOLTAGES_t bms_detailed_voltages_;
-BMS_DETAILED_TEMPS_t bms_detailed_temperatures_;
-EM_MEASUREMENT_t em_measurements_;
 
 /* Instances of LTC6811 (2) */
 BMSDriverGroup<12, 2> BMSGroup;
 
 void setup()
 {
-    pinMode(6, OUTPUT);
-    pinMode(5, OUTPUT);
+    pinMode(teensy_OK_pin, OUTPUT);
+    pinMode(teensy_to_vehicle_watchdog_pin, OUTPUT); 
     digitalWrite(6, HIGH); // write Teensy_OK pin high
 
     BMSGroup.init();
 
     Serial.begin(115200);
     SPI.begin();
-    TELEM_CAN.begin();
-    TELEM_CAN.setBaudRate(500000);
-    ENERGY_METER_CAN.begin();
-    ENERGY_METER_CAN.setBaudRate(500000);
-    ENERGY_METER_CAN.enableMBInterrupts();
-    //ENERGY_METER_CAN.onReceive(parse_energy_meter_can_message);
+    telem_can.begin();
+    telem_can.setBaudRate(500000);
+    energy_meter_can.begin();
+    energy_meter_can.setBaudRate(500000);
+    energy_meter_can.enableMBInterrupts();
+    //energy_meter_can.onReceive(parse_energy_meter_can_message);
     for (int i = 0; i < 64; i++)
     {                                                                          // Fill all filter slots with Charger Control Unit message filter
-        TELEM_CAN.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), CCU_STATUS_CANID); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
+        telem_can.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), CCU_STATUS_CANID); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
     }
     analogReadResolution(12);
 }
 
 void loop()
 {
-    TELEM_CAN.events();
-    ENERGY_METER_CAN.events();
+    telem_can.events();
+    energy_meter_can.events();
 
     // READ IC data
-    //BMSData data_in = BMSGroup.read_data();
+    auto data = BMSGroup.read_data();
 
     // Perform Calculations for cell balancing
 

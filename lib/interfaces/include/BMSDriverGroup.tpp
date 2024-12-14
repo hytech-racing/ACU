@@ -376,9 +376,10 @@ void BMSDriverGroup<num_chips, num_chip_selects>::write_configuration(uint8_t dc
 
 template <size_t num_chips, size_t num_chip_selects>
 void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses)
-{
+{   
+    constexpr size_t data_size = 8 * (num_chips / num_chip_selects);
     std::array<uint8_t, 4> cmd_and_pec = _generate_CMD_PEC(CMD_CODES_e::WRITE_CONFIG, -1);
-    std::array<uint8_t, num_chips / num_chip_selects * 8> full_buffer;
+    std::array<uint8_t, data_size> full_buffer;
     std::array<uint8_t, 2> temp_pec;
 
     // Needs to be sent on each chip select line
@@ -397,7 +398,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_broadcas
                 j++;
             }
         }
-        write_registers_command<num_chips / num_chip_selects * 8>(_chip_select[cs], cmd_and_pec, full_buffer);
+        write_registers_command<data_size>(_chip_select[cs], cmd_and_pec, full_buffer);
     }
 }
 
