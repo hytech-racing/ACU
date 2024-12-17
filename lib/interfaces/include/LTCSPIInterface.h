@@ -31,7 +31,7 @@ inline std::array<uint8_t, buffer_size> read_registers_command(int cs, std::arra
  * @param cs chip select
  * @param cmd_and_pec 4 bytes if using _1 model, 24 bytes for _2 model 
 */
-void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec);
+void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices);
 
 /**
  * Transfers bytes (uint8_t) of arbritrary length on to the SPI line

@@ -9,7 +9,7 @@
 #include <string>
 
 elapsedMillis timer = 0;
-BMSDriverGroup<1, 1> BMSGroup = BMSDriverGroup<1, 1>(LTC6811_Type_e::LTC6811_2);
+BMSDriverGroup<1, 1> BMSGroup = BMSDriverGroup<1, 1>(LTC6811_Type_e::LTC6811_1);
 
 void print_voltages(auto data)
 {
@@ -46,10 +46,11 @@ void loop()
 {
     std::array<uint16_t, 1> cell_balance_statuses;
     cell_balance_statuses[0] = 0x0;
-    if (timer > 500)
+    if (timer > 1000)
     { // Can't be more than 1500 or t sleep will disable itself -> will notice initial update, but that's it.
         timer = 0;
-        auto data = BMSGroup.read_data();
-        print_voltages(data);
+        BMSGroup.manual_send_and_print();
+        //auto data = BMSGroup.read_data();
+        //print_voltages(data);
     }
 }
