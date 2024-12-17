@@ -38,6 +38,8 @@ void setup()
     Serial.begin(115200);
     SPI.begin();
     BMSGroup.init();
+    std::array<int, 1> test_address = {4}; // For testing only
+    BMSGroup.set_addresses(test_address);
     Serial.println("Setup Finished!");
     Serial.println();
 }

@@ -83,7 +83,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
         }
     }
     std::array<int, num_chips> test_address = {4}; // For testing only
-    _override_default_address(test_address);       // For testing only
+    set_addresses(test_address);       // For testing only
 
     _chip_select_per_chip[0] = 10; // For testing only
     _chip_select[0] = 10;          // For testing only
@@ -577,7 +577,11 @@ std::array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects>::_generate_CM
 }
 
 template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_override_default_address(std::array<int, num_chips> addr)
-{
+void BMSDriverGroup<num_chips, num_chip_selects>::set_addresses(std::array<int, num_chips> addr)
+{   
+    if (sizeof(addr) != num_chips) {
+        Serial.println("Size of set_address parameter is invalid / != num_chips");
+        delay(100000);
+    }
     std::copy(addr.data(), addr.data() + num_chips, _address.data());
 }

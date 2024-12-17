@@ -132,6 +132,8 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
+    void set_addresses(std::array<int, num_chips>);
+
 private:
     /**
      * PEC:
@@ -193,8 +195,6 @@ private:
      * @return unsigned 16 bit PEC, array of uint8_t of length 2
      */
     std::array<uint8_t, 2> _calculate_specific_PEC(uint8_t *data, int length);
-
-    void _override_default_address(std::array<int, num_chips>);
 
     /**
      * Generates a formmatted 2 byte array for the Command bytes
