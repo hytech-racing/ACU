@@ -10,14 +10,15 @@
 #include <cstdint>
 #include <optional>
 
-
-enum class LTC6811_Type_e {
-        LTC6811_1 = 0,
-        LTC6811_2
+enum class LTC6811_Type_e
+{
+    LTC6811_1 = 0,
+    LTC6811_2
 };
 
-// Command Codes 
-enum class CMD_CODES_e {
+// Command Codes
+enum class CMD_CODES_e
+{
     // WRITES
     WRITE_CONFIG = 0x1,
     WRITE_S_CONTROL = 0x14,
@@ -32,7 +33,7 @@ enum class CMD_CODES_e {
     READ_GPIO_VOLTAGE_GROUP_A = 0xC,
     READ_GPIO_VOLTAGE_GROUP_B = 0xE,
     READ_STATUS_GROUP_A = 0x10,
-    READ_STATUS_GROUP_B = 0x12,  
+    READ_STATUS_GROUP_B = 0x12,
     READ_S_CONTROL = 0x16,
     READ_PWM = 0x22,
     READ_COMM = 0x722,
@@ -50,13 +51,14 @@ enum class CMD_CODES_e {
     // POLL ADC STATUS, DIAGNOSE MUX
     POLL_ADC_STATUS = 0x714,
     DIAGNOSE_MUX_POLL_STATUS = 0x715
-}; 
+};
 
-enum class ADC_MODE_e : uint8_t {
-	MODE_ZERO = 0x0,
-	FAST = 0x1,
-	NORMAL = 0x2,
-	FILTERED = 0x3
+enum class ADC_MODE_e : uint8_t
+{
+    MODE_ZERO = 0x0,
+    FAST = 0x1,
+    NORMAL = 0x2,
+    FILTERED = 0x3
 };
 
 using volt = float;
@@ -64,19 +66,19 @@ using celcius = float;
 template <size_t num_chips, size_t num_humidity_sensors, size_t num_board_thermistors>
 struct BMSData
 {
-        std::array<std::array<std::optional<volt>, 12>, num_chips> voltages;
-        std::array<celcius, 4 * num_chips> cell_temperatures;
-        std::array<float, num_humidity_sensors> humidity;
-        std::array<float, num_board_thermistors> board_temperatures;
-        float min_voltage;
-        float max_voltage;
-        size_t min_voltage_cell_id; // 0 - 125
-        size_t max_voltage_cell_id; // 0 - 125
-        size_t max_board_temperature_segment_id; // 0 - 5
-        size_t max_humidity_segment_id; // 0 - 5
-        size_t max_cell_temperature_cell_id; // 0 - 47
-        float total_voltage;
-        float average_cell_temperature;
+    std::array<std::array<std::optional<volt>, 12>, num_chips> voltages;
+    std::array<celcius, 4 * num_chips> cell_temperatures;
+    std::array<float, num_humidity_sensors> humidity;
+    std::array<float, num_board_thermistors> board_temperatures;
+    float min_voltage;
+    float max_voltage;
+    size_t min_voltage_cell_id;              // 0 - 125
+    size_t max_voltage_cell_id;              // 0 - 125
+    size_t max_board_temperature_segment_id; // 0 - 5
+    size_t max_humidity_segment_id;          // 0 - 5
+    size_t max_cell_temperature_cell_id;     // 0 - 47
+    float total_voltage;
+    float average_cell_temperature;
 };
 
 struct ReferenceMaxMin
@@ -93,11 +95,10 @@ struct ReferenceMaxMin
 template <size_t num_chips, size_t num_chip_selects>
 class BMSDriverGroup
 {
-public: 
+public:
     using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
 
-    BMSDriverGroup(LTC6811_Type_e t) : 
-        _chip_type(t) {};
+    BMSDriverGroup(LTC6811_Type_e t) : _chip_type(t) {};
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -134,6 +135,8 @@ public:
 
     void set_addresses(std::array<int, num_chips>);
 
+    void set_chip_select_per_chip(std::array<int, num_chips> chip_selects);
+
 private:
     /**
      * PEC:
@@ -147,7 +150,7 @@ private:
      * WAKEUP:
      * The Wakeup protocol will move the device from the SLEEP to STANDBY / REFUP state
      * Using the "more robust wakeup" method of sending pair of long isoSPI pulses
-     * Reference pages 51-52 on the data sheet for specific information. 
+     * Reference pages 51-52 on the data sheet for specific information.
      * @pre we don't care; for us, it's good to perform a wakeup to guarantee proper data propogation
      * @post essentially sets connected pin to LOW for period of time, then to HIGH for period of time
      */
@@ -182,7 +185,19 @@ private:
 
     void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
 
-    /* -------------------- SETTER FUNCTIONS -------------------- */
+    std::array<uint8_t, 24 * (num_chips / num_chip_selects)> _package_cell_voltages(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
+                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_4_to_6,
+                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_7_to_9,
+                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_10_to_12);
+
+    std::array<uint8_t, 10 * (num_chips / num_chip_selects)> _package_auxillary_data(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
+                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6);
+
+    BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
+                                      size_t chip_index, size_t &battery_cell_count);
+
+    BMSDriverData _load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
+                                    size_t chip_index, size_t &gpio_count);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
 
@@ -246,15 +261,15 @@ private:
 
     /**
      * Holds type of LTC6811 being used
-     * Replaces the 
-    */
+     * Replaces the
+     */
     LTC6811_Type_e _chip_type;
 
     /**
      * Stores the balance statuses for all the chips
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
      * out of the 16 bits
-    */
+     */
     std::array<uint16_t, num_chips> cell_discharge_en;
 };
 

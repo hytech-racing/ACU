@@ -7,12 +7,12 @@ template <size_t buffer_size>
 void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
-    _write_and_delay_LOW(cs, 2);
+    _write_and_delay_LOW(cs, 5);
 
     _transfer_SPI_data<4>(cmd_and_pec);
     _transfer_SPI_data<buffer_size>(data);
 
-    _write_and_delay_HIGH(cs, 2);   
+    _write_and_delay_HIGH(cs, 5);   
     SPI.endTransaction();
 }
 
@@ -21,12 +21,12 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
     std::array<uint8_t, buffer_size> read_in;
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompts SPI enable
-    _write_and_delay_LOW(cs, 2);
+    _write_and_delay_LOW(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
     
     read_in = _receive_SPI_data<buffer_size>();
     
-    _write_and_delay_HIGH(cs, 2); 
+    _write_and_delay_HIGH(cs, 5); 
     SPI.endTransaction();
     return read_in;
 }
@@ -34,16 +34,12 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
 void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
-    _write_and_delay_LOW(cs, 2);
+    _write_and_delay_LOW(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
     for (size_t i = 0; i < num_stacked_devices; i++) {
-        SPI.transfer(0);
+         SPI.transfer(0);
     }
-    // elapsedMillis timer = 0;
-    // while (timer < 15) {
-    //     SPI.transfer(0);
-    // }
-    _write_and_delay_HIGH(cs, 2);
+    _write_and_delay_HIGH(cs, 5);
     // End Message
     SPI.endTransaction();
 }
