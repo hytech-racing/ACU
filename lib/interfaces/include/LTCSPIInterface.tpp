@@ -39,6 +39,10 @@ void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t n
     for (size_t i = 0; i < num_stacked_devices; i++) {
          SPI.transfer(0);
     }
+    elapsedMillis timer = 0;
+    while (timer < 13) {
+        SPI.transfer(0);
+    }
     _write_and_delay_HIGH(cs, 5);
     // End Message
     SPI.endTransaction();
