@@ -10,14 +10,18 @@
 
 /* -------------------- SETUP FUNCTIONS -------------------- */
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::manual_send_and_print()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::manual_send_and_print()
 {
     std::array<uint8_t, 4> cmd_pec;
     // Wake up protocol
-    _write_and_delay_LOW(10, 350);
+    _write_and_delay_LOW(10, 400);
     SPI.transfer16(0);
     _write_and_delay_HIGH(10, 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+    _write_and_delay_LOW(10, 400);
+    SPI.transfer16(0);
+    _write_and_delay_HIGH(10, 400);
+
 
     cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CONFIG, -1);
     read_registers_command<8>(10, cmd_pec);
@@ -25,17 +29,27 @@ void BMSDriverGroup<num_chips, num_chip_selects>::manual_send_and_print()
     // Send ADC conversion command which we know works
     _start_cell_voltage_ADC_conversion();
 
+
+    _write_and_delay_LOW(10, 400);
+    SPI.transfer16(0);
+    _write_and_delay_HIGH(10, 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+    _write_and_delay_LOW(10, 400);
+    SPI.transfer16(0);
+    _write_and_delay_HIGH(10, 400);
+    
     // Another way is to do a dummy command like read configuration
-    // cmd_pec = _generate_CMD_PEC(CMD_CODES_e::POLL_ADC_STATUS, -1);
-    // cmd_pec[0] = (_address[0] << 3) | cmd_pec[0];
-    // adc_conversion_command(10, cmd_pec);
+    //cmd_pec = _generate_CMD_PEC(CMD_CODES_e::POLL_ADC_STATUS, -1);
+    //cmd_pec[0] = (_address[0] << 3) | cmd_pec[0];
+    //adc_conversion_command(10, cmd_pec);
 
     cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1);
-    read_registers_command<8>(10, cmd_pec);
+    auto data = read_registers_command<8>(10, cmd_pec);
+
+    Serial.println(data[0]);
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::init()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
 {
     // We only call this once during setup to instantiate the variable pec15Table, a pointer to an array
     _generate_PEC_table();
@@ -78,8 +92,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::init()
 
 // this implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
 // on page <76>, section: Applications Information
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_generate_PEC_table()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_generate_PEC_table()
 {
     for (int i = 0; i < 256; i++)
     {
@@ -100,16 +114,18 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_generate_PEC_table()
     }
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_start_wakeup_protocol()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_protocol()
 {
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        if (_chip_type == LTC6811_Type_e::LTC6811_1)
+        if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
         {
-            _write_and_delay_LOW(_chip_select[cs], 400);
-            SPI.transfer32(0);
-            _write_and_delay_HIGH(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+            for (int i = 0; i < num_chips / num_chip_selects; i++) {
+                _write_and_delay_LOW(_chip_select[cs], 400);
+                SPI.transfer16(0);
+                _write_and_delay_HIGH(_chip_select[cs], 400);
+            }
         }
         else
         {
@@ -122,17 +138,18 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_start_wakeup_protocol()
 
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
-template <size_t num_chips, size_t num_chip_selects>
-typename BMSDriverGroup<num_chips, num_chip_selects>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects>::read_data()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
     _start_wakeup_protocol(); // wakes all of the ICs on the chip select line
     _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
    
     _start_wakeup_protocol();
     _start_GPIO_ADC_conversion();
+    //write_configuration(dcto_read, _cell_discharge_en);
 
-    if (_chip_type == LTC6811_Type_e::LTC6811_1)
+    if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
         return _read_data_through_broadcast();
     }
@@ -142,9 +159,9 @@ BMSDriverGroup<num_chips, num_chip_selects>::read_data()
     }
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-typename BMSDriverGroup<num_chips, num_chip_selects>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broadcast()
 {
     ReferenceMaxMin max_min_reference;
     BMSDriverData bms_data;
@@ -154,7 +171,9 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast()
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         
-        // write_configuration(dcto_read, _cell_discharge_en);
+        write_configuration(dcto_read, _cell_discharge_en);
+
+        // Get buffers for each group we care about, all at once for ONE chip select line
         _start_wakeup_protocol();
         auto cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
         auto data_in_cell_voltages_1_to_3 = read_registers_command<data_size>(_chip_select[cs], cmd_pec);
@@ -212,9 +231,9 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_broadcast()
     return bms_data;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-typename BMSDriverGroup<num_chips, num_chip_selects>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_address()
 {
     ReferenceMaxMin max_min_reference;
     BMSDriverData bms_data;
@@ -264,9 +283,9 @@ BMSDriverGroup<num_chips, num_chip_selects>::_read_data_through_address()
     return bms_data;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-typename BMSDriverGroup<num_chips, num_chip_selects>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects>::_load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
                                                                  size_t chip_index, size_t &battery_cell_count)
 {
     int cell_count = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
@@ -280,17 +299,19 @@ BMSDriverGroup<num_chips, num_chip_selects>::_load_cell_voltages(BMSDriverData b
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
         chip_voltages_in[cell_Index] = voltage_in;
+
         Serial.print(voltage_in / 10000.0, 4);
         Serial.print("V\t");
+
         _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, voltage_in, battery_cell_count);
     }
     std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages[chip_index].data());
     return bms_data;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-typename BMSDriverGroup<num_chips, num_chip_selects>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
                                                                size_t chip_index, size_t &gpio_count)
 {
     for (int gpio_Index = 0; gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
@@ -306,8 +327,8 @@ BMSDriverGroup<num_chips, num_chip_selects>::_load_auxillaries(BMSDriverData bms
     return bms_data;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t &cell_count)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t &cell_count)
 {
     max_min_reference.total_voltage += voltage_in;
     if (voltage_in < max_min_reference.min_voltage)
@@ -323,8 +344,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_store_voltage_data(BMSDriverD
     cell_count++;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
 {
     if (gpio_Index < 4)
     {
@@ -360,8 +381,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_store_temperature_humidity_da
 
 /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses)
 {
     std::copy(cell_balance_statuses.begin(), cell_balance_statuses.end(), _cell_discharge_en.begin());
 
@@ -371,7 +392,7 @@ void BMSDriverGroup<num_chips, num_chip_selects>::write_configuration(uint8_t dc
     buffer_format[2] = ((over_voltage_threshold & 0x00F) << 4) | ((under_voltage_threshold & 0xF00) >> 8);
     buffer_format[3] = ((over_voltage_threshold & 0xFF0) >> 4);
 
-    if (_chip_type == LTC6811_Type_e::LTC6811_1)
+    if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
         _write_config_through_broadcast(dcto_mode, buffer_format, cell_balance_statuses);
     }
@@ -381,8 +402,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::write_configuration(uint8_t dc
     }
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses)
 {
     constexpr size_t data_size = 8 * (num_chips / num_chip_selects);
     std::array<uint8_t, 4> cmd_and_pec = _generate_CMD_PEC(CMD_CODES_e::WRITE_CONFIG, -1);
@@ -409,8 +430,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_broadcas
     }
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_address(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_through_address(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses)
 {
     // Need to manipulate the command code to have address, therefore have to send command num_chips times
     std::array<uint8_t, 4> cmd_and_pec;
@@ -428,14 +449,14 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_write_config_through_address(
     }
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_start_cell_voltage_ADC_conversion()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage_ADC_conversion()
 {
     uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_CV_ADC_CONVERSION | (adc_mode_cv_conversion << 7) | (discharge_permitted << 4) | static_cast<uint8_t>(adc_conversion_cell_select_mode);
     std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd & 0xFF;
-    if (_chip_type == LTC6811_Type_e::LTC6811_1)
+    if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
         _start_ADC_conversion_through_broadcast(cmd);
     }
@@ -447,15 +468,15 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_start_cell_voltage_ADC_conver
     delay(cv_adc_conversion_time_us); // us
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_start_GPIO_ADC_conversion()
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_conversion()
 {
     uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_GPIO_ADC_CONVERSION | (adc_mode_gpio_conversion << 7) | static_cast<uint8_t>(adc_conversion_gpio_select_mode);
     std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd & 0xFF;
 
-    if (_chip_type == LTC6811_Type_e::LTC6811_1)
+    if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
         _start_ADC_conversion_through_broadcast(cmd);
     }
@@ -467,8 +488,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_start_GPIO_ADC_conversion()
     delay(gpio_adc_conversion_time_us); // us
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_broadcast(const std::array<uint8_t, 2> &cmd_code)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversion_through_broadcast(const std::array<uint8_t, 2> &cmd_code)
 {
     // Leave the command code as is
     uint8_t cc[2] = {cmd_code[0], cmd_code[1]};
@@ -484,8 +505,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_
     }
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code)
 {
     // Need to manipulate the command code to have address, therefore have to send command num_chips times
     for (size_t i = 0; i < num_chips; i++)
@@ -502,8 +523,8 @@ void BMSDriverGroup<num_chips, num_chip_selects>::_start_ADC_conversion_through_
 /* -------------------- GETTER FUNCTIONS -------------------- */
 
 // This implementation is taken directly from the data sheet linked here: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
-template <size_t num_chips, size_t num_chip_selects>
-std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects>::_calculate_specific_PEC(uint8_t *data, int length)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_calculate_specific_PEC(uint8_t *data, int length)
 {
     std::array<uint8_t, 2> pec;
     uint16_t remainder;
@@ -520,13 +541,13 @@ std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects>::_calculate_s
     return pec;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects>::_generate_formatted_CMD(CMD_CODES_e command, int ic_index)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_generate_formatted_CMD(CMD_CODES_e command, int ic_index)
 {
     std::array<uint8_t, 2> cmd;
 
-    if (_chip_type == LTC6811_Type_e::LTC6811_1)
-    {
+    if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
+    { 
         cmd[0] = (uint8_t)command >> 8;
         cmd[1] = (uint8_t)command;
     }
@@ -538,8 +559,8 @@ std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects>::_generate_fo
     return cmd;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-std::array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects>::_generate_CMD_PEC(CMD_CODES_e command, int ic_index)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+std::array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_generate_CMD_PEC(CMD_CODES_e command, int ic_index)
 {
     std::array<uint8_t, 4> cmd_pec;
     std::array<uint8_t, 2> cmd = _generate_formatted_CMD(command, ic_index);
@@ -549,8 +570,8 @@ std::array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects>::_generate_CM
     return cmd_pec;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chips, num_chip_selects>::_package_cell_voltages(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_package_cell_voltages(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
                                                                                                                              const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_4_to_6,
                                                                                                                              const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_7_to_9,
                                                                                                                              const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_10_to_12)
@@ -569,8 +590,8 @@ std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
     return combined_cv_1_to_12;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-std::array<uint8_t, 10 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chips, num_chip_selects>::_package_auxillary_data(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+std::array<uint8_t, 10 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_package_auxillary_data(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
                                                                                                                               const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6)
 {
     constexpr size_t num_chips_on_chip_select = num_chips / num_chip_selects;
@@ -585,15 +606,15 @@ std::array<uint8_t, 10 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
     return combined_aux_1_to_5;
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::set_addresses(std::array<int, num_chips> addr)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::set_addresses(std::array<int, num_chips> addr)
 {
     static_assert(sizeof(addr) != num_chips, "Size of set_address parameter is invalid / != num_chips");
     std::copy(addr.data(), addr.data() + num_chips, _address.data());
 }
 
-template <size_t num_chips, size_t num_chip_selects>
-void BMSDriverGroup<num_chips, num_chip_selects>::set_chip_select_per_chip(std::array<int, num_chips> chip_selects)
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::set_chip_select_per_chip(std::array<int, num_chips> chip_selects)
 {
     static_assert(sizeof(chip_selects) != num_chips, "Size of set_address parameter is invalid / != num_chips");
     std::copy(chip_selects.data(), chip_selects.data() + num_chips, _chip_select_per_chip.data());

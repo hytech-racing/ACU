@@ -92,13 +92,13 @@ struct ReferenceMaxMin
     float total_thermistor_temps = 0;
 };
 
-template <size_t num_chips, size_t num_chip_selects>
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
     using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
 
-    BMSDriverGroup(LTC6811_Type_e t) : _chip_type(t) {};
+    BMSDriverGroup() {};
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -258,12 +258,6 @@ private:
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
      */
     std::array<int, num_chips> _address;
-
-    /**
-     * Holds type of LTC6811 being used
-     * Replaces the
-     */
-    LTC6811_Type_e _chip_type;
 
     /**
      * Stores the balance statuses for all the chips
