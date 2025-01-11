@@ -9,7 +9,9 @@
 #include <string>
 
 elapsedMillis timer = 0;
-using ltc_type = LTC6811_Type_e;
+std::array<uint16_t, 1> cell_balance_statuses;
+
+using chip_type = LTC6811_Type_e;
 
 // Initialize chip_select, chip_select_per_chip, and address
 constexpr int num_chips = 1;
@@ -18,8 +20,8 @@ std::array<int, num_chip_selects> cs = {10};
 std::array<int, num_chips> cs_per_chip = {10};
 std::array<int, num_chips> addr = {4};
 
-BMSDriverGroup<num_chips, num_chip_selects, ltc_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, ltc_type::LTC6811_1>(cs, cs_per_chip, addr);
-std::array<uint16_t, 1> cell_balance_statuses;
+// Instantiate BMS Driver Group
+BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
 void print_voltages(auto data)
 {
