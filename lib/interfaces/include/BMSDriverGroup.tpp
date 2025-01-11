@@ -20,7 +20,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::manual_send_and_pri
     _write_and_delay_HIGH(10, 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
     _write_and_delay_LOW(10, 400);
     SPI.transfer16(0);
-    _write_and_delay_HIGH(10, 400);
+    _write_and_delay_HIGH(10, 400);  
 
 
     cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CONFIG, -1);
@@ -51,67 +51,17 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::manual_send_and_pri
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
 {
-    // We only call this once during setup to instantiate the variable pec15Table, a pointer to an array
-    _generate_PEC_table();
-    int cs = 9;
+    // We initialized the pec table during beginning of runtime which allows _pec15table to be const -> no need to call in init()
     for (size_t i = 0; i < num_chip_selects; i++)
     {
-        _chip_select[i] = cs;
+        int cs = _chip_select[i];
         // chip select defines
         pinMode(cs, OUTPUT);
         digitalWrite(cs, HIGH);
-        cs++;
     }
-    for (size_t j = 0; j < num_chips; j++)
-    {
-        _address[j] = j; // For the most part
-        switch (j)
-        {
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 10:
-        case 11:
-            _chip_select_per_chip[j] = 10;
-            break;
-
-        case 0:
-        case 1:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-            _chip_select_per_chip[j] = 9;
-            break;
-        default:
-            break;
-        }
-    }
-}
-
-// this implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
-// on page <76>, section: Applications Information
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_generate_PEC_table()
-{
-    for (int i = 0; i < 256; i++)
-    {
-        uint16_t remainder = i << 7;
-        for (int bit = 8; bit > 0; --bit)
-        {
-            if (remainder & 0x4000)
-            {
-                remainder = ((remainder << 1));
-                remainder = (remainder ^ CRC15_POLY);
-            }
-            else
-            {
-                remainder = ((remainder << 1));
-            }
-        }
-        _pec15Table[i] = remainder & 0xFFFF;
-    }
+    static_assert(sizeof(_chip_select) != num_chips, "Size of set_address parameter is invalid / != num_chips");
+    static_assert(sizeof(_address) != num_chips, "Size of set_address parameter is invalid / != num_chips");
+    static_assert(sizeof(_chip_select_per_chip) != num_chip_selects, "Size of set_address parameter is invalid / != num_chip_selects");
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -533,7 +483,7 @@ std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_
     for (int i = 0; i < length; i++)
     {
         addr = ((remainder >> 7) ^ data[i]) & 0xff; // calculate PEC table address
-        remainder = (remainder << 8) ^ (uint16_t)_pec15Table[addr];
+        remainder = (remainder << 8) ^ (uint16_t) _pec15Table[addr];
     }
     remainder = remainder * 2; // The CRC15 has a 0 in the LSB so the final value must be multiplied by 2
     pec[0] = (uint8_t)((remainder >> 8) & 0xFF);
@@ -604,18 +554,4 @@ std::array<uint8_t, 10 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
         std::copy(aux_4_to_6.begin() + param_iterator, aux_4_to_6.begin() + param_iterator + 4, combined_aux_1_to_5.begin() + result_iterator + 6);
     }
     return combined_aux_1_to_5;
-}
-
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::set_addresses(std::array<int, num_chips> addr)
-{
-    static_assert(sizeof(addr) != num_chips, "Size of set_address parameter is invalid / != num_chips");
-    std::copy(addr.data(), addr.data() + num_chips, _address.data());
-}
-
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::set_chip_select_per_chip(std::array<int, num_chips> chip_selects)
-{
-    static_assert(sizeof(chip_selects) != num_chips, "Size of set_address parameter is invalid / != num_chips");
-    std::copy(chip_selects.data(), chip_selects.data() + num_chips, _chip_select_per_chip.data());
 }

@@ -33,35 +33,5 @@ inline std::array<uint8_t, buffer_size> read_registers_command(int cs, std::arra
 */
 void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices);
 
-/**
- * Transfers bytes (uint8_t) of arbritrary length on to the SPI line
- * @param data input buffer of size length
- * @param length length of buffer, number of bytes
-*/
-template <size_t data_size>
-void _transfer_SPI_data(const std::array<uint8_t, data_size> &data);
-
-/**
- * Receives SPI data
- * @param length length of data we expect to receive
- * @return data we are receiving instantaneously
-*/
-template <size_t data_size>
-std::array<uint8_t, data_size> _receive_SPI_data();
-
-/**
- * Writes a LOW on one of the chip selects, then delays
- * @param cs the chip select we are writing to
- * @param delay time in microseconds
-*/
-void _write_and_delay_LOW(int cs, int delay_microSeconds);
-
-/**
- * Writes a HIGH on one of the chip selects, then delay
- * @param cs the chip select we are writing to
- * @param delay time in microseconds
-*/
-void _write_and_delay_HIGH(int cs, int delay_microSeconds);
-
 #include <LTCSPIInterface.tpp>
 #endif

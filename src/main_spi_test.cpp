@@ -11,7 +11,14 @@
 elapsedMillis timer = 0;
 using ltc_type = LTC6811_Type_e;
 
-BMSDriverGroup<1, 1, ltc_type::LTC6811_1> BMSGroup = BMSDriverGroup<1, 1, ltc_type::LTC6811_1>();
+// Initialize chip_select, chip_select_per_chip, and address
+constexpr int num_chips = 1;
+constexpr int num_chip_selects = 1;
+std::array<int, num_chip_selects> cs = {10};
+std::array<int, num_chips> cs_per_chip = {10};
+std::array<int, num_chips> addr = {4};
+
+BMSDriverGroup<num_chips, num_chip_selects, ltc_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, ltc_type::LTC6811_1>(cs, cs_per_chip, addr);
 std::array<uint16_t, 1> cell_balance_statuses;
 
 void print_voltages(auto data)
@@ -41,8 +48,6 @@ void setup()
     Serial.begin(115200);
     SPI.begin();
     BMSGroup.init();
-    std::array<int, 1> test_address = {4}; // For testing only
-    BMSGroup.set_addresses(test_address);
     Serial.println("Setup Finished!");
     Serial.println();
 }

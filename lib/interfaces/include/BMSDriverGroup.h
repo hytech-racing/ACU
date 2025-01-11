@@ -98,7 +98,11 @@ class BMSDriverGroup
 public:
     using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
 
-    BMSDriverGroup() {};
+    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr) :
+        _pec15Table(initializePecTable()),
+        _chip_select(cs),
+        _chip_select_per_chip(cs_per_chip),
+        _address(addr) {};
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -132,10 +136,6 @@ public:
      * @post sends packaged data over SPI
      */
     void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
-
-    void set_addresses(std::array<int, num_chips>);
-
-    void set_chip_select_per_chip(std::array<int, num_chips> chip_selects);
 
 private:
     /**
@@ -228,10 +228,41 @@ private:
      */
     uint8_t _get_cmd_address(int address) { return 0x80 | (address << 3); }
 
+    /** 
+     * initializes PEC table
+     * Made static so that it can be called in constructor -> _pec15table is made const
+     * This implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
+     * On page <76>, section: Applications Information
+    */
+    static std::array<uint16_t, 256> initializePecTable()
+    {
+        std::array<uint16_t, 256> temp{};
+        // Logic to fill temp
+        for (int i = 0; i < 256; i++)
+        {
+            uint16_t remainder = i << 7;
+            for (int bit = 8; bit > 0; --bit)
+            {
+                if (remainder & 0x4000)
+                {
+                    remainder = ((remainder << 1));
+                    remainder = (remainder ^ CRC15_POLY);
+                }
+                else
+                {
+                    remainder = ((remainder << 1));
+                }
+            }
+            temp[i] = remainder & 0xFFFF;
+        }
+        return temp;
+    }
+
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
      */
-    uint16_t _pec15Table[256];
+    // uint16_t _pec15Table[256];
+    const std::array<uint16_t, 256> _pec15Table;
 
     /**
      * We will need this for both models of the IC
@@ -239,7 +270,7 @@ private:
      * It can only be 9 or 10
      * NOTE: needs to be initialized
      */
-    std::array<int, num_chip_selects> _chip_select;
+    const std::array<int, num_chip_selects> _chip_select;
 
     /**
      * We will need this for both models of the IC
@@ -247,7 +278,7 @@ private:
      * It can only be 9 or 10
      * NOTE: needs to be initialized
      */
-    std::array<int, num_chips> _chip_select_per_chip;
+    const std::array<int, num_chips> _chip_select_per_chip;
 
     /**
      * We will only end up using the address if this is a LTC6811-2
@@ -257,14 +288,14 @@ private:
      * Those segments correspond to 2 ICs each, so the instance with chip_select 9
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
      */
-    std::array<int, num_chips> _address;
+    const std::array<int, num_chips> _address; // constant
 
     /**
      * Stores the balance statuses for all the chips
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
      * out of the 16 bits
      */
-    std::array<uint16_t, num_chips> _cell_discharge_en;
+    std::array<uint16_t, num_chips> _cell_discharge_en; // not const
 };
 
 #include <BMSDriverGroup.tpp>

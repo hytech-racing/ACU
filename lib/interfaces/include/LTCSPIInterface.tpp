@@ -3,6 +3,32 @@
 #include "Configuration.h"
 #include <Arduino.h>
 
+template <size_t data_size>
+void _transfer_SPI_data(const std::array<uint8_t, data_size> &data) {
+    for (size_t i = 0; i < data_size; i++) {
+        SPI.transfer(data[i]);
+    }
+}
+
+template <size_t data_size>
+std::array<uint8_t, data_size> _receive_SPI_data() {
+    std::array<uint8_t, data_size> data_in;
+    for (size_t i = 0; i < data_size; i++) {
+        data_in[i] = SPI.transfer(0); // transfer dummy value over SPI in order to read bytes into data
+    }
+    return data_in;
+}
+
+void _write_and_delay_LOW(int cs, int delay_microSeconds) {
+    digitalWrite(cs, LOW);
+    delayMicroseconds(delay_microSeconds);
+}
+
+void _write_and_delay_HIGH(int cs, int delay_microSeconds) {
+    digitalWrite(cs, HIGH);
+    delayMicroseconds(delay_microSeconds);
+}
+
 template <size_t buffer_size>
 void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
@@ -48,30 +74,3 @@ void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t n
     // End Message
     SPI.endTransaction();
 }
-
-template <size_t data_size>
-void _transfer_SPI_data(const std::array<uint8_t, data_size> &data) {
-    for (size_t i = 0; i < data_size; i++) {
-        SPI.transfer(data[i]);
-    }
-}
-
-template <size_t data_size>
-std::array<uint8_t, data_size> _receive_SPI_data() {
-    std::array<uint8_t, data_size> data_in;
-    for (size_t i = 0; i < data_size; i++) {
-        data_in[i] = SPI.transfer(0); // transfer dummy value over SPI in order to read bytes into data
-    }
-    return data_in;
-}
-
-void _write_and_delay_LOW(int cs, int delay_microSeconds) {
-    digitalWrite(cs, LOW);
-    delayMicroseconds(delay_microSeconds);
-}
-
-void _write_and_delay_HIGH(int cs, int delay_microSeconds) {
-    digitalWrite(cs, HIGH);
-    delayMicroseconds(delay_microSeconds);
-}
-
