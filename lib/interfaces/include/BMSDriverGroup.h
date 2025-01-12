@@ -98,10 +98,7 @@ class BMSDriverGroup
 public:
     using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
 
-    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr) :
-        _chip_select(cs),
-        _chip_select_per_chip(cs_per_chip),
-        _address(addr) {};
+    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -233,35 +230,13 @@ private:
      * This implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
      * On page <76>, section: Applications Information
     */
-    constexpr std::array<uint16_t, 256> _initializePecTable()
-    {
-        std::array<uint16_t, 256> temp{};
-        // Logic to fill temp
-        for (int i = 0; i < 256; i++)
-        {
-            uint16_t remainder = i << 7;
-            for (int bit = 8; bit > 0; --bit)
-            {
-                if (remainder & 0x4000)
-                {
-                    remainder = ((remainder << 1));
-                    remainder = (remainder ^ CRC15_POLY);
-                }
-                else
-                {
-                    remainder = ((remainder << 1));
-                }
-            }
-            temp[i] = remainder & 0xFFFF;
-        }
-        return temp;
-    }
+    constexpr std::array<uint16_t, 256> _initialize_Pec_Table();
 
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
      */
     // uint16_t _pec15Table[256];
-    const std::array<uint16_t, 256> _pec15Table = _initializePecTable();
+    const std::array<uint16_t, 256> _pec15Table;
 
     /**
      * We will need this for both models of the IC

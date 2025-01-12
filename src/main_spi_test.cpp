@@ -23,6 +23,8 @@ std::array<int, num_chips> addr = {4};
 // Instantiate BMS Driver Group
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
+
+
 void print_voltages(auto data)
 {
     Serial.print("Total Voltage: ");
@@ -57,7 +59,7 @@ void setup()
 void loop()
 {
     cell_balance_statuses[0] = 0x0;
-    if (timer > 500)
+    if (timer > 300)
     {   
         Serial.println("Enter looped!");
         // Can't be more than 1500 or t sleep will disable itself -> will notice initial update, but that's it.
