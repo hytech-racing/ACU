@@ -1,6 +1,10 @@
 #ifndef __CONFIGURATION_H__
 #define __CONFIGURATION_H__
 
+#include <cstdint>
+#include <stddef.h>
+#include <array>
+
 /* CONSTANT Definitions */
 /**
  * These devices have 2 IDLE modes: 
@@ -12,7 +16,7 @@
  * If we ever want tot use the REFUP state, change this to true / 0b1
  * The following MACROS are for writing the configuration:
 */ 
-const bool device_refup_mode = false;
+const bool device_refup_mode = true;
 const bool adcopt = false;
 const uint16_t gpios_enabled = 0x1F; // There are 5 GPIOs, we are using all 5 so they are all given a 1
 const bool dcto_read = 0x1;
@@ -26,9 +30,11 @@ const int adc_conversion_cell_select_mode = 0;
 const int adc_conversion_gpio_select_mode = 0;
 const uint8_t discharge_permitted = 0x0;
 const uint8_t adc_mode_cv_conversion = 0x1;
-const uint8_t adc_mode_gpio_conversion = 0x11;
-const int minimum_voltage = 30000;   // Minimum allowable single cell voltage in units of 100μV
-const int maximum_voltage = 42000;   // Maxiumum allowable single cell voltage in units of 100μV
+const uint8_t adc_mode_gpio_conversion = 0x1;
+const int minimum_allowed_voltage = 30000;   // Minimum allowable single cell voltage in units of 100μV
+const int maximum_allowed_voltage = 42000;   // Maxiumum allowable single cell voltage in units of 100μV
+const size_t max_allowed_voltage_faults = 20;
+const size_t max_allowed_temp_faults = 20;
 const int maximum_total_voltage = 5330000;    // Maximum allowable pack total voltage in units of 100μV    
 const int maximum_thermistor_voltage = 26225; // Maximum allowable pack temperature corresponding to 60C in units 100μV
 const uint16_t under_voltage_threshold = 1874;  // 3.0V  // Minimum voltage value following datasheet formula: Comparison Voltage = (VUV + 1) • 16 • 100μV
@@ -41,5 +47,15 @@ const float gpio_adc_conversion_time_us = 3.1;
 /* PIN Definitions */
 const int teensy_to_vehicle_watchdog_pin = 5;
 const int teensy_OK_pin = 6;
+
+template<size_t num_chips>
+struct ACU_State_s {
+    size_t uv_counter;
+    size_t ov_counter;
+    size_t ot_counter;
+    bool voltage_fault;
+    bool charging_enabled;
+    std::array<uint16_t, num_chips> cell_balance_statuses;
+};
 
 #endif

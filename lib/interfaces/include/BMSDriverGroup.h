@@ -8,7 +8,7 @@
 #include "Configuration.h"
 #include "LTCSPIInterface.h"
 #include <cstdint>
-#include <optional>
+#include "etl/optional.h"
 
 enum class LTC6811_Type_e
 {
@@ -66,7 +66,7 @@ using celcius = float;
 template <size_t num_chips, size_t num_humidity_sensors, size_t num_board_thermistors>
 struct BMSData
 {
-    std::array<std::array<std::optional<volt>, 12>, num_chips> voltages;
+    std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages;
     std::array<celcius, 4 * num_chips> cell_temperatures;
     std::array<float, num_humidity_sensors> humidity;
     std::array<float, num_board_thermistors> board_temperatures;

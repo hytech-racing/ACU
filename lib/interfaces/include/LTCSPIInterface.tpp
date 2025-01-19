@@ -36,6 +36,9 @@ void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const s
     _write_and_delay_LOW(cs, 5);
 
     _transfer_SPI_data<4>(cmd_and_pec);
+    
+    SPI.transfer16(0); // need to do this # of times devices
+    
     _transfer_SPI_data<buffer_size>(data);
 
     _write_and_delay_HIGH(cs, 5);   
@@ -51,6 +54,8 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
     _write_and_delay_LOW(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
     
+    SPI.transfer16(0);
+    
     read_in = _receive_SPI_data<buffer_size>();
     
     _write_and_delay_HIGH(cs, 5); 
@@ -63,14 +68,14 @@ void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t n
     // Prompting SPI enable
     _write_and_delay_LOW(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
-    // for (size_t i = 0; i < num_stacked_devices; i++) {
-    //      SPI.transfer(0);
-    // }
-    // elapsedMillis timer = 0;
-    // while (timer < 13) {
-    //     SPI.transfer(0);
-    // }
+    for (size_t i = 0; i < num_stacked_devices; i++) {
+        SPI.transfer(0);
+    }
+    elapsedMillis timer = 0;
+    while (timer < 15) {
+        SPI.transfer(0);
+    }
     _write_and_delay_HIGH(cs, 5);
-    // End Message
+    // End Messager
     SPI.endTransaction();
 }

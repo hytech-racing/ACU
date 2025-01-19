@@ -55,5 +55,6 @@ public:
 private: 
     ACUData_s _latest_data = {};
 };
+#include <ACUEthernetInterface.tpp>
 
 #endif

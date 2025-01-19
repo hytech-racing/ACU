@@ -76,7 +76,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
     {
         if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
         {
-            for (int i = 0; i < num_chips / num_chip_selects; i++)
+            for (size_t i = 0; i < num_chips / num_chip_selects; i++)
             {
                 _write_and_delay_LOW(_chip_select[cs], 400);
                 SPI.transfer16(0);
@@ -128,7 +128,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 
     _start_wakeup_protocol();
     _start_GPIO_ADC_conversion();
-    // write_configuration(dcto_read, _cell_discharge_en);
 
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
@@ -151,7 +150,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     size_t gpio_count = 0;
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-
+        _start_wakeup_protocol();
         write_configuration(dcto_read, _cell_discharge_en);
 
         // Get buffers for each group we care about, all at once for ONE chip select line
@@ -373,6 +372,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration
     buffer_format[2] = ((over_voltage_threshold & 0x00F) << 4) | ((under_voltage_threshold & 0xF00) >> 8);
     buffer_format[3] = ((over_voltage_threshold & 0xFF0) >> 4);
 
+    _start_wakeup_protocol();
+
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
         _write_config_through_broadcast(dcto_mode, buffer_format, cell_balance_statuses);
@@ -433,8 +434,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage_ADC_conversion()
 {
-    uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_CV_ADC_CONVERSION | (adc_mode_cv_conversion << 7) | (discharge_permitted << 4) | static_cast<uint8_t>(adc_conversion_cell_select_mode);
-    std::array<uint8_t, 2> cmd;
+    uint16_t adc_cmd = (uint16_t) CMD_CODES_e::START_CV_ADC_CONVERSION | (adc_mode_cv_conversion << 7) | (discharge_permitted << 4) | static_cast<uint8_t>(adc_conversion_cell_select_mode);
+    std::array<uint8_t, 2> cmd; 
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd & 0xFF;
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
@@ -452,10 +453,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_conversion()
 {
-    uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_GPIO_ADC_CONVERSION | (adc_mode_gpio_conversion << 7) | static_cast<uint8_t>(adc_conversion_gpio_select_mode);
+    uint16_t adc_cmd = (uint16_t) CMD_CODES_e::START_GPIO_ADC_CONVERSION | (adc_mode_gpio_conversion << 7); // | static_cast<uint8_t>(adc_conversion_gpio_select_mode);
     std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd & 0xFF;
+    Serial.println(cmd[0]);
 
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
