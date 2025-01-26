@@ -1,11 +1,18 @@
 #include "ACUController.h"
 
+#define DEBUG 0
+
 template<size_t num_chips>
 bool check_faults(ACU_State_s<num_chips> acu_state) {
     return check_voltage_faults(acu_state.ov_counter, acu_state.uv_counter) || check_temperature_faults(acu_state.ot_counter);
 }
 
 bool check_voltage_faults(size_t ov_counter, size_t uv_counter) {
+    #ifdef DEBUG
+        Serial.print("# of Over Voltage Faults: "); Serial.println(ov_counter);
+        Serial.print("# of Under Voltage Faults: "); Serial.println(uv_counter)
+    #endif 
+
     return ov_counter > max_allowed_voltage_faults || uv_counter > max_allowed_voltage_faults;
 }
 
@@ -31,12 +38,12 @@ void update_acu_state(ACU_State_s<num_chips> acu_state, std::array<std::array<et
                     chip_balance_status = (0b1 << cell) | chip_balance_status;
                 }
                 // Check for faults
-                if (cell_voltage > max_voltage) {
+                if (cell_voltage > maximum_allowed_voltage) {
                     acu_state.ov_counter++;
                 } else {
                     acu_state.ov_counter = 0;
                 }
-                if (cell_voltage < min_voltage) {
+                if (cell_voltage < minimum_allowed_voltage) {
                     acu_state.uv_counter++;
                 } else {
                     acu_state.uv_counter = 0;
@@ -47,7 +54,7 @@ void update_acu_state(ACU_State_s<num_chips> acu_state, std::array<std::array<et
         }
         acu_state.cell_balance_statuses[chip] = chip_balance_status;
     }
-    check_faults(acu_state);
+    acu_state.voltage_fault = check_faults(acu_state);
 }
 
 void columb_counting() {

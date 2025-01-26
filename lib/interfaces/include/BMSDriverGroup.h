@@ -1,7 +1,7 @@
 #ifndef __BMSDriverGroup_H__
 #define __BMSDriverGroup_H__
-#include "LTCSPIInterface.h"
 
+#include "LTCSPIInterface.h"
 #include <Arduino.h>
 #include <SPI.h>
 #include <stdio.h>
