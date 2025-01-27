@@ -53,8 +53,9 @@ struct ACU_State_s {
     size_t uv_counter;
     size_t ov_counter;
     size_t ot_counter;
-    bool voltage_fault;
+    bool has_voltage_fault;
     bool charging_enabled;
+    bool current_pulse;
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 

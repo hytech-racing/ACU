@@ -2,6 +2,7 @@
 #define __ACUCONTROLLER_H__
 
 #include "Configuration.h"
+#include <Arduino.h>
 #include <array>
 #include <stddef.h>
 #include <stdio.h>
@@ -9,6 +10,8 @@
 #include "etl/optional.h"
 
 using volt = float; 
+
+void pulse_ams_watchdog(ACU_State_s<num_chips> acu_state);
 
 /**
  * @pre data has been gathered
@@ -34,7 +37,7 @@ bool check_temperature_faults(size_t ot_counter);
  * @post updates configuration bytes and sends configuration command 
 */
 template<size_t num_chips>
-void update_acu_state(ACU_State_s<num_chips> acu_state, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, 
+void update_acu_state(ACU_State_s<num_chips> &acu_state, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, 
                      float min_voltage, float max_voltage);
 
 /**

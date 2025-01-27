@@ -65,14 +65,21 @@ void loop()
         Serial.println("Enter looped!");
         // Can't be more than 1500 or t sleep will disable itself -> will notice initial update, but that's it.
         timer = 0;
-        // BMSGroup.manual_send_and_print();
+        // Reading in voltage / GPIO data
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
 
-        // Calculate cell_balance_statuses based on data.voltages
-        // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses, 
+        // Calculate cell_balance_statuses based on data.voltages + updating faults
         update_acu_state<num_chips>(acu_state, bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
-
+        
+        // Toggle pin 5 on teensy if there are no voltage faults <- AMS watchdog
+        if (!acu_state.has_voltage_fault) {
+            pulse_ams_watchdog(acu_state);
+        }
+        
+        // Update cell balances to the cells
         BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
+
+        // Send bms_data through message interface here
     }
 }

@@ -2,6 +2,11 @@
 
 #define DEBUG 0
 
+void pulse_ams_watchdog(ACU_State_s<num_chips> acu_state) {
+    digitalWrite(teensy_to_vehicle_watchdog_pin, acu_state.current_pulse ? HIGH : LOW);
+    acu_state.current_pulse = !acu_state.current_pulse;
+}
+
 template<size_t num_chips>
 bool check_faults(ACU_State_s<num_chips> acu_state) {
     return check_voltage_faults(acu_state.ov_counter, acu_state.uv_counter) || check_temperature_faults(acu_state.ot_counter);
@@ -21,7 +26,7 @@ bool check_temperature_faults(size_t ot_counter) {
 }
 
 template <size_t num_chips>
-void update_acu_state(ACU_State_s<num_chips> acu_state, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, float min_voltage, float max_voltage)
+void update_acu_state(ACU_State_s<num_chips> &acu_state, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, float min_voltage, float max_voltage)
 {
     for (size_t chip = 0; chip < num_chips; chip++)
     {
@@ -54,7 +59,7 @@ void update_acu_state(ACU_State_s<num_chips> acu_state, std::array<std::array<et
         }
         acu_state.cell_balance_statuses[chip] = chip_balance_status;
     }
-    acu_state.voltage_fault = check_faults(acu_state);
+    acu_state.has_voltage_fault = check_faults(acu_state);
 }
 
 void columb_counting() {
