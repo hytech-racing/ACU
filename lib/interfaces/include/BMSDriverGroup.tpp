@@ -275,7 +275,8 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
         chip_voltages_in[cell_Index] = voltage_in;
-
+        // Serial.print(voltage_in, BIN);
+        // Serial.print("\t");
         _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, voltage_in, battery_cell_count);
     }
     std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages[chip_index].data());
@@ -553,6 +554,7 @@ std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
 {
     constexpr size_t num_chips_on_chip_select = num_chips / num_chip_selects;
     std::array<uint8_t, 24 * num_chips_on_chip_select> combined_cv_1_to_12;
+    
     for (size_t chip = 0; chip < num_chips_on_chip_select; chip++)
     {
         size_t result_iterator = 24 * chip;
@@ -562,6 +564,7 @@ std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
         std::copy(cv_7_to_9.begin() + param_iterator, cv_7_to_9.begin() + param_iterator + 6, combined_cv_1_to_12.begin() + result_iterator + 12);
         std::copy(cv_10_to_12.begin() + param_iterator, cv_10_to_12.begin() + param_iterator + 6, combined_cv_1_to_12.begin() + result_iterator + 18);
     }
+   
     return combined_cv_1_to_12;
 }
 
