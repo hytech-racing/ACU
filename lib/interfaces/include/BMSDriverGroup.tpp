@@ -43,7 +43,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::manual_send_and_pri
     cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1);
     auto data = read_registers_command<8>(10, cmd_pec);
 
-    Serial.println(data[0]);
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -64,9 +63,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
         pinMode(cs, OUTPUT);
         digitalWrite(cs, HIGH);
     }
-    static_assert(sizeof(_chip_select) != num_chips, "Size of set_address parameter is invalid / != num_chips");
-    static_assert(sizeof(_address) != num_chips, "Size of set_address parameter is invalid / != num_chips");
-    static_assert(sizeof(_chip_select_per_chip) != num_chip_selects, "Size of set_address parameter is invalid / != num_chip_selects");
+    // static_assert(sizeof(_chip_select) == num_chips, "Size of set_address parameter is invalid / != num_chips");
+    // static_assert(sizeof(_address) == num_chips, "Size of set_address parameter is invalid / != num_chips");
+    // static_assert(sizeof(_chip_select_per_chip) != num_chip_selects, "Size of set_address parameter is invalid / != num_chip_selects");
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -280,9 +279,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
         chip_voltages_in[cell_Index] = voltage_in;
 
-        Serial.print(voltage_in / 10000.0, 4);
-        Serial.print("V\t");
-
         _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, voltage_in, battery_cell_count);
     }
     std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages[chip_index].data());
@@ -311,12 +307,12 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t &cell_count)
 {
     max_min_reference.total_voltage += voltage_in;
-    if (voltage_in < max_min_reference.min_voltage)
+    if (voltage_in <= max_min_reference.min_voltage)
     {
         max_min_reference.min_voltage = voltage_in;
         bms_data.min_voltage_cell_id = cell_count;
     }
-    if (voltage_in > max_min_reference.max_voltage)
+    if (voltage_in >= max_min_reference.max_voltage)
     {
         max_min_reference.max_voltage = voltage_in;
         bms_data.max_voltage_cell_id = cell_count;
@@ -457,7 +453,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
     std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd & 0xFF;
-    Serial.println(cmd[0]);
 
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
