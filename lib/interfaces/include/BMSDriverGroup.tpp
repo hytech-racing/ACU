@@ -75,12 +75,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
     {
         if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
         {
-            for (size_t i = 0; i < num_chips / num_chip_selects; i++)
-            {
-                _write_and_delay_LOW(_chip_select[cs], 400);
-                SPI.transfer16(0);
-                _write_and_delay_HIGH(_chip_select[cs], 400);
-            }
+            _write_and_delay_LOW(_chip_select[cs], 400);
+            SPI.transfer16(0);
+            _write_and_delay_HIGH(_chip_select[cs], 400);
         }
         else
         {

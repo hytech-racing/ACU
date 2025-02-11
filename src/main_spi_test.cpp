@@ -15,11 +15,11 @@ elapsedMillis timer = 0;
 using chip_type = LTC6811_Type_e;
 
 // Initialize chip_select, chip_select_per_chip, and address
-const int num_chips = 4;
+const int num_chips = 1;
 const int num_chip_selects = 1;
 std::array<int, num_chip_selects> cs = {10};
-std::array<int, num_chips> cs_per_chip = {10, 10, 10, 10};
-std::array<int, num_chips> addr = {4, 4, 4, 4};
+std::array<int, num_chips> cs_per_chip = {10};
+std::array<int, num_chips> addr = {4};
 ACU_State_s<num_chips> acu_state = {};
 
 // Instantiate BMS Driver Group
