@@ -2,6 +2,7 @@
 
 #define DEBUG 0
 
+template<size_t num_chips>
 void pulse_ams_watchdog(ACU_State_s<num_chips> acu_state) {
     digitalWrite(teensy_to_vehicle_watchdog_pin, acu_state.current_pulse ? HIGH : LOW);
     acu_state.current_pulse = !acu_state.current_pulse;
@@ -15,7 +16,7 @@ bool check_faults(ACU_State_s<num_chips> acu_state) {
 bool check_voltage_faults(size_t ov_counter, size_t uv_counter) {
     #ifdef DEBUG
         Serial.print("# of Over Voltage Faults: "); Serial.println(ov_counter);
-        Serial.print("# of Under Voltage Faults: "); Serial.println(uv_counter)
+        Serial.print("# of Under Voltage Faults: "); Serial.println(uv_counter);
     #endif 
 
     return ov_counter > max_allowed_voltage_faults || uv_counter > max_allowed_voltage_faults;
