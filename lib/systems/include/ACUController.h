@@ -2,7 +2,6 @@
 #define __ACUCONTROLLER_H__
 
 #include "Configuration.h"
-#include <Arduino.h>
 #include <array>
 #include <stddef.h>
 #include <stdio.h>
