@@ -1,7 +1,5 @@
 #include "ACUController.h"
 
-#define DEBUG 0
-
 template<size_t num_chips>
 void pulse_ams_watchdog(ACU_State_s<num_chips> acu_state) {
     digitalWrite(teensy_to_vehicle_watchdog_pin, acu_state.current_pulse ? HIGH : LOW);
