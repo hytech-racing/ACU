@@ -34,17 +34,17 @@ void print_voltages(driver_data data)
     Serial.println("V");
 
     Serial.print("Minimum Voltage: ");
-    Serial.print(data.min_voltage / 10000.0, 4);
+    Serial.print(data.min_voltage, 4);
     Serial.print("V\tLocation of Minimum Voltage: ");
     Serial.println(data.min_voltage_cell_id);
 
     Serial.print("Maxmimum Voltage: ");
-    Serial.print(data.max_voltage / 10000.0, 4);
+    Serial.print(data.max_voltage, 4);
     Serial.print("V\tLocation of Maximum Voltage: ");
     Serial.println(data.max_voltage_cell_id);
 
     Serial.print("Average Voltage: ");
-    Serial.print(data.total_voltage / (num_chips * 21) / 10000.0, 4);
+    Serial.print(data.total_voltage / (num_chips * 21), 4);
     Serial.println("V");
 
     Serial.println();
@@ -58,7 +58,7 @@ void print_voltages(driver_data data)
         {
             if(voltage)
             {
-                Serial.print((*voltage) / 10000.0, 4);
+                Serial.print((*voltage), 4);
                 Serial.print("V\t");
             }
 
