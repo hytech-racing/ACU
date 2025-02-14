@@ -147,6 +147,7 @@ void loop()
                 }
             }
         }
+
         BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
 
         // Send bms_data through message interface here
