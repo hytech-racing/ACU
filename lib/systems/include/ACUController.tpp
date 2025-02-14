@@ -23,7 +23,7 @@ void update_acu_state(ACU_State_s<num_chips> &acu_state, std::array<std::array<e
 {
     for (size_t chip = 0; chip < num_chips; chip++)
     {
-        uint16_t chip_balance_status;
+        uint16_t chip_balance_status = 0;
         for (size_t cell = 0; cell < voltages[chip].size(); cell++)
         {   
             // Will only get voltage if not a null pointer

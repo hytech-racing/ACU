@@ -1,5 +1,6 @@
 #include <SPI.h>
 #include "BMSDriverGroup.h"
+#include "WatchdogInterface.h"
 #include <LTCSPIInterface.h>
 #include "Configuration.h"
 #include "ACUController.h"
@@ -74,7 +75,7 @@ void loop()
         
         // Toggle pin 5 on teensy if there are no voltage faults <- AMS watchdog
         if (!acu_state.has_voltage_fault) {
-            pulse_ams_watchdog(acu_state);
+            pulse_ams_watchdog(acu_state.current_pulse);
         }
         
         // Update cell balances to the cells

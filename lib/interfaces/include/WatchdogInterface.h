@@ -3,6 +3,6 @@
 
 #include <Arduino.h>
 
-void pulse_ams_watchdog(bool current_pulse);
+void pulse_ams_watchdog(bool &current_pulse, int teensy_to_vehicle_watchdog_pin = 5);
 
 #endif
