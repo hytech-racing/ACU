@@ -126,8 +126,10 @@ void loop()
     
         // Calculate cell_balance_statuses based on data.voltages
         // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
-        // update_acu_state<num_chips>(acu_state, bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
+        update_acu_state<num_chips>(acu_state, bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
         
+        
+
         for(size_t chip_index = 0; chip_index < bms_data.voltages.size(); chip_index++)
         {
             auto segment_voltages = bms_data.voltages[chip_index];
@@ -145,16 +147,6 @@ void loop()
                 }
             }
         }
-
-        // Calculate cell_balance_statuses based on data.voltages + updating faults
-        update_acu_state<num_chips>(acu_state, bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
-        
-        // Toggle pin 5 on teensy if there are no voltage faults <- AMS watchdog
-        if (!acu_state.has_voltage_fault) {
-            pulse_ams_watchdog(acu_state.current_pulse);
-        }
-        
-        // Update cell balances to the cells
         BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
 
         // Send bms_data through message interface here
