@@ -95,7 +95,7 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
-    using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, num_chips>;
+    using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
 
