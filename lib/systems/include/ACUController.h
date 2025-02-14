@@ -1,14 +1,12 @@
 #ifndef __ACUCONTROLLER_H__
 #define __ACUCONTROLLER_H__
 
-#include "Configuration.h"
 #include <array>
 #include <stddef.h>
 #include <stdio.h>
 #include <cstdint>
 #include "etl/optional.h"
-
-using volt = float; 
+#include "SharedFirmwareTypes.h"
 
 template<size_t num_chips>
 struct ACU_State_s {
