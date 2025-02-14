@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <string>
 
+#include <cstdint>
+
 elapsedMillis timer = 0;
 
 using chip_type = LTC6811_Type_e;
@@ -25,6 +27,16 @@ ACU_State_s<num_chips> acu_state = {};
 
 // Instantiate BMS Driver Group
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
+
+void setBit(uint16_t &value, uint8_t index, bool bitValue) {
+    if (index >= 16) return; // Ensure index is within range
+
+    if (bitValue) {
+        value |= (1 << index);  // Set the bit
+    } else {
+        value &= ~(1 << index); // Clear the bit
+    }
+}
 
 template <typename driver_data>
 void print_voltages(driver_data data)
@@ -61,11 +73,34 @@ void print_voltages(driver_data data)
                 Serial.print((*voltage) / 10000.0, 4);
                 Serial.print("V\t");
             }
-
         }
         chip_index++;
         Serial.println();
     }
+
+    int cti = 0;
+    for(auto temp : data.cell_temperatures)
+    {
+        Serial.print(" temp id");
+        Serial.print(cti);
+        Serial.print(" val \t");
+        Serial.print("");
+        Serial.print(temp);
+        cti++;
+    }
+    Serial.println();
+    Serial.println();
+    int temp_index = 0;
+    for(auto bt : data.board_temperatures)
+    {
+        Serial.print("board temp id");
+        Serial.print(temp_index);
+        Serial.print(" val ");
+        Serial.print("");
+        Serial.print(bt);
+        temp_index++;
+    }
+    Serial.println();
 }
 
 void setup()
@@ -93,7 +128,24 @@ void loop()
         // Calculate cell_balance_statuses based on data.voltages
         // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
         // update_acu_state<num_chips>(acu_state, bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
-
+        
+        for(size_t chip_index = 0; chip_index < bms_data.voltages.size(); chip_index++)
+        {
+            auto segment_voltages = bms_data.voltages[chip_index];
+            for(size_t j = 0; j < segment_voltages.size(); j++)
+            {
+                auto opt_volt = segment_voltages[j];
+                if(opt_volt)
+                {
+                    if(((*opt_volt) / 10000.0) > 3.8)
+                    {
+                        setBit(acu_state.cell_balance_statuses[chip_index], j, true);
+                    } else {
+                        setBit(acu_state.cell_balance_statuses[chip_index], j, false);
+                    }
+                }
+            }
+        }
         BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
     }
 }

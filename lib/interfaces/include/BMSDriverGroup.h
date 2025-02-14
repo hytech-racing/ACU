@@ -96,7 +96,7 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
-    using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
+    using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
 
@@ -269,7 +269,7 @@ public:
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
      * out of the 16 bits
      */
-    std::array<uint16_t, num_chips> _cell_discharge_en; // not const
+    std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const
 };
 
 #include <BMSDriverGroup.tpp>

@@ -140,7 +140,7 @@ typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broadcast()
 {
     ReferenceMaxMin max_min_reference;
-    BMSDriverData bms_data;
+    BMSDriverData bms_data = {};
     constexpr size_t data_size = 8 * (num_chips / num_chip_selects);
     size_t battery_cell_count = 0;
     size_t gpio_count = 0;
@@ -333,9 +333,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         }
         gpio_count++;
     }
-    else if ((chip_num % 2) && gpio_Index == 4)
+    else if ((chip_num % 2) && gpio_Index == 5)
     {
-        bms_data.board_temperatures[(chip_num + 2) / 2] = -66.875 + 218.75 * (gpio_in / 50000.0); // caculation for SHT31 temperature in C
+        // bms_data.board_temperatures[(chip_num + 2) / 2] = -66.875 + 218.75 * ( gpio_in  / 50000.0); // caculation for SHT31 temperature in C
+        constexpr float mcp_9701_temperature_coefficient = 19.5f;
+        constexpr float mcp_9701_output_v_at_0c = 0.4f;
+        bms_data.board_temperatures[(chip_num +2)/2] =  (( static_cast<float>(gpio_in)  / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
+        // bms_data.board_temperatures[(chip_num +2)/2] = 0;
         if (gpio_in > max_min_reference.max_board_temp_voltage)
         {
             max_min_reference.total_voltage = gpio_in;
