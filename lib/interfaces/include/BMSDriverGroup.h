@@ -9,6 +9,7 @@
 #include "LTCSPIInterface.h"
 #include <cstdint>
 #include "etl/optional.h"
+#include "SharedFirmwareTypes.h"
 
 enum class LTC6811_Type_e
 {
@@ -61,15 +62,13 @@ enum class ADC_MODE_e : uint8_t
     FILTERED = 0x3
 };
 
-using volt = float;
-using celcius = float;
 template <size_t num_chips, size_t num_humidity_sensors, size_t num_board_thermistors>
 struct BMSData
 {
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages;
     std::array<celcius, 4 * num_chips> cell_temperatures;
     std::array<float, num_humidity_sensors> humidity;
-    std::array<float, num_board_thermistors> board_temperatures;
+    std::array<celcius, num_board_thermistors> board_temperatures;
     float min_voltage;
     float max_voltage;
     size_t min_voltage_cell_id;              // 0 - 125
@@ -83,13 +82,13 @@ struct BMSData
 
 struct ReferenceMaxMin
 {
-    uint32_t total_voltage = 0;
-    uint16_t max_voltage = 0;
-    uint16_t min_voltage = 65535;
+    volt total_voltage = 0;
+    volt max_voltage = 0;
+    volt min_voltage = 65535;
     uint16_t max_humidity = 0;
     uint16_t max_thermistor_voltage = 0;
     uint16_t max_board_temp_voltage = 0;
-    float total_thermistor_temps = 0;
+    celcius total_thermistor_temps = 0;
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -158,7 +157,7 @@ public:
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t &cell_count);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 

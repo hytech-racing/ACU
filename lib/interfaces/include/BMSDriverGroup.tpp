@@ -265,7 +265,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
                                                                             size_t chip_index, size_t &battery_cell_count)
 {
     int cell_count = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
-    std::array<uint16_t, 12> chip_voltages_in;
+    std::array<volt, 12> chip_voltages_in;
     for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
     {
         std::array<uint8_t, 2> data_in_cell_voltage;
@@ -274,10 +274,9 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
         std::copy(start, end, data_in_cell_voltage.begin());
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
-        chip_voltages_in[cell_Index] = voltage_in;
-        // Serial.print(voltage_in, BIN);
-        // Serial.print("\t");
-        _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, voltage_in, battery_cell_count);
+        chip_voltages_in[cell_Index] = voltage_in / 10000.0;
+        
+        _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, chip_voltages_in[cell_index], battery_cell_count);
     }
     std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages[chip_index].data());
     return bms_data;
@@ -302,7 +301,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t &cell_count)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count)
 {
     max_min_reference.total_voltage += voltage_in;
     if (voltage_in <= max_min_reference.min_voltage)
