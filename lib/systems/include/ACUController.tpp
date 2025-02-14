@@ -26,7 +26,7 @@ void update_acu_state(ACU_State_s<num_chips> &acu_state, std::array<std::array<e
             {
                 // Get cell voltage from optional
                 volt cell_voltage = *voltages[chip][cell];
-                if (max_voltage - (cell_voltage) < 200 && (cell_voltage) - min_voltage > 200)
+                if (max_voltage - (cell_voltage) < 3.0 && (cell_voltage) - min_voltage > 4.2)
                 { // balance if the cell voltage differential from the max voltage is .02V or less and if the cell voltage differential from the minimum voltage is 0.02V or greater (progressive)
                     chip_balance_status = (0b1 << cell) | chip_balance_status;
                 }

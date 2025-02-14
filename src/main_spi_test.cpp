@@ -82,7 +82,7 @@ void print_voltages(driver_data data)
     int cti = 0;
     for(auto temp : data.cell_temperatures)
     {
-        Serial.print(" temp id");
+        Serial.print(" temp id ");
         Serial.print(cti);
         Serial.print(" val \t");
         Serial.print("");
@@ -92,7 +92,7 @@ void print_voltages(driver_data data)
     Serial.println();
     Serial.println();
     int temp_index = 0;
-    for(auto bt : data.board_temperatures)
+    for(auto bt : data.board_temperatures) 
     {
         Serial.print("board temp id");
         Serial.print(temp_index);
@@ -147,8 +147,16 @@ void loop()
                 }
             }
         }
-
-        BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
+         
+        /**
+         * Be extra careful with cell balancing
+         * Is it possible to get a false CCU CAN message? Should we check for that?
+         * Perhaps we can check if the message propogates consistently with the same message, then cell balance
+         */
+        if (1) // ~CCU Message Exists
+        {   
+            BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
+        }
 
         // Send bms_data through message interface here
     }

@@ -46,7 +46,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::manual_send_and_pri
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr) :
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, BMS_DRIVER_PARAMS _bms_config) :
         _pec15Table(_initialize_Pec_Table()), 
         _chip_select(cs),
         _chip_select_per_chip(cs_per_chip),
@@ -146,7 +146,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     size_t gpio_count = 0;
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        _start_wakeup_protocol();
         write_configuration(dcto_read, _cell_discharge_en);
 
         // Get buffers for each group we care about, all at once for ONE chip select line

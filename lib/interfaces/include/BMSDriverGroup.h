@@ -11,6 +11,37 @@
 #include "etl/optional.h"
 #include "SharedFirmwareTypes.h"
 
+struct BMS_DRIVER_DEFUALT_PARAMS
+{
+    const bool device_refup_mode = true;
+    const bool adcopt = false;
+    const uint16_t gpios_enabled = 0x1F; // There are 5 GPIOs, we are using all 5 so they are all given a 1
+    const bool dcto_read = 0x1;
+    const bool dcto_write = 0x0;
+    const int total_ic = 12;      // Number of LTC6811-2 ICs that are used in the accumulator
+    const int even_ic_cells = 12; // Number of cells monitored by ICs with even addresses
+    const int odd_ic_cells = 9;   // Number of cells monitored by ICS with odd addresses
+    const int chip_select_9 = 9;
+    const int chip_select_10 = 10;
+    const int adc_conversion_cell_select_mode = 0;
+    const int adc_conversion_gpio_select_mode = 0;
+    const uint8_t discharge_permitted = 0x0;
+    const uint8_t adc_mode_cv_conversion = 0x1;
+    const uint8_t adc_mode_gpio_conversion = 0x1;
+    const int minimum_allowed_voltage = 30000; // Minimum allowable single cell voltage in units of 100μV
+    const int maximum_allowed_voltage = 42000; // Maxiumum allowable single cell voltage in units of 100μV
+    const size_t max_allowed_voltage_faults = 20;
+    const size_t max_allowed_temp_faults = 20;
+    const int maximum_total_voltage = 5330000;     // Maximum allowable pack total voltage in units of 100μV
+    const int maximum_thermistor_voltage = 26225;  // Maximum allowable pack temperature corresponding to 60C in units 100μV
+    const uint16_t under_voltage_threshold = 1874; // 3.0V  // Minimum voltage value following datasheet formula: Comparison Voltage = (VUV + 1) • 16 • 100μV
+    const uint16_t over_voltage_threshold = 2625;  // 4.2V  // Maximum voltage value following datasheet formula: Comparison Voltage = VOV • 16 • 100μV
+    const uint16_t gpio_enable = 0x1F;
+    const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
+    const float cv_adc_conversion_time_us = 13;
+    const float gpio_adc_conversion_time_us = 3.1;
+};
+
 enum class LTC6811_Type_e
 {
     LTC6811_1 = 0,
@@ -97,7 +128,7 @@ class BMSDriverGroup
 public:
     using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
 
-    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
+    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, BMS_DRIVER_PARAMS _bms_config = {});
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -132,7 +163,12 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
-//private:
+    private:
+    /**
+     * Create Config Variable
+    */
+    BMS_DRIVER_DEFUALT_PARAMS
+
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data
@@ -151,8 +187,14 @@ public:
      */
     void _start_wakeup_protocol();
 
+    /**
+     * 
+    */
     BMSDriverData _read_data_through_broadcast();
 
+    /**
+     * 
+    */
     BMSDriverData _read_data_through_address();
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
@@ -223,12 +265,12 @@ public:
      */
     uint8_t _get_cmd_address(int address) { return 0x80 | (address << 3); }
 
-    /** 
+    /**
      * initializes PEC table
      * Made static so that it can be called in constructor -> _pec15table is made const
      * This implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
      * On page <76>, section: Applications Information
-    */
+     */
     constexpr std::array<uint16_t, 256> _initialize_Pec_Table();
 
     /**

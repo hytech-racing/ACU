@@ -8,6 +8,11 @@
 #include "etl/optional.h"
 #include "SharedFirmwareTypes.h"
 
+namespace ACU_CONTROLLER_DEFUALT_PARAMS {
+    constexpr const int teensy_to_vehicle_watchdog_pin = 5;
+    constexpr const int teensy_OK_pin = 6;
+};
+
 template<size_t num_chips>
 struct ACU_State_s {
     size_t uv_counter;
