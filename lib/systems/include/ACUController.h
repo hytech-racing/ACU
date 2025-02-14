@@ -19,9 +19,6 @@ struct ACU_State_s {
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 
-template<size_t num_chips>
-void pulse_ams_watchdog(ACU_State_s<num_chips> acu_state);
-
 /**
  * @pre data has been gathered
  * @return boolean, true if there exists any fault

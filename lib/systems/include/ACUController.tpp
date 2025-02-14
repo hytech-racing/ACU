@@ -1,12 +1,6 @@
 #include "ACUController.h"
 
 template<size_t num_chips>
-void pulse_ams_watchdog(ACU_State_s<num_chips> acu_state) {
-    digitalWrite(teensy_to_vehicle_watchdog_pin, acu_state.current_pulse ? HIGH : LOW);
-    acu_state.current_pulse = !acu_state.current_pulse;
-}
-
-template<size_t num_chips>
 bool check_faults(ACU_State_s<num_chips> acu_state) {
     return check_voltage_faults(acu_state.ov_counter, acu_state.uv_counter) || check_temperature_faults(acu_state.ot_counter);
 }
