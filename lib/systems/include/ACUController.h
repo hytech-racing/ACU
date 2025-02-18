@@ -8,6 +8,14 @@
 #include "etl/optional.h"
 #include "SharedFirmwareTypes.h"
 
+
+namespace ACU_CONTROLLER_DEFAULT_PARAMS
+{
+    constexpr const float OV_THRESH = 4.2; // Volts
+    constexpr const float UV_THRESH = 3.2; // Volts
+    constexpr const float OT_THRESH = 65.0; // Celcius
+};
+
 template <size_t num_chips>
 struct ACU_State_s
 {
@@ -24,6 +32,20 @@ template<size_t num_chips>
 class ACUController
 {
 public:
+    /**
+     * ACU Controller Constructor
+     * @param ov_thresh_v overvoltage threshold value | units in volts 
+     * @param uv_thresh_v undervoltage threshold value | units in volts
+     * @param ot_thresh_c overtemp threshold value | units in celcius
+    */
+    void ACUController(volt ov_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::OV_THRESH, 
+                       volt uv_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::UV_THRESH, 
+                       celcius ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::OT_THRESH) : 
+        _ov_thresh_v(ov_thresh_v),
+        _uv_thresh_v(uv_thresh_v),
+        _ot_thresh_c(ot_thresh_c)
+        {};
+
     /**
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
@@ -55,7 +77,21 @@ private:
     void _columb_counting();
 
 private:
+    /**
+     * @brief ACU State Holder
+     * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
+     * state is packaged this way so that we can feed it directly into the message interface as a struct
+    */
     ACU_State_s<num_chips> state = {};
+
+    // Overvoltage threshold in volts
+    const volt _ov_thresh_v = 0;
+
+    // Undervoltage threshold in volts
+    const volt __uv_thresh_v = 0;
+
+    // Overtemp threshold in celcius
+    const celcius _ot_thresh_c = 0;
 };
 
 #include "ACUController.tpp"

@@ -24,10 +24,12 @@ constexpr int num_chip_selects = 1;
 std::array<int, num_chip_selects> cs = {10};
 std::array<int, num_chips> cs_per_chip = {10, 10};
 std::array<int, num_chips> addr = {4, 5};
-ACU_State_s<num_chips> acu_state = {};
 
 // Instantiate BMS Driver Group
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
+
+// Instantiate ACU Controller
+ACUController<num_chips> controller = ACUController<num_chips>();
 
 void setBit(uint16_t &value, uint8_t index, bool bitValue) {
     if (index >= 16) return; // Ensure index is within range
@@ -88,9 +90,6 @@ void setup()
     Serial.println("Setup Finished!");
     Serial.println();
 }
-
-int ci = 0;
-int ji = 0;
 
 void loop()
 {
