@@ -80,6 +80,7 @@ void print_voltages(driver_data data)
         chip_index++;
         Serial.println();
     }
+    
 }
 
 void setup()

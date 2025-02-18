@@ -140,7 +140,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                                                                                                                         data_in_cell_voltages_7_to_9,
                                                                                                                         data_in_cell_voltages_10_to_12);
 
-        std::array<uint8_t, 10 * (num_chips / num_chip_selects)> data_in_temps_1_to_12 = _package_auxillary_data(data_in_auxillaries_1_to_3,
+        std::array<uint8_t, 10 * (num_chips / num_chip_selects)> data_in_temps_1_to_5 = _package_auxillary_data(data_in_auxillaries_1_to_3,
                                                                                                                  data_in_auxillaries_4_to_6);
 
         // DEBUG: Check to see that the PEC is what we expect it to be
@@ -158,7 +158,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             // load humidity / temperatures function
             std::array<uint8_t, 10> gpio_1_to_5_for_one_chip;
-            start = data_in_temps_1_to_12.begin() + (chip_index * 10);
+            start = data_in_temps_1_to_5.begin() + (chip_index * 10);
             end = start + 10;
             std::copy(start, end, gpio_1_to_5_for_one_chip.begin());
             bms_data = _load_auxillaries(bms_data, max_min_reference, gpio_1_to_5_for_one_chip, chip_index, gpio_count);
@@ -289,7 +289,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
     {
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
         bms_data.cell_temperatures[gpio_count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 273.15; // calculation for thermistor temperature in C
-        max_min_reference.total_thermistor_temps += gpio_in;
+        max_min_reference.total_thermistor_temps += bms_data.cell_temperatures[gpio_count];
         if (gpio_in > max_min_reference.max_thermistor_voltage)
         {
             max_min_reference.max_thermistor_voltage = gpio_in;
@@ -302,13 +302,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         // bms_data.board_temperatures[(chip_num + 2) / 2] = -66.875 + 218.75 * ( gpio_in  / 50000.0); // caculation for SHT31 temperature in C
         constexpr float mcp_9701_temperature_coefficient = 19.5f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
-        // Don't depend on int rounding
-        int chipi = 0;
-        if (chip_num % 2 == 0) {
-            chipi = (chip_num + 1) / 2;
-        } else {
-            chipi = (chip_num + 1) / 2;
-        }
+        // Each chip has it's own board temp now, so there's chip_num board temps
         bms_data.board_temperatures[chip_num] =  (( static_cast<float>(gpio_in) / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
         // bms_data.board_temperatures[(chip_num +2)/2] = 0;
         if (gpio_in > max_min_reference.max_board_temp_voltage)

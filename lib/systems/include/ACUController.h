@@ -84,7 +84,7 @@ private:
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
      * state is packaged this way so that we can feed it directly into the message interface as a struct
     */
-    ACUData _acu_state;
+    ACUData _acu_state = {};
 
     // Overvoltage threshold in volts
     const volt _ov_thresh_v = 0;

@@ -68,4 +68,5 @@ void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optio
 template <size_t num_chips>
 void ACUController<num_chips>::_columb_counting()
 {
+    // Numbers
 }
