@@ -80,7 +80,31 @@ void print_voltages(driver_data data)
         chip_index++;
         Serial.println();
     }
-    
+     int cti = 0;
+    for(auto temp : data.cell_temperatures)
+    {
+        Serial.print("temp id ");
+        Serial.print(cti);
+        Serial.print(" val \t");
+        Serial.print("");
+        Serial.print(temp);
+        Serial.println();
+        cti++;
+    }
+    Serial.println();
+
+    int temp_index = 0;
+    for(auto bt : data.board_temperatures)
+    {
+        Serial.print("board temp id");
+        Serial.print(temp_index);
+        Serial.print(" val ");
+        Serial.print("");
+        Serial.print(bt);
+        temp_index++;
+    }
+    Serial.println();
+    Serial.println();
 }
 
 void setup()
