@@ -59,7 +59,7 @@ void print_voltages(driver_data data)
     Serial.println(data.max_voltage_cell_id);
 
     Serial.print("Average Voltage: ");
-    Serial.print(data.total_voltage / (num_chips / 2 * 21), 4);
+    Serial.print(data.total_voltage / ((num_chips / 2) * 21), 4);
     Serial.println("V");
 
     Serial.println();
@@ -81,7 +81,7 @@ void print_voltages(driver_data data)
         Serial.println();
     }
      int cti = 0;
-    for(auto temp : data.cell_temperatures)
+    for(auto temp : data.cell_temperatures) // Should be 4 per chip
     {
         Serial.print("temp id ");
         Serial.print(cti);
@@ -94,7 +94,7 @@ void print_voltages(driver_data data)
     Serial.println();
 
     int temp_index = 0;
-    for(auto bt : data.board_temperatures)
+    for(auto bt : data.board_temperatures) // Should be 1 per chip
     {
         Serial.print("board temp id");
         Serial.print(temp_index);
