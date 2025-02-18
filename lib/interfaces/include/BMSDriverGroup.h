@@ -73,8 +73,8 @@ struct BMSData
     float max_voltage;
     size_t min_voltage_cell_id;              // 0 - 125
     size_t max_voltage_cell_id;              // 0 - 125
-    size_t max_board_temperature_segment_id; // 0 - 5
-    size_t max_humidity_segment_id;          // 0 - 5
+    size_t max_board_temperature_segment_id; // 0 - 11
+    size_t max_humidity_segment_id;          // DNP
     size_t max_cell_temperature_cell_id;     // 0 - 47
     float total_voltage;
     float average_cell_temperature;
@@ -95,7 +95,7 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
-    using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
+    using BMSDriverData = BMSData<num_chips, 0, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
 

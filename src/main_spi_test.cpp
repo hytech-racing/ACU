@@ -19,8 +19,8 @@ elapsedMillis timer = 0;
 using chip_type = LTC6811_Type_e;
 
 // Initialize chip_select, chip_select_per_chip, and address
-const int num_chips = 2;
-const int num_chip_selects = 1;
+constexpr int num_chips = 2;
+constexpr int num_chip_selects = 1;
 std::array<int, num_chip_selects> cs = {10};
 std::array<int, num_chips> cs_per_chip = {10, 10};
 std::array<int, num_chips> addr = {4, 5};
@@ -43,7 +43,7 @@ template <typename driver_data>
 void print_voltages(driver_data data)
 {
     Serial.print("Total Voltage: ");
-    Serial.print(data.total_voltage / 10000.0, 4);
+    Serial.print(data.total_voltage, 4);
     Serial.println("V");
 
     Serial.print("Minimum Voltage: ");
@@ -57,7 +57,7 @@ void print_voltages(driver_data data)
     Serial.println(data.max_voltage_cell_id);
 
     Serial.print("Average Voltage: ");
-    Serial.print(data.total_voltage / (num_chips * 21), 4);
+    Serial.print(data.total_voltage / (num_chips / 2 * 21), 4);
     Serial.println("V");
 
     Serial.println();
@@ -65,7 +65,7 @@ void print_voltages(driver_data data)
     size_t chip_index = 1;
     for(auto chip_voltages : data.voltages )
     {
-        Serial.print("chip ");
+        Serial.print("Chip ");
         Serial.println(chip_index);
         for(auto voltage : chip_voltages)
         {
@@ -78,30 +78,6 @@ void print_voltages(driver_data data)
         chip_index++;
         Serial.println();
     }
-
-    int cti = 0;
-    for(auto temp : data.cell_temperatures)
-    {
-        Serial.print(" temp id");
-        Serial.print(cti);
-        Serial.print(" val \t");
-        Serial.print("");
-        Serial.print(temp);
-        cti++;
-    }
-    Serial.println();
-    Serial.println();
-    int temp_index = 0;
-    for(auto bt : data.board_temperatures)
-    {
-        Serial.print("board temp id");
-        Serial.print(temp_index);
-        Serial.print(" val ");
-        Serial.print("");
-        Serial.print(bt);
-        temp_index++;
-    }
-    Serial.println();
 }
 
 void setup()
@@ -113,40 +89,25 @@ void setup()
     Serial.println();
 }
 
+int ci = 0;
+int ji = 0;
+
 void loop()
 {
-    if (timer > 300)
+    if (timer > 800)
     {
         // Serial.println("Enter looped!");
         // Can't be more than 1500 or t sleep will disable itself -> will notice initial update, but that's it.
         timer = 0;
-        // Reading in voltage / GPIO data
+        auto cmd_pec = BMSGroup._generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
+
+        // BMSGroup.manual_send_and_print();
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
     
         // Calculate cell_balance_statuses based on data.voltages
         // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
-        update_acu_state<num_chips>(acu_state, bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
-        
-        
-
-        for(size_t chip_index = 0; chip_index < bms_data.voltages.size(); chip_index++)
-        {
-            auto segment_voltages = bms_data.voltages[chip_index];
-            for(size_t j = 0; j < segment_voltages.size(); j++)
-            {
-                auto opt_volt = segment_voltages[j];
-                if(opt_volt)
-                {
-                    if(((*opt_volt) / 10000.0) > 3.8)
-                    {
-                        setBit(acu_state.cell_balance_statuses[chip_index], j, true);
-                    } else {
-                        setBit(acu_state.cell_balance_statuses[chip_index], j, false);
-                    }
-                }
-            }
-        }
+        // update_acu_state<num_chips>(acu_state, bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
 
         BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
 
