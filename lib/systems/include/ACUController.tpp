@@ -1,24 +1,6 @@
 #include "ACUController.h"
 
 template <size_t num_chips>
-bool ACUController<num_chips>::_check_faults()
-{
-    return _check_voltage_faults() || _check_temperature_faults();
-}
-
-template <size_t num_chips>
-bool ACUController<num_chips>::_check_voltage_faults()
-{
-    return _acu_state.ov_counter > _max_allowed_voltage_faults || _acu_state.uv_counter > _max_allowed_voltage_faults;
-}
-
-template <size_t num_chips>
-bool ACUController<num_chips>::_check_temperature_faults()
-{
-    return _acu_state.ot_counter > _max_allowed_temp_faults;
-}
-
-template <size_t num_chips>
 void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, float min_voltage, float max_voltage)
 {
     for (size_t chip = 0; chip < num_chips; chip++)
@@ -63,6 +45,24 @@ void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optio
         _acu_state.cell_balance_statuses[chip] = chip_balance_status;
     }
     _acu_state.has_voltage_fault = _check_faults();
+}
+
+template <size_t num_chips>
+bool ACUController<num_chips>::_check_faults()
+{
+    return _check_voltage_faults() || _check_temperature_faults();
+}
+
+template <size_t num_chips>
+bool ACUController<num_chips>::_check_voltage_faults()
+{
+    return _acu_state.ov_counter > _max_allowed_voltage_faults || _acu_state.uv_counter > _max_allowed_voltage_faults;
+}
+
+template <size_t num_chips>
+bool ACUController<num_chips>::_check_temperature_faults()
+{
+    return _acu_state.ot_counter > _max_allowed_temp_faults;
 }
 
 template <size_t num_chips>
