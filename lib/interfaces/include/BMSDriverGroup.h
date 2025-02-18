@@ -67,7 +67,7 @@ struct BMSData
 {
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages;
     std::array<celcius, 4 * num_chips> cell_temperatures;
-    std::array<float, num_humidity_sensors> humidity;
+    std::array<float, num_humidity_sensors> humidity; // DNP
     std::array<celcius, num_board_thermistors> board_temperatures;
     float min_voltage;
     float max_voltage;

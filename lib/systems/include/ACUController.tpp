@@ -9,13 +9,13 @@ bool ACUController<num_chips>::_check_faults()
 template <size_t num_chips>
 bool ACUController<num_chips>::_check_voltage_faults()
 {
-    return _acu_state.ov_counter > max_allowed_voltage_faults || _acu_state.uv_counter > max_allowed_voltage_faults;
+    return _acu_state.ov_counter > _max_allowed_voltage_faults || _acu_state.uv_counter > _max_allowed_voltage_faults;
 }
 
 template <size_t num_chips>
 bool ACUController<num_chips>::_check_temperature_faults()
 {
-    return _acu_state.ot_counter > max_allowed_temp_faults;
+    return _acu_state.ot_counter > _max_allowed_temp_faults;
 }
 
 template <size_t num_chips>

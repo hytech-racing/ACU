@@ -13,6 +13,8 @@ namespace ACU_CONTROLLER_DEFAULT_PARAMS
     constexpr const float OV_THRESH = 4.2; // Volts
     constexpr const float UV_THRESH = 3.2; // Volts
     constexpr const float OT_THRESH = 65.0; // Celcius
+    constexpr const size_t MAX_NUM_VOLTAGE_FAULTS = 20; 
+    constexpr const size_t MAX_NUM_TEMP_FAULTS = 20; 
 };
 
 template <size_t num_chips>
@@ -42,10 +44,14 @@ public:
     */
     ACUController(volt ov_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::OV_THRESH, 
                        volt uv_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::UV_THRESH, 
-                       celcius ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::OT_THRESH) : 
+                       celcius ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::OT_THRESH, 
+                       size_t max_volt_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_VOLTAGE_FAULTS,
+                       size_t max_temp_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_TEMP_FAULTS) : 
         _ov_thresh_v(ov_thresh_v),
         _uv_thresh_v(uv_thresh_v),
-        _ot_thresh_c(ot_thresh_c)
+        _ot_thresh_c(ot_thresh_c),
+        _max_allowed_voltage_faults(max_volt_faults),
+        _max_allowed_temp_faults(max_temp_faults)
         {};
 
     /**
@@ -94,6 +100,12 @@ private:
 
     // Overtemp threshold in celcius
     const celcius _ot_thresh_c = 0;
+
+    // Maximum number of voltage faults allowed before watchdog shuts off
+    const size_t _max_allowed_voltage_faults = 0;
+
+    // Maximum number of temp faults allowed before watchdog shuts off
+    const celcius _max_allowed_temp_faults = 0;
 };
 
 #include "ACUController.tpp"
