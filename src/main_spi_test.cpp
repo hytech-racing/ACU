@@ -94,12 +94,11 @@ int ji = 0;
 
 void loop()
 {
-    if (timer > 800)
+    if (timer > 500) // Need an actual schedular
     {
         // Serial.println("Enter looped!");
         // Can't be more than 1500 or t sleep will disable itself -> will notice initial update, but that's it.
         timer = 0;
-        auto cmd_pec = BMSGroup._generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
 
         // BMSGroup.manual_send_and_print();
         auto bms_data = BMSGroup.read_data();

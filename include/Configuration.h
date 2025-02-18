@@ -48,14 +48,4 @@ const float gpio_adc_conversion_time_us = 3.1;
 const int teensy_to_vehicle_watchdog_pin = 5;
 const int teensy_OK_pin = 6;
 
-template<size_t num_chips>
-struct ACU_State_s {
-    size_t uv_counter;
-    size_t ov_counter;
-    size_t ot_counter;
-    bool voltage_fault;
-    bool charging_enabled;
-    std::array<uint16_t, num_chips> cell_balance_statuses = {};
-};
-
 #endif
