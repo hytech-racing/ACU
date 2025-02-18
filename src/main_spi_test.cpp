@@ -104,9 +104,9 @@ void loop()
     
         // Calculate cell_balance_statuses based on data.voltages
         // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
-        // update_acu_state<num_chips>(acu_state, bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
+        controller.update_acu_state(bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
 
-        BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
+        // BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
 
         // Send bms_data through message interface here
 
