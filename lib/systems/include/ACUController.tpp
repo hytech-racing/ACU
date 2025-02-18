@@ -31,11 +31,13 @@ void update_acu_state(ACU_State_s<num_chips> &acu_state, std::array<std::array<e
                     chip_balance_status = (0b1 << cell) | chip_balance_status;
                 }
                 // Check for faults
+                // Check overvoltage
                 if (cell_voltage > maximum_allowed_voltage) {
                     acu_state.ov_counter++;
                 } else {
                     acu_state.ov_counter = 0;
                 }
+                // Check undervoltage
                 if (cell_voltage < minimum_allowed_voltage) {
                     acu_state.uv_counter++;
                 } else {

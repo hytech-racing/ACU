@@ -19,6 +19,8 @@ struct ACU_State_s {
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 
+
+
 /**
  * @pre data has been gathered
  * @return boolean, true if there exists any fault
