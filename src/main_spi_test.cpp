@@ -100,7 +100,6 @@ void loop()
         // Can't be more than 1500 or t sleep will disable itself -> will notice initial update, but that's it.
         timer = 0;
 
-        // BMSGroup.manual_send_and_print();
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
     
@@ -111,5 +110,6 @@ void loop()
         BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
 
         // Send bms_data through message interface here
+
     }
 }

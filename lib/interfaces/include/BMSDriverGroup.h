@@ -101,8 +101,6 @@ public:
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
-    void manual_send_and_print();
-
     /**
      * INIT: ONLY CALLED ONCE at initialization. LTC6811 only needs to set up the PEC table
      * @post We should have initialized the PEC by calling generate_PEC_table(), so every other time
