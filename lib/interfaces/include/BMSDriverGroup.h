@@ -254,7 +254,7 @@ public:
     /**
      * We will only end up using the address if this is a LTC6811-2
      * NOTE: But if we are, we need to call a setup function to instatiate each with the correct addresses
-     * BMS Segments 1, 4, and 5 are on chip select 9
+     * EX) BMS Segments 1, 4, and 5 are on chip select 9
      * BMS Segments 2, 3, and 6 are on chip select 10
      * Those segments correspond to 2 ICs each, so the instance with chip_select 9
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10

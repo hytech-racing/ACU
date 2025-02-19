@@ -119,19 +119,24 @@ void setup()
 void loop()
 {
     if (timer > 500) // Need an actual schedular
-    {
-        // Serial.println("Enter looped!");
-        // Can't be more than 1500 or t sleep will disable itself -> will notice initial update, but that's it.
+    {   
+        // reset timer
         timer = 0;
 
+        // Read cell and auxillary data from the BMS Driver
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
-    
+
         // Calculate cell_balance_statuses based on data.voltages
         // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
         controller.update_acu_state(bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
+        
 
-        // BMSGroup.write_configuration(dcto_write, acu_state.cell_balance_statuses); // cell_balance_statuses is updated at this point
+        // Retrieve the cell balance status array from the controller
+        std::array<uint16_t, num_chips> cell_balance_config = controller.get_cell_balance_params();
+
+        // Rewrite the configuration for the chip
+        BMSGroup.write_configuration(dcto_write, cell_balance_config); 
 
         // Send bms_data through message interface here
 

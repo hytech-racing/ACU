@@ -41,6 +41,8 @@ public:
      * @param ov_thresh_v overvoltage threshold value | units in volts 
      * @param uv_thresh_v undervoltage threshold value | units in volts
      * @param ot_thresh_c overtemp threshold value | units in celcius
+     * @param max_volt_faults max number of voltage faults allowed
+     * @param max_temp_faults max number of temp faults allowed
     */
     ACUController(volt ov_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::OV_THRESH, 
                        volt uv_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::UV_THRESH, 
@@ -60,6 +62,16 @@ public:
      */
     void update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages,
                           float min_voltage, float max_voltage);
+
+    /**
+     * cell balance status getter function
+     * @post provides access to the ACU Controller's state's cell balance status array of length num chips
+     * With the intention of feeding the cell balance statuses into the BMS Driver to rewrite configurations
+    */
+    std::array<uint16_t, num_chips> get_cell_balance_params() {
+        return _acu_state.cell_balance_statuses;
+    }
+
 private:
     /**
      * @pre data has been gathered
