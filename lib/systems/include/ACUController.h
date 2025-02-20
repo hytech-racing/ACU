@@ -15,8 +15,8 @@ namespace ACU_CONTROLLER_DEFAULT_PARAMS
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 45.0; // Celsius
-    constexpr const size_t MAX_NUM_VOLTAGE_FAULTS = 20; 
-    constexpr const size_t MAX_NUM_TEMP_FAULTS = 20; 
+    constexpr const size_t MAX_NUM_VOLTAGE_FAULTS = 12; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
+    constexpr const size_t MAX_NUM_TEMP_FAULTS = 12; // Same as voltage fault count
 };
 
 template <size_t num_chips>
