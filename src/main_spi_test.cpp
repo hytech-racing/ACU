@@ -23,7 +23,7 @@ constexpr int num_chips = 2;
 constexpr int num_chip_selects = 1;
 std::array<int, num_chip_selects> cs = {10};
 std::array<int, num_chips> cs_per_chip = {10, 10};
-std::array<int, num_chips> addr = {4, 5};
+std::array<int, num_chips> addr = {0, 1};
 
 // Instantiate BMS Driver Group
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
@@ -80,27 +80,27 @@ void print_voltages(driver_data data)
         chip_index++;
         Serial.println();
     }
-     int cti = 0;
+    int cti = 1;
     for(auto temp : data.cell_temperatures) // Should be 4 per chip
     {
         Serial.print("temp id ");
         Serial.print(cti);
-        Serial.print(" val \t");
-        Serial.print("");
+        Serial.print(" val ");
         Serial.print(temp);
-        Serial.println();
+        Serial.print("\t");
+        if (cti % 4 == 3) Serial.println();
         cti++;
     }
     Serial.println();
 
-    int temp_index = 0;
+    int temp_index = 1;
     for(auto bt : data.board_temperatures) // Should be 1 per chip
     {
-        Serial.print("board temp id");
+        Serial.print("board temp id ");
         Serial.print(temp_index);
         Serial.print(" val ");
-        Serial.print("");
         Serial.print(bt);
+        Serial.print("\t");
         temp_index++;
     }
     Serial.println();
@@ -118,7 +118,7 @@ void setup()
 
 void loop()
 {
-    if (timer > 500) // Need an actual schedular
+    if (timer > 300) // Need an actual schedular
     {   
         // reset timer
         timer = 0;
@@ -129,14 +129,14 @@ void loop()
 
         // Calculate cell_balance_statuses based on data.voltages
         // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
-        controller.update_acu_state(bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
-        
+        // controller.update_acu_state(bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
+    
 
         // Retrieve the cell balance status array from the controller
-        std::array<uint16_t, num_chips> cell_balance_config = controller.get_cell_balance_params();
+        //std::array<uint16_t, num_chips> cell_balance_config = controller.get_cell_balance_params();
 
         // Rewrite the configuration for the chip
-        BMSGroup.write_configuration(dcto_write, cell_balance_config); 
+        //BMSGroup.write_configuration(dcto_write, cell_balance_config); 
 
         // Send bms_data through message interface here
 

@@ -45,10 +45,10 @@ public:
      * @param max_temp_faults max number of temp faults allowed
     */
     ACUController(volt ov_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::OV_THRESH, 
-                       volt uv_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::UV_THRESH, 
-                       celcius ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::OT_THRESH, 
-                       size_t max_volt_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_VOLTAGE_FAULTS,
-                       size_t max_temp_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_TEMP_FAULTS) : 
+                    volt uv_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::UV_THRESH, 
+                    celcius ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::OT_THRESH, 
+                    size_t max_volt_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_VOLTAGE_FAULTS,
+                    size_t max_temp_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_TEMP_FAULTS) : 
         _ov_thresh_v(ov_thresh_v),
         _uv_thresh_v(uv_thresh_v),
         _ot_thresh_c(ot_thresh_c),
