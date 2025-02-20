@@ -10,9 +10,11 @@
 
 namespace ACU_CONTROLLER_DEFAULT_PARAMS
 {
-    constexpr const float OV_THRESH = 4.2; // Volts
-    constexpr const float UV_THRESH = 3.2; // Volts
-    constexpr const float OT_THRESH = 65.0; // Celcius
+    constexpr const volt OV_THRESH = 4.2; // Volts
+    constexpr const volt UV_THRESH = 3.2; // Volts
+    constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
+    constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
+    constexpr const celsius RUNNING_OT_THRESH = 45.0; // Celsius
     constexpr const size_t MAX_NUM_VOLTAGE_FAULTS = 20; 
     constexpr const size_t MAX_NUM_TEMP_FAULTS = 20; 
 };
@@ -26,6 +28,7 @@ struct ACU_State_s
     bool has_voltage_fault;
     bool charging_enabled;
     bool current_pulse;
+    volt pack_total_voltage;
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 
@@ -38,20 +41,26 @@ public:
 
     /**
      * ACU Controller Constructor
-     * @param ov_thresh_v overvoltage threshold value | units in volts 
-     * @param uv_thresh_v undervoltage threshold value | units in volts
-     * @param ot_thresh_c overtemp threshold value | units in celcius
+     * @param ov_thresh_v over voltage threshold value | units in volts 
+     * @param uv_thresh_v under voltage threshold value | units in volts
+     * @param charging_ot_thresh_c overtemp threshold value | units in celsius
+     * @param funning_ot_thresh_c overtemp threshold value | units in celsius
+     * @param min_pack_total_voltage minimum pack total voltage | units in volts
      * @param max_volt_faults max number of voltage faults allowed
      * @param max_temp_faults max number of temp faults allowed
     */
     ACUController(volt ov_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::OV_THRESH, 
                     volt uv_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::UV_THRESH, 
-                    celcius ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::OT_THRESH, 
+                    celsius charging_ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::CHARGING_OT_THRESH, 
+                    celsius running_ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::RUNNING_OT_THRESH,
+                    volt min_pack_total_voltage = ACU_CONTROLLER_DEFAULT_PARAMS::MIN_PACK_TOTAL_VOLTAGE,
                     size_t max_volt_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_VOLTAGE_FAULTS,
                     size_t max_temp_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_TEMP_FAULTS) : 
         _ov_thresh_v(ov_thresh_v),
         _uv_thresh_v(uv_thresh_v),
-        _ot_thresh_c(ot_thresh_c),
+        _charging_ot_thresh_c(charging_ot_thresh_c),
+        _running_ot_thresh_c(running_ot_thresh_c),
+        _min_pack_total_v(min_pack_total_voltage),
         _max_allowed_voltage_faults(max_volt_faults),
         _max_allowed_temp_faults(max_temp_faults)
         {};
@@ -60,8 +69,8 @@ public:
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    void update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages,
-                          float min_voltage, float max_voltage);
+    void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, 
+        std::array<celsius, 4 * num_chips> cell_temps, std::array<celsius, num_chips> board_temps, float min_voltage, float max_voltage);
 
     /**
      * cell balance status getter function
@@ -94,7 +103,7 @@ private:
     /**
      * NOTE: TBD
     */
-    void _columb_counting();
+    void _coulumb_counting();
 
 private: 
     /**
@@ -111,13 +120,19 @@ private:
     const volt _uv_thresh_v = 0;
 
     // Overtemp threshold in celcius
-    const celcius _ot_thresh_c = 0;
+    const celsius _charging_ot_thresh_c = 0;
+
+    // Overtemp threshold in celcius
+    const celsius _running_ot_thresh_c = 0;
+
+    // Minimum voltage threshold for the entire battery pack
+    const volt _min_pack_total_v = 0;
 
     // Maximum number of voltage faults allowed before watchdog shuts off
     const size_t _max_allowed_voltage_faults = 0;
 
     // Maximum number of temp faults allowed before watchdog shuts off
-    const celcius _max_allowed_temp_faults = 0;
+    const celsius _max_allowed_temp_faults = 0;
 };
 
 #include "ACUController.tpp"
