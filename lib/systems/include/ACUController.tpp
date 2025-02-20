@@ -71,6 +71,7 @@ void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optio
         if (cell_temp > max_temp)
         {
             cell_ot_fault_triggered = true;
+            break;
         }
     }
     // Board Temperatures
@@ -79,6 +80,7 @@ void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optio
         if (board_temp > _charging_ot_thresh_c) // Choose charging ot threshold because it's always going to be lower, and we don't expect the board to be hotter than the cells
         {
             board_ot_fault_triggered = true;
+            break;
         }
     }
 
