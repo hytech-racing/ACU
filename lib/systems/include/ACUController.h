@@ -24,7 +24,8 @@ struct ACU_State_s
 {
     size_t uv_counter;
     size_t ov_counter;
-    size_t ot_counter;
+    size_t cell_ot_counter;
+    size_t board_ot_counter;
     bool has_voltage_fault;
     bool charging_enabled;
     bool current_pulse;
@@ -69,7 +70,7 @@ public:
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, 
+    void update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, 
         std::array<celsius, 4 * num_chips> cell_temps, std::array<celsius, num_chips> board_temps, float min_voltage, float max_voltage);
 
     /**

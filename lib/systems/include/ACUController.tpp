@@ -61,11 +61,12 @@ void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optio
     {
         if (cell_temp > max_temp)
         {
-            _acu_state.ot_counter++;
+            _acu_state.cell_ot_counter++;
+            break;
         }
         else
         {
-            _acu_state.ot_counter = 0;
+            _acu_state.cell_ot_counter = 0;
         }
     }
     // Board Temperatures
@@ -73,11 +74,11 @@ void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optio
     {
         if (board_temp > _charging_ot_thresh_c) // Choose charging ot threshold because it's always going to be lower, and we don't expect the board to be hotter than the cells
         {
-            _acu_state.ot_counter++;
+            _acu_state.board_ot_counter++;
         }
         else
         {
-            _acu_state.ot_counter = 0;
+            _acu_state.board_ot_counter = 0;
         }
     }
 
@@ -103,6 +104,8 @@ bool ACUController<num_chips>::_check_voltage_faults()
 template <size_t num_chips>
 bool ACUController<num_chips>::_check_temperature_faults()
 {
+    bool cell_ot_fault = _acu_state.cell_ot_counter > _max_allowed_temp_faults;
+    bool board_ot_fault = _acu_state.board_ot_counter > _max_allowed_temp_faults;
     return _acu_state.ot_counter > _max_allowed_temp_faults;
 }
 
