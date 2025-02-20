@@ -88,11 +88,9 @@ void print_voltages(driver_data data)
         Serial.print(" val ");
         Serial.print(temp);
         Serial.print("\t");
-        if (cti % 4 == 3) Serial.println();
+        if (cti % 4 == 0) Serial.println();
         cti++;
     }
-    Serial.println();
-
     int temp_index = 1;
     for(auto bt : data.board_temperatures) // Should be 1 per chip
     {
@@ -101,6 +99,7 @@ void print_voltages(driver_data data)
         Serial.print(" val ");
         Serial.print(bt);
         Serial.print("\t");
+        if (temp_index % 4 == 0) Serial.println();
         temp_index++;
     }
     Serial.println();

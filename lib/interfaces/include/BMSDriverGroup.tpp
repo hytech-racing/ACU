@@ -140,7 +140,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                                                                                                                         data_in_cell_voltages_10_to_12);
 
         std::array<uint8_t, 10 * (num_chips / num_chip_selects)> data_in_temps_1_to_5 = _package_auxillary_data(data_in_auxillaries_1_to_3,
-                                                                                                                 data_in_auxillaries_4_to_6);
+                                                                                                                data_in_auxillaries_4_to_6);
 
         // DEBUG: Check to see that the PEC is what we expect it to be
 
@@ -249,7 +249,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
-                                                                          size_t chip_index, size_t &gpio_count)
+                                                                        size_t chip_index, size_t &gpio_count)
 {
     for (int gpio_Index = 0; gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
     {
@@ -299,11 +299,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
     else // if ((chip_num % 2) && gpio_Index == 4) // For odd chips, the 5th GPIO serves as a board temp
     {
         // bms_data.board_temperatures[chip_num] = -66.875 + 218.75 * ( gpio_in  / 50000.0); // caculation for SHT31 temperature in C
-        constexpr float mcp_9701_temperature_coefficient = 19.5f;
+        constexpr float mcp_9701_temperature_coefficient = 19.5f / 1000.0f; // mV 
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
         // Each chip has it's own board temp now, so there's chip_num board temps
-        bms_data.board_temperatures[chip_num] = (( static_cast<float>(gpio_in) / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
-        // bms_data.board_temperatures[chip_num] = 0;
+        bms_data.board_temperatures[chip_num] = (( gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
+
         if (gpio_in > max_min_reference.max_board_temp_voltage)
         {
             max_min_reference.max_board_temp_voltage = gpio_in;
