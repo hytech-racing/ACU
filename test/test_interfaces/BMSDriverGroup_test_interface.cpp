@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <unity.h>
 #include "BMSDriverGroup.h"
 
 /* Circular buffer for a CAN line to write to/read from. */

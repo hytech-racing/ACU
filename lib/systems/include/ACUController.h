@@ -61,7 +61,7 @@ public:
      * @post updates configuration bytes and sends configuration command
      */
     void update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages,
-                          float min_voltage, float max_voltage);
+                        float min_voltage, float max_voltage);
 
     /**
      * cell balance status getter function
