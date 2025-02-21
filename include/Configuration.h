@@ -9,7 +9,7 @@
 /**
  * These devices have 2 IDLE modes: 
  * REFUP - the references remain on meaning getting to the MEASURE state is almost instantaneous
- * STANDY - the references are offline, so it takes longer to get to MEASURE state
+ * STANDBY - the references are offline, so it takes longer to get to MEASURE state
  * For our applications we don't need the references to remain on, neither do we need the cell data
  * instantaneously. When we configure the device we will need to set a value for REFUP
  * Because we want to use the STANDBY state, we will set DEVICE_REFUP_MODE to false / 0b0
