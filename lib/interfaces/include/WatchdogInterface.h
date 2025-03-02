@@ -2,9 +2,74 @@
 #define __WATCHDOG_INTERFACE_H__
 
 #include <Arduino.h>
+#include "etl/singleton.h"
 
-void pulse_ams_watchdog(bool &current_pulse, int teensy_to_vehicle_watchdog_pulse_pin = 5);
+using pin = size_t;
 
-void push_ok_watchdog(bool &current_pulse, int teensy_to_acu_watchdog_ok_pin = 6);
+namespace WATCHDOG_DEFAULT_PARAMS
+{
+    constexpr const pin TEENSY_OK_PIN = 3;
+    constexpr const pin WD_KICK_PIN = 4;       
+    constexpr const pin N_LATCH_EN_PIN = 6;
+    constexpr const pin IMD_OK_PIN = 25;
+    constexpr const pin SHDN_OUT_PIN = 38;
+};
+
+class WatchdogInterface
+{
+public:
+    /**
+     * @param _teensy_ok_pin OUTPUT - needs to stay HIGH, the other input to Watchdog on ACU
+     * @param wd_kick_pin OUTPUT - 100 Hz pulse from teensy, one of inputs to Watchdog hardware on ACU 
+     * @param n_latch_en_pin OUTPUT - should be HIGH if NOT Faulted
+     * @param imd_ok_pin INPUT - LOW represents FAULT on IMD hardware
+     * @param shdn_out_pin INPUT - in FAULT state, if SHDN
+    */
+    WatchdogInterface(pin teensy_ok_pin = WATCHDOG_DEFAULT_PARAMS::TEENSY_OK_PIN,
+        pin wd_kick_pin = WATCHDOG_DEFAULT_PARAMS::WD_KICK_PIN, 
+        pin n_latch_pin = WATCHDOG_DEFAULT_PARAMS::N_LATCH_EN_PIN,
+        pin imd_ok_pin = WATCHDOG_DEFAULT_PARAMS::IMD_OK_PIN, 
+        pin shdn_out_pin = WATCHDOG_DEFAULT_PARAMS::SHDN_OUT_PIN) : 
+                        _teensy_wd_kick_pin(wd_kick_pin),
+                        _teensy_ok_pin(teensy_ok_pin),
+                        _teensy_n_latch_en_pin(n_latch_pin),
+                        _teensy_imd_ok_pin(imd_ok_pin),
+                        _teensy_shdn_out_pin(shdn_out_pin)
+
+    {}
+    
+    /**
+     * @pre constructor called and instance created
+     * @post Pins on Teensy configured and written as IN/OUT
+    */ 
+    void init();
+
+private:
+    // following is taken from VCR Watchdog System
+    /* Watchdog last kicked time */
+    unsigned long _watchdog_time;
+    bool _watchdog_state;
+    unsigned long _watchdog_kick_interval;
+    /* Watchdog output state */
+
+    /* Pin Assignments */
+    pin _teensy_wd_kick_pin;  // > Needs to flip at 100 Hz to keep BMS_OK high
+    pin _teensy_ok_pin;   // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
+    pin _teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
+    pin _teensy_imd_ok_pin; // < READ from IMD hardware, go to FAULT state if HIGH
+    pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goest to HIGH to signify car startup
+
+public: 
+    /**
+     * Get/update watchdog state
+     * @param curr_millis time of ACU time
+     * @post IF reach interval, _watchdog_time updated and state switched
+    */
+    bool get_watchdog_state(unsigned long curr_millis);
+
+    
+};
+
+using WatchdogInstance = etl::singleton<WatchdogInterface>;
 
 #endif
