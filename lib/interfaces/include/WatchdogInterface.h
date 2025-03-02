@@ -67,7 +67,27 @@ public:
     */
     bool get_watchdog_state(unsigned long curr_millis);
 
-    
+    /**
+     * Sets Teensy_OK LOW
+     * @pre ACU Controller discovers bms voltage/temp fault, womp womp
+    */
+    void set_teensy_ok_low();
+
+    /**
+     * Sets n_latch_en low
+     * @pre that there is a fault of some sort
+    */
+    void set_n_latch_en_low();
+
+    /**
+     * @return the state of the IMD, HIGH = NO FAULT
+    */
+    bool read_imd_ok();
+
+    /**
+     * @return the state of SHDN_OUT, HIGH = CAR was STARTED UP
+    */
+    bool read_shdn_out();
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;
