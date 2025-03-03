@@ -66,9 +66,9 @@ template <size_t num_chips, size_t num_humidity_sensors, size_t num_board_thermi
 struct BMSData
 {
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages;
-    std::array<celcius, 4 * num_chips> cell_temperatures;
+    std::array<celsius, 4 * num_chips> cell_temperatures;
     std::array<float, num_humidity_sensors> humidity;
-    std::array<celcius, num_board_thermistors> board_temperatures;
+    std::array<celsius, num_board_thermistors> board_temperatures;
     float min_voltage;
     float max_voltage;
     size_t min_voltage_cell_id;              // 0 - 125
@@ -88,7 +88,7 @@ struct ReferenceMaxMin
     uint16_t max_humidity = 0;
     uint16_t max_thermistor_voltage = 0;
     uint16_t max_board_temp_voltage = 0;
-    celcius total_thermistor_temps = 0;
+    celsius total_thermistor_temps = 0;
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -132,7 +132,7 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
-//private:
+private:
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data
