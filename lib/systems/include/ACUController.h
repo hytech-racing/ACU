@@ -20,7 +20,7 @@ namespace ACU_CONTROLLER_DEFAULT_PARAMS
 };
 
 template <size_t num_chips>
-struct ACU_State_s
+struct ACUControllerData_s
 {
     size_t uv_counter;
     size_t ov_counter;

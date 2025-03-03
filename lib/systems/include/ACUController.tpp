@@ -58,7 +58,7 @@ void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optio
     // Update voltage fault counters
     _acu_state.ov_counter = ov_fault_triggered ? _acu_state.ov_counter + 1 : 0;
     _acu_state.uv_counter = uv_fault_triggered ? _acu_state.uv_counter + 1 : 0;
-
+    
     // Temperature fault checking
     // Cell Temperatures 
     celsius max_temp = _acu_state.charging_enabled ? _charging_ot_thresh_c : _running_ot_thresh_c;
