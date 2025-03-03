@@ -8,7 +8,7 @@
 #include "etl/optional.h"
 #include "SharedFirmwareTypes.h"
 
-namespace ACU_CONTROLLER_DEFAULT_PARAMS
+namespace acu_controller_default_params
 {
     constexpr const volt OV_THRESH = 4.2; // Volts
     constexpr const volt UV_THRESH = 3.2; // Volts
@@ -50,13 +50,13 @@ public:
      * @param max_volt_faults max number of voltage faults allowed
      * @param max_temp_faults max number of temp faults allowed
     */
-    ACUController(volt ov_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::OV_THRESH, 
-                    volt uv_thresh_v = ACU_CONTROLLER_DEFAULT_PARAMS::UV_THRESH, 
-                    celsius charging_ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::CHARGING_OT_THRESH, 
-                    celsius running_ot_thresh_c = ACU_CONTROLLER_DEFAULT_PARAMS::RUNNING_OT_THRESH,
-                    volt min_pack_total_voltage = ACU_CONTROLLER_DEFAULT_PARAMS::MIN_PACK_TOTAL_VOLTAGE,
-                    size_t max_volt_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_VOLTAGE_FAULTS,
-                    size_t max_temp_faults = ACU_CONTROLLER_DEFAULT_PARAMS::MAX_NUM_TEMP_FAULTS) : 
+    ACUController(volt ov_thresh_v = acu_controller_default_params::OV_THRESH, 
+                    volt uv_thresh_v = acu_controller_default_params::UV_THRESH, 
+                    celsius charging_ot_thresh_c = acu_controller_default_params::CHARGING_OT_THRESH, 
+                    celsius running_ot_thresh_c = acu_controller_default_params::RUNNING_OT_THRESH,
+                    volt min_pack_total_voltage = acu_controller_default_params::MIN_PACK_TOTAL_VOLTAGE,
+                    size_t max_volt_faults = acu_controller_default_params::MAX_NUM_VOLTAGE_FAULTS,
+                    size_t max_temp_faults = acu_controller_default_params::MAX_NUM_TEMP_FAULTS) : 
         _ov_thresh_v(ov_thresh_v),
         _uv_thresh_v(uv_thresh_v),
         _charging_ot_thresh_c(charging_ot_thresh_c),
