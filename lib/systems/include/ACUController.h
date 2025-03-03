@@ -38,7 +38,7 @@ class ACUController
 {
 public:
 
-    using ACUData = ACU_State_s<num_chips>;
+    using ACUData = ACUControllerData_s<num_chips>;
 
     /**
      * ACU Controller Constructor
