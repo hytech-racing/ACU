@@ -8,43 +8,6 @@
 #include <string>
 #include <optional>
 
-/* -------------------- SETUP FUNCTIONS -------------------- */
-
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::manual_send_and_print()
-{
-    std::array<uint8_t, 4> cmd_pec;
-    // Wake up protocol
-    _write_and_delay_LOW(10, 400);
-    SPI.transfer16(0);
-    _write_and_delay_HIGH(10, 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
-    _write_and_delay_LOW(10, 400);
-    SPI.transfer16(0);
-    _write_and_delay_HIGH(10, 400);
-
-    cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CONFIG, -1);
-    read_registers_command<8>(10, cmd_pec);
-
-    // Send ADC conversion command which we know works
-    _start_cell_voltage_ADC_conversion();
-
-    _write_and_delay_LOW(10, 400);
-    SPI.transfer16(0);
-    _write_and_delay_HIGH(10, 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
-    _write_and_delay_LOW(10, 400);
-    SPI.transfer16(0);
-    _write_and_delay_HIGH(10, 400);
-
-    // Another way is to do a dummy command like read configuration
-    // cmd_pec = _generate_CMD_PEC(CMD_CODES_e::POLL_ADC_STATUS, -1);
-    // cmd_pec[0] = (_address[0] << 3) | cmd_pec[0];
-    // adc_conversion_command(10, cmd_pec);
-
-    cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1);
-    auto data = read_registers_command<8>(10, cmd_pec);
-
-}
-
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr) :
         _pec15Table(_initialize_Pec_Table()), 
@@ -63,9 +26,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
         pinMode(cs, OUTPUT);
         digitalWrite(cs, HIGH);
     }
-    // static_assert(sizeof(_chip_select) == num_chips, "Size of set_address parameter is invalid / != num_chips");
-    // static_assert(sizeof(_address) == num_chips, "Size of set_address parameter is invalid / != num_chips");
-    // static_assert(sizeof(_chip_select_per_chip) != num_chip_selects, "Size of set_address parameter is invalid / != num_chip_selects");
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -352,15 +312,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
             bms_data.max_board_temperature_segment_id = chip_num; // Because each segment only has 1 humidity and 1 board temp sensor
         }
     }
-    // else // For even chips, the 5th GPIO serves as a humidity sensor
-    // {
-    //     bms_data.humidity[(chip_num + 1) / 2] = -12.5 + 125 * (gpio_in) / 50000.0; // humidity calculation
-    //     if (gpio_in > max_min_reference.max_humidity)
-    //     {
-    //         max_min_reference.max_humidity = gpio_in;
-    //         bms_data.max_board_temperature_segment_id = (chip_num + 2) / 2;
-    //     }
-    // }
 }
 
 /* -------------------- WRITING DATA FUNCTIONS -------------------- */
