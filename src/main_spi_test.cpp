@@ -117,12 +117,12 @@ void setup()
 
 void loop()
 {
-    if (timer > 300) // Need an actual schedular
+    if (timer > 250) // Need an actual schedular
     {   
         // reset timer
         timer = 0;
 
-        // Read cell and auxillary data from the BMS Driver
+        // Read cell and auxiliary data from the BMS Driver
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
 

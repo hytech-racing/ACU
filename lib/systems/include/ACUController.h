@@ -15,8 +15,8 @@ namespace acu_controller_default_params
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 45.0; // Celsius
-    constexpr const size_t MAX_NUM_VOLTAGE_FAULTS = 12; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
-    constexpr const size_t MAX_NUM_TEMP_FAULTS = 12; // Same as voltage fault count
+    constexpr const size_t MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
+    constexpr const size_t MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
 };
 
 template <size_t num_chips>
@@ -38,7 +38,7 @@ class ACUController
 {
 public:
 
-    using ACUData = ACUControllerData_s<num_chips>;
+    using ACUStatus = ACUControllerData_s<num_chips>;
 
     /**
      * ACU Controller Constructor
@@ -47,31 +47,31 @@ public:
      * @param charging_ot_thresh_c overtemp threshold value | units in celsius
      * @param funning_ot_thresh_c overtemp threshold value | units in celsius
      * @param min_pack_total_voltage minimum pack total voltage | units in volts
-     * @param max_volt_faults max number of voltage faults allowed
-     * @param max_temp_faults max number of temp faults allowed
+     * @param max_volt_fault_dur max number of voltage faults allowed
+     * @param max_temp_fault_dur max number of temp faults allowed
     */
     ACUController(volt ov_thresh_v = acu_controller_default_params::OV_THRESH, 
                     volt uv_thresh_v = acu_controller_default_params::UV_THRESH, 
                     celsius charging_ot_thresh_c = acu_controller_default_params::CHARGING_OT_THRESH, 
                     celsius running_ot_thresh_c = acu_controller_default_params::RUNNING_OT_THRESH,
                     volt min_pack_total_voltage = acu_controller_default_params::MIN_PACK_TOTAL_VOLTAGE,
-                    size_t max_volt_faults = acu_controller_default_params::MAX_NUM_VOLTAGE_FAULTS,
-                    size_t max_temp_faults = acu_controller_default_params::MAX_NUM_TEMP_FAULTS) : 
+                    size_t max_volt_fault_dur = acu_controller_default_params::MAX_VOLTAGE_FAULT_DUR,
+                    size_t max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR) : 
         _ov_thresh_v(ov_thresh_v),
         _uv_thresh_v(uv_thresh_v),
         _charging_ot_thresh_c(charging_ot_thresh_c),
         _running_ot_thresh_c(running_ot_thresh_c),
         _min_pack_total_v(min_pack_total_voltage),
-        _max_allowed_voltage_faults(max_volt_faults),
-        _max_allowed_temp_faults(max_temp_faults)
+        _max_allowed_voltage_fault_dur(max_volt_fault_dur),
+        _max_allowed_temp_fault_dur(max_temp_fault_dur)
         {};
 
     /**
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    void update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, 
-        std::array<celsius, 4 * num_chips> cell_temps, std::array<celsius, num_chips> board_temps, float min_voltage, float max_voltage);
+    ACUStatus evaluate_accumulator(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
+                                                volt min_voltage, volt max_voltage, celsius max_cell_temp, celsius max_board_temp);
 
     /**
      * cell balance status getter function
@@ -104,7 +104,7 @@ private:
     /**
      * NOTE: TBD
     */
-    void _coulumb_counting();
+    void _coulomb_counting();
 
 private: 
     /**
@@ -112,7 +112,7 @@ private:
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
      * state is packaged this way so that we can feed it directly into the message interface as a struct
     */
-    ACUData _acu_state = {};
+    ACUStatus _acu_state = {};
 
     // Overvoltage threshold in volts
     const volt _ov_thresh_v = 0;
@@ -130,10 +130,10 @@ private:
     const volt _min_pack_total_v = 0;
 
     // Maximum number of voltage faults allowed before watchdog shuts off
-    const size_t _max_allowed_voltage_faults = 0;
+    const size_t _max_allowed_voltage_fault_dur = 0;
 
     // Maximum number of temp faults allowed before watchdog shuts off
-    const celsius _max_allowed_temp_faults = 0;
+    const celsius _max_allowed_temp_fault_dur = 0;
 };
 
 #include "ACUController.tpp"
