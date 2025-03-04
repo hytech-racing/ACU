@@ -1,11 +1,15 @@
 #include "ACUController.h"
 
 template <size_t num_chips>
+void ACUController<num_chips>::init(time_ms system_start_time) {
+
+}
+
+template <size_t num_chips>
 typename ACUController<num_chips>::ACUStatus
-ACUController<num_chips>::evaluate_accumulator(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
+ACUController<num_chips>::evaluate_accumulator(time_ms current_millis, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
                                                 volt min_voltage, volt max_voltage, celsius max_cell_temp, celsius max_board_temp)
 {
-
     // Cell balancing calculations
     if (_acu_state.charging_enabled)
     {
@@ -15,7 +19,21 @@ ACUController<num_chips>::evaluate_accumulator(std::array<std::array<etl::option
         _acu_state.cell_balance_statuses.fill(0);
     }
 
-    // Update voltage fault counters
+    // Update voltage fault time stamps
+    if (max_voltage < _ov_thresh_v) { 
+        _acu_state.ov_start_time = current_millis;
+    } 
+    if (min_voltage > _uv_thresh_v) { 
+        _acu_state.uv_start_time = current_millis;
+    }
+    // Update temp fault time stamps
+    if (max_board_temp < _charging_ot_thresh_c) { // charging ot thresh will be the lower of the 2
+        _acu_state.board_ot_start_time = current_millis;
+    }
+    celsius _cell_ot_thresh = _acu_state.charging_enabled ? _charging_ot_thresh_c : _running_ot_thresh_c;
+    if (max_cell_temp < _cell_ot_thresh) {
+        _acu_state.cell_ot_start_time = current_millis;
+    }
     // _acu_state.ov_counter = ov_fault_triggered ? _acu_state.ov_counter + 1 : 0;
     // _acu_state.uv_counter = uv_fault_triggered ? _acu_state.uv_counter + 1 : 0;
 
@@ -26,30 +44,15 @@ ACUController<num_chips>::evaluate_accumulator(std::array<std::array<etl::option
     bool cell_ot_fault_triggered = false;
     bool board_ot_fault_triggered = false;
 
-    // for (auto cell_temp : cell_temps) // So the way this is implemented, the ot_counter increments per read_data call IF there is a fault
-    // {
-    //     if (cell_temp > max_temp)
-    //     {
-    //         cell_ot_fault_triggered = true;
-    //         break;
-    //     }
-    // }
-    // // Board Temperatures
-    // for (auto board_temp : board_temps)
-    // {
-    //     if (board_temp > _charging_ot_thresh_c) // Choose charging ot threshold because it's always going to be lower, and we don't expect the board to be hotter than the cells
-    //     {
-    //         board_ot_fault_triggered = true;
-    //         break;
-    //     }
-    // }
-
+    
     // Update temperature fault counters
     _acu_state.cell_ot_counter = cell_ot_fault_triggered ? _acu_state.cell_ot_counter + 1 : 0;
     _acu_state.board_ot_counter = board_ot_fault_triggered ? _acu_state.board_ot_counter + 1 : 0;
 
     // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot
-    _acu_state.has_voltage_fault = _check_faults();
+    _acu_state.has_fault = _check_faults();
+
+    return _acu_state;
 }
 
 template <size_t num_chips>

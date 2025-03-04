@@ -29,9 +29,8 @@ struct ACUControllerData_s
     time_ms cell_ot_start_time;
     time_ms board_ot_start_time;
     time_ms pack_uv_start_time;
-    bool has_voltage_fault;
+    bool has_fault;
     bool charging_enabled;
-    bool current_pulse;
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 
@@ -69,10 +68,15 @@ public:
         {};
 
     /**
+     * @brief Initialize the status time stamps because we don't want accidental sudden faults
+     */
+    void init(time_ms system_start_time);
+
+    /**
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    ACUStatus evaluate_accumulator(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
+    ACUStatus evaluate_accumulator(time_ms current_millis, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
                                                 volt min_voltage, volt max_voltage, celsius max_cell_temp, celsius max_board_temp);
 
 private:
