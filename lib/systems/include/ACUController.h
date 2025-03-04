@@ -34,6 +34,8 @@ struct ACUControllerData_s
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 
+
+
 template<size_t num_chips>
 class ACUController
 {
@@ -78,7 +80,6 @@ public:
      */
     ACUStatus evaluate_accumulator(time_ms current_millis, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
                                                 volt min_voltage, volt max_voltage, celsius max_cell_temp, celsius max_board_temp);
-
 private:
     /**
      * Calculate Cell Balancing values
