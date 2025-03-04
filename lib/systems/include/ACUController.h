@@ -75,16 +75,14 @@ public:
     ACUStatus evaluate_accumulator(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
                                                 volt min_voltage, volt max_voltage, celsius max_cell_temp, celsius max_board_temp);
 
-    /**
-     * cell balance status getter function
-     * @post provides access to the ACU Controller's state's cell balance status array of length num chips
-     * With the intention of feeding the cell balance statuses into the BMS Driver to rewrite configurations
-    */
-    std::array<uint16_t, num_chips> get_cell_balance_params() {
-        return _acu_state.cell_balance_statuses;
-    }
-
 private:
+    /**
+     * Calculate Cell Balancing values
+     * @pre cell charging is enabled
+     * @post _acu_state.cell_balance_statuses will have the new values
+     */
+    std::array<uint16_t, num_chips> _calculate_cell_balance_statuses(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt min_voltage);
+
     /**
      * @pre data has been gathered
      * @return boolean, true if there exists any fault

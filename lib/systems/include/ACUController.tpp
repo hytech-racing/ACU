@@ -5,55 +5,22 @@ typename ACUController<num_chips>::ACUStatus
 ACUController<num_chips>::evaluate_accumulator(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
                                                 volt min_voltage, volt max_voltage, celsius max_cell_temp, celsius max_board_temp)
 {
-    
+
     // Cell balancing calculations
-    
-    for (size_t chip = 0; chip < num_chips; chip++)
+    if (_acu_state.charging_enabled)
     {
-        uint16_t chip_balance_status = 0;
-        for (size_t cell = 0; cell < voltages[chip].size(); cell++)
-        {
-            // Will only get voltage if not a null pointer
-            if (voltages[chip][cell])
-            {
-                // Get cell voltage from optional
-                volt cell_voltage = *voltages[chip][cell];
-
-                // We're only going to be balancing during charging
-                if (_acu_state.charging_enabled)
-                {
-                    if ((cell_voltage) - min_voltage > 200) // && max_voltage - (cell_voltage) < 200 && 
-                    { // balance if the cell voltage differential from the max voltage is .02V or less and if the cell voltage differential from the minimum voltage is 0.02V or greater (progressive)
-                        chip_balance_status = (0b1 << cell) | chip_balance_status;
-                    }
-                }
-                // Check Faults
-                // Check cell over voltage
-                // if (cell_voltage > _ov_thresh_v)
-                // {
-                //     ov_fault_triggered = true;
-                //     // We want to check and see if there is a voltage fault in the system after we measure all of the cell voltages
-                //     // so as to not accidentally find a normal cell at the end and set counter to 0
-                //     // so reset the VOLTAGE counters to 0 after ALL of the parsing is done
-                // }
-                // // Check cell under voltage
-                // if (cell_voltage < _uv_thresh_v)
-                // {   
-                //     uv_fault_triggered = true;
-                // }
-            }
-        }
-        // Assign cell 12 bit cell balance status to the chip index
-        _acu_state.cell_balance_statuses[chip] = chip_balance_status;
+        _acu_state.cell_balance_statuses = _calculate_cell_balance_statuses(voltages, min_voltage);
+    } else {
+        // Fill with zeros, no balancing
+        _acu_state.cell_balance_statuses.fill(0);
     }
-
 
     // Update voltage fault counters
     // _acu_state.ov_counter = ov_fault_triggered ? _acu_state.ov_counter + 1 : 0;
     // _acu_state.uv_counter = uv_fault_triggered ? _acu_state.uv_counter + 1 : 0;
-    
+
     // Temperature fault checking
-    // Cell Temperatures 
+    // Cell Temperatures
     celsius max_temp = _acu_state.charging_enabled ? _charging_ot_thresh_c : _running_ot_thresh_c;
 
     bool cell_ot_fault_triggered = false;
@@ -83,7 +50,32 @@ ACUController<num_chips>::evaluate_accumulator(std::array<std::array<etl::option
 
     // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot
     _acu_state.has_voltage_fault = _check_faults();
+}
 
+template <size_t num_chips>
+std::array<uint16_t, num_chips> ACUController<num_chips>::_calculate_cell_balance_statuses(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt min_voltage)
+{
+    std::array<uint16_t, num_chips> cb;
+
+    for (size_t chip = 0; chip < num_chips; chip++)
+    {
+        uint16_t chip_balance_status = 0;
+        for (size_t cell = 0; cell < voltages[chip].size(); cell++)
+        {
+            // Will only get voltage if not a null pointer
+            if (voltages[chip][cell])
+            {
+                // Get cell voltage from optional
+                volt cell_voltage = *voltages[chip][cell];
+                if ((cell_voltage) - min_voltage > 200) // && max_voltage - (cell_voltage) < 200 &&
+                {                                     // balance if the cell voltage differential from the max voltage is .02V or less and if the cell voltage differential from the minimum voltage is 0.02V or greater (progressive)
+                    chip_balance_status = (0b1 << cell) | chip_balance_status;
+                }
+            }
+        }
+        cb[chip] = chip_balance_status;
+    }
+    return cb;
 }
 
 template <size_t num_chips>
