@@ -91,19 +91,19 @@ private:
      * @pre data has been gathered
      * @return boolean, true if there exists any fault
      */
-    bool _check_faults();
+    bool _check_faults(time_ms current_millis);
 
     /**
      * @pre voltage data has been gathered
      * @return boolean, true if there exists at least 1 voltage fault
      */
-    bool _check_voltage_faults();
+    bool _check_voltage_faults(time_ms current_millis);
 
     /**
      * @pre temperature data has been gathered
      * @return boolean, true if there exists a temperature fault
      */
-    bool _check_temperature_faults();
+    bool _check_temperature_faults(time_ms current_millis);
 
     /**
      * NOTE: TBD

@@ -75,26 +75,26 @@ std::array<uint16_t, num_chips> ACUController<num_chips>::_calculate_cell_balanc
 }
 
 template <size_t num_chips>
-bool ACUController<num_chips>::_check_faults()
+bool ACUController<num_chips>::_check_faults(time_ms current_millis)
 {
-    return _check_voltage_faults() || _check_temperature_faults();
+    return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis);
 }
 
 template <size_t num_chips>
-bool ACUController<num_chips>::_check_voltage_faults()
+bool ACUController<num_chips>::_check_voltage_faults(time_ms current_millis)
 {
-    // bool ov_fault = _acu_state.ov_counter > _max_allowed_voltage_faults;
-    // bool uv_fault = _acu_state.uv_counter > _max_allowed_voltage_faults;
-    bool pack_fault = _acu_state.pack_total_voltage < _min_pack_total_v;
-    return false; // ov_fault || uv_fault || pack_fault;
+    bool ov_fault = (current_millis - _acu_state.ov_start_time) > _max_allowed_voltage_fault_dur;
+    bool uv_fault = (current_millis - _acu_state.uv_start_time) > _max_allowed_voltage_fault_dur;
+    bool pack_fault = (current_millis - _acu_state.pack_uv_start_time) > _max_allowed_voltage_fault_dur;
+    return ov_fault || uv_fault || pack_fault;
 }
 
 template <size_t num_chips>
-bool ACUController<num_chips>::_check_temperature_faults()
+bool ACUController<num_chips>::_check_temperature_faults(time_ms current_millis)
 {
-    // bool cell_ot_fault = _acu_state.cell_ot_counter > _max_allowed_temp_faults;
-    // bool board_ot_fault = _acu_state.board_ot_counter > _max_allowed_temp_faults;
-    return false; // cell_ot_fault > board_ot_fault;
+    bool cell_ot_fault = (current_millis - _acu_state.cell_ot_start_time) > _max_allowed_temp_fault_dur;
+    bool board_ot_fault = (current_millis - _acu_state.board_ot_start_time) > _max_allowed_temp_fault_dur;
+    return cell_ot_fault > board_ot_fault;
 }
 
 template <size_t num_chips>
