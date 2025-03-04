@@ -2,7 +2,11 @@
 
 template <size_t num_chips>
 void ACUController<num_chips>::init(time_ms system_start_time) {
-
+    _acu_state.ov_start_time = system_start_time;
+    _acu_state.uv_start_time = system_start_time;
+    _acu_state.board_ot_start_time = system_start_time;
+    _acu_state.cell_ot_start_time = system_start_time;
+    _acu_state.pack_uv_start_time= system_start_time;
 }
 
 template <size_t num_chips>
@@ -26,6 +30,9 @@ ACUController<num_chips>::evaluate_accumulator(time_ms current_millis, std::arra
     if (min_voltage > _uv_thresh_v) { 
         _acu_state.uv_start_time = current_millis;
     }
+    if (pack_voltage > _min_pack_total_v) {
+        _acu_state.pack_uv_start_time = current_millis;
+    }
     // Update temp fault time stamps
     if (max_board_temp < _charging_ot_thresh_c) { // charging ot thresh will be the lower of the 2
         _acu_state.board_ot_start_time = current_millis;
@@ -34,23 +41,9 @@ ACUController<num_chips>::evaluate_accumulator(time_ms current_millis, std::arra
     if (max_cell_temp < _cell_ot_thresh) {
         _acu_state.cell_ot_start_time = current_millis;
     }
-    // _acu_state.ov_counter = ov_fault_triggered ? _acu_state.ov_counter + 1 : 0;
-    // _acu_state.uv_counter = uv_fault_triggered ? _acu_state.uv_counter + 1 : 0;
-
-    // Temperature fault checking
-    // Cell Temperatures
-    celsius max_temp = _acu_state.charging_enabled ? _charging_ot_thresh_c : _running_ot_thresh_c;
-
-    bool cell_ot_fault_triggered = false;
-    bool board_ot_fault_triggered = false;
-
     
-    // Update temperature fault counters
-    _acu_state.cell_ot_counter = cell_ot_fault_triggered ? _acu_state.cell_ot_counter + 1 : 0;
-    _acu_state.board_ot_counter = board_ot_fault_triggered ? _acu_state.board_ot_counter + 1 : 0;
-
     // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot
-    _acu_state.has_fault = _check_faults();
+    _acu_state.has_fault = _check_faults(current_millis);
 
     return _acu_state;
 }
