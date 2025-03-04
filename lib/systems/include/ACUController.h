@@ -8,6 +8,8 @@
 #include "etl/optional.h"
 #include "SharedFirmwareTypes.h"
 
+using time_ms = unsigned long;
+
 namespace acu_controller_default_params
 {
     constexpr const volt OV_THRESH = 4.2; // Volts
@@ -15,21 +17,21 @@ namespace acu_controller_default_params
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 45.0; // Celsius
-    constexpr const size_t MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
-    constexpr const size_t MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
+    constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
+    constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
 };
 
 template <size_t num_chips>
 struct ACUControllerData_s
 {
-    size_t uv_counter;
-    size_t ov_counter;
-    size_t cell_ot_counter;
-    size_t board_ot_counter;
+    time_ms uv_start_time;
+    time_ms ov_start_time;
+    time_ms cell_ot_start_time;
+    time_ms board_ot_start_time;
+    time_ms pack_uv_start_time;
     bool has_voltage_fault;
     bool charging_enabled;
     bool current_pulse;
-    volt pack_total_voltage;
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 
@@ -55,8 +57,8 @@ public:
                     celsius charging_ot_thresh_c = acu_controller_default_params::CHARGING_OT_THRESH, 
                     celsius running_ot_thresh_c = acu_controller_default_params::RUNNING_OT_THRESH,
                     volt min_pack_total_voltage = acu_controller_default_params::MIN_PACK_TOTAL_VOLTAGE,
-                    size_t max_volt_fault_dur = acu_controller_default_params::MAX_VOLTAGE_FAULT_DUR,
-                    size_t max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR) : 
+                    time_ms max_volt_fault_dur = acu_controller_default_params::MAX_VOLTAGE_FAULT_DUR,
+                    time_ms max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR) : 
         _ov_thresh_v(ov_thresh_v),
         _uv_thresh_v(uv_thresh_v),
         _charging_ot_thresh_c(charging_ot_thresh_c),
@@ -114,26 +116,26 @@ private:
     */
     ACUStatus _acu_state = {};
 
-    // Overvoltage threshold in volts
+    // Over-voltage threshold in volts
     const volt _ov_thresh_v = 0;
 
-    // Undervoltage threshold in volts
+    // Under-voltage threshold in volts
     const volt _uv_thresh_v = 0;
 
-    // Overtemp threshold in celcius
+    // Overtemp threshold in celsius
     const celsius _charging_ot_thresh_c = 0;
 
-    // Overtemp threshold in celcius
+    // Overtemp threshold in celsius
     const celsius _running_ot_thresh_c = 0;
 
     // Minimum voltage threshold for the entire battery pack
     const volt _min_pack_total_v = 0;
 
     // Maximum number of voltage faults allowed before watchdog shuts off
-    const size_t _max_allowed_voltage_fault_dur = 0;
+    const time_ms _max_allowed_voltage_fault_dur = 0;
 
     // Maximum number of temp faults allowed before watchdog shuts off
-    const celsius _max_allowed_temp_fault_dur = 0;
+    const time_ms _max_allowed_temp_fault_dur = 0;
 };
 
 #include "ACUController.tpp"
