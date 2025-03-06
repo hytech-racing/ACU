@@ -10,10 +10,8 @@ void WatchdogInterface::init() {
     
     // Initial Pin States
     digitalWrite(_teensy_ok_pin, HIGH);
-    digitalWrite(_teensy_wd_kick_pin, HIGH);
-    digitalWrite(_teensy_n_latch_en_pin, HIGH);
-
-    _watchdog_state = true; 
+    digitalWrite(_teensy_wd_kick_pin, LOW); // watchdog state set to low to start
+    digitalWrite(_teensy_n_latch_en_pin, HIGH); 
 }
 
 bool WatchdogInterface::get_watchdog_state(unsigned long curr_millis) {

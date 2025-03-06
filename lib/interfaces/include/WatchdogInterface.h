@@ -25,11 +25,15 @@ public:
      * @param imd_ok_pin INPUT - LOW represents FAULT on IMD hardware
      * @param shdn_out_pin INPUT - in FAULT state, if SHDN
     */
-    WatchdogInterface(pin teensy_ok_pin = WATCHDOG_DEFAULT_PARAMS::TEENSY_OK_PIN,
+    WatchdogInterface(const unsigned long kick_interval_ms = 10UL, 
+        pin teensy_ok_pin = WATCHDOG_DEFAULT_PARAMS::TEENSY_OK_PIN,
         pin wd_kick_pin = WATCHDOG_DEFAULT_PARAMS::WD_KICK_PIN, 
         pin n_latch_pin = WATCHDOG_DEFAULT_PARAMS::N_LATCH_EN_PIN,
         pin imd_ok_pin = WATCHDOG_DEFAULT_PARAMS::IMD_OK_PIN, 
         pin shdn_out_pin = WATCHDOG_DEFAULT_PARAMS::SHDN_OUT_PIN) : 
+                        _watchdog_kick_interval(kick_interval_ms),
+                        _watchdog_time(0), 
+                        _watchdog_state(false),
                         _teensy_wd_kick_pin(wd_kick_pin),
                         _teensy_ok_pin(teensy_ok_pin),
                         _teensy_n_latch_en_pin(n_latch_pin),
