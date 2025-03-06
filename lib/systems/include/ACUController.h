@@ -26,19 +26,19 @@ namespace acu_controller_default_params
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
 };
 
-template <size_t num_chips>
+template <size_t num_cells>
 struct ACUControllerData_s
 {
-    time_ms uv_start_time;
-    time_ms ov_start_time;
-    time_ms cell_ot_start_time;
-    time_ms board_ot_start_time;
-    time_ms pack_uv_start_time;
-
+    time_ms last_time_uv_fault_not_present;
+    time_ms last_time_ov_fault_not_present;
+    time_ms last_time_cell_ot_fault_not_present;
+    time_ms last_time_board_ot_fault_not_present;
+    time_ms last_time_pack_uv_fault_not_present;
+    
     bool has_fault;
     bool charging_enabled;
 
-    std::array<uint16_t, num_chips> cell_balance_statuses;
+    std::array<bool, num_cells> cb;
 };
 
 struct ACUControllerParameters {
