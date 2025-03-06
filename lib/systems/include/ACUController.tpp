@@ -11,34 +11,34 @@ void ACUController<num_chips>::init(time_ms system_start_time) {
 
 template <size_t num_chips>
 typename ACUController<num_chips>::ACUStatus
-ACUController<num_chips>::evaluate_accumulator(time_ms current_millis, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
-                                                volt min_voltage, volt max_voltage, celsius max_cell_temp, celsius max_board_temp)
-{
+ACUController<num_chips>::evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_chips> &input_state)
+{   
+    _acu_state.charging_enabled = charging_enabled;
     // Cell balancing calculations
     if (_acu_state.charging_enabled)
     {
-        _acu_state.cell_balance_statuses = _calculate_cell_balance_statuses(voltages, min_voltage);
+        _acu_state.cell_balance_statuses = _calculate_cell_balance_statuses(input_state. voltages, input_state.min_cell_voltage);
     } else {
         // Fill with zeros, no balancing
         _acu_state.cell_balance_statuses.fill(0);
     }
 
     // Update voltage fault time stamps
-    if (max_voltage < _ov_thresh_v) { 
+    if (input_state.max_cell_voltage < _ov_thresh_v) { 
         _acu_state.ov_start_time = current_millis;
     } 
-    if (min_voltage > _uv_thresh_v) { 
+    if (input_state.min_cell_voltage > _uv_thresh_v) { 
         _acu_state.uv_start_time = current_millis;
     }
-    if (pack_voltage > _min_pack_total_v) {
+    if (input_state.pack_voltage > _min_pack_total_v) {
         _acu_state.pack_uv_start_time = current_millis;
     }
     // Update temp fault time stamps
-    if (max_board_temp < _charging_ot_thresh_c) { // charging ot thresh will be the lower of the 2
+    if (input_state.max_board_temp < _charging_ot_thresh_c) { // charging ot thresh will be the lower of the 2
         _acu_state.board_ot_start_time = current_millis;
     }
     celsius _cell_ot_thresh = _acu_state.charging_enabled ? _charging_ot_thresh_c : _running_ot_thresh_c;
-    if (max_cell_temp < _cell_ot_thresh) {
+    if (input_state.max_cell_temp < _cell_ot_thresh) {
         _acu_state.cell_ot_start_time = current_millis;
     }
     

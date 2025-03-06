@@ -1,5 +1,5 @@
-#ifndef ACU_GLOBALS
-#define ACU_GLOBALS
+#ifndef ACU_CONSTANTS
+#define ACU_CONSTANTS
 
 #include <cstddef>
 

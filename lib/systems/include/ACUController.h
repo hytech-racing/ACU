@@ -9,6 +9,9 @@
 #include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
 
+// Won't actually be here, but I need the struct to be in SharedFirmwareTypes.h once this gets checked off, then i'll remove this
+#include "ACU_Globals.h"
+
 using time_ms = unsigned long;
 
 namespace acu_controller_default_params
@@ -30,8 +33,10 @@ struct ACUControllerData_s
     time_ms cell_ot_start_time;
     time_ms board_ot_start_time;
     time_ms pack_uv_start_time;
+
     bool has_fault;
     bool charging_enabled;
+
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 
@@ -79,8 +84,7 @@ public:
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt pack_voltage,
-                                                volt min_voltage, volt max_voltage, celsius max_cell_temp, celsius max_board_temp);
+    ACUStatus evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_chips> &input_state);
 private:
     /**
      * Calculate Cell Balancing values

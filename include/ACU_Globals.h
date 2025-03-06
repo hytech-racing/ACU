@@ -18,6 +18,7 @@ struct ACUData_s {
     celsius max_cell_temp; 
     celsius max_board_temp;
 
+    bool charging_enabled;
     bool acu_ok; // False when one of the three shutdown conditions is met (see AMSSystem header)
 };
 
