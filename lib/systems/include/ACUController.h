@@ -34,7 +34,7 @@ struct ACUControllerData_s
     time_ms last_time_cell_ot_fault_not_present;
     time_ms last_time_board_ot_fault_not_present;
     time_ms last_time_pack_uv_fault_not_present;
-    
+
     bool has_fault;
     bool charging_enabled;
 
@@ -55,9 +55,10 @@ struct ACUControllerParameters {
 template<size_t num_cells>
 class ACUController
 {
-public:
-
+    using ACUData = etl::singleton<ACUData_s<num_cells>>;
     using ACUStatus = ACUControllerData_s<num_cells>;
+public:
+   
 
     /**
      * ACU Controller Constructor
