@@ -66,5 +66,39 @@ TEST (ACUControllerTesting, charging_state) {
 }
 
 TEST (ACUControllerTesting, faulted_state) {
+    ACUControllerInstance<num_chips>::create();
+    ACUController controller = ACUControllerInstance<num_chips>::instance();
+
+    charging_enabled = false; // or true doesn't matter
+    std::array<uint16_t, num_chips> cb = {0};
+    const uint32_t init_time = 2450;
+    const uint32_t start_time = 3000;
     
+    controller.init(init_time);
+
+    ACUData_s<num_chips> data= {
+        3.03, // min cell v
+        4.21, // max cell v
+        430.00, // pack v
+        {3.18, 3.2, 3.03, 3.21, 3.10, 3.12, 3.11, 3.12, 3.18, 3.19, 4.21, 3.06}, // individual cell voltage data
+        70, // cell temp c
+        50, // board temp c
+    };
+
+    auto status = controller.evaluate_accumulator(init_time, charging_enabled, data);
+
+    ASSERT_NEAR(data.min_cell_voltage, 3.03, 0.0001);
+    ASSERT_EQ(controller._acu_state.ov_start_time, 2450);
+
+    status = controller.evaluate_accumulator(start_time,charging_enabled, data);
+
+    ASSERT_EQ(status.has_fault, true);
+    ASSERT_EQ(status.cell_balance_statuses, cb); 
+    ASSERT_EQ(status.charging_enabled, false);
+
+    ASSERT_EQ(status.ov_start_time, init_time); // because they're past thresh...
+    ASSERT_EQ(status.uv_start_time, init_time); 
+    ASSERT_EQ(status.cell_ot_start_time, init_time);
+    ASSERT_EQ(status.board_ot_start_time, init_time);
+    ASSERT_EQ(status.pack_uv_start_time, start_time); // but since this, 430 > 420, then it keeps start_time
 }

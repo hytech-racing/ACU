@@ -19,8 +19,8 @@ namespace acu_controller_default_params
     constexpr const volt OV_THRESH = 4.2; // Volts
     constexpr const volt UV_THRESH = 3.05; // Volts
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
-    constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
-    constexpr const celsius RUNNING_OT_THRESH = 45.0; // Celsius
+    constexpr const celsius CHARGING_OT_THRESH = 45.0; // Celsius
+    constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
 };
