@@ -55,7 +55,6 @@ std::array<bool, num_cells> ACUController<num_cells>::_calculate_cell_balance_st
 
     for (size_t cell = 0; cell < num_cells; cell++)
     {
-        // Get cell voltage from optional
         volt cell_voltage = voltages[cell];
         if ((cell_voltage) - min_voltage > _parameters.v_diff_to_init_cb) // && max_voltage - (cell_voltage) < 200 &&
         {                                   
