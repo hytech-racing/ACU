@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <cstdint>
 #include "etl/optional.h"
+#include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
 
 using time_ms = unsigned long;
@@ -140,6 +141,9 @@ private:
     // Maximum number of temp faults allowed before watchdog shuts off
     const time_ms _max_allowed_temp_fault_dur = 0;
 };
+
+template<size_t num_chips>
+using ACUControllerInstance = etl::singleton<ACUController<num_chips>>;
 
 #include "ACUController.tpp"
 #endif
