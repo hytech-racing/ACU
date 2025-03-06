@@ -5,7 +5,7 @@
 
 #include "ACUController.h"
 
-constexpr size_t num_chips = 1;
+constexpr size_t num_cells = 12;
 bool charging_enabled;
 
 TEST (ACUControllerTesting, initial_state) {
@@ -13,7 +13,7 @@ TEST (ACUControllerTesting, initial_state) {
     ACUController controller = ACUControllerInstance<num_chips>::instance();
 
     charging_enabled = false;
-    std::array<uint16_t, num_chips> cb = {0};
+    std::array<uint16_t, num_cells> cb = {0};
     uint32_t start_time = 0;
 
     auto status = controller.evaluate_accumulator(start_time, charging_enabled, {0});
@@ -34,7 +34,7 @@ TEST (ACUControllerTesting, charging_state) {
     ACUController controller = ACUControllerInstance<num_chips>::instance();
 
     charging_enabled = true;
-    std::array<uint16_t, num_chips> cb = {0b001100010010};
+    std::array<bool, num_chips> cb = {0,0,1,1,0,0,0,1,0,0,1,0}; // 0b001100010010
     const uint32_t init_time = 2450;
     const uint32_t start_time = 2500;
     
