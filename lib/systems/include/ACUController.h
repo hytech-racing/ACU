@@ -12,12 +12,12 @@
 // Won't actually be here, but I need the struct to be in SharedFirmwareTypes.h once this gets checked off, then i'll remove this
 #include "ACU_Globals.h"
 
-using time_ms = unsigned long;
+using time_ms = uint32_t;
 
 namespace acu_controller_default_params
 {
     constexpr const volt OV_THRESH = 4.2; // Volts
-    constexpr const volt UV_THRESH = 3.2; // Volts
+    constexpr const volt UV_THRESH = 3.05; // Volts
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 45.0; // Celsius

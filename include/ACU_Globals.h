@@ -24,5 +24,4 @@ struct ACUData_s {
 
 using ACUData = etl::singleton<ACUData_s<NUM_CHIPS>>;
 
-
 #endif

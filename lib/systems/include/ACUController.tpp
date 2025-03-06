@@ -37,8 +37,8 @@ ACUController<num_chips>::evaluate_accumulator(time_ms current_millis, bool char
     if (input_state.max_board_temp < _charging_ot_thresh_c) { // charging ot thresh will be the lower of the 2
         _acu_state.board_ot_start_time = current_millis;
     }
-    celsius _cell_ot_thresh = _acu_state.charging_enabled ? _charging_ot_thresh_c : _running_ot_thresh_c;
-    if (input_state.max_cell_temp < _cell_ot_thresh) {
+    celsius cell_ot_thresh = _acu_state.charging_enabled ? _charging_ot_thresh_c : _running_ot_thresh_c;
+    if (input_state.max_cell_temp < cell_ot_thresh) {
         _acu_state.cell_ot_start_time = current_millis;
     }
     
