@@ -1,5 +1,5 @@
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "test_acu_controller.h"
 
 int main(int argc, char **argv) {
