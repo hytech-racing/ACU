@@ -2,11 +2,11 @@
 
 template <size_t num_cells>
 void ACUController<num_cells>::init(time_ms system_start_time) {
-    _acu_state.ov_start_time = system_start_time;
-    _acu_state.uv_start_time = system_start_time;
-    _acu_state.board_ot_start_time = system_start_time;
-    _acu_state.cell_ot_start_time = system_start_time;
-    _acu_state.pack_uv_start_time= system_start_time;
+    _acu_state.last_time_ov_fault_not_present = system_start_time;
+    _acu_state.last_time_uv_fault_not_present = system_start_time;
+    _acu_state.last_time_board_ot_fault_not_present = system_start_time;
+    _acu_state.last_time_cell_ot_fault_not_present = system_start_time;
+    _acu_state.last_time_pack_uv_fault_not_present= system_start_time;
 }
 
 template <size_t num_cells>
@@ -17,10 +17,10 @@ ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, bool char
     // Cell balancing calculations
     if (_acu_state.charging_enabled)
     {
-        _acu_state.cell_balance_statuses = _calculate_cell_balance_statuses(input_state. voltages, input_state.min_cell_voltage);
+        _acu_state.cb = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
     } else {
         // Fill with zeros, no balancing
-        _acu_state.cell_balance_statuses.fill(0);
+        _acu_state.cb.fill(0);
     }
 
     // Update voltage fault time stamps
@@ -51,14 +51,14 @@ ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, bool char
 template <size_t num_cells>
 std::array<bool, num_cells> ACUController<num_cells>::_calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage)
 {
-    std::array<uint16_t, num_cells> cb;
+    std::array<bool, num_cells> cb = {false};
 
     for (size_t cell = 0; cell < num_cells; cell++)
     {
         // Get cell voltage from optional
         volt cell_voltage = voltages[cell];
         if ((cell_voltage) - min_voltage > _parameters.v_diff_to_init_cb) // && max_voltage - (cell_voltage) < 200 &&
-        {                                     // balance if the cell voltage differential from the max voltage is .02V or less and if the cell voltage differential from the minimum voltage is 0.02V or greater (progressive)
+        {                                   
             cb[cell] = true;
         }
     }

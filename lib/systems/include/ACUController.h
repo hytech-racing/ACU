@@ -5,12 +5,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <cstdint>
-#include "etl/optional.h"
 #include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
-
-// Won't actually be here, but I need the struct to be in SharedFirmwareTypes.h once this gets checked off, then i'll remove this
-#include "ACU_Globals.h"
 
 using time_ms = uint32_t;
 
@@ -57,6 +53,7 @@ class ACUController
 {
     using ACUData = etl::singleton<ACUData_s<num_cells>>;
     using ACUStatus = ACUControllerData_s<num_cells>;
+    
 public:
    
 
