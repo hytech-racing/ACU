@@ -63,7 +63,7 @@ std::array<uint16_t, num_chips> ACUController<num_chips>::_calculate_cell_balanc
             {
                 // Get cell voltage from optional
                 volt cell_voltage = *voltages[chip][cell];
-                if ((cell_voltage) - min_voltage > 200) // && max_voltage - (cell_voltage) < 200 &&
+                if ((cell_voltage) - min_voltage > 0.02) // && max_voltage - (cell_voltage) < 200 &&
                 {                                     // balance if the cell voltage differential from the max voltage is .02V or less and if the cell voltage differential from the minimum voltage is 0.02V or greater (progressive)
                     chip_balance_status = (0b1 << cell) | chip_balance_status;
                 }
@@ -94,7 +94,7 @@ bool ACUController<num_chips>::_check_temperature_faults(time_ms current_millis)
 {
     bool cell_ot_fault = (current_millis - _acu_state.cell_ot_start_time) > _max_allowed_temp_fault_dur;
     bool board_ot_fault = (current_millis - _acu_state.board_ot_start_time) > _max_allowed_temp_fault_dur;
-    return cell_ot_fault > board_ot_fault;
+    return cell_ot_fault || board_ot_fault;
 }
 
 template <size_t num_chips>
