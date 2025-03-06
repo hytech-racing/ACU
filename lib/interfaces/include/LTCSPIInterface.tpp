@@ -14,8 +14,7 @@ template <size_t data_size>
 std::array<uint8_t, data_size> _receive_SPI_data() {
     std::array<uint8_t, data_size> data_in;
     for (size_t i = 0; i < data_size; i++) {
-        auto test = SPI.transfer(0);
-        data_in[i] = test; // transfer dummy value over SPI in order to read bytes into data
+        data_in[i] = SPI.transfer(0);
     }
     
     return data_in;
