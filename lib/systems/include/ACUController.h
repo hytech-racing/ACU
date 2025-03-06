@@ -23,6 +23,7 @@ namespace acu_controller_default_params
     constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
+    constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
 };
 
 template <size_t num_chips>
@@ -40,14 +41,23 @@ struct ACUControllerData_s
     std::array<uint16_t, num_chips> cell_balance_statuses;
 };
 
+struct ACUControllerParameters {
+    volt ov_thresh_v = 0;
+    volt uv_thresh_v = 0;
+    celsius charging_ot_thresh_c = 0;
+    celsius running_ot_thresh_c = 0;
+    volt min_pack_total_v = 0;
+    time_ms max_allowed_voltage_fault_dur = 0;
+    time_ms max_allowed_temp_fault_dur = 0;
+    volt v_diff_to_init_cb = 0;
+};
 
-
-template<size_t num_chips>
+template<size_t num_cells>
 class ACUController
 {
 public:
 
-    using ACUStatus = ACUControllerData_s<num_chips>;
+    using ACUStatus = ACUControllerData_s<num_cells>;
 
     /**
      * ACU Controller Constructor
@@ -65,14 +75,18 @@ public:
                     celsius running_ot_thresh_c = acu_controller_default_params::RUNNING_OT_THRESH,
                     volt min_pack_total_voltage = acu_controller_default_params::MIN_PACK_TOTAL_VOLTAGE,
                     time_ms max_volt_fault_dur = acu_controller_default_params::MAX_VOLTAGE_FAULT_DUR,
-                    time_ms max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR) : 
-        _ov_thresh_v(ov_thresh_v),
-        _uv_thresh_v(uv_thresh_v),
-        _charging_ot_thresh_c(charging_ot_thresh_c),
-        _running_ot_thresh_c(running_ot_thresh_c),
-        _min_pack_total_v(min_pack_total_voltage),
-        _max_allowed_voltage_fault_dur(max_volt_fault_dur),
-        _max_allowed_temp_fault_dur(max_temp_fault_dur)
+                    time_ms max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR,
+                    volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB) : 
+        _parameters {
+            ov_thresh_v,
+            uv_thresh_v,
+            charging_ot_thresh_c,
+            running_ot_thresh_c,
+            min_pack_total_voltage,
+            max_volt_fault_dur,
+            max_temp_fault_dur,
+            v_diff_init_cb
+        }
         {};
 
     /**
@@ -84,14 +98,14 @@ public:
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_chips> &input_state);
+    ACUStatus evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_cells> &input_state);
 private:
     /**
      * Calculate Cell Balancing values
      * @pre cell charging is enabled
      * @post _acu_state.cell_balance_statuses will have the new values
      */
-    std::array<uint16_t, num_chips> _calculate_cell_balance_statuses(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, volt min_voltage);
+    std::array<bool, num_cells> _calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage);
 
     /**
      * @pre data has been gathered
@@ -124,30 +138,14 @@ public: // private:
     */
     ACUStatus _acu_state = {};
 
-    // Over-voltage threshold in volts
-    const volt _ov_thresh_v = 0;
-
-    // Under-voltage threshold in volts
-    const volt _uv_thresh_v = 0;
-
-    // Overtemp threshold in celsius
-    const celsius _charging_ot_thresh_c = 0;
-
-    // Overtemp threshold in celsius
-    const celsius _running_ot_thresh_c = 0;
-
-    // Minimum voltage threshold for the entire battery pack
-    const volt _min_pack_total_v = 0;
-
-    // Maximum number of voltage faults allowed before watchdog shuts off
-    const time_ms _max_allowed_voltage_fault_dur = 0;
-
-    // Maximum number of temp faults allowed before watchdog shuts off
-    const time_ms _max_allowed_temp_fault_dur = 0;
+    /**
+     * @brief ACU Controller Parameters holder
+    */
+    const ACUControllerParameters _parameters = {};
 };
 
-template<size_t num_chips>
-using ACUControllerInstance = etl::singleton<ACUController<num_chips>>;
+template<size_t num_cells>
+using ACUControllerInstance = etl::singleton<ACUController<num_cells>>;
 
 #include "ACUController.tpp"
 #endif

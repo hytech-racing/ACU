@@ -5,6 +5,7 @@
 #include "Configuration.h"
 #include "ACUController.h"
 
+#include "ACU_Constants.h"
 
 #include <array>
 #include <stddef.h>
@@ -19,7 +20,7 @@ elapsedMillis timer = 0;
 using chip_type = LTC6811_Type_e;
 
 // Initialize chip_select, chip_select_per_chip, and address
-constexpr int num_chips = 2;
+constexpr int num_chips = 2; 
 constexpr int num_chip_selects = 1;
 std::array<int, num_chip_selects> cs = {10};
 std::array<int, num_chips> cs_per_chip = {10, 10};
@@ -29,17 +30,7 @@ std::array<int, num_chips> addr = {0, 1};
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
 // Instantiate ACU Controller
-ACUController<num_chips> controller = ACUController<num_chips>();
-
-void setBit(uint16_t &value, uint8_t index, bool bitValue) {
-    if (index >= 16) return; // Ensure index is within range
-
-    if (bitValue) {
-        value |= (1 << index);  // Set the bit
-    } else {
-        value &= ~(1 << index); // Clear the bit
-    }
-}
+ACUController<NUM_CELLS> controller = ACUController<NUM_CELLS>();
 
 template <typename driver_data>
 void print_voltages(driver_data data)
@@ -132,7 +123,7 @@ void loop()
     
 
         // Retrieve the cell balance status array from the controller
-        //std::array<uint16_t, num_chips> cell_balance_config = controller.get_cell_balance_params();
+        // std::array<uint16_t, num_chips> cell_balance_config = controller.get_cell_balance_params();
 
         // Rewrite the configuration for the chip
         //BMSGroup.write_configuration(dcto_write, cell_balance_config); 
