@@ -62,10 +62,11 @@ enum class ADC_MODE_e : uint8_t
     FILTERED = 0x3
 };
 
-template <size_t num_chips, size_t num_humidity_sensors, size_t num_board_thermistors>
+template <size_t num_chips, size_t num_cells, size_t num_humidity_sensors, size_t num_board_thermistors>
 struct BMSData
 {
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages;
+    std::array<volt, >
     std::array<celsius, 4 * num_chips> cell_temperatures;
     std::array<float, num_humidity_sensors> humidity;
     std::array<celsius, num_board_thermistors> board_temperatures;
@@ -95,7 +96,7 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
-    using BMSDriverData = BMSData<num_chips, 0, num_chips>;
+    using BMSDriverData = BMSData<num_chips, ,num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
 
