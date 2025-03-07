@@ -1,3 +1,6 @@
 .pio
 .pio/
 .vscode/
+**/.DS_Store
+
+get-platformio.py
