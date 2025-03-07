@@ -128,7 +128,7 @@ private:
     */
     void _coulomb_counting();
 
-public: // private:
+private:
     /**
      * @brief ACU State Holder
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW

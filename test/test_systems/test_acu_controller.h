@@ -50,7 +50,6 @@ TEST (ACUControllerTesting, charging_state) {
     auto status = controller.evaluate_accumulator(init_time, charging_enabled, data);
 
     ASSERT_NEAR(data.min_cell_voltage, 3.21, 0.0001);
-    ASSERT_EQ(controller._acu_state.last_time_ov_fault_not_present, 2450);
 
     status = controller.evaluate_accumulator(start_time,charging_enabled, data);
 
@@ -88,7 +87,6 @@ TEST (ACUControllerTesting, faulted_state) {
     auto status = controller.evaluate_accumulator(init_time, charging_enabled, data);
 
     ASSERT_NEAR(data.min_cell_voltage, 3.03, 0.0001);
-    ASSERT_EQ(controller._acu_state.last_time_ov_fault_not_present, 2450);
 
     status = controller.evaluate_accumulator(start_time,charging_enabled, data);
 
