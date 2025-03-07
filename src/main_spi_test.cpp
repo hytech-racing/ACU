@@ -62,7 +62,7 @@ void print_voltages(driver_data data)
     Serial.println();
 
     size_t chip_index = 1;
-    for(auto chip_voltages : data.voltages )
+    for(auto chip_voltages : data.voltages_by_chip )
     {
         Serial.print("Chip ");
         Serial.println(chip_index);
@@ -136,7 +136,7 @@ void loop()
         for(size_t chip_index = 0; chip_index < bms_data.voltages.size(); chip_index++)
         {
             
-            auto segment_voltages = bms_data.voltages[chip_index];
+            auto segment_voltages = bms_data.voltages_by_chip[chip_index];
             for(size_t j = 0; j < segment_voltages.size(); j++)
             {
                 auto opt_volt = segment_voltages[j];

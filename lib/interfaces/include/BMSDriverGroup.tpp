@@ -235,10 +235,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
         chip_voltages_in[cell_Index] = voltage_in / 10000.0;
+        bms_data.voltages[battery_cell_count] = chip_voltages_in[cell_Index];
         
         _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, chip_voltages_in[cell_Index], battery_cell_count);
     }
-    std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages[chip_index].data());
+    std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages_by_chip[chip_index].data());
     return bms_data;
 }
 
@@ -310,8 +311,28 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
 /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses)
 {
+    std::array<uint16_t, num_chips> cb;
+    size_t cell = 0;
+    for (size_t chip = 0; chip < num_chips; chip++) {
+        uint16_t chip_cb = 0;
+        size_t cell_count = (chip % 2 == 0) ? 12 : 9;
+        for (size_t cell = 0; cell < cell_count; cell++) {
+            if (cell_balance_statuses[cell]) {
+                chip_cb = (0b1 << cell) | chip_cb;
+            }
+            cell++;
+        }
+        cb[chip] = chip_cb;
+    }
+
+    write_configuration(dcto_mode, cb); 
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses)
+{   
     std::copy(cell_balance_statuses.begin(), cell_balance_statuses.end(), _cell_discharge_en.begin());
 
     std::array<uint8_t, 6> buffer_format; // This buffer processing can be seen in more detail on page 62 of the data sheet
