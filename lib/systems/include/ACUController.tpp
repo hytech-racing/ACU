@@ -1,72 +1,94 @@
 #include "ACUController.h"
 
-template <size_t num_chips>
-void ACUController<num_chips>::update_acu_state(std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages, float min_voltage, float max_voltage)
-{
-    for (size_t chip = 0; chip < num_chips; chip++)
+template <size_t num_cells>
+void ACUController<num_cells>::init(time_ms system_start_time) {
+    _acu_state.last_time_ov_fault_not_present = system_start_time;
+    _acu_state.last_time_uv_fault_not_present = system_start_time;
+    _acu_state.last_time_board_ot_fault_not_present = system_start_time;
+    _acu_state.last_time_cell_ot_fault_not_present = system_start_time;
+    _acu_state.last_time_pack_uv_fault_not_present= system_start_time;
+}
+
+template <size_t num_cells>
+typename ACUController<num_cells>::ACUStatus
+ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_cells> &input_state)
+{   
+    _acu_state.charging_enabled = charging_enabled;
+    // Cell balancing calculations
+    if (_acu_state.charging_enabled)
     {
-        uint16_t chip_balance_status = 0;
-        for (size_t cell = 0; cell < voltages[chip].size(); cell++)
-        {
-            // Will only get voltage if not a null pointer
-            if (voltages[chip][cell])
-            {
-                // Get cell voltage from optional
-                volt cell_voltage = *voltages[chip][cell];
-                if (_acu_state.charging_enabled) // We're only going to be balancing during charging
-                {
-                    if ((cell_voltage) - min_voltage > 200) // && max_voltage - (cell_voltage) < 200 && 
-                    { // balance if the cell voltage differential from the max voltage is .02V or less and if the cell voltage differential from the minimum voltage is 0.02V or greater (progressive)
-                        chip_balance_status = (0b1 << cell) | chip_balance_status;
-                    }
-                }
-                // Check Faults
-                // Check overvoltage
-                if (cell_voltage > maximum_allowed_voltage)
-                {
-                    _acu_state.ov_counter++;
-                }
-                else
-                {
-                    _acu_state.ov_counter = 0;
-                }
-                // Check undervoltage
-                if (cell_voltage < minimum_allowed_voltage)
-                {
-                    _acu_state.uv_counter++;
-                }
-                else
-                {
-                    _acu_state.uv_counter = 0;
-                }
-            }
-        }
-        // Assign cell 12 bit cell balance status to the chip index
-        _acu_state.cell_balance_statuses[chip] = chip_balance_status;
+        _acu_state.cb = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
+    } else {
+        // Fill with zeros, no balancing
+        _acu_state.cb.fill(0);
     }
-    _acu_state.has_voltage_fault = _check_faults();
+
+    // Update voltage fault time stamps
+    if (input_state.max_cell_voltage < _parameters.ov_thresh_v) { 
+        _acu_state.last_time_ov_fault_not_present = current_millis;
+    } 
+    if (input_state.min_cell_voltage > _parameters.uv_thresh_v) { 
+        _acu_state.last_time_uv_fault_not_present = current_millis;
+    }
+    if (input_state.pack_voltage > _parameters.min_pack_total_v) {
+        _acu_state.last_time_pack_uv_fault_not_present = current_millis;
+    }
+    // Update temp fault time stamps
+    if (input_state.max_board_temp < _parameters.charging_ot_thresh_c) { // charging ot thresh will be the lower of the 2
+        _acu_state.last_time_board_ot_fault_not_present = current_millis;
+    }
+    celsius cell_ot_thresh = _acu_state.charging_enabled ? _parameters.charging_ot_thresh_c : _parameters.running_ot_thresh_c;
+    if (input_state.max_cell_temp < cell_ot_thresh) {
+        _acu_state.last_time_cell_ot_fault_not_present = current_millis;
+    }
+    
+    // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot
+    _acu_state.has_fault = _check_faults(current_millis);
+
+    return _acu_state;
 }
 
-template <size_t num_chips>
-bool ACUController<num_chips>::_check_faults()
+template <size_t num_cells>
+std::array<bool, num_cells> ACUController<num_cells>::_calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage)
 {
-    return _check_voltage_faults() || _check_temperature_faults();
+    std::array<bool, num_cells> cb = {false};
+
+    for (size_t cell = 0; cell < num_cells; cell++)
+    {
+        volt cell_voltage = voltages[cell];
+        if ((cell_voltage) - min_voltage > _parameters.v_diff_to_init_cb) // && max_voltage - (cell_voltage) < 200 &&
+        {                                   
+            cb[cell] = true;
+        }
+    }
+    return cb;
 }
 
-template <size_t num_chips>
-bool ACUController<num_chips>::_check_voltage_faults()
+template <size_t num_cells>
+bool ACUController<num_cells>::_check_faults(time_ms current_millis)
 {
-    return _acu_state.ov_counter > _max_allowed_voltage_faults || _acu_state.uv_counter > _max_allowed_voltage_faults;
+    return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis);
 }
 
-template <size_t num_chips>
-bool ACUController<num_chips>::_check_temperature_faults()
+template <size_t num_cells>
+bool ACUController<num_cells>::_check_voltage_faults(time_ms current_millis)
 {
-    return _acu_state.ot_counter > _max_allowed_temp_faults;
+    bool ov_fault = (current_millis - _acu_state.last_time_ov_fault_not_present) > _parameters.max_allowed_voltage_fault_dur;
+    bool uv_fault = (current_millis - _acu_state.last_time_uv_fault_not_present) > _parameters.max_allowed_voltage_fault_dur;
+    bool pack_fault = (current_millis - _acu_state.last_time_pack_uv_fault_not_present) > _parameters.max_allowed_voltage_fault_dur;
+    return ov_fault || uv_fault || pack_fault;
 }
 
-template <size_t num_chips>
-void ACUController<num_chips>::_columb_counting()
+template <size_t num_cells>
+bool ACUController<num_cells>::_check_temperature_faults(time_ms current_millis)
+{
+    bool cell_ot_fault = (current_millis - _acu_state.last_time_cell_ot_fault_not_present) > _parameters.max_allowed_temp_fault_dur;
+    bool board_ot_fault = (current_millis - _acu_state.last_time_board_ot_fault_not_present) > _parameters.max_allowed_temp_fault_dur;
+    return cell_ot_fault || board_ot_fault;
+}
+
+template <size_t num_cells>
+void ACUController<num_cells>::_coulomb_counting()
 {
     // Numbers
 }
