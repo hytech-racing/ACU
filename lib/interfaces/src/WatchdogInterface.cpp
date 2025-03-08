@@ -1,5 +1,4 @@
 #include "WatchdogInterface.h"
-#include "WatchdogInterface.h"
 
 void WatchdogInterface::init() {
     // Pin Configuration
