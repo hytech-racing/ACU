@@ -34,7 +34,15 @@ void setup()
 
 void loop()
 {      
-    bool watchdog_state = WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified
+    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
+
+    if (sys_time::hal_millis() % 200 == 0) { // 5Hz
+        auto data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data(); // verified
+        print_bms_data(data);
+
+        ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUData); 
+    }
+    
     
     
     // scheduler.run(); 

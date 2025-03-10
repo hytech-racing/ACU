@@ -8,6 +8,6 @@
 
 #include "ACU_Constants.h"
 
-// using ACUData = etl::singleton<ACUData_s<NUM_CELLS>>;
+using ACUData = etl::singleton<ACUData_s<NUM_CELLS>>;
 
 #endif

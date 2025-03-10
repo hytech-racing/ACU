@@ -58,13 +58,13 @@ private:
      * The function run upon the entry of the car into a new state.
      * @param new_state The state in which we are entering.
      */
-    void _handle_entry_logic_(ACUState_e new_state, unsigned long curr_millis);
+    void _handle_entry_logic(ACUState_e new_state, unsigned long curr_millis);
     
     /**
      * The function run upon the exit of a state.
      * @param prev_state the state in which we are leaving.
      */
-    void _handle_exit_logic_(ACUState_e prev_state, unsigned long curr_millis);
+    void _handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis);
         
     ACUState_e _current_state;
 
