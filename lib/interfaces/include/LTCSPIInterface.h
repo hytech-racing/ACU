@@ -24,14 +24,18 @@ void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const s
  * @return the data we read
 */
 template <size_t buffer_size>
-inline std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec);
+std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec);
 
 /**
  * Sends a SPI command to initiate some functionality of the device
  * @param cs chip select
  * @param cmd_and_pec 4 bytes if using _1 model, 24 bytes for _2 model 
 */
-void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices);
+inline void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices);
+
+inline void _write_and_delay_HIGH(int cs, int delay_microSeconds);
+
+inline void _write_and_delay_LOW(int cs, int delay_microSeconds);
 
 #include <LTCSPIInterface.tpp>
 #endif

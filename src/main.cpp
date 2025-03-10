@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #include "BMSDriverGroup.h"
 #include "WatchdogInterface.h"
+#include "SystemTimeInterface.h"
 // #include "ACUEthernetInterface.h"
 
 /* System Includes */
@@ -17,19 +18,25 @@
 #include "ht_sched.hpp"
 #include "ht_task.hpp"
 
-// Instantiate BMS Driver Group
-BMSDriverGroup<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>(CS, CS_PER_CHIP, ADDR);
-
 /* Scheduler setup */
 HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
 void setup()
 {
-    BMSGroup.init();
-    
+    /* Interface and System initialization */
+    initialize_all_interfaces();
+    initialize_all_systems();
+
+    delay(500);
+    Serial.println("Setup Complete");
+    delay(500);
 }
 
 void loop()
-{
-    scheduler.run(); 
+{      
+    bool watchdog_state = WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); 
+    Serial.printf("Watchdog state: %d\n", watchdog_state);
+    
+    
+    // scheduler.run(); 
 }

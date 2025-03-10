@@ -25,22 +25,22 @@ public:
      * @param imd_ok_pin INPUT - LOW represents FAULT on IMD hardware
      * @param shdn_out_pin INPUT - in FAULT state, if SHDN
     */
-    WatchdogInterface(const unsigned long kick_interval_ms = 10UL, 
+    WatchdogInterface(
         pin teensy_ok_pin = WATCHDOG_DEFAULT_PARAMS::TEENSY_OK_PIN,
         pin wd_kick_pin = WATCHDOG_DEFAULT_PARAMS::WD_KICK_PIN, 
         pin n_latch_pin = WATCHDOG_DEFAULT_PARAMS::N_LATCH_EN_PIN,
         pin imd_ok_pin = WATCHDOG_DEFAULT_PARAMS::IMD_OK_PIN, 
-        pin shdn_out_pin = WATCHDOG_DEFAULT_PARAMS::SHDN_OUT_PIN) : 
-                        _watchdog_kick_interval(kick_interval_ms),
-                        _watchdog_time(0), 
-                        _watchdog_state(false),
+        pin shdn_out_pin = WATCHDOG_DEFAULT_PARAMS::SHDN_OUT_PIN,
+        const unsigned long kick_interval_ms = 10UL) : 
                         _teensy_wd_kick_pin(wd_kick_pin),
                         _teensy_ok_pin(teensy_ok_pin),
                         _teensy_n_latch_en_pin(n_latch_pin),
                         _teensy_imd_ok_pin(imd_ok_pin),
-                        _teensy_shdn_out_pin(shdn_out_pin)
-
-    {}
+                        _teensy_shdn_out_pin(shdn_out_pin),
+                        _watchdog_kick_interval(kick_interval_ms),
+                        _watchdog_time(0), 
+                        _watchdog_state(false)
+    {};
     
     /**
      * @pre constructor called and instance created
@@ -49,19 +49,19 @@ public:
     void init();
 
 private:
-    // following is taken from VCR Watchdog System
-    /* Watchdog last kicked time */
-    unsigned long _watchdog_time;
-    bool _watchdog_state;
-    unsigned long _watchdog_kick_interval;
-    /* Watchdog output state */
-
     /* Pin Assignments */
     pin _teensy_wd_kick_pin;  // > Needs to flip at 100 Hz to keep BMS_OK high
     pin _teensy_ok_pin;   // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
     pin _teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
     pin _teensy_imd_ok_pin; // < READ from IMD hardware, go to FAULT state if HIGH
-    pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goest to HIGH to signify car startup
+    pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
+
+    // following is taken from VCR Watchdog System
+    /* Watchdog last kicked time */
+    unsigned long _watchdog_kick_interval;
+    unsigned long _watchdog_time;
+    bool _watchdog_state;
+    /* Watchdog output state */
 
 public: 
     /**
@@ -73,7 +73,7 @@ public:
 
     /**
      * Sets Teensy_OK LOW
-     * @pre ACU Controller discovers bms voltage/temp fault, womp womp
+     * @pre ACU Controller discovers bms voltage/temp fault
     */
     void set_teensy_ok_low();
 

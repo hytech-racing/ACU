@@ -1,11 +1,11 @@
 #include "ACU_InterfaceTasks.h"
 
-void initialize_interfaces() {
+void initialize_all_interfaces() {
     SPI.begin();
     Serial.begin(115200);
     analogReadResolution(12);
     /* BMS Driver */
-    BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create();
+    BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(CS, CS_PER_CHIP, ADDR);
     BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();
     /* Watchdog Interface */
     WatchdogInstance::create();
@@ -14,8 +14,12 @@ void initialize_interfaces() {
 
 bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()));
+    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis());
     return true;
+}
+
+void handle_ACU_logic() {
+    
 }
 
 
