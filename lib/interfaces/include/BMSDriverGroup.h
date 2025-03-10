@@ -9,7 +9,9 @@
 #include "LTCSPIInterface.h"
 #include <cstdint>
 #include "etl/optional.h"
+
 #include "etl/singleton.h"
+
 #include "SharedFirmwareTypes.h"
 
 enum class LTC6811_Type_e
@@ -63,12 +65,13 @@ enum class ADC_MODE_e : uint8_t
     FILTERED = 0x3
 };
 
-template <size_t num_chips, size_t num_humidity_sensors, size_t num_board_thermistors>
+
+template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData
 {
-    std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages;
+    std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages_by_chip;
+    std::array<volt, num_cells> voltages;
     std::array<celsius, 4 * num_chips> cell_temperatures;
-    std::array<float, num_humidity_sensors> humidity; // DNP
     std::array<celsius, num_board_thermistors> board_temperatures;
     float min_voltage;
     float max_voltage;
@@ -96,7 +99,9 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
-    using BMSDriverData = BMSData<num_chips, 0, num_chips>;
+
+    constexpr static size_t num_cells = (num_chips / 2) * 21;
+    using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
 
@@ -131,7 +136,14 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
-//private:
+
+    /**
+     * Alternative header for configuration function call
+    */
+    void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
+
+private:
+
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data

@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-
 #include <array>
 #include <stddef.h>
 
