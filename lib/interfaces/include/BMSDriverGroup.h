@@ -9,6 +9,9 @@
 #include "LTCSPIInterface.h"
 #include <cstdint>
 #include "etl/optional.h"
+
+#include "etl/singleton.h"
+
 #include "SharedFirmwareTypes.h"
 
 enum class LTC6811_Type_e
@@ -62,6 +65,7 @@ enum class ADC_MODE_e : uint8_t
     FILTERED = 0x3
 };
 
+
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData
 {
@@ -95,15 +99,14 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
+
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
-    
+
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
-    void manual_send_and_print();
-
     /**
      * INIT: ONLY CALLED ONCE at initialization. LTC6811 only needs to set up the PEC table
      * @post We should have initialized the PEC by calling generate_PEC_table(), so every other time
@@ -133,12 +136,14 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
+
     /**
      * Alternative header for configuration function call
     */
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
 private:
+
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data
@@ -262,7 +267,7 @@ private:
     /**
      * We will only end up using the address if this is a LTC6811-2
      * NOTE: But if we are, we need to call a setup function to instatiate each with the correct addresses
-     * BMS Segments 1, 4, and 5 are on chip select 9
+     * EX) BMS Segments 1, 4, and 5 are on chip select 9
      * BMS Segments 2, 3, and 6 are on chip select 10
      * Those segments correspond to 2 ICs each, so the instance with chip_select 9
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
@@ -276,6 +281,10 @@ private:
      */
     std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const
 };
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+using BMSDriverInstance = etl::singleton<BMSDriverGroup<num_chips, num_chip_selects, chip_type>>;
+
 
 #include <BMSDriverGroup.tpp>
 

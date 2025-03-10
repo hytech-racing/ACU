@@ -14,9 +14,10 @@ template <size_t data_size>
 std::array<uint8_t, data_size> _receive_SPI_data() {
     std::array<uint8_t, data_size> data_in;
     for (size_t i = 0; i < data_size; i++) {
+
         data_in[i] = SPI.transfer(0);
     }
-    
+   
     return data_in;
 }
 
@@ -37,7 +38,7 @@ void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const s
     _write_and_delay_LOW(cs, 5);
 
     _transfer_SPI_data<4>(cmd_and_pec);
-    
+
     _transfer_SPI_data<buffer_size>(data);
 
     _write_and_delay_HIGH(cs, 5);   
@@ -52,9 +53,10 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
     // Prompts SPI enable
     _write_and_delay_LOW(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
-    
+ 
     read_in = _receive_SPI_data<buffer_size>();
-    
+    // Serial.print(cv_1_to_3[5] >> 4, BIN);
+    // Serial.print("\t");
     _write_and_delay_HIGH(cs, 5); 
     SPI.endTransaction();
     return read_in;

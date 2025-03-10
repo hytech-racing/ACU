@@ -106,7 +106,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     size_t gpio_count = 0;
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        _start_wakeup_protocol();
         write_configuration(dcto_read, _cell_discharge_en);
 
         // Get buffers for each group we care about, all at once for ONE chip select line
@@ -135,8 +134,8 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                                                                                                                         data_in_cell_voltages_7_to_9,
                                                                                                                         data_in_cell_voltages_10_to_12);
 
-        std::array<uint8_t, 10 * (num_chips / num_chip_selects)> data_in_temps_1_to_12 = _package_auxillary_data(data_in_auxillaries_1_to_3,
-                                                                                                                 data_in_auxillaries_4_to_6);
+        std::array<uint8_t, 10 * (num_chips / num_chip_selects)> data_in_temps_1_to_5 = _package_auxillary_data(data_in_auxillaries_1_to_3,
+                                                                                                                data_in_auxillaries_4_to_6);
 
         // DEBUG: Check to see that the PEC is what we expect it to be
 
@@ -153,7 +152,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             // load humidity / temperatures function
             std::array<uint8_t, 10> gpio_1_to_5_for_one_chip;
-            start = data_in_temps_1_to_12.begin() + (chip_index * 10);
+            start = data_in_temps_1_to_5.begin() + (chip_index * 10);
             end = start + 10;
             std::copy(start, end, gpio_1_to_5_for_one_chip.begin());
             bms_data = _load_auxillaries(bms_data, max_min_reference, gpio_1_to_5_for_one_chip, chip_index, gpio_count);
@@ -235,8 +234,9 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
         chip_voltages_in[cell_Index] = voltage_in / 10000.0;
+
         bms_data.voltages[battery_cell_count] = chip_voltages_in[cell_Index];
-        
+
         _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, chip_voltages_in[cell_Index], battery_cell_count);
     }
     std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages_by_chip[chip_index].data());
@@ -246,7 +246,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
-                                                                          size_t chip_index, size_t &gpio_count)
+                                                                        size_t chip_index, size_t &gpio_count)
 {
     for (int gpio_Index = 0; gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
     {
@@ -285,7 +285,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
     {
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
         bms_data.cell_temperatures[gpio_count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 273.15; // calculation for thermistor temperature in C
-        max_min_reference.total_thermistor_temps += gpio_in;
+        max_min_reference.total_thermistor_temps += bms_data.cell_temperatures[gpio_count];
         if (gpio_in > max_min_reference.max_thermistor_voltage)
         {
             max_min_reference.max_thermistor_voltage = gpio_in;
@@ -303,9 +303,19 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         if (gpio_in > max_min_reference.max_board_temp_voltage)
         {
             max_min_reference.total_voltage = gpio_in;
+
             bms_data.max_board_temperature_segment_id = chip_num; // Because each segment only has 1 humidity and 1 board temp sensor
         }
     }
+    // else // For even chips, the 5th GPIO serves as a humidity sensor
+    // {
+    //     bms_data.humidity[(chip_num + 1) / 2] = -12.5 + 125 * (gpio_in) / 50000.0; // humidity calculation
+    //     if (gpio_in > max_min_reference.max_humidity)
+    //     {
+    //         max_min_reference.max_humidity = gpio_in;
+    //         bms_data.max_board_temperature_segment_id = (chip_num + 2) / 2;
+    //     }
+    // }
 }
 
 /* -------------------- WRITING DATA FUNCTIONS -------------------- */
