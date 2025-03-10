@@ -20,26 +20,16 @@
 // Instantiate BMS Driver Group
 BMSDriverGroup<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>(CS, CS_PER_CHIP, ADDR);
 
+/* Scheduler setup */
+HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
 void setup()
 {
     BMSGroup.init();
-
-    Serial.begin(115200);
-    SPI.begin();
-
-    analogReadResolution(12);
+    
 }
 
 void loop()
 {
-    // READ IC data
-    auto data = BMSGroup.read_data();
-
-    // Perform Calculations for cell balancing
-
-    // Report Voltage & temps over to Ethernet
-
-    // Parse EM Messages from CAN to Ethernet
-
+    scheduler.run(); 
 }

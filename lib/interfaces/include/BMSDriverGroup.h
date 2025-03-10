@@ -9,6 +9,7 @@
 #include "LTCSPIInterface.h"
 #include <cstdint>
 #include "etl/optional.h"
+#include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
 
 enum class LTC6811_Type_e
@@ -268,6 +269,10 @@ public:
      */
     std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const
 };
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+using BMSDriverInstance = etl::singleton<BMSDriverGroup<num_chips, num_chip_selects, chip_type>>;
+
 
 #include <BMSDriverGroup.tpp>
 
