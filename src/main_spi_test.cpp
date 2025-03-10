@@ -1,11 +1,9 @@
 #include <SPI.h>
 #include "BMSDriverGroup.h"
-#include "WatchdogInterface.h"
-#include <LTCSPIInterface.h>
+
+#include "LTCSPIInterface.h"
 #include "Configuration.h"
 #include "ACUController.h"
-
-#include "ACU_Constants.h"
 
 #include <array>
 #include <stddef.h>
@@ -29,8 +27,6 @@ std::array<int, num_chips> addr = {0, 1};
 // Instantiate BMS Driver Group
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
-// Instantiate ACU Controller
-ACUController<NUM_CELLS> controller = ACUController<NUM_CELLS>();
 
 template <typename driver_data>
 void print_voltages(driver_data data)
@@ -50,13 +46,16 @@ void print_voltages(driver_data data)
     Serial.println(data.max_voltage_cell_id);
 
     Serial.print("Average Voltage: ");
+
     Serial.print(data.total_voltage / ((num_chips / 2) * 21), 4);
+
     Serial.println("V");
 
     Serial.println();
 
     size_t chip_index = 1;
-    for(auto chip_voltages : data.voltages )
+    for(auto chip_voltages : data.voltages_by_chip )
+
     {
         Serial.print("Chip ");
         Serial.println(chip_index);
@@ -71,26 +70,28 @@ void print_voltages(driver_data data)
         chip_index++;
         Serial.println();
     }
-    int cti = 1;
-    for(auto temp : data.cell_temperatures) // Should be 4 per chip
+
+    int cti = 0;
+    for(auto temp : data.cell_temperatures)
     {
         Serial.print("temp id ");
         Serial.print(cti);
-        Serial.print(" val ");
+        Serial.print(" val \t");
+        Serial.print("");
         Serial.print(temp);
-        Serial.print("\t");
-        if (cti % 4 == 0) Serial.println();
+        Serial.println();
         cti++;
     }
-    int temp_index = 1;
-    for(auto bt : data.board_temperatures) // Should be 1 per chip
+    Serial.println();
+
+    int temp_index = 0;
+    for(auto bt : data.board_temperatures)
     {
-        Serial.print("board temp id ");
+        Serial.print("board temp id");
         Serial.print(temp_index);
         Serial.print(" val ");
+        Serial.print("");
         Serial.print(bt);
-        Serial.print("\t");
-        if (temp_index % 4 == 0) Serial.println();
         temp_index++;
     }
     Serial.println();
@@ -106,8 +107,12 @@ void setup()
     Serial.println();
 }
 
+int ci = 0;
+int ji = 0;
+
 void loop()
 {
+
     if (timer > 250) // Need an actual schedular
     {   
         // reset timer
@@ -116,9 +121,10 @@ void loop()
         // Read cell and auxiliary data from the BMS Driver
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
-
+    
         // Calculate cell_balance_statuses based on data.voltages
         // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
+
         // controller.update_acu_state(bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
     
 
@@ -127,8 +133,5 @@ void loop()
 
         // Rewrite the configuration for the chip
         //BMSGroup.write_configuration(dcto_write, cell_balance_config); 
-
-        // Send bms_data through message interface here
-
     }
 }
