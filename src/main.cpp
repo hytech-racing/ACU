@@ -34,8 +34,7 @@ void setup()
 
 void loop()
 {      
-    bool watchdog_state = WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); 
-    Serial.printf("Watchdog state: %d\n", watchdog_state);
+    bool watchdog_state = WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified
     
     
     // scheduler.run(); 
