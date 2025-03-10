@@ -5,9 +5,10 @@
 
 #include "etl/optional.h"
 #include "etl/singleton.h"
+#include "etl/delegate.h"
 
 #include "ACU_Constants.h"
 
-using ACUData = etl::singleton<ACUData_s<NUM_CELLS>>;
+using ACUDataInstance = etl::singleton<ACUData_s<NUM_CELLS>>;
 
 #endif

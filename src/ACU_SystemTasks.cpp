@@ -7,5 +7,6 @@ bool initialize_all_systems() {
     return true;
 }
 
-
-
+etl::delegate<bool()> mock_hv_over_threshold = etl::delegate<bool()>::create([]() -> bool {
+    return true;
+});

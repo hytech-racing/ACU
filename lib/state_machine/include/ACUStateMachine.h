@@ -1,5 +1,5 @@
-#ifndef __AMS_STATE_MACHINE_H__
-#define __AMS_STATE_MACHINE_H__
+#ifndef __ACU_STATE_MACHINE_H__
+#define __ACU_STATE_MACHINE_H__
 
 /* From shared-firmware-types */
 #include "SharedFirmwareTypes.h"
@@ -14,10 +14,10 @@ enum class ACUState_e
     FAULTED = 3, 
 };
 
-class AMSStateMachine
+class ACUStateMachine
 {
 public:
-    AMSStateMachine(
+    ACUStateMachine(
         etl::delegate<bool()> received_CCU_message,
         etl::delegate<bool()> has_bms_fault,
         etl::delegate<bool()> has_imd_fault,
@@ -74,8 +74,8 @@ private:
     etl::delegate<bool()> _has_imd_fault;
     etl::delegate<bool()> _received_valid_shdn_out;
     /// @brief setters
-    etl::delegate<void()> _disable_cell_balancing;
     etl::delegate<void()> _enable_cell_balancing;
+    etl::delegate<void()> _disable_cell_balancing;
     etl::delegate<void()> _disable_watchdog;
     etl::delegate<void()> _reinitialize_watchdog;
     etl::delegate<void()> _disable_n_latch_en;

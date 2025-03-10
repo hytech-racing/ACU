@@ -73,25 +73,26 @@ struct BMSData
     std::array<volt, num_cells> voltages;
     std::array<celsius, 4 * num_chips> cell_temperatures;
     std::array<celsius, num_board_thermistors> board_temperatures;
-    float min_voltage;
-    float max_voltage;
-    size_t min_voltage_cell_id;              // 0 - 125
-    size_t max_voltage_cell_id;              // 0 - 125
+    volt min_cell_voltage;
+    volt max_cell_voltage;
+    celsius max_cell_temp;
+    celsius max_board_temp;
+    size_t min_cell_voltage_id;              // 0 - 125
+    size_t max_cell_voltage_id;              // 0 - 125
     size_t max_board_temperature_segment_id; // 0 - 11
     size_t max_humidity_segment_id;          // DNP
     size_t max_cell_temperature_cell_id;     // 0 - 47
-    float total_voltage;
-    float average_cell_temperature;
+    volt total_voltage;
+    celsius average_cell_temperature;
 };
 
 struct ReferenceMaxMin
 {
     volt total_voltage = 0;
-    volt max_voltage = 0;
-    volt min_voltage = 65535;
-    uint16_t max_humidity = 0;
-    uint16_t max_thermistor_voltage = 0;
-    uint16_t max_board_temp_voltage = 0;
+    volt max_cell_voltage = 0;
+    volt min_cell_voltage = 65535;
+    celsius max_cell_temp_voltage = 0;
+    celsius max_board_temp_voltage = 0;
     celsius total_thermistor_temps = 0;
 };
 

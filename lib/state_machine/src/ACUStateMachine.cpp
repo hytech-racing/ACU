@@ -1,6 +1,6 @@
-#include "AMSStateMachine.h"
+#include "ACUStateMachine.h"
 
-void AMSStateMachine::tick_state_machine(unsigned long current_millis) {
+void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
     switch(_current_state) {
         case ACUState_e::STARTUP: 
         {
@@ -46,14 +46,14 @@ void AMSStateMachine::tick_state_machine(unsigned long current_millis) {
     }
 }
 
-void AMSStateMachine::_set_state(ACUState_e new_state, unsigned long curr_millis)
+void ACUStateMachine::_set_state(ACUState_e new_state, unsigned long curr_millis)
 {
     _handle_exit_logic(_current_state, curr_millis);
     _current_state = new_state;
     _handle_entry_logic(_current_state, curr_millis);
 }
 
-void AMSStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis)
+void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis)
 {
     switch(prev_state) {
         case ACUState_e::STARTUP: 
@@ -78,7 +78,7 @@ void AMSStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
     }
 }
 
-void AMSStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long curr_millis)
+void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long curr_millis)
 {
     switch(new_state) {
         case ACUState_e::STARTUP: 

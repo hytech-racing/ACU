@@ -159,10 +159,12 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         }
     }
 
-    bms_data.min_voltage = max_min_reference.min_voltage;
-    bms_data.max_voltage = max_min_reference.max_voltage;
+    bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
+    bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
     bms_data.total_voltage = max_min_reference.total_voltage;
     bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
+    bms_data.max_cell_temp = bms_data.cell_temperatures[bms_data.max_cell_temperature_cell_id];
+    bms_data.max_board_temp = bms_data.board_temperatures[bms_data.max_board_temperature_segment_id];
     return bms_data;
 }
 
@@ -211,10 +213,12 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_addre
         bms_data = _load_auxillaries(bms_data, max_min_reference, data_in_auxillaries_1_to_5, chip, gpio_count);
     }
 
-    bms_data.min_voltage = max_min_reference.min_voltage;
-    bms_data.max_voltage = max_min_reference.max_voltage;
+    bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
+    bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
     bms_data.total_voltage = max_min_reference.total_voltage;
     bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
+    bms_data.max_cell_temp = bms_data.cell_temperatures[bms_data.max_cell_temperature_cell_id];
+    bms_data.max_board_temp = bms_data.board_temperatures[bms_data.max_board_temperature_segment_id];
     return bms_data;
 }
 
@@ -265,15 +269,15 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count)
 {
     max_min_reference.total_voltage += voltage_in;
-    if (voltage_in <= max_min_reference.min_voltage)
+    if (voltage_in <= max_min_reference.min_cell_voltage)
     {
-        max_min_reference.min_voltage = voltage_in;
-        bms_data.min_voltage_cell_id = cell_count;
+        max_min_reference.min_cell_voltage = voltage_in;
+        bms_data.min_cell_voltage_id = cell_count;
     }
-    if (voltage_in >= max_min_reference.max_voltage)
+    if (voltage_in >= max_min_reference.max_cell_voltage)
     {
-        max_min_reference.max_voltage = voltage_in;
-        bms_data.max_voltage_cell_id = cell_count;
+        max_min_reference.max_cell_voltage = voltage_in;
+        bms_data.max_cell_voltage_id = cell_count;
     }
     cell_count++;
 }
@@ -286,9 +290,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
         bms_data.cell_temperatures[gpio_count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 273.15; // calculation for thermistor temperature in C
         max_min_reference.total_thermistor_temps += bms_data.cell_temperatures[gpio_count];
-        if (gpio_in > max_min_reference.max_thermistor_voltage)
+        if (gpio_in > max_min_reference.max_cell_temp_voltage)
         {
-            max_min_reference.max_thermistor_voltage = gpio_in;
+            max_min_reference.max_cell_temp_voltage = gpio_in;
             bms_data.max_cell_temperature_cell_id = gpio_count;
         }
         gpio_count++;
@@ -328,9 +332,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration
     for (size_t chip = 0; chip < num_chips; chip++) {
         uint16_t chip_cb = 0;
         size_t cell_count = (chip % 2 == 0) ? 12 : 9;
-        for (size_t cell = 0; cell < cell_count; cell++) {
+        for (size_t cell_i = 0; cell_i < cell_count; cell_i++) {
             if (cell_balance_statuses[cell]) {
-                chip_cb = (0b1 << cell) | chip_cb;
+                chip_cb = (0b1 << cell_i) | chip_cb;
             }
             cell++;
         }

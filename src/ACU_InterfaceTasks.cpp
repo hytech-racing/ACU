@@ -4,6 +4,8 @@ void initialize_all_interfaces() {
     SPI.begin();
     Serial.begin(115200);
     analogReadResolution(12);
+    /* ACU Data Struct */
+    ACUDataInstance::create();
     /* BMS Driver */
     BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(CS, CS_PER_CHIP, ADDR);
     BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();
@@ -18,13 +20,28 @@ bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& 
     return true;
 }
 
-void get_bms_data() {
+template <typename bms_data>
+bms_data get_bms_data() {
     auto data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
     print_bms_data(data);
+    handle_bms_data(data);
+    return data;
 }
 
-template <typename driver_data>
-void print_bms_data(driver_data data)
+template <typename bms_data>
+void handle_bms_data(bms_data data) {
+    /* Process with ACUDataInstance */
+    ACUDataInstance::instance().voltages = data.voltages;
+    ACUDataInstance::instance().min_cell_voltage = data.min_cell_voltage;
+    ACUDataInstance::instance().max_cell_voltage = data.max_cell_voltage;
+    ACUDataInstance::instance().pack_voltage = data.total_voltage;
+
+    ACUDataInstance::instance().max_board_temp = data.max_board_temp;
+    ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
+}
+
+template <typename bms_data>
+void print_bms_data(bms_data data)
 {
     Serial.print("Total Voltage: ");
     Serial.print(data.total_voltage, 4);

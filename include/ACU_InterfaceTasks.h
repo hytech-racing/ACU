@@ -22,9 +22,11 @@ void initialize_all_interfaces();
  */
 bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
-template <typename driver_data>
-void print_bms_data(driver_data data);
+template <typename bms_data>
+void print_bms_data(bms_data data);
 
+template <typename bms_data>
+void handle_bms_data(bms_data data);
 /**
  * Needs to handle the logic and output for n_latch_en, and teensy_ok
  */

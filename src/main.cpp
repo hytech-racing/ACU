@@ -13,6 +13,7 @@
 
 /* System Includes */
 #include "ACUController.h"
+#include "ACUStateMachine.h"
 
 /* Schedular Dependencies */
 #include "ht_sched.hpp"
@@ -26,10 +27,6 @@ void setup()
     /* Interface and System initialization */
     initialize_all_interfaces();
     initialize_all_systems();
-
-    delay(500);
-    Serial.println("Setup Complete");
-    delay(500);
 }
 
 void loop()
@@ -37,13 +34,15 @@ void loop()
     WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
 
     if (sys_time::hal_millis() % 200 == 0) { // 5Hz
-        auto data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data(); // verified
-        print_bms_data(data);
+        BMSData data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data(); // verified
 
-        ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUData); 
+        auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUDataInstance::instance()); // verified
+                
+        BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, acu_status.cb);
     }
     
-    
-    
+
+
+
     // scheduler.run(); 
 }
