@@ -14,7 +14,7 @@ void initialize_interfaces() {
 
 bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    digitalWrite(WATCHDOG_PIN, WatchdogInstance::instance().get_watchdog_state(sys_time::hal_millis()));
+    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()));
     return true;
 }
 

@@ -69,7 +69,7 @@ public:
      * @param curr_millis time of ACU time
      * @post IF reach interval, _watchdog_time updated and state switched
     */
-    bool get_watchdog_state(unsigned long curr_millis);
+    bool update_watchdog_state(unsigned long curr_millis);
 
     /**
      * Sets Teensy_OK LOW
