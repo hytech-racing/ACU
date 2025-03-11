@@ -1,65 +1,64 @@
-/**
- * PREAMBLE: MUST READ TO UNDERSTAND WTF IS GOING ON
- */
+/* ACU Dependent */
+#include "ACU_Constants.h"
+#include "ACU_Globals.h"
+#include "ACU_InterfaceTasks.h"
+#include "ACU_SystemTasks.h"
 
-/* Library Includes */
+/* Interface Includes */
 #include <Arduino.h>
 #include "BMSDriverGroup.h"
+#include "WatchdogInterface.h"
+#include "SystemTimeInterface.h"
+// #include "ACUEthernetInterface.h"
+
+/* System Includes */
 #include "ACUController.h"
-#include "Configuration.h"
-#include "ACUEthernetInterface.h"
-#include "hytech.h"
+#include "ACUStateMachine.h"
 
-// FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> energy_meter_can;
-// FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> telem_can;
+/* Schedular Dependencies */
+#include "ht_sched.hpp"
+#include "ht_task.hpp"
 
-/* Instances of LTC6811 (2) */
-using chip_type = LTC6811_Type_e;
+/* Scheduler setup */
+HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
-// Initialize chip_select, chip_select_per_chip, and address
-const int num_chips = 12;
-const int num_chip_selects = 2;
-std::array<int, num_chip_selects> cs = {9, 10};
-std::array<int, num_chips> cs_per_chip = {9, 9, 10, 10, 10, 10, 9, 9, 9, 9, 10, 10};
-std::array<int, num_chips> addr = {0,1,2,3,4,5,6,7,8,9,10,11};
-ACU_State_s<num_chips> acu_state = {};
-
-// Instantiate BMS Driver Group
-BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
 
 void setup()
 {
-    pinMode(teensy_OK_pin, OUTPUT);
-    pinMode(teensy_to_vehicle_watchdog_pin, OUTPUT); 
-    digitalWrite(6, HIGH); // write Teensy_OK pin high
-
-    BMSGroup.init();
-
-    Serial.begin(115200);
-    SPI.begin();
-    //telem_can.begin();
-    //telem_can.setBaudRate(500000);
-    //energy_meter_can.begin();
-    //energy_meter_can.setBaudRate(500000);
-    //energy_meter_can.enableMBInterrupts();
-    //energy_meter_can.onReceive(parse_energy_meter_can_message);
-    for (int i = 0; i < 64; i++)
-    {                                                                          // Fill all filter slots with Charger Control Unit message filter
-        // telem_can.setMBFilter(static_cast<FLEXCAN_MAILBOX>(i), CCU_STATUS_CANID); // Set CAN mailbox filtering to only watch for charger controller status CAN messages
-    }
-    analogReadResolution(12);
+    /* Interface and System initialization */
+    initialize_all_interfaces();
+    initialize_all_systems();
 }
 
 void loop()
-{
-    // READ IC data
-    auto data = BMSGroup.read_data();
+{      
+    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
 
-    // Perform Calculations for cell balancing
+    if (sys_time::hal_millis() % 200 == 0) { // 5Hz
+        BMSData data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data(); // verified
 
-    // Report Voltage & temps over to Ethernet
+        auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUDataInstance::instance()); // verified
+        ACUDataInstance::instance().acu_ok = acu_status.has_fault;
+        Serial.print(acu_status.has_fault);
+        BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, acu_status.cb);
+    }
+    
+    // if (sys_time::hal_millis() % 500 == 0) { // 2 Hz
+    //     auto state = ACUStateMachineInstance::instance().get_state();
+    //     Serial.printf("state: %d\n", static_cast<int>(state));
+    // }
+    
+    ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
-    // Parse EM Messages from CAN to Ethernet
 
+    if (sys_time::hal_millis() % 100 == 0) { // 10 Hz
+        // UDP Message Send
+    }
+
+    if (sys_time::hal_millis() % 200 == 0) { // 5 Hz
+        // TCP Message send
+    }
+
+    // scheduler.run(); 
 }

@@ -10,6 +10,10 @@
 #include <cstdint>
 #include "etl/optional.h"
 
+#include "etl/singleton.h"
+
+#include "SharedFirmwareTypes.h"
+
 enum class LTC6811_Type_e
 {
     LTC6811_1 = 0,
@@ -61,49 +65,49 @@ enum class ADC_MODE_e : uint8_t
     FILTERED = 0x3
 };
 
-using volt = float;
-using celcius = float;
-template <size_t num_chips, size_t num_humidity_sensors, size_t num_board_thermistors>
+
+template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData
 {
-    std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages;
-    std::array<celcius, 4 * num_chips> cell_temperatures;
-    std::array<float, num_humidity_sensors> humidity;
-    std::array<float, num_board_thermistors> board_temperatures;
-    float min_voltage;
-    float max_voltage;
-    size_t min_voltage_cell_id;              // 0 - 125
-    size_t max_voltage_cell_id;              // 0 - 125
-    size_t max_board_temperature_segment_id; // 0 - 5
-    size_t max_humidity_segment_id;          // 0 - 5
+    std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages_by_chip;
+    std::array<volt, num_cells> voltages;
+    std::array<celsius, 4 * num_chips> cell_temperatures;
+    std::array<celsius, num_board_thermistors> board_temperatures;
+    volt min_cell_voltage;
+    volt max_cell_voltage;
+    celsius max_cell_temp;
+    celsius max_board_temp;
+    size_t min_cell_voltage_id;              // 0 - 125
+    size_t max_cell_voltage_id;              // 0 - 125
+    size_t max_board_temperature_segment_id; // 0 - 11
+    size_t max_humidity_segment_id;          // DNP
     size_t max_cell_temperature_cell_id;     // 0 - 47
-    float total_voltage;
-    float average_cell_temperature;
+    volt total_voltage;
+    celsius average_cell_temperature;
 };
 
 struct ReferenceMaxMin
 {
-    uint32_t total_voltage = 0;
-    uint16_t max_voltage = 0;
-    uint16_t min_voltage = 65535;
-    uint16_t max_humidity = 0;
-    uint16_t max_thermistor_voltage = 0;
-    uint16_t max_board_temp_voltage = 0;
-    float total_thermistor_temps = 0;
+    volt total_voltage = 0;
+    volt max_cell_voltage = 0;
+    volt min_cell_voltage = 65535;
+    celsius max_cell_temp_voltage = 0;
+    celsius max_board_temp_voltage = 0;
+    celsius total_thermistor_temps = 0;
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
-    using BMSDriverData = BMSData<num_chips, (num_chips + 1) / 2, (num_chips + 1) / 2>;
+
+    constexpr static size_t num_cells = (num_chips / 2) * 21;
+    using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
-    void manual_send_and_print();
-
     /**
      * INIT: ONLY CALLED ONCE at initialization. LTC6811 only needs to set up the PEC table
      * @post We should have initialized the PEC by calling generate_PEC_table(), so every other time
@@ -133,7 +137,14 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
+
+    /**
+     * Alternative header for configuration function call
+    */
+    void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
+
 private:
+
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data
@@ -158,7 +169,7 @@ private:
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<uint16_t, 12> &chip_voltages_in, const uint16_t &voltage_in, size_t &cell_count);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
@@ -257,7 +268,7 @@ private:
     /**
      * We will only end up using the address if this is a LTC6811-2
      * NOTE: But if we are, we need to call a setup function to instatiate each with the correct addresses
-     * BMS Segments 1, 4, and 5 are on chip select 9
+     * EX) BMS Segments 1, 4, and 5 are on chip select 9
      * BMS Segments 2, 3, and 6 are on chip select 10
      * Those segments correspond to 2 ICs each, so the instance with chip_select 9
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
@@ -269,8 +280,12 @@ private:
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
      * out of the 16 bits
      */
-    std::array<uint16_t, num_chips> _cell_discharge_en; // not const
+    std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const
 };
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+using BMSDriverInstance = etl::singleton<BMSDriverGroup<num_chips, num_chip_selects, chip_type>>;
+
 
 #include <BMSDriverGroup.tpp>
 
