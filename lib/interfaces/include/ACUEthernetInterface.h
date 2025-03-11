@@ -10,70 +10,25 @@
 #include "ProtobufMsgInterface.h"
 #include "SharedFirmwareTypes.h"
 
-class ACUEthernetInterface
+namespace ACUEthernetInterface
 {
-private:
-    IPAddress _drivebrain_ip; // Private member variable for drivebrain IP
-    uint16_t _acu_data_port;         // Private member variable for ACU data port
-    qindesign::network::EthernetUDP * _udp_socket;            // Private member variable for UDP socket
-
-public:
-    /**
-     * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_VCRData_s.
+  /**
+     * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUCoreData_s.
      *
-     * @param shared_state The current VCR state, which includes both interface and system data.
+     * @param shared_state Minimum data ACU must send for car to run.
      * @return A populated instance of the outgoing protoc struct.
      */
-    hytech_msgs_VCRData_s make_vcr_data_msg(const VCRData_s &shared_state);
+    hytech_msgs_ACUCoreData_s make_acu_core_data_msg(const ACUCoreData_s &shared_state);
 
     /**
-     * Function to take a populated protoc struct from ACU and update the VCR state.
+     * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUAllData_s.
      *
-     * @param msg_in A reference to a populated protoc struct.
-     * @param shared_state A reference to the VCR state.
-     *
-     * @post After this function completes, shared_state will have updated contents of ACUCoreData.
+     * @param shared_state Detailed, unprocessed data from ACU sensors.
+     * @return A populated instance of the outgoing protoc struct.
      */
-    void receive_pb_msg_acu_core_data(const hytech_msgs_ACUCoreData_s &msg_in, VCRData_s &shared_state, unsigned long curr_millis);
+    hytech_msgs_ACUAllData_s make_acu_all_data_msg(const ACUAllData_s &shared_state);
 
-    /**
-     * Function to take a populated protoc struct from ACU and update the VCR state.
-     *
-     * @param msg_in A reference to a populated protoc struct.
-     * @param shared_state A reference to the VCR state.
-     *
-     * @post After this function completes, shared_state will have updated contents of ACUAllData.
-     */
-    void receive_pb_msg_acu_all_data(const hytech_msgs_ACUAllData_s &msg_in, VCRData_s &shared_state);
-
-    /**
-     * Function to take a populated protoc struct from the drivebrain and update the VCR state.
-     *
-     * @param msg_in A reference to a populated protoc struct.
-     * @param shared_state A reference to the VCR state.
-     *
-     * @post After this function completes, shared_state will have updated contents of ACUAllData.
-     */
-    void receive_pb_msg_db(const hytech_msgs_MCUCommandData &msg_in, VCRData_s &shared_state, unsigned long curr_millis);
-
-    /**
-     * Function to take a populated protoc struct from VCF and update the VCR state.
-     *
-     * @param msg_in A reference to a populated protoc struct.
-     * @param shared_state A reference to the VCR state.
-     *
-     * @post After this function completes, shared_state will have updated contents of ACUAllData.
-     */
-    void receive_pb_msg_vcf(const hytech_msgs_VCFData_s &msg_in, VCRData_s &shared_state, unsigned long curr_millis);
-
-    /**
-     * Helper function to copy an instance of InverterData_s to the protoc struct hytech_msgs_InverterData_s.
-     * @param original A populated instance of the InverterData_s defined in shared firmware types.
-     * @param destination The destination protoc struct.
-     * @post The destination struct will be populated with the data from original.
-     */
-    void copy_inverter_data(const InverterData_s &original, hytech_msgs_InverterData_s &destination);
-
+    
     /**
      * Helper function to copy veh_vec data.
      *
@@ -90,7 +45,7 @@ public:
     //   to.RR = from.RR;
     // }
 
-    void handle_send_ethernet_data(const hytech_msgs_VCRData_s &data);
+    //void handle_send_ethernet_data(const hytech_msgs_VCRData_s &data);
 };
 
 #endif /* ACU_ETHERNET_INTERFACE_H */
