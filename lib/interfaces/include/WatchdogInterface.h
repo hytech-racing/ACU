@@ -76,12 +76,15 @@ public:
      * @pre ACU Controller discovers bms voltage/temp fault
     */
     void set_teensy_ok_low();
+    void set_teensy_ok_high();
+
 
     /**
      * Sets n_latch_en low
      * @pre that there is a fault of some sort
     */
     void set_n_latch_en_low();
+    void set_n_latch_en_high();
 
     /**
      * @return the state of the IMD, HIGH = NO FAULT

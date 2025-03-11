@@ -29,18 +29,27 @@ void WatchdogInterface::set_teensy_ok_low() {
     digitalWrite(_teensy_ok_pin, LOW);
 }
 
+void WatchdogInterface::set_teensy_ok_high() {
+    digitalWrite(_teensy_ok_pin, HIGH);
+}
+
+
 void WatchdogInterface::set_n_latch_en_low() {
     digitalWrite(_teensy_n_latch_en_pin, LOW);
 }
 
+void WatchdogInterface::set_n_latch_en_high() {
+    digitalWrite(_teensy_n_latch_en_pin, HIGH);
+}
+
 bool WatchdogInterface::read_imd_ok() {
-    uint8_t data = digitalRead(_teensy_imd_ok_pin);
-    return data != 0; // idk if this would actually work, like if a LOW is a threshold or smth
+    bool data = digitalRead(_teensy_imd_ok_pin);
+    return data; // idk if this would actually work, like if a LOW is a threshold or smth
 }
 
 bool WatchdogInterface::read_shdn_out() {
-    uint8_t data = digitalRead(_teensy_shdn_out_pin);
-    return data != 0;
+    bool data = digitalRead(_teensy_shdn_out_pin);
+    return data;
 }
 
 

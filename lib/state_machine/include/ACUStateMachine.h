@@ -5,6 +5,7 @@
 #include "SharedFirmwareTypes.h"
 
 #include <etl/delegate.h>
+#include "etl/singleton.h"
 
 enum class ACUState_e
 {
@@ -48,7 +49,7 @@ public:
     /**
      * @return current ACU state
     */
-    ACUState_e get_state();
+    ACUState_e get_state() { return _current_state; } 
 
 private:
 
@@ -81,5 +82,7 @@ private:
     etl::delegate<void()> _disable_n_latch_en;
     etl::delegate<void()> _reset_latch;
 };
+
+using ACUStateMachineInstance = etl::singleton<ACUStateMachine>;
 
 #endif

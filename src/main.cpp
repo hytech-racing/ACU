@@ -37,12 +37,17 @@ void loop()
         BMSData data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data(); // verified
 
         auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUDataInstance::instance()); // verified
-                
+        ACUDataInstance::instance().acu_ok = acu_status.has_fault;
+        Serial.print(acu_status.has_fault);
         BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, acu_status.cb);
     }
     
-
-
+    if (sys_time::hal_millis() % 500 == 0) { // 10 Hz
+        auto state = ACUStateMachineInstance::instance().get_state();
+        Serial.printf("state: %d\n", static_cast<int>(state));
+    }
+    
+    ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
     // scheduler.run(); 
 }
