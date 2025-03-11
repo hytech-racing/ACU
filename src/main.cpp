@@ -22,6 +22,8 @@
 /* Scheduler setup */
 HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
+
+
 void setup()
 {
     /* Interface and System initialization */
@@ -42,12 +44,21 @@ void loop()
         BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, acu_status.cb);
     }
     
-    if (sys_time::hal_millis() % 500 == 0) { // 10 Hz
-        auto state = ACUStateMachineInstance::instance().get_state();
-        Serial.printf("state: %d\n", static_cast<int>(state));
-    }
+    // if (sys_time::hal_millis() % 500 == 0) { // 2 Hz
+    //     auto state = ACUStateMachineInstance::instance().get_state();
+    //     Serial.printf("state: %d\n", static_cast<int>(state));
+    // }
     
     ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
+
+
+    if (sys_time::hal_millis() % 100 == 0) { // 10 Hz
+        // UDP Message Send
+    }
+
+    if (sys_time::hal_millis() % 200 == 0) { // 5 Hz
+        // TCP Message send
+    }
 
     // scheduler.run(); 
 }
