@@ -71,6 +71,8 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
         }
         case ACUState_e::FAULTED: 
         {
+            _reset_latch();
+            _reinitialize_watchdog();
             break;
         }
         default:
