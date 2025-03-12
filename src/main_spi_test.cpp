@@ -121,34 +121,5 @@ void loop()
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
     
-        // Calculate cell_balance_statuses based on data.voltages
-        // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
-
-        // controller.update_acu_state(bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
-    
-
-        // Retrieve the cell balance status array from the controller
-        // std::array<uint16_t, num_chips> cell_balance_config = controller.get_cell_balance_params();
-
-        // Rewrite the configuration for the chip
-        //BMSGroup.write_configuration(dcto_write, cell_balance_config); 
-
-        // Cell balance testing
-        std::array<uint16_t, num_chips> cb = {0}; 
-
-        uint16_t setting = 0;
-        setting = (0b1 << cell);
-        // // if (cell == 1)
-        // //     setting = (0b1 << 8) || (0b1 << (9));
-        
-
-        // // delay(2000);
-        cb[0] = setting;
-        cb[1] = setting;
-
-        BMSGroup.write_configuration(dcto_write, cb);
-
-        cell++;
-        if (cell == 12) cell = 0;
     }
 }
