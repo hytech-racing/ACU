@@ -37,13 +37,10 @@ hytech_msgs_ACUAllData_s ACUEthernetInterface::make_acu_all_data_msg(const ACUAl
     return out;
 }
 
-
-	
-// void ACUEthernetInterface::copy_inverter_data(const InverterData_s &original, hytech_msgs_InverterData_s &destination)
-// {
-    
-// }
-
-// void ACUEthernetInterface::handle_send_ethernet_data(const hytech_msgs_VCRData_s &data) {
-//     handle_ethernet_socket_send_pb<(size_t) 1024>(_drivebrain_ip, _acu_data_port, _udp_socket, data, hytech_msgs_VCRData_s_fields);
-// }
+void ACUEthernetInterface::receive_pb_msg_vcr(const hytech_msgs_VCRData_s &msg_in, ACUCoreData_s &shared_state)
+{
+    shared_state.avg_cell_voltage = msg_in.ams_data.average_cell_voltage;
+    shared_state.max_cell_temp = msg_in.ams_data.max_temp_celsius;
+    shared_state.min_cell_voltage = msg_in.ams_data.min_cell_voltage;
+    shared_state.pack_voltage = msg_in.ams_data.total_pack_voltage;
+}
