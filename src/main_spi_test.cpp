@@ -22,11 +22,10 @@ constexpr int num_chips = 2;
 constexpr int num_chip_selects = 1;
 std::array<int, num_chip_selects> cs = {10};
 std::array<int, num_chips> cs_per_chip = {10, 10};
-std::array<int, num_chips> addr = {0, 1};
+std::array<int, num_chips> addr = {6, 7};
 
 // Instantiate BMS Driver Group
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
-
 
 template <typename driver_data>
 void print_voltages(driver_data data)
@@ -36,14 +35,14 @@ void print_voltages(driver_data data)
     Serial.println("V");
 
     Serial.print("Minimum Voltage: ");
-    Serial.print(data.min_voltage, 4);
+    Serial.print(data.min_cell_voltage, 4);
     Serial.print("V\tLocation of Minimum Voltage: ");
-    Serial.println(data.min_voltage_cell_id);
+    Serial.println(data. min_cell_voltage_id);
 
     Serial.print("Maxmimum Voltage: ");
-    Serial.print(data.max_voltage, 4);
+    Serial.print(data.max_cell_voltage, 4);
     Serial.print("V\tLocation of Maximum Voltage: ");
-    Serial.println(data.max_voltage_cell_id);
+    Serial.println(data.max_cell_voltage_id);
 
     Serial.print("Average Voltage: ");
 
@@ -54,8 +53,7 @@ void print_voltages(driver_data data)
     Serial.println();
 
     size_t chip_index = 1;
-    for(auto chip_voltages : data.voltages_by_chip )
-
+    for(auto chip_voltages : data.voltages_by_chip)
     {
         Serial.print("Chip ");
         Serial.println(chip_index);
@@ -77,9 +75,9 @@ void print_voltages(driver_data data)
         Serial.print("temp id ");
         Serial.print(cti);
         Serial.print(" val \t");
-        Serial.print("");
         Serial.print(temp);
-        Serial.println();
+        Serial.print("\t");
+        if (cti % 4 == 3) Serial.println();
         cti++;
     }
     Serial.println();
@@ -87,11 +85,12 @@ void print_voltages(driver_data data)
     int temp_index = 0;
     for(auto bt : data.board_temperatures)
     {
-        Serial.print("board temp id");
+        Serial.print("board temp id ");
         Serial.print(temp_index);
         Serial.print(" val ");
-        Serial.print("");
         Serial.print(bt);
+        Serial.print("\t");
+        if (temp_index % 4 == 3) Serial.println();
         temp_index++;
     }
     Serial.println();
@@ -109,7 +108,7 @@ void setup()
 
 int ci = 0;
 int ji = 0;
-
+int cell = 0;
 void loop()
 {
 
@@ -122,16 +121,5 @@ void loop()
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
     
-        // Calculate cell_balance_statuses based on data.voltages
-        // Passing in voltages, min_voltage, max_voltage; Returns cell_balance_statuses,
-
-        // controller.update_acu_state(bms_data.voltages, bms_data.min_voltage, bms_data.max_voltage);
-    
-
-        // Retrieve the cell balance status array from the controller
-        // std::array<uint16_t, num_chips> cell_balance_config = controller.get_cell_balance_params();
-
-        // Rewrite the configuration for the chip
-        //BMSGroup.write_configuration(dcto_write, cell_balance_config); 
     }
 }

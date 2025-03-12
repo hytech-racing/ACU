@@ -267,7 +267,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count)
-{
+{   
     max_min_reference.total_voltage += voltage_in;
     if (voltage_in <= max_min_reference.min_cell_voltage)
     {
@@ -300,13 +300,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
     else 
     {
         // bms_data.board_temperatures[(chip_num + 2) / 2] = -66.875 + 218.75 * ( gpio_in  / 50000.0); // caculation for SHT31 temperature in C
-        constexpr float mcp_9701_temperature_coefficient = 19.5f;
+        constexpr float mcp_9701_temperature_coefficient = 0.0195f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
-        bms_data.board_temperatures[chip_num] =  (( static_cast<float>(gpio_in) / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
+        bms_data.board_temperatures[chip_num] =  ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
         // bms_data.board_temperatures[(chip_num +2)/2] = 0;
         if (gpio_in > max_min_reference.max_board_temp_voltage)
         {
-            max_min_reference.total_voltage = gpio_in;
+            max_min_reference.max_board_temp_voltage = gpio_in;
 
             bms_data.max_board_temperature_segment_id = chip_num; // Because each segment only has 1 humidity and 1 board temp sensor
         }
