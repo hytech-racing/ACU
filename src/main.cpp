@@ -35,30 +35,32 @@ void loop()
 {      
     WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
 
-    if (sys_time::hal_millis() % 200 == 0) { // 5Hz
-        BMSData data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data(); // verified
+    /* BMS Data acquisition | Cell Balancing (CB) Calculation | BMS CB Writing IF Charging */
+    // if (sys_time::hal_millis() % 200 == 0) { // 5Hz
+    //     BMSData data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data(); // verified
 
-        auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUDataInstance::instance()); // verified
-        ACUDataInstance::instance().acu_ok = acu_status.has_fault;
-        Serial.print(acu_status.has_fault);
-        BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, acu_status.cb);
-    }
-    
-    // if (sys_time::hal_millis() % 500 == 0) { // 2 Hz
-    //     auto state = ACUStateMachineInstance::instance().get_state();
-    //     Serial.printf("state: %d\n", static_cast<int>(state));
+    //     auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUDataInstance::instance()); // verified
+    //     ACUDataInstance::instance().acu_ok = acu_status.has_fault;
+    //     Serial.print(acu_status.has_fault);
+    //     BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, acu_status.cb);
     // }
     
-    ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
+    // ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
+    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
+    Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
+    Serial.printf("TS OUT Filtered: %d\n", WatchdogInstance::instance().read_ts_out_filtered());
+    Serial.printf("PACK OUT Filtered: %d\n", WatchdogInstance::instance().read_pack_out_filtered());
 
-    if (sys_time::hal_millis() % 100 == 0) { // 10 Hz
-        // UDP Message Send
-    }
+    Serial.println();
 
-    if (sys_time::hal_millis() % 200 == 0) { // 5 Hz
-        // TCP Message send
-    }
+    // if (sys_time::hal_millis() % 100 == 0) { // 10 Hz
+    //     // UDP Message Send
+    // }
+
+    // if (sys_time::hal_millis() % 200 == 0) { // 5 Hz
+    //     // TCP Message send
+    // }
 
     // scheduler.run(); 
 }
