@@ -1,28 +1,34 @@
-#include <SPI.h>
+/* ACU Dependent */
+#include "ACU_Constants.h"
+#include "ACU_Globals.h"
+#include "ACU_InterfaceTasks.h"
+#include "ACU_SystemTasks.h"
+
+/* Interface Includes */
+#include <Arduino.h>
 #include "BMSDriverGroup.h"
+#include "WatchdogInterface.h"
+#include "SystemTimeInterface.h"
+// #include "ACUEthernetInterface.h"
 
-#include "LTCSPIInterface.h"
-#include "Configuration.h"
+/* System Includes */
 #include "ACUController.h"
+#include "ACUStateMachine.h"
 
-#include <array>
-#include <stddef.h>
-#include <string.h>
-#include <stdio.h>
-#include <string>
-
-#include <cstdint>
+/* Schedular Dependencies */
+#include "ht_sched.hpp"
+#include "ht_task.hpp"
 
 elapsedMillis timer = 0;
 
 using chip_type = LTC6811_Type_e;
 
 // Initialize chip_select, chip_select_per_chip, and address
-constexpr int num_chips = 2; 
+constexpr int num_chips = 12; 
 constexpr int num_chip_selects = 1;
 std::array<int, num_chip_selects> cs = {10};
-std::array<int, num_chips> cs_per_chip = {10, 10};
-std::array<int, num_chips> addr = {6, 7};
+std::array<int, num_chips> cs_per_chip = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
+std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
 // Instantiate BMS Driver Group
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
@@ -104,13 +110,19 @@ void setup()
     BMSGroup.init();
     Serial.println("Setup Finished!");
     Serial.println();
+
+    /* ACU Data Struct */
+    ACUDataInstance::create();
+
+    /* Watchdog Interface */
+    WatchdogInstance::create();
+    WatchdogInstance::instance().init();
 }
 
-int ci = 0;
-int ji = 0;
-int cell = 0;
 void loop()
 {
+
+    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
 
     if (timer > 250) // Need an actual schedular
     {   
@@ -120,6 +132,6 @@ void loop()
         // Read cell and auxiliary data from the BMS Driver
         auto bms_data = BMSGroup.read_data();
         print_voltages(bms_data);
-    
     }
+
 }
