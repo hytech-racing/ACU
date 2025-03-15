@@ -1,10 +1,6 @@
 #ifndef ACU_ETHERNET_INTERFACE_H
 #define ACU_ETHERNET_INTERFACE_H
 
-/* ACU Local Dependencies*/
-#include "ACU_Constants.h"
-#include "ACU_Globals.h"
-
 /* External Libraries */
 #include "hytech_msgs.pb.h"
 #include "ProtobufMsgInterface.h"

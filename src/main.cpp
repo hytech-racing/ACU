@@ -22,8 +22,6 @@
 /* Scheduler setup */
 HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
-
-
 void setup()
 {
     /* Interface and System initialization */
@@ -47,12 +45,17 @@ void loop()
     
     // ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
-    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
-    Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
-    Serial.printf("TS OUT Filtered: %d\n", WatchdogInstance::instance().read_ts_out_filtered());
-    Serial.printf("PACK OUT Filtered: %d\n", WatchdogInstance::instance().read_pack_out_filtered());
+    if (sys_time::hal_millis() % 10 == 0) {
+        Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
+        Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
 
-    Serial.println();
+        Serial.print("TS OUT Filtered: ");
+        Serial.println(WatchdogInstance::instance().read_ts_out_filtered(), 4);
+        Serial.print("PACK OUT Filtered: ");
+        Serial.println(WatchdogInstance::instance().read_pack_out_filtered(), 4);
+
+        Serial.println();
+    }
 
     // if (sys_time::hal_millis() % 100 == 0) { // 10 Hz
     //     // UDP Message Send

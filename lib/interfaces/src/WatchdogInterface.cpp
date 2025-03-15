@@ -57,7 +57,8 @@ bool WatchdogInterface::read_shdn_out() {
 }
 
 volt WatchdogInterface::read_ts_out_filtered() {
-    volt data = static_cast<float>(analogRead(_teensy_ts_out_filtered_pin)) * (3.3 / 4095.0);
+    // 3.3 V for pin voltage cap. and 4095 for bit resolution
+    volt data = static_cast<float>(analogRead(_teensy_ts_out_filtered_pin)) * (3.3 / 4095.0); 
     return data;
 }
 
