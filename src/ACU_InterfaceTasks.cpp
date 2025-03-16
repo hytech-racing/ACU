@@ -20,26 +20,28 @@ bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& 
     return true;
 }
 
-template <typename bms_data>
-bms_data get_bms_data() {
+void get_bms_data() {
     auto data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
-    print_bms_data(data);
     handle_bms_data(data);
-    return data;
+}
+
+
+void write_cell_balancing_config() {
+    BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUDataInstance::instance().cb);
 }
 
 template <typename bms_data>
 void handle_bms_data(bms_data data) {
-    /* Process with ACUDataInstance */
+    /* Store into ACUDataInstance */
     ACUDataInstance::instance().voltages = data.voltages;
     ACUDataInstance::instance().min_cell_voltage = data.min_cell_voltage;
     ACUDataInstance::instance().max_cell_voltage = data.max_cell_voltage;
     ACUDataInstance::instance().pack_voltage = data.total_voltage;
-
     ACUDataInstance::instance().max_board_temp = data.max_board_temp;
     ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
 }
 
+/* Print Functions */
 template <typename bms_data>
 void print_bms_data(bms_data data)
 {
@@ -48,14 +50,14 @@ void print_bms_data(bms_data data)
     Serial.println("V");
 
     Serial.print("Minimum Voltage: ");
-    Serial.print(data.min_voltage, 4);
+    Serial.print(data.min_cell_voltage, 4);
     Serial.print("V\tLocation of Minimum Voltage: ");
-    Serial.println(data.min_voltage_cell_id);
+    Serial.println(data.min_cell_voltage_id);
 
     Serial.print("Maxmimum Voltage: ");
-    Serial.print(data.max_voltage, 4);
+    Serial.print(data.max_cell_voltage, 4);
     Serial.print("V\tLocation of Maximum Voltage: ");
-    Serial.println(data.max_voltage_cell_id);
+    Serial.println(data.max_cell_voltage_id);
 
     Serial.print("Average Voltage: ");
 
@@ -112,10 +114,17 @@ void print_bms_data(bms_data data)
     Serial.println();
 }
 
-void handle_ACU_logic() {
-    
-}
+void print_watchdog_data() {
+    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
+    Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
 
+    Serial.print("TS OUT Filtered: ");
+    Serial.println(WatchdogInstance::instance().read_ts_out_filtered(), 4);
+    Serial.print("PACK OUT Filtered: ");
+    Serial.println(WatchdogInstance::instance().read_pack_out_filtered(), 4);
+
+    Serial.println();
+}
 
 void set_bit(uint16_t &value, uint8_t index, bool bitValue) {
     if (index >= 16) return; // Ensure index is within range

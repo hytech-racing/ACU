@@ -22,15 +22,17 @@ void initialize_all_interfaces();
  */
 bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
+void get_bms_data();
+
+void write_cell_balancing_config();
+
 template <typename bms_data>
 void print_bms_data(bms_data data);
 
+void print_watchdog_data();
+
 template <typename bms_data>
 void handle_bms_data(bms_data data);
-/**
- * Needs to handle the logic and output for n_latch_en, and teensy_ok
- */
-void handle_ACU_logic();
 
 /* Miscellaneous debugging functions */
 void set_bit(uint16_t & value, uint8_t index, bool bitValue);

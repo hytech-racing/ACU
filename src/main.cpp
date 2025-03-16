@@ -34,36 +34,28 @@ void loop()
     WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
 
     /* BMS Data acquisition | Cell Balancing (CB) Calculation | BMS CB Writing IF Charging */
-    // if (sys_time::hal_millis() % 200 == 0) { // 5Hz
-    //     BMSData data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data(); // verified
+    if (sys_time::hal_millis() % 200 == 0) { // 5Hz
+        get_bms_data();
 
-    //     auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUDataInstance::instance()); // verified
-    //     ACUDataInstance::instance().acu_ok = acu_status.has_fault;
-    //     Serial.print(acu_status.has_fault);
-    //     BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, acu_status.cb);
-    // }
+        evaluate_accumulator();
+        
+        write_cell_balancing_config();
+
+        /* Prints */
+        print_watchdog_data();
+        print_acu_status();
+    }
     
-    // ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
+    /* State Machine Tick */
+    ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
-    if (sys_time::hal_millis() % 10 == 0) {
-        Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
-        Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
-
-        Serial.print("TS OUT Filtered: ");
-        Serial.println(WatchdogInstance::instance().read_ts_out_filtered(), 4);
-        Serial.print("PACK OUT Filtered: ");
-        Serial.println(WatchdogInstance::instance().read_pack_out_filtered(), 4);
-
-        Serial.println();
+    if (sys_time::hal_millis() % 100 == 0) { // 10 Hz
+        // UDP Message Send
     }
 
-    // if (sys_time::hal_millis() % 100 == 0) { // 10 Hz
-    //     // UDP Message Send
-    // }
-
-    // if (sys_time::hal_millis() % 200 == 0) { // 5 Hz
-    //     // TCP Message send
-    // }
+    if (sys_time::hal_millis() % 200 == 0) { // 5 Hz
+        // TCP Message send
+    }
 
     // scheduler.run(); 
 }

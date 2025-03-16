@@ -51,3 +51,25 @@ bool initialize_all_systems() {
     return true;
 }
 
+void evaluate_accumulator() {
+    auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUDataInstance::instance()); // verified
+    ACUDataInstance::instance().acu_ok = !acu_status.has_fault;
+    ACUDataInstance::instance().cb = acu_status.cb;
+}
+
+void print_acu_status() {
+    if (ACUDataInstance::instance().acu_ok) {
+        Serial.print("ACU is OK\n");
+    } else {
+        Serial.print("ACU is NOT OK\n");
+    }
+
+    Serial.printf("Pack Voltage: %d\n", ACUDataInstance::instance().pack_voltage);
+    Serial.printf("Minimum Cell Voltage: %d\t", ACUDataInstance::instance().min_cell_voltage);
+    Serial.printf("Maximum Cell Voltage: %d\n", ACUDataInstance::instance().max_cell_voltage);
+    Serial.printf("Maximum Board Temp: %d\t", ACUDataInstance::instance().max_board_temp);
+    Serial.printf("Maximum Cell Temp: %d\n", ACUDataInstance::instance().max_cell_temp);
+
+    Serial.println();
+}
+

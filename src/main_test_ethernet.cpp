@@ -3,7 +3,6 @@
 
 #include "SharedFirmwareTypes.h"
 #include "EthernetAddressDefs.h"
-// #include "hytech_msgs.pb.h"
 
 #include <QNEthernet.h>
 
