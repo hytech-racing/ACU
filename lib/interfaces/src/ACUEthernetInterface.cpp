@@ -3,6 +3,12 @@
 
 #include <algorithm>
 
+void ACUEthernetInterface::init_ethernet_device() {
+    Ethernet.begin(EthernetIPDefsInstance::instance().acu_ip,  EthernetIPDefsInstance::instance().car_subnet, EthernetIPDefsInstance::instance().default_gateway);
+    send_socket.begin(EthernetIPDefsInstance::instance().ACUCoreData_port);
+    recv_socket.begin(EthernetIPDefsInstance::instance().DBData_port);
+}
+
 hytech_msgs_ACUCoreData_s ACUEthernetInterface::make_acu_core_data_msg(const ACUCoreData_s &shared_state)
 {
     hytech_msgs_ACUCoreData_s out;

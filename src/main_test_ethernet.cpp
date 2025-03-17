@@ -9,7 +9,6 @@
 #include <array>
 #include <cstring>
 
-
 using namespace qindesign::network;
 EthernetUDP send_socket; 
 EthernetUDP recv_socket; 
