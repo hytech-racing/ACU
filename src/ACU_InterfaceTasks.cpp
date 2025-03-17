@@ -12,6 +12,9 @@ void initialize_all_interfaces() {
     /* Watchdog Interface */
     WatchdogInstance::create();
     WatchdogInstance::instance().init();
+    /* Ethernet Interface */
+    ACUEthernetInterfaceInstance::create();
+    ACUEthernetInterfaceInstance::instance().init_ethernet_device();
 }
 
 bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
@@ -39,6 +42,27 @@ void handle_bms_data(bms_data data) {
     ACUDataInstance::instance().pack_voltage = data.total_voltage;
     ACUDataInstance::instance().max_board_temp = data.max_board_temp;
     ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
+    ACUDataInstance::instance().cell_temps = data.cell_temperatures;
+}
+
+void handle_send_ACU_core_ethernet_data() {
+    ACUCoreData_s data = {.pack_voltage = ACUDataInstance::instance().pack_voltage,
+                        .min_cell_voltage = ACUDataInstance::instance().min_cell_voltage,
+                        .avg_cell_voltage = ACUDataInstance::instance().pack_voltage / NUM_CELLS,
+                        .max_cell_temp = ACUDataInstance::instance().max_cell_temp};
+    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(data));
+}
+
+void handle_send_ACU_all_ethernet_data() { 
+    ACUAllData_s data = {};
+    for (size_t cell = 0; cell < NUM_CELLS; cell++) {
+        data.voltages[cell] = ACUDataInstance::instance().voltages[cell];
+    }
+    for (size_t temp = 0; temp < NUM_CELL_TEMPS; temp++) {
+        data.cell_temperatures[temp] = ACUDataInstance::instance().cell_temps[temp];
+    }
+    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(data));
+
 }
 
 /* Print Functions */

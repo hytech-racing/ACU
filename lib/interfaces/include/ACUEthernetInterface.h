@@ -5,6 +5,7 @@
 #include "hytech_msgs.pb.h"
 #include "QNEthernet.h"
 #include "EthernetAddressDefs.h"
+#include "ProtobufMsgInterface.h"
 
 #include "SharedFirmwareTypes.h"
 
@@ -12,25 +13,17 @@
 
 using namespace qindesign::network;
 
-namespace acu_ethernet_default_params
-{
-    constexpr const uint16_t ACU_CORE_DATA_PORT = EthernetIPDefsInstance::instance().ACUCoreData_port;
-    constexpr const uint16_t ACU_ALL_DATA_PORT = EthernetIPDefsInstance::instance().ACUAllData_port
-    constexpr const uint16_t VCR_DATA_PORT = EthernetIPDefsInstance::instance().VCRData_port;
-    constexpr const uint16_t DB_DATA_PORT = EthernetIPDefsInstance::instance().DBData_port;
-};
-
-
 class ACUEthernetInterface 
 {
 public:
-  ACUEthernetInterface()
-  {
-  };
+  ACUEthernetInterface() {};
 
   void init_ethernet_device();
 
-private:
+  void handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData_s &data);
+
+  void handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData_s &data);
+
   /**
    * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUCoreData_s.
    *
@@ -38,6 +31,7 @@ private:
    * @return A populated instance of the outgoing protoc struct.
    */
   hytech_msgs_ACUCoreData_s make_acu_core_data_msg(const ACUCoreData_s &shared_state);
+
   /**
    * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUAllData_s.
    *
@@ -45,7 +39,6 @@ private:
    * @return A populated instance of the outgoing protoc struct.
    */
   hytech_msgs_ACUAllData_s make_acu_all_data_msg(const ACUAllData_s &shared_state);
-
   /**
    * Function to take a populated protoc struct from VCR and update ACUCoreData.
    *
@@ -58,14 +51,13 @@ private:
 
 private: 
   /* Ethernet Sockets */
-  EthernetUDP _send_socket;
-  EthernetUDP _recv_socket;
+  EthernetUDP _acu_core_data_send_socket;
+  EthernetUDP _acu_all_data_send_socket;
+  EthernetUDP _vcr_data_recv_socket;
+  EthernetUDP _db_data_recv_socket;
+  
+  /* IP Address */
 
-  /* Send/Recv Ports */
-  const uint16_t _send_port;
-  const uint16_t _recv_port;
-
-  /*  */
 };
 
 using ACUEthernetInterfaceInstance = etl::singleton<ACUEthernetInterface>;

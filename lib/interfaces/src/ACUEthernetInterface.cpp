@@ -4,9 +4,28 @@
 #include <algorithm>
 
 void ACUEthernetInterface::init_ethernet_device() {
+    EthernetIPDefsInstance::create();
     Ethernet.begin(EthernetIPDefsInstance::instance().acu_ip,  EthernetIPDefsInstance::instance().car_subnet, EthernetIPDefsInstance::instance().default_gateway);
-    send_socket.begin(EthernetIPDefsInstance::instance().ACUCoreData_port);
-    recv_socket.begin(EthernetIPDefsInstance::instance().DBData_port);
+    _acu_core_data_send_socket.begin(EthernetIPDefsInstance::instance().ACUCoreData_port);
+    _acu_all_data_send_socket.begin(EthernetIPDefsInstance::instance().ACUAllData_port);
+    _vcr_data_recv_socket.begin(EthernetIPDefsInstance::instance().VCRData_port);
+    _db_data_recv_socket.begin(EthernetIPDefsInstance::instance().DBData_port);
+}
+
+void ACUEthernetInterface::handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData_s &data) {
+    handle_ethernet_socket_send_pb<(size_t)1024>(EthernetIPDefsInstance::instance().acu_ip, 
+                                                EthernetIPDefsInstance::instance().DBData_port,
+                                                &_acu_all_data_send_socket, data, hytech_msgs_ACUAllData_s_fields);
+}
+
+void ACUEthernetInterface::handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData_s &data) {
+    handle_ethernet_socket_send_pb<(size_t)1024>(EthernetIPDefsInstance::instance().acu_ip, 
+                                                EthernetIPDefsInstance::instance().VCRData_port,
+                                                &_acu_core_data_send_socket, data, hytech_msgs_ACUCoreData_s_fields);
+
+    handle_ethernet_socket_send_pb<(size_t)1024>(EthernetIPDefsInstance::instance().acu_ip, 
+                                                EthernetIPDefsInstance::instance().DBData_port,
+                                                &_acu_core_data_send_socket, data, hytech_msgs_ACUCoreData_s_fields);
 }
 
 hytech_msgs_ACUCoreData_s ACUEthernetInterface::make_acu_core_data_msg(const ACUCoreData_s &shared_state)
@@ -25,19 +44,14 @@ hytech_msgs_ACUAllData_s ACUEthernetInterface::make_acu_all_data_msg(const ACUAl
 {
     hytech_msgs_ACUAllData_s out;
 
-    for (uint32_t i = 0; i < out.voltages_count; ++i)
+    for (size_t i = 0; i < out.voltages_count; ++i)
     {
         out.voltages[i] = shared_state.voltages[i];
     }
 
-    for (uint32_t i = 0; i < out.cell_temperatures_count; ++i)
+    for (size_t i = 0; i < out.cell_temperatures_count; ++i)
     {
         out.cell_temperatures[i] = shared_state.cell_temperatures[i];
-    }
-
-    for (uint32_t i = 0; i < out.board_humidities_count; ++i)
-    {
-        out.board_humidities[i] = shared_state.board_humidities[i];
     }
 
     return out;

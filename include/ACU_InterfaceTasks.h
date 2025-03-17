@@ -8,6 +8,7 @@
 #include "BMSDriverGroup.h"
 #include "WatchdogInterface.h"
 #include "SystemTimeInterface.h"
+#include "ACUEthernetInterface.h"
 #include <ht_task.hpp>
 
 using chip_type = LTC6811_Type_e;
@@ -25,6 +26,10 @@ bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& 
 void get_bms_data();
 
 void write_cell_balancing_config();
+
+void handle_send_ACU_core_ethernet_data();
+
+void handle_send_ACU_all_ethernet_data();
 
 template <typename bms_data>
 void print_bms_data(bms_data data);

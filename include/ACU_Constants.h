@@ -8,6 +8,7 @@
 #include <array>
 
 constexpr size_t NUM_CELLS = 126;
+constexpr size_t NUM_CELL_TEMPS = 48;
 constexpr size_t NUM_CHIPS = 12;
 constexpr size_t NUM_CHIP_SELECTS = 1;
 
