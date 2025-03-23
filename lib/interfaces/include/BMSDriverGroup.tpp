@@ -265,6 +265,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
         if (bms_data.valid_read_packets[chip_index]) {
             _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
         }
+        
         if (gpio_Index < 4)
         {
             gpio_count++;

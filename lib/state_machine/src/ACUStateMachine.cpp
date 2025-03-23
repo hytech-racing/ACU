@@ -1,11 +1,13 @@
 #include "ACUStateMachine.h"
 
 void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
-    //Serial.print("Current State Is: "); Serial.println(_current_state);
     switch(_current_state) {
         case ACUState_e::STARTUP: 
-        {
-            _set_state(ACUState_e::DRIVING, current_millis);
+        {   
+            if (_received_valid_shdn_out()) {
+                _set_state(ACUState_e::DRIVING, current_millis);
+                break;
+            }
             break;
         }
         case ACUState_e::DRIVING: 

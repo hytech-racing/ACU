@@ -66,7 +66,7 @@ void print_acu_status() {
         Serial.print("BMS is NOT OK\n");
     }
 
-    Serial.print("Pack Voltage: \t");
+    Serial.print("Pack Voltage: ");
     Serial.println(ACUDataInstance::instance().pack_voltage, 4);
 
     Serial.print("Minimum Cell Voltage: ");
@@ -81,7 +81,11 @@ void print_acu_status() {
     Serial.print("Maximum Cell Temp: ");
     Serial.println(ACUDataInstance::instance().max_cell_temp, 4);
 
-    Serial.printf("Cell Balance Statuses %d\n", ACUDataInstance::instance().cb);
+    Serial.print("Cell Balance Statuses: ");
+    Serial.println(ACUDataInstance::instance().cb);
+
+    Serial.print("ACU State: ");
+    Serial.println(ACUStateMachineInstance::instance().get_state());
 
     Serial.println();
 }
