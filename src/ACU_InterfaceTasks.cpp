@@ -15,7 +15,7 @@ void initialize_all_interfaces()
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init();
+    WatchdogInstance::instance().init(); 
 
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
@@ -110,16 +110,12 @@ void print_bms_data(bms_data data)
     Serial.println(data.max_cell_voltage_id);
 
     Serial.print("Average Voltage: ");
-
-    Serial.print(data.total_voltage / ((NUM_CHIPS / 2) * 21), 4);
-
+    Serial.print(data.total_voltage / NUM_CELLS, 4);
     Serial.println("V");
-
     Serial.println();
 
     size_t chip_index = 1;
     for (auto chip_voltages : data.voltages_by_chip)
-
     {
         Serial.print("Chip ");
         Serial.println(chip_index);
@@ -162,11 +158,9 @@ void print_bms_data(bms_data data)
             Serial.println();
         temp_index++;
     }
-    Serial.println();
 
     Serial.print("Number of Global Faults: ");
-    Serial.println(ACUFaultDataInstance::instance().global_fault_count);
-    
+    Serial.println(ACUDataInstance::instance().global_invalid_packet_count);
     Serial.println("Number of Consecutive Faults Per Chip: ");
     for (size_t c = 0; c < NUM_CHIPS; c++) {
         Serial.print("CHIP ");
@@ -175,7 +169,7 @@ void print_bms_data(bms_data data)
         Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
         Serial.print("\t");
     }
-
+    Serial.println();
     Serial.println();
 }
 

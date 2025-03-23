@@ -26,8 +26,7 @@ ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, const ACU
     if (_acu_state.charging_enabled)
     {
         _acu_state.cb = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
-    } else {
-        // Fill with zeros, no balancing
+    } else { // Fill with zeros, no balancing
         _acu_state.cb.fill(0);
     }
 
@@ -53,7 +52,7 @@ ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, const ACU
         _acu_state.last_time_invalid_packet_present = current_millis;
     }
     _acu_state.prev_time_stamp = current_millis;
-
+    
     // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot ONLY if the data packet is all valid
     _acu_state.has_fault = _check_faults(current_millis);
 

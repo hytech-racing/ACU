@@ -253,6 +253,9 @@ private:
     */
     constexpr std::array<uint16_t, 256> _initialize_Pec_Table();
 
+    /* MEMBER VARIABLES */
+    BMSDriverData _bms_data;
+    
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
      */

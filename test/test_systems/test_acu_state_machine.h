@@ -4,8 +4,10 @@
 
 #include <etl/delegate.h>
 
-#include "ACUController.h"
+#include "ACUStateMachine.h"
+
+ACUStateMachine
 
 TEST (ACUStateMachineTesting, initial_state) {
-    
+
 }
