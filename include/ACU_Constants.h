@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <array>
+#include <algorithm>
 
 constexpr size_t NUM_CELLS = 126;
 constexpr size_t NUM_CELL_TEMPS = 48;

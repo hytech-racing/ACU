@@ -6,14 +6,21 @@ void ACUController<num_cells>::init(time_ms system_start_time) {
     _acu_state.last_time_uv_fault_not_present = system_start_time;
     _acu_state.last_time_board_ot_fault_not_present = system_start_time;
     _acu_state.last_time_cell_ot_fault_not_present = system_start_time;
-    _acu_state.last_time_pack_uv_fault_not_present= system_start_time;
+    _acu_state.last_time_pack_uv_fault_not_present = system_start_time;
+    _acu_state.last_time_invalid_packet_present = system_start_time;
 }
 
 template <size_t num_cells>
 typename ACUController<num_cells>::ACUStatus
-ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_cells> &input_state)
+ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells> &input_state)
 {   
-    _acu_state.charging_enabled = charging_enabled;
+    _acu_state.charging_enabled = false; // comment after CCU CAN read implemented
+
+    bool has_invalid_packet = false;
+    if (input_state.global_invalid_packet_count != 0) { // meaning that all of the data is valid
+        has_invalid_packet = true;
+    }
+
     // Cell balancing calculations
     if (_acu_state.charging_enabled)
     {
@@ -24,25 +31,29 @@ ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, bool char
     }
 
     // Update voltage fault time stamps
-    if (input_state.max_cell_voltage < _parameters.ov_thresh_v) { 
+    if (input_state.max_cell_voltage < _parameters.ov_thresh_v || has_invalid_packet) { 
         _acu_state.last_time_ov_fault_not_present = current_millis;
     } 
-    if (input_state.min_cell_voltage > _parameters.uv_thresh_v) { 
+    if (input_state.min_cell_voltage > _parameters.uv_thresh_v || has_invalid_packet) { 
         _acu_state.last_time_uv_fault_not_present = current_millis;
     }
-    if (input_state.pack_voltage > _parameters.min_pack_total_v) {
+    if (input_state.pack_voltage > _parameters.min_pack_total_v || has_invalid_packet) {
         _acu_state.last_time_pack_uv_fault_not_present = current_millis;
     }
     // Update temp fault time stamps
-    if (input_state.max_board_temp < _parameters.charging_ot_thresh_c) { // charging ot thresh will be the lower of the 2
+    if (input_state.max_board_temp < _parameters.charging_ot_thresh_c || has_invalid_packet) { // charging ot thresh will be the lower of the 2
         _acu_state.last_time_board_ot_fault_not_present = current_millis;
     }
     celsius cell_ot_thresh = _acu_state.charging_enabled ? _parameters.charging_ot_thresh_c : _parameters.running_ot_thresh_c;
-    if (input_state.max_cell_temp < cell_ot_thresh) {
+    if (input_state.max_cell_temp < cell_ot_thresh || has_invalid_packet) {
         _acu_state.last_time_cell_ot_fault_not_present = current_millis;
     }
-    
-    // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot
+    if (input_state.global_invalid_packet_count > _parameters.invalid_packet_count_thresh || has_invalid_packet) {
+        _acu_state.last_time_invalid_packet_present = current_millis;
+    }
+    _acu_state.prev_time_stamp = current_millis;
+
+    // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot ONLY if the data packet is all valid
     _acu_state.has_fault = _check_faults(current_millis);
 
     return _acu_state;
@@ -66,7 +77,7 @@ std::array<bool, num_cells> ACUController<num_cells>::_calculate_cell_balance_st
 
 template <size_t num_cells>
 bool ACUController<num_cells>::_check_faults(time_ms current_millis)
-{
+{   
     return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis);
 }
 
@@ -85,6 +96,13 @@ bool ACUController<num_cells>::_check_temperature_faults(time_ms current_millis)
     bool cell_ot_fault = (current_millis - _acu_state.last_time_cell_ot_fault_not_present) > _parameters.max_allowed_temp_fault_dur;
     bool board_ot_fault = (current_millis - _acu_state.last_time_board_ot_fault_not_present) > _parameters.max_allowed_temp_fault_dur;
     return cell_ot_fault || board_ot_fault;
+}
+
+template <size_t num_cells>
+bool ACUController<num_cells>::_check_invalid_packet_faults(time_ms current_millis)
+{   
+    bool invalid_packet_fault = (current_millis - _acu_state.last_time_invalid_packet_present) > _parameters.max_allowed_invalid_packet_fault_dur;
+    return invalid_packet_fault;
 }
 
 template <size_t num_cells>

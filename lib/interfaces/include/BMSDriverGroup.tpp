@@ -129,12 +129,12 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         auto data_in_auxillaries_4_to_6 = read_registers_command<data_size>(_chip_select[cs], cmd_pec);
 
         // store the data for all chips on a chip select into one array, no PEC included
-        std::array<uint8_t, 24 * (num_chips / num_chip_selects)> data_in_cell_voltages_1_to_12 = _package_cell_voltages(bms_data, data_in_cell_voltages_1_to_3,
+        std::array<uint8_t, 24 * (num_chips / num_chip_selects)> data_in_cell_voltages_1_to_12 = _package_cell_voltages(bms_data, cs, data_in_cell_voltages_1_to_3,
                                                                                                                         data_in_cell_voltages_4_to_6,
                                                                                                                         data_in_cell_voltages_7_to_9,
                                                                                                                         data_in_cell_voltages_10_to_12);
 
-        std::array<uint8_t, 10 * (num_chips / num_chip_selects)> data_in_temps_1_to_5 = _package_auxillary_data(bms_data, data_in_auxillaries_1_to_3,
+        std::array<uint8_t, 10 * (num_chips / num_chip_selects)> data_in_temps_1_to_5 = _package_auxillary_data(bms_data, cs, data_in_auxillaries_1_to_3,
                                                                                                                 data_in_auxillaries_4_to_6);
 
         // DEBUG: Check to see that the PEC is what we expect it to be
@@ -536,13 +536,15 @@ std::array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_package_cell_voltages(BMSDriverData &bms_data, const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
+std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_package_cell_voltages(BMSDriverData &bms_data, size_t chip_select_index, 
+                                                                                                                                        const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
                                                                                                                                         const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_4_to_6,
                                                                                                                                         const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_7_to_9,
                                                                                                                                         const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_10_to_12)
 {
     constexpr size_t num_chips_on_chip_select = num_chips / num_chip_selects;
     std::array<uint8_t, 24 * num_chips_on_chip_select> combined_cv_1_to_12;
+    size_t chip_iterator = chip_select_index * num_chips_on_chip_select; // used for gathering data on valid packets
     
     for (size_t chip = 0; chip < num_chips_on_chip_select; chip++)
     {   
@@ -553,36 +555,44 @@ std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
         std::copy(cv_7_to_9.begin() + param_iterator, cv_7_to_9.begin() + param_iterator + 6, combined_cv_1_to_12.begin() + result_iterator + 12);
         std::copy(cv_10_to_12.begin() + param_iterator, cv_10_to_12.begin() + param_iterator + 6, combined_cv_1_to_12.begin() + result_iterator + 18);
 
-        uint8_t sample_packet[6];
-        uint8_t sample_pec[2];
-        for (int packet = 0; packet < 6; packet++) {
-            sample_packet[packet] = cv_1_to_3[param_iterator + packet];
-        }
-        for (int packet = 0; packet < 2; packet++) {
-            sample_pec[packet] = cv_1_to_3[param_iterator + packet + 6];
-        }
-        std::array<uint8_t, 2> calculated_pec = _calculate_specific_PEC(sample_packet, 6);
-        
-        if (calculated_pec[0] != sample_pec[0]) {
-            bms_data.valid_read_packets = false;
-        }
+        bms_data.valid_read_packets[chip + chip_iterator] = _check_if_valid_packet(cv_1_to_3, param_iterator);
     }
-   
+
     return combined_cv_1_to_12;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-std::array<uint8_t, 10 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_package_auxillary_data(BMSDriverData &bms_data, const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
-                                                                                                                                         const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6)
+std::array<uint8_t, 10 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_package_auxillary_data(BMSDriverData &bms_data, size_t chip_select_index,
+                                                                                                                                        const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
+                                                                                                                                        const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6)
 {
     constexpr size_t num_chips_on_chip_select = num_chips / num_chip_selects;
     std::array<uint8_t, 10 * num_chips_on_chip_select> combined_aux_1_to_5;
+    size_t chip_iterator = chip_select_index * num_chips_on_chip_select; // used for gathering data on valid packets
+ 
     for (size_t chip = 0; chip < num_chips_on_chip_select; chip++)
     {
         size_t result_iterator = 10 * chip;
         size_t param_iterator = 8 * chip;
         std::copy(aux_1_to_3.begin() + param_iterator, aux_1_to_3.begin() + param_iterator + 6, combined_aux_1_to_5.begin() + result_iterator);
         std::copy(aux_4_to_6.begin() + param_iterator, aux_4_to_6.begin() + param_iterator + 4, combined_aux_1_to_5.begin() + result_iterator + 6);
+
+        bms_data.valid_read_packets[chip + chip_iterator] = _check_if_valid_packet(aux_1_to_3, param_iterator);
     }
     return combined_aux_1_to_5;
 }
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_valid_packet(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator) {
+    uint8_t sample_packet[6];
+    uint8_t sample_pec[2];
+    for (int packet = 0; packet < 6; packet++) {
+        sample_packet[packet] = data[param_iterator + packet];
+    }
+    for (int packet = 0; packet < 2; packet++)  {
+        sample_pec[packet] = data[param_iterator + packet + 6];
+    }
+    std::array<uint8_t, 2> calculated_pec = _calculate_specific_PEC(sample_packet, 6);
+
+    return calculated_pec[0] == sample_pec[0] && calculated_pec[1] == sample_pec[1];
+}   

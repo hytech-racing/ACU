@@ -54,7 +54,7 @@ void loop()
     }
     
     /* State Machine Tick */
-    // ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
+    ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
     
 

@@ -52,7 +52,7 @@ bool initialize_all_systems() {
 }
 
 void evaluate_accumulator() {
-    auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), false, ACUDataInstance::instance()); // verified
+    auto acu_status = ACUControllerInstance<NUM_CELLS>::instance().evaluate_accumulator(sys_time::hal_millis(), ACUDataInstance::instance()); // verified
     ACUDataInstance::instance().acu_ok = !acu_status.has_fault;
     ACUDataInstance::instance().cb = acu_status.cb;
 }

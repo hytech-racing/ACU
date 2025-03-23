@@ -9,13 +9,7 @@
 
 #include "ACU_Constants.h"
 
+using ACUFaultDataInstance = etl::singleton<ACUFaultData_s<NUM_CHIPS>>;
 using ACUDataInstance = etl::singleton<ACUData_s<NUM_CELLS>>;
-
-struct ACU_Fault_Counter_s {
-    size_t global_count;
-    size_t consecutive_count;
-};
-
-using ACUFaultCountInstance = etl::singleton<ACU_Fault_Counter_s>;
 
 #endif

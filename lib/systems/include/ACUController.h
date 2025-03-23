@@ -17,8 +17,10 @@ namespace acu_controller_default_params
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 45.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
+    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 10; // Same as voltage fault count
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
+    constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 5000; // In cases in EMI, we will need more leniency with invalid packet faults
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
 };
 
@@ -30,6 +32,8 @@ struct ACUControllerData_s
     time_ms last_time_cell_ot_fault_not_present;
     time_ms last_time_board_ot_fault_not_present;
     time_ms last_time_pack_uv_fault_not_present;
+    time_ms last_time_invalid_packet_present;
+    time_ms prev_time_stamp;
 
     bool has_fault;
     bool charging_enabled;
@@ -43,8 +47,10 @@ struct ACUControllerParameters {
     celsius charging_ot_thresh_c = 0;
     celsius running_ot_thresh_c = 0;
     volt min_pack_total_v = 0;
+    size_t invalid_packet_count_thresh = 0;
     time_ms max_allowed_voltage_fault_dur = 0;
     time_ms max_allowed_temp_fault_dur = 0;
+    time_ms max_allowed_invalid_packet_fault_dur = 0;
     volt v_diff_to_init_cb = 0;
 };
 
@@ -72,8 +78,10 @@ public:
                     celsius charging_ot_thresh_c = acu_controller_default_params::CHARGING_OT_THRESH, 
                     celsius running_ot_thresh_c = acu_controller_default_params::RUNNING_OT_THRESH,
                     volt min_pack_total_voltage = acu_controller_default_params::MIN_PACK_TOTAL_VOLTAGE,
+                    size_t invalid_packet_count_thresh = acu_controller_default_params::MAX_INVALID_PACKET_FAULT_COUNT,
                     time_ms max_volt_fault_dur = acu_controller_default_params::MAX_VOLTAGE_FAULT_DUR,
                     time_ms max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR,
+                    time_ms max_invalid_packet_dur = acu_controller_default_params::MAX_INVALID_PACKET_FAULT_DUR,
                     volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB) : 
         _parameters {
             ov_thresh_v,
@@ -81,8 +89,10 @@ public:
             charging_ot_thresh_c,
             running_ot_thresh_c,
             min_pack_total_voltage,
+            invalid_packet_count_thresh,
             max_volt_fault_dur,
             max_temp_fault_dur,
+            max_invalid_packet_dur,
             v_diff_init_cb
         }
         {};
@@ -96,7 +106,7 @@ public:
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_cells> &input_state);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells> &input_state);
 private:
     /**
      * Calculate Cell Balancing values
@@ -122,6 +132,11 @@ private:
      * @return boolean, true if there exists a temperature fault
      */
     bool _check_temperature_faults(time_ms current_millis);
+
+    /**
+     * @return boolean, true if there has been global invalid packets for > MAX DURATION
+    */
+    bool _check_invalid_packet_faults(time_ms current_millis);
 
     /**
      * NOTE: TBD

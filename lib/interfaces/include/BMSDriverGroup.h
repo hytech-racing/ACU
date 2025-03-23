@@ -69,7 +69,7 @@ enum class ADC_MODE_e : uint8_t
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData
 {   
-    bool valid_read_packets;
+    std::array<bool, num_chips> valid_read_packets;
 
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages_by_chip;
     std::array<volt, num_cells> voltages;
@@ -194,13 +194,15 @@ private:
 
     void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
 
-    std::array<uint8_t, 24 * (num_chips / num_chip_selects)> _package_cell_voltages(BMSDriverData &bms_data, const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
+    std::array<uint8_t, 24 * (num_chips / num_chip_selects)> _package_cell_voltages(BMSDriverData &bms_data, size_t chip_select_index, 
+                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_4_to_6,
                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_7_to_9,
                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_10_to_12);
 
-    std::array<uint8_t, 10 * (num_chips / num_chip_selects)> _package_auxillary_data(BMSDriverData &bms_data, const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
-                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6);
+    std::array<uint8_t, 10 * (num_chips / num_chip_selects)> _package_auxillary_data(BMSDriverData &bms_data, size_t chip_select_index, 
+                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
+                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6);
 
     BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
                                       size_t chip_index, size_t &battery_cell_count);
@@ -209,6 +211,12 @@ private:
                                     size_t chip_index, size_t &gpio_count);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
+
+    /**
+     * @brief When the inverters are idle, comms get funky from EMI. This function allows us to determine if the acu reads valid packets 
+     * @return bool of whether the PEC correctly reflects the buffer being given. If no, then we know that EMI (likely) is causing invalid reads
+    */
+    bool _check_if_valid_packet(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator);
 
     /**
      * Generates a Packet Error Code
