@@ -59,16 +59,27 @@ void evaluate_accumulator() {
 
 void print_acu_status() {
     if (ACUDataInstance::instance().acu_ok) {
-        Serial.print("ACU is OK\n");
+        Serial.print("BMS is OK\n");
     } else {
-        Serial.print("ACU is NOT OK\n");
+        Serial.print("BMS is NOT OK\n");
     }
 
-    Serial.printf("Pack Voltage: %d\n", ACUDataInstance::instance().pack_voltage);
-    Serial.printf("Minimum Cell Voltage: %d\t", ACUDataInstance::instance().min_cell_voltage);
-    Serial.printf("Maximum Cell Voltage: %d\n", ACUDataInstance::instance().max_cell_voltage);
-    Serial.printf("Maximum Board Temp: %d\t", ACUDataInstance::instance().max_board_temp);
-    Serial.printf("Maximum Cell Temp: %d\n", ACUDataInstance::instance().max_cell_temp);
+    Serial.print("Pack Voltage: \t");
+    Serial.println(ACUDataInstance::instance().pack_voltage, 4);
+
+    Serial.print("Minimum Cell Voltage: ");
+    Serial.println(ACUDataInstance::instance().min_cell_voltage, 4);
+
+    Serial.print("Maximum Cell Voltage: ");
+    Serial.println(ACUDataInstance::instance().max_cell_voltage, 4);
+
+    Serial.print("Maximum Board Temp: ");
+    Serial.println(ACUDataInstance::instance().max_board_temp, 4);
+
+    Serial.print("Maximum Cell Temp: ");
+    Serial.println(ACUDataInstance::instance().max_cell_temp, 4);
+
+    Serial.printf("Cell Balance Statuses %d\n", ACUDataInstance::instance().cb);
 
     Serial.println();
 }

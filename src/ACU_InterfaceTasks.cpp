@@ -4,6 +4,7 @@ void initialize_all_interfaces() {
     SPI.begin();
     Serial.begin(115200);
     analogReadResolution(12);
+
     /* ACU Data Struct */
     ACUDataInstance::create();
 
@@ -19,8 +20,7 @@ void initialize_all_interfaces() {
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
 
-    /* CAN Interface */
-    
+    ACUFaultCountInstance::create();    
 }
 
 bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
@@ -32,6 +32,7 @@ bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& 
 void get_bms_data() {
     auto data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
     handle_bms_data(data);
+    print_bms_data(data);
 }
 
 
@@ -49,6 +50,13 @@ void handle_bms_data(bms_data data) {
     ACUDataInstance::instance().max_board_temp = data.max_board_temp;
     ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
     ACUDataInstance::instance().cell_temps = data.cell_temperatures;
+
+    if (!data.valid_read_packets) {
+        ACUFaultCountInstance::instance().global_count++;
+        ACUFaultCountInstance::instance().consecutive_count++;
+    } else {
+        ACUFaultCountInstance::instance().consecutive_count = 0;
+    }
 }
 
 void handle_send_ACU_core_ethernet_data() {
@@ -141,6 +149,17 @@ void print_bms_data(bms_data data)
         temp_index++;
     }
     Serial.println();
+    if (data.valid_read_packets) {
+        Serial.println("This is VALID data!");
+    } else {
+        Serial.println("This is INVALID data!");
+    }
+    Serial.print("Number of Global Faults: ");
+    Serial.println(ACUFaultCountInstance::instance().global_count);
+
+    Serial.print("Number of Consecutive Faults: ");
+    Serial.println(ACUFaultCountInstance::instance().consecutive_count);
+
     Serial.println();
 }
 

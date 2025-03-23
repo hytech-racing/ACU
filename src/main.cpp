@@ -23,42 +23,50 @@
 /* Scheduler setup */
 HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
+HT_TASK::Task kick_watchdog_task(HT_TASK::DUMMY_FUNCTION, run_kick_watchdog, WATCHDOG_PRIORITY, KICK_WATCHDOG_PERIOD_US); 
+
 void setup()
 {
     /* Interface and System initialization */
     initialize_all_interfaces();
     initialize_all_systems();
+
+    scheduler.setTimingFunction(micros);
+
+    scheduler.schedule(kick_watchdog_task);
 }
 
 void loop()
-{      
+{  
     WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis());
 
     /* BMS Data acquisition | Cell Balancing (CB) Calculation | BMS CB Writing IF Charging */
     if (sys_time::hal_millis() % 200 == 0) { // 5Hz
         get_bms_data();
-
+        
         evaluate_accumulator();
         
         write_cell_balancing_config();
 
-        /* Prints */
-        print_watchdog_data();
-        print_acu_status();
+        /* Debug Prints */
+        //print_watchdog_data();
+        //print_acu_status();
     }
     
     /* State Machine Tick */
-    ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
+    // ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
+
+    
 
     if (sys_time::hal_millis() % 100 == 0) { // 10 Hz
         // UDP Message Send
         handle_send_ACU_core_ethernet_data();
     }
 
-    if (sys_time::hal_millis() % 200 == 0) { // 5 Hz
-        // TCP Message send
-        handle_send_ACU_all_ethernet_data();
-    }
+    // if (sys_time::hal_millis() % 200 == 50) { // 5 Hz
+    //     // TCP Message send
+    //     handle_send_ACU_all_ethernet_data();
+    // }
 
     // scheduler.run(); 
 }

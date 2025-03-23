@@ -18,7 +18,8 @@ constexpr std::array<int, NUM_CHIPS> CS_PER_CHIP = {10, 10, 10, 10, 10, 10, 10, 
 constexpr std::array<int, NUM_CHIPS> ADDR = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // only for addressable bms chips
 
 /* Task Times */
-constexpr unsigned long WATCHDOG_KICK_INTERVAL = 10;                 // 10 ms = 100 Hz
+constexpr unsigned long KICK_WATCHDOG_PERIOD_US = 1000UL;             // 1 000 us = 1000 Hz
+constexpr unsigned long WATCHDOG_PRIORITY = 1;
 
 /* Message Interface */
 const uint32_t CAN_baudrate = 500000;

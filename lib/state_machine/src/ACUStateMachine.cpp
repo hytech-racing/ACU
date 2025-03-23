@@ -1,6 +1,7 @@
 #include "ACUStateMachine.h"
 
 void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
+    //Serial.print("Current State Is: "); Serial.println(_current_state);
     switch(_current_state) {
         case ACUState_e::STARTUP: 
         {
