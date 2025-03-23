@@ -9,6 +9,8 @@
 #include "WatchdogInterface.h"
 #include "SystemTimeInterface.h"
 #include "ACUEthernetInterface.h"
+#include "ACUCANInterface.h"
+
 #include <ht_task.hpp>
 
 using chip_type = LTC6811_Type_e;

@@ -10,6 +10,7 @@
 #include "WatchdogInterface.h"
 #include "SystemTimeInterface.h"
 #include "ACUEthernetInterface.h"
+#include "ACUCANInterface.h"
 
 /* System Includes */
 #include "ACUController.h"

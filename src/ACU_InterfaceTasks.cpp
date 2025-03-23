@@ -6,15 +6,21 @@ void initialize_all_interfaces() {
     analogReadResolution(12);
     /* ACU Data Struct */
     ACUDataInstance::create();
+
     /* BMS Driver */
     BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(CS, CS_PER_CHIP, ADDR);
     BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();
+
     /* Watchdog Interface */
     WatchdogInstance::create();
     WatchdogInstance::instance().init();
+
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
+
+    /* CAN Interface */
+    
 }
 
 bool run_kick_watchdog(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
