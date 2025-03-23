@@ -15,7 +15,7 @@ TEST (ACUControllerTesting, initial_state) {
     std::array<bool, num_cells> cb = {0};
     uint32_t start_time = 0;
 
-    auto status = controller.evaluate_accumulator(start_time, charging_enabled, {0});
+    auto status = controller.evaluate_accumulator(start_time, {0});
 
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cb, cb); 
@@ -45,12 +45,13 @@ TEST (ACUControllerTesting, charging_state) {
         430.00, // pack v
         {3.23, 3.24, 3.23, 3.21, 3.3, 3.22, 3.21, 3.23, 3.26, 3.27, 3.22, 3.22} // individual cell voltage data
     };
+    data.charging_enabled = charging_enabled;
 
-    auto status = controller.evaluate_accumulator(init_time, charging_enabled, data);
+    auto status = controller.evaluate_accumulator(init_time, data);
 
     ASSERT_NEAR(data.min_cell_voltage, 3.21, 0.0001);
 
-    status = controller.evaluate_accumulator(start_time,charging_enabled, data);
+    status = controller.evaluate_accumulator(start_time, data);
 
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cb, cb); 
@@ -83,11 +84,13 @@ TEST (ACUControllerTesting, faulted_state) {
         50, // board temp c
     };
 
-    auto status = controller.evaluate_accumulator(init_time, charging_enabled, data);
+    data.charging_enabled = charging_enabled;
+
+    auto status = controller.evaluate_accumulator(init_time, data);
 
     ASSERT_NEAR(data.min_cell_voltage, 3.03, 0.0001);
 
-    status = controller.evaluate_accumulator(start_time,charging_enabled, data);
+    status = controller.evaluate_accumulator(start_time, data);
 
     ASSERT_EQ(status.has_fault, true);
     ASSERT_EQ(status.cb, cb); 

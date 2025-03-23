@@ -12,7 +12,9 @@ etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool
     return ACUDataInstance::instance().acu_ok;
 });
 
-etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_imd_ok>(WatchdogInstance::instance());
+etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool {
+    return !WatchdogInstance::instance().read_imd_ok();
+});
 
 etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_shdn_out>(WatchdogInstance::instance());
 

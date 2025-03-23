@@ -14,8 +14,9 @@ template <size_t num_cells>
 typename ACUController<num_cells>::ACUStatus
 ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells> &input_state)
 {   
-    _acu_state.charging_enabled = false; // comment after CCU CAN read implemented
-
+    // _acu_state.charging_enabled = false; // comment after CCU CAN read implemented
+    _acu_state.charging_enabled = input_state.charging_enabled;
+    
     bool has_invalid_packet = false;
     if (input_state.global_invalid_packet_count != 0) { // meaning that all of the data is valid
         has_invalid_packet = true;
