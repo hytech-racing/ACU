@@ -49,8 +49,8 @@ void loop()
         write_cell_balancing_config();
 
         /* Debug Prints */
-        //print_watchdog_data();
-        //print_acu_status();
+        // print_watchdog_data();
+        // print_acu_status();
     }
     
     /* State Machine Tick */

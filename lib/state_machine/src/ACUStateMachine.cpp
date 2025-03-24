@@ -96,12 +96,12 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
             break;
         }
         case ACUState_e::CHARGING: 
-        {
+        {   
             _enable_cell_balancing();
             break;
         }
         case ACUState_e::FAULTED: 
-        {
+        {   
             _disable_watchdog();
             _disable_n_latch_en();
             break;
