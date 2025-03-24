@@ -148,7 +148,7 @@ void print_bms_data(bms_data data)
     int temp_index = 0;
     for (auto bt : data.board_temperatures)
     {
-        Serial.print("board temp id");
+        Serial.print("board temp id ");
         Serial.print(temp_index);
         Serial.print(" val ");
         Serial.print("");

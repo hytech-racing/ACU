@@ -81,11 +81,10 @@ void print_acu_status() {
     Serial.print("Maximum Cell Temp: ");
     Serial.println(ACUDataInstance::instance().max_cell_temp, 4);
 
-    Serial.print("Cell Balance Statuses: ");
-    Serial.println(ACUDataInstance::instance().cb);
+    Serial.printf("Cell Balance Statuses: %d\n", ACUDataInstance::instance().cb);
 
     Serial.print("ACU State: ");
-    Serial.println(ACUStateMachineInstance::instance().get_state());
+    Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
 
     Serial.println();
 }

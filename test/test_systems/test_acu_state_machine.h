@@ -132,7 +132,12 @@ TEST (ACUStateMachineTesting, fault_states) {
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::FAULTED);
 
+    has_bms_fault_var = true;
     received_valid_shdn_out_var = true;
+    state_machine.tick_state_machine(0);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::FAULTED);
+
+    has_bms_fault_var = false;
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP);
 
