@@ -54,7 +54,7 @@ void handle_bms_data(bms_data data)
 
     for (size_t chip = 0; chip < NUM_CHIPS; chip++)
     {
-        if (!data.valid_read_packets[chip])
+        if (!data.valid_read_packets[chip].all_invalid_reads)
         {
             ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[chip]++;
         }

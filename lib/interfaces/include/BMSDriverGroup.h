@@ -9,6 +9,7 @@
 #include "LTCSPIInterface.h"
 #include <cstdint>
 #include "etl/optional.h"
+#include <numeric>
 
 #include "etl/singleton.h"
 
@@ -65,11 +66,20 @@ enum class ADC_MODE_e : uint8_t
     FILTERED = 0x3
 };
 
+struct ValidPacketData_s {
+    bool valid_read_cells_1_to_3 = true;
+    bool valid_read_cells_4_to_6 = true;
+    bool valid_read_cells_7_to_9 = true;
+    bool valid_read_cells_10_to_12 = true;
+    bool valid_read_gpios_1_to_3 = true;
+    bool valid_read_gpios_4_to_6 = true;
+    bool all_invalid_reads = false;
+};
 
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData
 {   
-    std::array<bool, num_chips> valid_read_packets;
+    std::array<ValidPacketData_s, num_chips> valid_read_packets;
 
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages_by_chip;
     std::array<volt, num_cells> voltages;
@@ -217,6 +227,21 @@ private:
      * @return bool of whether the PEC correctly reflects the buffer being given. If no, then we know that EMI (likely) is causing invalid reads
     */
     bool _check_if_valid_packet(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator);
+
+    /**
+     * @return bool of whether valid read packets are all 0
+    */
+    bool _check_if_all_invalid(size_t chip_index);
+
+    /**
+     * @return sum of all cell voltages
+    */
+    volt _sum_cell_voltages();
+
+    /**
+     * @return bool whether the specific packet group (ex: cell voltages group B) should be updated, specifically if it's invalid
+    */
+    bool _check_specific_packet_group_is_invalid(size_t index, bool group_A_invalid, bool group_B_invalid, bool group_C_invalid, bool group_D_invalid);
 
     /**
      * Generates a Packet Error Code
