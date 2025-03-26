@@ -54,7 +54,7 @@ void handle_bms_data(bms_data data)
 
     for (size_t chip = 0; chip < NUM_CHIPS; chip++)
     {
-        if (!data.valid_read_packets[chip].all_invalid_reads)
+        if (data.valid_read_packets[chip].all_invalid_reads) // only if all 6 read commands fail for this chip
         {
             ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[chip]++;
         }
@@ -158,7 +158,6 @@ void print_bms_data(bms_data data)
             Serial.println();
         temp_index++;
     }
-
     Serial.print("Number of Global Faults: ");
     Serial.println(ACUDataInstance::instance().global_invalid_packet_count);
     Serial.println("Number of Consecutive Faults Per Chip: ");
@@ -166,7 +165,19 @@ void print_bms_data(bms_data data)
         Serial.print("CHIP ");
         Serial.print(c);
         Serial.print(": ");
-        Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
+        // Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
+        // Serial.print(" ");
+        Serial.print(data.valid_read_packets[c].valid_read_cells_1_to_3);
+        Serial.print(" ");
+        Serial.print(data.valid_read_packets[c].valid_read_cells_4_to_6);
+        Serial.print(" ");
+        Serial.print(data.valid_read_packets[c].valid_read_cells_7_to_9);
+        Serial.print(" ");
+        Serial.print(data.valid_read_packets[c].valid_read_cells_10_to_12);
+        Serial.print(" ");
+        Serial.print(data.valid_read_packets[c].valid_read_gpios_1_to_3);
+        Serial.print(" ");
+        Serial.print(data.valid_read_packets[c].valid_read_gpios_4_to_6);
         Serial.print("\t");
     }
     Serial.println();

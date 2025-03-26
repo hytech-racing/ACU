@@ -9,7 +9,7 @@ etl::delegate<bool()> received_CCU_message = etl::delegate<bool()>::create([]() 
 });
 
 etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool {
-    return ACUDataInstance::instance().acu_ok;
+    return !ACUDataInstance::instance().acu_ok;
 });
 
 etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool {

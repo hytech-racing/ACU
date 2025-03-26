@@ -293,7 +293,9 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
 
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
         _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
-        gpio_count++;
+        if (gpio_Index < 4) {
+            gpio_count++;
+        }
     }
     return bms_data;
 }
@@ -637,7 +639,11 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_all_inval
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 volt BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_sum_cell_voltages()
 {
-    return std::accumulate(_bms_data.voltages.begin(), _bms_data.voltages.end(), 0);
+    volt sum = 0;
+    for (volt v : _bms_data.voltages) {
+        sum += v;
+    }
+    return sum;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
