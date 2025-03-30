@@ -3,6 +3,7 @@
 
 /* From shared-firmware-types */
 #include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 
 #include <etl/delegate.h>
 #include "etl/singleton.h"
@@ -10,7 +11,7 @@
 enum class ACUState_e
 {
     STARTUP = 0, 
-    DRIVING = 1, 
+    ACTIVE = 1, 
     CHARGING = 2, 
     FAULTED = 3, 
 };
@@ -19,10 +20,12 @@ class ACUStateMachine
 {
 public:
     ACUStateMachine(
-        etl::delegate<bool()> received_CCU_message,
+        etl::delegate<bool()> charge_state_requested,
         etl::delegate<bool()> has_bms_fault,
         etl::delegate<bool()> has_imd_fault,
         etl::delegate<bool()> received_valid_shdn_out,
+        etl::delegate<void()> enable_send_discharge_CAN_msg,
+        etl::delegate<void()> disable_send_discharge_CAN_msg,
         etl::delegate<void()> enable_cell_balancing,
         etl::delegate<void()> disable_cell_balancing,
         etl::delegate<void()> disable_watchdog,
@@ -30,10 +33,12 @@ public:
         etl::delegate<void()> disable_n_latch_en,
         etl::delegate<void()> reset_latch
     ) :
-    _received_CCU_message(received_CCU_message),
+    _charge_state_requested(charge_state_requested),
     _has_bms_fault(has_bms_fault),
     _has_imd_fault(has_imd_fault),
     _received_valid_shdn_out(received_valid_shdn_out),
+    _enable_send_discharging_CAN_msg(enable_send_discharge_CAN_msg),
+    _disable_send_discharging_CAN_msg(disable_send_discharge_CAN_msg),
     _enable_cell_balancing(enable_cell_balancing),
     _disable_cell_balancing(disable_cell_balancing),
     _disable_watchdog(disable_watchdog),
@@ -70,11 +75,13 @@ private:
     ACUState_e _current_state;
 
     // Lamdas for state machine abstraction, functions defined in main
-    etl::delegate<bool()> _received_CCU_message; 
+    etl::delegate<bool()> _charge_state_requested; 
     etl::delegate<bool()> _has_bms_fault;
     etl::delegate<bool()> _has_imd_fault;
     etl::delegate<bool()> _received_valid_shdn_out;
     /// @brief setters
+    etl::delegate<void()> _enable_send_discharging_CAN_msg;
+    etl::delegate<void()> _disable_send_discharging_CAN_msg;
     etl::delegate<void()> _enable_cell_balancing;
     etl::delegate<void()> _disable_cell_balancing;
     etl::delegate<void()> _disable_watchdog;

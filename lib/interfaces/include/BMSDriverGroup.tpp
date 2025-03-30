@@ -9,10 +9,11 @@
 #include <optional>
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr) : _pec15Table(_initialize_Pec_Table()),
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {}) : _pec15Table(_initialize_Pec_Table()),
                                                                                                                                                                                         _chip_select(cs),
                                                                                                                                                                                         _chip_select_per_chip(cs_per_chip),
-                                                                                                                                                                                        _address(addr){};
+                                                                                                                                                                                        _address(addr),
+                                                                                                                                                                                        _config(config) {};
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
@@ -106,7 +107,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     size_t gpio_count = 0;
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        write_configuration(dcto_read, _cell_discharge_en);
+        write_configuration(_config.dcto_read, _cell_discharge_en);
 
         // Get buffers for each group we care about, all at once for ONE chip select line
         _start_wakeup_protocol();
@@ -143,8 +144,8 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         {
             size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
 
-            _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
-            if (_bms_data.valid_read_packets[chip_index].all_invalid_reads)
+            _bms_data.valid_read_packets[chip_index].all_valid_reads = _check_if_all_valid(chip_index);
+            if (_check_if_all_invalid(chip_index))
             {
                 continue;
             }
@@ -627,6 +628,13 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_valid_pac
     std::array<uint8_t, 2> calculated_pec = _calculate_specific_PEC(sample_packet, 6);
 
     return calculated_pec[0] == sample_pec[0] && calculated_pec[1] == sample_pec[1];
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_all_valid(size_t chip_index)
+{
+    ValidPacketData_s data = _bms_data.valid_read_packets[chip_index];
+    return data.valid_read_cells_1_to_3 && data.valid_read_cells_4_to_6 && data.valid_read_cells_7_to_9 && data.valid_read_cells_10_to_12 && data.valid_read_gpios_1_to_3 && data.valid_read_gpios_4_to_6;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>

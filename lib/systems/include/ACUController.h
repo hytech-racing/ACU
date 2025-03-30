@@ -7,6 +7,7 @@
 #include <cstdint>
 #include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 
 using time_ms = uint32_t;
 
@@ -17,7 +18,7 @@ namespace acu_controller_default_params
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 45.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
-    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 100; // Same as voltage fault count
+    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 2; // Same as voltage fault count
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
     constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
@@ -38,7 +39,7 @@ struct ACUControllerData_s
     bool has_fault;
     bool charging_enabled;
 
-    std::array<bool, num_cells> cb;
+    std::array<bool, num_cells> cell_balancing_statuses;
 };
 
 struct ACUControllerParameters {
@@ -54,10 +55,10 @@ struct ACUControllerParameters {
     volt v_diff_to_init_cb = 0;
 };
 
-template<size_t num_cells>
+template <size_t num_cells, size_t num_celltemps>
 class ACUController
 {
-    using ACUData = etl::singleton<ACUData_s<num_cells>>;
+    using ACUData = etl::singleton<ACUData_s<num_cells, num_celltemps>>;
     using ACUStatus = ACUControllerData_s<num_cells>;
     
 public:
@@ -106,7 +107,7 @@ public:
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells> &input_state);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps> &input_state);
 private:
     /**
      * Calculate Cell Balancing values
@@ -157,8 +158,8 @@ private:
     const ACUControllerParameters _parameters = {};
 };
 
-template<size_t num_cells>
-using ACUControllerInstance = etl::singleton<ACUController<num_cells>>;
+template<size_t num_cells, size_t num_celltemps>
+using ACUControllerInstance = etl::singleton<ACUController<num_cells, num_celltemps>>;
 
 #include "ACUController.tpp"
 #endif

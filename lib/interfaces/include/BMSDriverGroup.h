@@ -14,6 +14,7 @@
 #include "etl/singleton.h"
 
 #include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 
 enum class LTC6811_Type_e
 {
@@ -66,19 +67,20 @@ enum class ADC_MODE_e : uint8_t
     FILTERED = 0x3
 };
 
-struct ValidPacketData_s {
+struct ValidPacketData_s
+{
     bool valid_read_cells_1_to_3 = true;
     bool valid_read_cells_4_to_6 = true;
     bool valid_read_cells_7_to_9 = true;
     bool valid_read_cells_10_to_12 = true;
     bool valid_read_gpios_1_to_3 = true;
     bool valid_read_gpios_4_to_6 = true;
-    bool all_invalid_reads = false;
+    bool all_valid_reads = true;
 };
 
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData
-{   
+{
     std::array<ValidPacketData_s, num_chips> valid_read_packets;
 
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages_by_chip;
@@ -108,15 +110,34 @@ struct ReferenceMaxMin
     celsius total_thermistor_temps = 0;
 };
 
+struct BMSDriverGroupConfig_s
+{
+    const bool device_refup_mode = true;
+    const bool adcopt = false;
+    const uint16_t gpios_enabled = 0x1F; // There are 5 GPIOs, we are using all 5 so they are all given a 1
+    const bool dcto_read = 0x1;
+    const bool dcto_write = 0x0;
+    const int adc_conversion_cell_select_mode = 0;
+    const int adc_conversion_gpio_select_mode = 0;
+    const uint8_t discharge_permitted = 0x0;
+    const uint8_t adc_mode_cv_conversion = 0x1;
+    const uint8_t adc_mode_gpio_conversion = 0x1;
+    const uint16_t under_voltage_threshold = 1874; // 3.0V  // Minimum voltage value following datasheet formula: Comparison Voltage = (VUV + 1) • 16 • 100μV
+    const uint16_t over_voltage_threshold = 2625;  // 4.2V  // Maximum voltage value following datasheet formula: Comparison Voltage = VOV • 16 • 100μV
+    const uint16_t gpio_enable = 0x1F;
+    const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
+    const float cv_adc_conversion_time_us = 13;
+    const float gpio_adc_conversion_time_us = 3.1;
+};
+
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
 public:
-
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
-    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr);
+    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -149,14 +170,12 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
-
     /**
      * Alternative header for configuration function call
-    */
+     */
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
 private:
-
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data
@@ -204,15 +223,15 @@ private:
 
     void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
 
-    std::array<uint8_t, 24 * (num_chips / num_chip_selects)> _package_cell_voltages(BMSDriverData &bms_data, size_t chip_select_index, 
+    std::array<uint8_t, 24 * (num_chips / num_chip_selects)> _package_cell_voltages(BMSDriverData &bms_data, size_t chip_select_index,
                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_4_to_6,
                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_7_to_9,
                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_10_to_12);
 
-    std::array<uint8_t, 10 * (num_chips / num_chip_selects)> _package_auxillary_data(BMSDriverData &bms_data, size_t chip_select_index, 
-                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
-                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6);
+    std::array<uint8_t, 10 * (num_chips / num_chip_selects)> _package_auxillary_data(BMSDriverData &bms_data, size_t chip_select_index,
+                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
+                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6);
 
     BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
                                       size_t chip_index, size_t &battery_cell_count);
@@ -223,24 +242,29 @@ private:
     /* -------------------- GETTER FUNCTIONS -------------------- */
 
     /**
-     * @brief When the inverters are idle, comms get funky from EMI. This function allows us to determine if the acu reads valid packets 
+     * @brief When the inverters are idle, comms get funky from EMI. This function allows us to determine if the acu reads valid packets
      * @return bool of whether the PEC correctly reflects the buffer being given. If no, then we know that EMI (likely) is causing invalid reads
-    */
+     */
     bool _check_if_valid_packet(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator);
 
     /**
+     * @return bool of whether valid read packets are all 1
+     */
+    bool _check_if_all_valid(size_t chip_index);
+
+    /**
      * @return bool of whether valid read packets are all 0
-    */
+     */
     bool _check_if_all_invalid(size_t chip_index);
 
     /**
      * @return sum of all cell voltages
-    */
+     */
     volt _sum_cell_voltages();
 
     /**
      * @return bool whether the specific packet group (ex: cell voltages group B) should be updated, specifically if it's invalid
-    */
+     */
     bool _check_specific_packet_group_is_invalid(size_t index, bool group_A_invalid, bool group_B_invalid, bool group_C_invalid, bool group_D_invalid);
 
     /**
@@ -270,17 +294,19 @@ private:
      */
     uint8_t _get_cmd_address(int address) { return 0x80 | (address << 3); }
 
-    /** 
+private:
+    const BMSDriverGroupConfig_s _config;
+    /**
      * initializes PEC table
      * Made static so that it can be called in constructor -> _pec15table is made const
      * This implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
      * On page <76>, section: Applications Information
-    */
+     */
     constexpr std::array<uint16_t, 256> _initialize_Pec_Table();
 
     /* MEMBER VARIABLES */
     BMSDriverData _bms_data;
-    
+
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
      */
@@ -323,7 +349,6 @@ private:
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 using BMSDriverInstance = etl::singleton<BMSDriverGroup<num_chips, num_chip_selects, chip_type>>;
-
 
 #include <BMSDriverGroup.tpp>
 

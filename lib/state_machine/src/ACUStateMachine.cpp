@@ -5,14 +5,14 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
         case ACUState_e::STARTUP: 
         {   
             if (_received_valid_shdn_out()) {
-                _set_state(ACUState_e::DRIVING, current_millis);
+                _set_state(ACUState_e::ACTIVE, current_millis);
                 break;
             }
             break;
         }
-        case ACUState_e::DRIVING: 
+        case ACUState_e::ACTIVE: 
         {
-            if (_received_CCU_message()) {
+            if (_charge_state_requested()) {
                 _set_state(ACUState_e::CHARGING, current_millis);
                 break;
             }
@@ -24,8 +24,8 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
         }
         case ACUState_e::CHARGING: 
         {   
-            if (!_received_CCU_message()) {
-                _set_state(ACUState_e::DRIVING, current_millis);
+            if (!_charge_state_requested()) {
+                _set_state(ACUState_e::ACTIVE, current_millis);
                 break;
             }
             if (_has_bms_fault() || _has_imd_fault()) {
@@ -63,13 +63,14 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
         {
             break;
         }
-        case ACUState_e::DRIVING: 
+        case ACUState_e::ACTIVE: 
         {
             break;
         }
         case ACUState_e::CHARGING: 
         {
             _disable_cell_balancing();
+            _disable_send_discharging_CAN_msg();
             break;
         }
         case ACUState_e::FAULTED: 
@@ -91,12 +92,13 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
             _reinitialize_watchdog();
             break;
         }
-        case ACUState_e::DRIVING: 
+        case ACUState_e::ACTIVE: 
         {   
             break;
         }
         case ACUState_e::CHARGING: 
         {   
+            _enable_send_discharging_CAN_msg();
             _enable_cell_balancing();
             break;
         }

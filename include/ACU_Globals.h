@@ -9,7 +9,11 @@
 
 #include "ACU_Constants.h"
 
-using ACUFaultDataInstance = etl::singleton<ACUFaultData_s<NUM_CHIPS>>;
-using ACUDataInstance = etl::singleton<ACUData_s<NUM_CELLS>>;
+#include "shared_types.h"
+
+using ACUFaultDataInstance = etl::singleton<ACUFaultData_s<ACUConstants::NUM_CHIPS>>;
+using ACUDataInstance = etl::singleton<ACUData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS>>;
+
+using ACUAllDataType_s = ACUAllData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>;
 
 #endif

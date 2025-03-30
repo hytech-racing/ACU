@@ -1,5 +1,7 @@
 #include "ACU_InterfaceTasks.h"
 
+using chip_type = LTC6811_Type_e;
+
 void initialize_all_interfaces()
 {
     SPI.begin();
@@ -10,8 +12,8 @@ void initialize_all_interfaces()
     ACUDataInstance::create();
 
     /* BMS Driver */
-    BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(CS, CS_PER_CHIP, ADDR);
-    BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();
+    BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
+    BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();
 
     /* Watchdog Interface */
     WatchdogInstance::create();
@@ -20,6 +22,8 @@ void initialize_all_interfaces()
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
+
+    handle_CAN_setup(ACUCANInterface::CCU_CAN, ACUConstants::CAN_baudrate, &ACUCANInterface::on_ccu_can_receive);
 }
 
 bool run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
@@ -28,21 +32,10 @@ bool run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &
     return true;
 }
 
-void get_bms_data()
+bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    auto data = BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
-    handle_bms_data(data);
-    print_bms_data(data);
-}
-
-void write_cell_balancing_config()
-{
-    BMSDriverInstance<NUM_CHIPS, NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUDataInstance::instance().cb);
-}
-
-template <typename bms_data>
-void handle_bms_data(bms_data data)
-{
+    auto data = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
+    
     /* Store into ACUDataInstance */
     ACUDataInstance::instance().voltages = data.voltages;
     ACUDataInstance::instance().min_cell_voltage = data.min_cell_voltage;
@@ -52,41 +45,56 @@ void handle_bms_data(bms_data data)
     ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
     ACUDataInstance::instance().cell_temps = data.cell_temperatures;
 
-    for (size_t chip = 0; chip < NUM_CHIPS; chip++)
+    for (size_t chip = 0; chip < data.valid_read_packets.size() ; chip++)
     {
-        if (data.valid_read_packets[chip].all_invalid_reads) // only if all 6 read commands fail for this chip
+        if (!data.valid_read_packets[chip].all_valid_reads) // only if all 6 read commands fail for this chip
         {
-            ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[chip]++;
+            ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip]++;
         }
         else
         {
-            ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[chip] = 0;
+            ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = 0;
         }
     }
-    auto start = ACUFaultDataInstance::instance().consecutive_fault_count_per_chip.begin();
-    auto end = ACUFaultDataInstance::instance().consecutive_fault_count_per_chip.end();
-    ACUDataInstance::instance().global_invalid_packet_count = *etl::max_element(start, end);
+    auto start = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.begin();
+    auto end = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.end();
+    ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(start, end);
+    //print_bms_data(data);
+
+    return true;
+}
+
+bool write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+{
+    BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUDataInstance::instance().cell_balancing_statuses);
+    return true;
+}
+
+bool handle_send_ACU_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo) {
+    handle_send_ACU_core_ethernet_data();
+    handle_send_ACU_all_ethernet_data();
+    return true;
 }
 
 void handle_send_ACU_core_ethernet_data()
 {
     ACUCoreData_s data = {.pack_voltage = ACUDataInstance::instance().pack_voltage,
                           .min_cell_voltage = ACUDataInstance::instance().min_cell_voltage,
-                          .avg_cell_voltage = ACUDataInstance::instance().pack_voltage / NUM_CELLS,
-                          .max_cell_temp = ACUDataInstance::instance().max_cell_temp};
+                          .avg_cell_voltage = ACUDataInstance::instance().pack_voltage / ACUConstants::NUM_CELLS,
+                          .max_cell_temp = ACUDataInstance::instance().max_cell_temp };
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(data));
 }
 
 void handle_send_ACU_all_ethernet_data()
 {
-    ACUAllData_s data = {};
-    for (size_t cell = 0; cell < NUM_CELLS; cell++)
+    ACUAllDataType_s data = {};
+    for (size_t cell = 0; cell < ACUConstants::NUM_CELLS; cell++)
     {
-        data.voltages[cell] = ACUDataInstance::instance().voltages[cell];
+        data.cell_voltages[cell] = ACUDataInstance::instance().voltages[cell];
     }
-    for (size_t temp = 0; temp < NUM_CELL_TEMPS; temp++)
+    for (size_t temp = 0; temp < ACUConstants::NUM_CELL_TEMPS; temp++)
     {
-        data.cell_temperatures[temp] = ACUDataInstance::instance().cell_temps[temp];
+        data.cell_temps[temp] = ACUDataInstance::instance().cell_temps[temp];
     }
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(data));
 }
@@ -110,7 +118,7 @@ void print_bms_data(bms_data data)
     Serial.println(data.max_cell_voltage_id);
 
     Serial.print("Average Voltage: ");
-    Serial.print(data.total_voltage / NUM_CELLS, 4);
+    Serial.print(data.total_voltage / ACUConstants::NUM_CELLS, 4);
     Serial.println("V");
     Serial.println();
 
@@ -159,9 +167,9 @@ void print_bms_data(bms_data data)
         temp_index++;
     }
     Serial.print("Number of Global Faults: ");
-    Serial.println(ACUDataInstance::instance().global_invalid_packet_count);
+    Serial.println(ACUDataInstance::instance().max_consecutive_invalid_packet_count);
     Serial.println("Number of Consecutive Faults Per Chip: ");
-    for (size_t c = 0; c < NUM_CHIPS; c++) {
+    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
         Serial.print("CHIP ");
         Serial.print(c);
         Serial.print(": ");
@@ -184,6 +192,8 @@ void print_bms_data(bms_data data)
     Serial.println();
 }
 
+
+
 void print_watchdog_data()
 {
     Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
@@ -195,19 +205,4 @@ void print_watchdog_data()
     Serial.println(WatchdogInstance::instance().read_pack_out_filtered(), 4);
 
     Serial.println();
-}
-
-void set_bit(uint16_t &value, uint8_t index, bool bitValue)
-{
-    if (index >= 16)
-        return; // Ensure index is within range
-
-    if (bitValue)
-    {
-        value |= (1 << index); // Set the bit
-    }
-    else
-    {
-        value &= ~(1 << index); // Clear the bit
-    }
 }

@@ -3,11 +3,14 @@
 
 #include "ACU_Constants.h"
 #include "ACU_Globals.h"
+#include "shared_types.h"
 
 /* Local System Includes */
 #include "ACUController.h"
 #include "ACUStateMachine.h"
 #include "SystemTimeInterface.h"
+
+#include <ht_task.hpp>
 
 bool initialize_all_systems();
 
@@ -24,7 +27,7 @@ extern etl::delegate<void()> reinitialize_watchdog;
 extern etl::delegate<void()> disable_n_latch_en;
 extern etl::delegate<void()> reset_latch;
 
-void evaluate_accumulator();
+bool evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
 void print_acu_status();
 

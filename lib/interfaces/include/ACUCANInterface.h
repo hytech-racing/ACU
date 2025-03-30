@@ -1,21 +1,50 @@
 #ifndef __ACU_CAN_INTERFACE_H__
 #define __ACU_CAN_INTERFACE_H__
 
-#include "etl/singleton.h"
+#include <cstdint>
+#include <tuple>
+#include <utility>
+
 #include "etl/delegate.h"
+#include "etl/singleton.h"
 
-/* External Dependencies */
-#include "SharedFirmwareTypes.h"
-
-#include "hytech.h"
+#include "FlexCAN_T4.h"
 #include "CANInterface.h"
 
+#include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 
-class ACUCANInterface {
-public:
-private:
+#include "hytech.h" // generated CAN library
+
+#include "ACUController.h"
+
+using CANRXBufferType = Circular_Buffer<uint8_t, (uint32_t)16, sizeof(CAN_message_t)>;
+using CANTXBufferType = Circular_Buffer<uint8_t, (uint32_t)128, sizeof(CAN_message_t)>;
+
+/* RX buffers for CAN extern declarations*/
+
+template <CAN_DEV_TABLE CAN_DEV> using FlexCAN_Type = FlexCAN_T4<CAN_DEV, RX_SIZE_256, TX_SIZE_16>;
+
+struct ACUCANInterfaces {
+    explicit ACUCANInterfaces() {}
 };
 
-using ACUCANInterfaceInstance = etl::singleton<ACUCANInterface>;
+using ACUCANInterfacesInstance = etl::singleton<ACUCANInterfaces>;
 
-#endif
+namespace ACUCANInterfaceImpl {
+
+    extern CANRXBufferType ccu_can_rx_buffer;
+    extern CANTXBufferType ccu_can_tx_buffer;
+
+    extern FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CCU_CAN; // gets defined in main as of right now
+
+    void on_ccu_can_receive(const CAN_message_t &msg);
+
+    template<size_t num_cells>
+    void acu_CAN_recv(ACUCANInterfaces &interfaces, const CAN_message_t &msg, unsigned long millis);
+
+    void send_all_CAN_msgs(CANTXBufferType &buffer, FlexCAN_T4_Base *can_interface);
+    
+}; // namespace ACUCANInterfaceImpl
+
+#endif // __ACU_CAN_INTERFACE_H__

@@ -1,0 +1,30 @@
+#ifndef __SHAREDTYPES_H__ 
+#define __SHAREDTYPES_H__
+
+template<size_t num_cells, size_t num_celltemps>
+struct ACUData_s {
+    volt min_cell_voltage;
+    volt max_cell_voltage;
+    volt pack_voltage;
+    std::array<volt, num_cells> voltages;
+    celsius max_cell_temp; 
+    celsius max_board_temp;
+
+    std::array<bool, num_cells> cell_balancing_statuses;
+    std::array<celsius, num_celltemps> cell_temps;
+
+    size_t max_consecutive_invalid_packet_count;
+
+    bool charging_enabled;
+    bool acu_ok; // False when one of the three shutdown conditions is met (see AMSSystem header)
+};
+
+template<size_t num_chips>
+struct ACUFaultData_s {
+    std::array<size_t, num_chips> consecutive_invalid_packet_counts;
+    size_t max_consecutive_invalid_packet_count;
+};
+
+
+
+#endif

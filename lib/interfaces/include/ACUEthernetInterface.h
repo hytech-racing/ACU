@@ -8,6 +8,7 @@
 #include "ProtobufMsgInterface.h"
 
 #include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 
 #include <etl/singleton.h>
 
