@@ -9,6 +9,8 @@ void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned
         _curr_data.charging_requested = (curr_millis - _curr_data.last_time_charging_requested) < _min_charging_enable_threshold;
         _curr_data.last_time_charging_requested = curr_millis;
         Serial.println("Updated CCU Interface curr data.");
+    } else {
+        _curr_data.charging_requested = false;
     }
 }
 
