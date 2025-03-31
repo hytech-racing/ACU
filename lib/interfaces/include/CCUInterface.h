@@ -12,8 +12,8 @@
 #include "SharedFirmwareTypes.h"
 
 struct CCUCANInterfaceData_s {
-    StampedPedalsSystemData_s stamped_pedals;
-    DashInputState_s dash_input_state;
+    unsigned long last_time_charging_requested;
+    bool charging_requested;
 };
 
 class CCUInterface {
@@ -21,31 +21,25 @@ public:
 
     CCUInterface() = delete;
 
-    CCUInterface(unsigned long init_millis, unsigned long max_heartbeat_interval_ms) : _max_heartbeat_interval_ms(max_heartbeat_interval_ms)
+    CCUInterface(unsigned long init_millis, unsigned long charing_enable_threshold_ms) : _min_charging_enable_threshold(charing_enable_threshold_ms)
     {
-        _curr_data.stamped_pedals.last_recv_millis = 0;
-        _curr_data.stamped_pedals.heartbeat_ok = false; // start out false
+        _curr_data.last_time_charging_requested = 0;
+        _curr_data.charging_requested = false;
     };
 
-    bool is_start_button_pressed() { return _curr_data.dash_input_state.start_btn_is_pressed; }
-    bool is_brake_pressed() {return _curr_data.stamped_pedals.pedals_data.brake_is_pressed; }
-    bool is_pedals_heartbeat_not_ok() {return !_curr_data.stamped_pedals.heartbeat_ok; }
-    void reset_pedals_heartbeat();
+    bool is_charging_requested() { return _curr_data.charging_requested; }
     
     void receive_CCU_status_message(const CAN_message_t& msg, unsigned long curr_millis);
-    void receive__message(const CAN_message_t& msg, unsigned long curr_millis);
     
     CCUCANInterfaceData_s get_latest_data();
 
-    void send_buzzer_start_message();
+    void handle_enqueue_acu_CAN_message();
 
 private:
 
     CCUCANInterfaceData_s _curr_data;
 
-    unsigned long _max_heartbeat_interval_ms;
-    bool _first_received_message_heartbeat_init = false;
-    
+    unsigned long _min_charging_enable_threshold;
 };
 
 using CCUInterfaceInstance = etl::singleton<CCUInterface>;

@@ -40,18 +40,18 @@ hytech_msgs_ACUCoreData_s ACUEthernetInterface::make_acu_core_data_msg(const ACU
     return out;
 }
 
-hytech_msgs_ACUAllData_s ACUEthernetInterface::make_acu_all_data_msg(const ACUAllData_s &shared_state)
+hytech_msgs_ACUAllData_s ACUEthernetInterface::make_acu_all_data_msg(const ACUAllDataType_s &shared_state)
 {
     hytech_msgs_ACUAllData_s out;
 
     for (size_t i = 0; i < out.voltages_count; ++i)
     {
-        out.voltages[i] = shared_state.voltages[i];
+        out.voltages[i] = shared_state.cell_voltages[i];
     }
 
     for (size_t i = 0; i < out.cell_temperatures_count; ++i)
     {
-        out.cell_temperatures[i] = shared_state.cell_temperatures[i];
+        out.cell_temperatures[i] = shared_state.cell_temps[i];
     }
 
     return out;

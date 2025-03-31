@@ -39,7 +39,7 @@ public:
    * @param shared_state Detailed, unprocessed data from ACU sensors.
    * @return A populated instance of the outgoing protoc struct.
    */
-  hytech_msgs_ACUAllData_s make_acu_all_data_msg(const ACUAllData_s &shared_state);
+  hytech_msgs_ACUAllData_s make_acu_all_data_msg(const ACUAllDataType_s &shared_state);
   /**
    * Function to take a populated protoc struct from VCR and update ACUCoreData.
    *

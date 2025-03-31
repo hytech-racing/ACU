@@ -70,7 +70,6 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
         case ACUState_e::CHARGING: 
         {
             _disable_cell_balancing();
-            _disable_send_discharging_CAN_msg();
             break;
         }
         case ACUState_e::FAULTED: 
@@ -98,7 +97,6 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
         }
         case ACUState_e::CHARGING: 
         {   
-            _enable_send_discharging_CAN_msg();
             _enable_cell_balancing();
             break;
         }

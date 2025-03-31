@@ -10,26 +10,27 @@
 
 #include "FlexCAN_T4.h"
 #include "CANInterface.h"
-
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
-
 #include "hytech.h" // generated CAN library
 
 #include "ACUController.h"
+#include "CCUInterface.h"
 
 using CANRXBufferType = Circular_Buffer<uint8_t, (uint32_t)16, sizeof(CAN_message_t)>;
 using CANTXBufferType = Circular_Buffer<uint8_t, (uint32_t)128, sizeof(CAN_message_t)>;
 
 /* RX buffers for CAN extern declarations*/
-
 template <CAN_DEV_TABLE CAN_DEV> using FlexCAN_Type = FlexCAN_T4<CAN_DEV, RX_SIZE_256, TX_SIZE_16>;
 
-struct ACUCANInterfaces {
-    explicit ACUCANInterfaces() {}
+struct CANInterfaces {
+    explicit CANInterfaces(CCUInterface &ccu_int) :
+        ccu_interface(ccu_int) {}
+    
+    CCUInterface & ccu_interface;
 };
 
-using ACUCANInterfacesInstance = etl::singleton<ACUCANInterfaces>;
+using CANInterfacesInstance = etl::singleton<CANInterfaces>;
 
 namespace ACUCANInterfaceImpl {
 
@@ -40,8 +41,7 @@ namespace ACUCANInterfaceImpl {
 
     void on_ccu_can_receive(const CAN_message_t &msg);
 
-    template<size_t num_cells>
-    void acu_CAN_recv(ACUCANInterfaces &interfaces, const CAN_message_t &msg, unsigned long millis);
+    void acu_CAN_recv(CANInterfaces &interfaces, const CAN_message_t &msg, unsigned long millis);
 
     void send_all_CAN_msgs(CANTXBufferType &buffer, FlexCAN_T4_Base *can_interface);
     

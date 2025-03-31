@@ -12,6 +12,9 @@
 #include "ACUEthernetInterface.h"
 #include "ACUCANInterface.h"
 
+/* For Debugging */
+#include "ACUStateMachine.h"
+
 #include <ht_task.hpp>
 
 /**
@@ -28,10 +31,16 @@ bool sample_bms_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& ta
 
 bool write_cell_balancing_config(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
-bool handle_send_ACU_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
+bool handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
-void handle_send_ACU_core_ethernet_data();
+bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
-void handle_send_ACU_all_ethernet_data();
+bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+bool enqueue_CCU_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+bool sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+bool debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
 #endif 

@@ -29,6 +29,6 @@ extern etl::delegate<void()> reset_latch;
 
 bool evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
-void print_acu_status();
+bool tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
 #endif 

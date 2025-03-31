@@ -24,8 +24,6 @@ public:
         etl::delegate<bool()> has_bms_fault,
         etl::delegate<bool()> has_imd_fault,
         etl::delegate<bool()> received_valid_shdn_out,
-        etl::delegate<void()> enable_send_discharge_CAN_msg,
-        etl::delegate<void()> disable_send_discharge_CAN_msg,
         etl::delegate<void()> enable_cell_balancing,
         etl::delegate<void()> disable_cell_balancing,
         etl::delegate<void()> disable_watchdog,
@@ -37,8 +35,6 @@ public:
     _has_bms_fault(has_bms_fault),
     _has_imd_fault(has_imd_fault),
     _received_valid_shdn_out(received_valid_shdn_out),
-    _enable_send_discharging_CAN_msg(enable_send_discharge_CAN_msg),
-    _disable_send_discharging_CAN_msg(disable_send_discharge_CAN_msg),
     _enable_cell_balancing(enable_cell_balancing),
     _disable_cell_balancing(disable_cell_balancing),
     _disable_watchdog(disable_watchdog),
@@ -80,8 +76,6 @@ private:
     etl::delegate<bool()> _has_imd_fault;
     etl::delegate<bool()> _received_valid_shdn_out;
     /// @brief setters
-    etl::delegate<void()> _enable_send_discharging_CAN_msg;
-    etl::delegate<void()> _disable_send_discharging_CAN_msg;
     etl::delegate<void()> _enable_cell_balancing;
     etl::delegate<void()> _disable_cell_balancing;
     etl::delegate<void()> _disable_watchdog;

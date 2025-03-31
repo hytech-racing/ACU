@@ -23,7 +23,13 @@ void initialize_all_interfaces()
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
 
-    handle_CAN_setup(ACUCANInterface::CCU_CAN, ACUConstants::CAN_baudrate, &ACUCANInterface::on_ccu_can_receive);
+    /* CCU Interface */
+    CCUInterfaceInstance::create(sys_time::hal_millis(), 500);
+
+    /* CAN Interfaces Construct */
+    CANInterfacesInstance::create(CCUInterfaceInstance::instance());
+
+    handle_CAN_setup(ACUCANInterfaceImpl::CCU_CAN, ACUConstants::CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
 }
 
 bool run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
@@ -70,22 +76,18 @@ bool write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::
     return true;
 }
 
-bool handle_send_ACU_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo) {
-    handle_send_ACU_core_ethernet_data();
-    handle_send_ACU_all_ethernet_data();
-    return true;
-}
-
-void handle_send_ACU_core_ethernet_data()
+bool handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUCoreData_s data = {.pack_voltage = ACUDataInstance::instance().pack_voltage,
                           .min_cell_voltage = ACUDataInstance::instance().min_cell_voltage,
                           .avg_cell_voltage = ACUDataInstance::instance().pack_voltage / ACUConstants::NUM_CELLS,
                           .max_cell_temp = ACUDataInstance::instance().max_cell_temp };
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(data));
+    
+    return true;
 }
 
-void handle_send_ACU_all_ethernet_data()
+bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUAllDataType_s data = {};
     for (size_t cell = 0; cell < ACUConstants::NUM_CELLS; cell++)
@@ -97,6 +99,29 @@ void handle_send_ACU_all_ethernet_data()
         data.cell_temps[temp] = ACUDataInstance::instance().cell_temps[temp];
     }
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(data));
+
+    return true;
+}
+
+bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
+    return true;
+}
+
+bool enqueue_CCU_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    CCUInterfaceInstance::instance().handle_enqueue_acu_CAN_message();
+    return true;
+}
+
+bool sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
+
+    process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
+    // above will call acu_CAN_recv
+    // which will then affiliated recv functions in specific control unit interfaces like CCU interface
+
+    return true;
 }
 
 /* Print Functions */
@@ -192,10 +217,17 @@ void print_bms_data(bms_data data)
     Serial.println();
 }
 
-
-
-void print_watchdog_data()
+bool debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
+    if (ACUDataInstance::instance().acu_ok)
+    {
+        Serial.print("BMS is OK\n");
+    }
+    else
+    {
+        Serial.print("BMS is NOT OK\n");
+    }
+
     Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
     Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
 
@@ -205,4 +237,28 @@ void print_watchdog_data()
     Serial.println(WatchdogInstance::instance().read_pack_out_filtered(), 4);
 
     Serial.println();
+
+    Serial.print("Pack Voltage: ");
+    Serial.println(ACUDataInstance::instance().pack_voltage, 4);
+
+    Serial.print("Minimum Cell Voltage: ");
+    Serial.println(ACUDataInstance::instance().min_cell_voltage, 4);
+
+    Serial.print("Maximum Cell Voltage: ");
+    Serial.println(ACUDataInstance::instance().max_cell_voltage, 4);
+
+    Serial.print("Maximum Board Temp: ");
+    Serial.println(ACUDataInstance::instance().max_board_temp, 4);
+
+    Serial.print("Maximum Cell Temp: ");
+    Serial.println(ACUDataInstance::instance().max_cell_temp, 4);
+
+    Serial.printf("Cell Balance Statuses: %d\n", ACUDataInstance::instance().cell_balancing_statuses);
+
+    Serial.print("ACU State: ");
+    Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
+
+    Serial.println();
+
+    return true;
 }

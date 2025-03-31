@@ -295,7 +295,7 @@ private:
     uint8_t _get_cmd_address(int address) { return 0x80 | (address << 3); }
 
 private:
-    const BMSDriverGroupConfig_s _config;
+
     /**
      * initializes PEC table
      * Made static so that it can be called in constructor -> _pec15table is made const
@@ -339,12 +339,14 @@ private:
      */
     const std::array<int, num_chips> _address; // constant
 
+    const BMSDriverGroupConfig_s _config;
+
     /**
      * Stores the balance statuses for all the chips
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
      * out of the 16 bits
      */
-    std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const
+    std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const  
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
