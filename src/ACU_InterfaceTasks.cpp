@@ -10,6 +10,7 @@ void initialize_all_interfaces()
 
     /* ACU Data Struct */
     ACUDataInstance::create();
+    ACUCoreDataInstance::create();
 
     /* BMS Driver */
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
@@ -47,9 +48,18 @@ bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &ta
     ACUDataInstance::instance().min_cell_voltage = data.min_cell_voltage;
     ACUDataInstance::instance().max_cell_voltage = data.max_cell_voltage;
     ACUDataInstance::instance().pack_voltage = data.total_voltage;
+    ACUDataInstance::instance().avg_cell_voltage = data.total_voltage / ACUConstants::NUM_CELLS;
     ACUDataInstance::instance().max_board_temp = data.max_board_temp;
     ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
     ACUDataInstance::instance().cell_temps = data.cell_temperatures;
+
+    /* Store into ACUCoreDataInstance */
+    ACUCoreDataInstance::instance().avg_cell_voltage = ACUDataInstance::instance().avg_cell_voltage;
+    ACUCoreDataInstance::instance().max_cell_voltage = ACUDataInstance::instance().max_cell_voltage;
+    ACUCoreDataInstance::instance().min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;
+    ACUCoreDataInstance::instance().pack_voltage = ACUDataInstance::instance().pack_voltage;
+    ACUCoreDataInstance::instance().max_cell_temp = ACUDataInstance::instance().max_cell_temp;
+
 
     for (size_t chip = 0; chip < data.valid_read_packets.size() ; chip++)
     {
@@ -110,17 +120,15 @@ bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::Tas
 }
 
 bool enqueue_CCU_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    CCUInterfaceInstance::instance().handle_enqueue_acu_CAN_message();
+    CCUInterfaceInstance::instance().set_ACU_core_data(ACUCoreDataInstance::instance());
+    CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
+    CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_CAN_message();
     return true;
 }
 
 bool sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
-
     process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
-    // above will call acu_CAN_recv
-    // which will then affiliated recv functions in specific control unit interfaces like CCU interface
-
     return true;
 }
 

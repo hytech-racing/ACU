@@ -6,6 +6,7 @@ struct ACUData_s {
     volt min_cell_voltage;
     volt max_cell_voltage;
     volt pack_voltage;
+    volt avg_cell_voltage;
     std::array<volt, num_cells> voltages;
     celsius max_cell_temp; 
     celsius max_board_temp;

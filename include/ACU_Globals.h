@@ -13,6 +13,7 @@
 
 using ACUFaultDataInstance = etl::singleton<ACUFaultData_s<ACUConstants::NUM_CHIPS>>;
 using ACUDataInstance = etl::singleton<ACUData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS>>;
+using ACUCoreDataInstance = etl::singleton<ACUCoreData_s>;
 
 using ACUAllDataType_s = ACUAllData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>;
 

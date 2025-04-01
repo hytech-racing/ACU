@@ -10,6 +10,7 @@
 
 #include "FlexCAN_T4.h"
 #include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 
 struct CCUCANInterfaceData_s {
     unsigned long last_time_charging_requested;
@@ -33,11 +34,15 @@ public:
     
     CCUCANInterfaceData_s get_latest_data();
 
-    void handle_enqueue_acu_CAN_message();
+    void set_ACU_core_data(ACUCoreData_s input);
+
+    void handle_enqueue_acu_status_CAN_message();
+    void handle_enqueue_acu_voltages_CAN_message();
 
 private:
 
     CCUCANInterfaceData_s _curr_data;
+    ACUCoreData_s _acu_core_data; 
 
     unsigned long _min_charging_enable_threshold;
 };
