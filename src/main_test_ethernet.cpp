@@ -13,6 +13,8 @@ using namespace qindesign::network;
 EthernetUDP send_socket; 
 EthernetUDP recv_socket; 
 
+const uint32_t delay_ms = 10;
+
 void init_ethernet_device()
 {
     Ethernet.begin(EthernetIPDefsInstance::instance().acu_ip,  EthernetIPDefsInstance::instance().car_subnet, EthernetIPDefsInstance::instance().default_gateway);
@@ -52,6 +54,6 @@ void setup()
 void loop()
 {
     test_ethernet();
-    delay(10);
+    delay(delay_ms);
     // Serial.println("loopin");
 }

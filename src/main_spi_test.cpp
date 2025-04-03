@@ -23,6 +23,8 @@ elapsedMillis timer = 0;
 
 using chip_type = LTC6811_Type_e;
 
+const size_t sample_period_ms = 250;
+
 // Initialize chip_select, chip_select_per_chip, and address
 constexpr int num_chips = 12; 
 constexpr int num_chip_selects = 1;
@@ -124,7 +126,7 @@ void loop()
 
     WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
 
-    if (timer > 250) // Need an actual schedular
+    if (timer > sample_period_ms) // Need an actual schedular
     {   
         // reset timer
         timer = 0;

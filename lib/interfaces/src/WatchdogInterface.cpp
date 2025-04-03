@@ -22,7 +22,6 @@ bool WatchdogInterface::update_watchdog_state(unsigned long curr_millis) {
     if ((curr_millis - _watchdog_time) > _watchdog_kick_interval) {
         _watchdog_state = !_watchdog_state;
         _watchdog_time = curr_millis;
-
         digitalWrite(_teensy_wd_kick_pin, _watchdog_state ? HIGH : LOW);
     }
 

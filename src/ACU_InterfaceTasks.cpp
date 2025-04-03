@@ -29,8 +29,6 @@ void initialize_all_interfaces()
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance());
-
-    handle_CAN_setup(ACUCANInterfaceImpl::CCU_CAN, ACUConstants::CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
 }
 
 bool run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
@@ -115,18 +113,21 @@ bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_
 
 bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
+    // Serial.println("Sending");
+    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
     return true;
 }
 
 bool enqueue_CCU_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    Serial.println("ENqueueing");
     CCUInterfaceInstance::instance().set_ACU_core_data(ACUCoreDataInstance::instance());
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
-    CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_CAN_message();
+    //CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_CAN_message();
     return true;
 }
 
 bool sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    // Serial.println("Sampling");
     etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
     process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
     return true;
@@ -266,6 +267,8 @@ bool debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskIn
     Serial.print("ACU State: ");
     Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
 
+    Serial.print("CCU Charging Requested? : ");
+    Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
     Serial.println();
 
     return true;

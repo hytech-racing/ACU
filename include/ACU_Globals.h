@@ -10,6 +10,7 @@
 #include "ACU_Constants.h"
 
 #include "shared_types.h"
+#include "FlexCAN_T4.h"
 
 using ACUFaultDataInstance = etl::singleton<ACUFaultData_s<ACUConstants::NUM_CHIPS>>;
 using ACUDataInstance = etl::singleton<ACUData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS>>;

@@ -16,7 +16,7 @@ void on_recv(const CAN_message_t &msg)
       Serial.print(msg.buf[i]); Serial.print(" ");
     }
     Serial.print("  TS: "); Serial.println(msg.timestamp);
-  }
+}
     
 
 void setup()

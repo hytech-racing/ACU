@@ -13,7 +13,7 @@ bool initialize_all_systems()
 
     /* Delegate Function Definitions */
     etl::delegate<bool()> charge_state_request = etl::delegate<bool()>::create([]() -> bool
-                                                                               { return CCUInterfaceInstance::instance().get_latest_data().charging_requested; });
+                                                                               { return CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested; });
 
     etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool
                                                                         { return !ACUDataInstance::instance().acu_ok; });

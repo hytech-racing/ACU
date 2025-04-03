@@ -32,7 +32,7 @@ public:
     
     void receive_CCU_status_message(const CAN_message_t& msg, unsigned long curr_millis);
     
-    CCUCANInterfaceData_s get_latest_data();
+    CCUCANInterfaceData_s get_latest_data(unsigned long curr_millis);
 
     void set_ACU_core_data(ACUCoreData_s input);
 

@@ -31,13 +31,12 @@ struct CANInterfaces {
 };
 
 using CANInterfacesInstance = etl::singleton<CANInterfaces>;
+extern FlexCAN_T4<CAN3> CCU_CAN; // gets defined in main as of right now
 
 namespace ACUCANInterfaceImpl {
 
     extern CANRXBufferType ccu_can_rx_buffer;
     extern CANTXBufferType ccu_can_tx_buffer;
-
-    extern FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CCU_CAN; // gets defined in main as of right now
 
     void on_ccu_can_receive(const CAN_message_t &msg);
 
