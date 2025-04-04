@@ -33,12 +33,15 @@ HT_TASK::Task write_cell_balancing_config_task(HT_TASK::DUMMY_FUNCTION, write_ce
 HT_TASK::Task send_all_data_ethernet_task(HT_TASK::DUMMY_FUNCTION, handle_send_ACU_all_ethernet_data, ACUConstants::ALL_DATA_ETHERNET_PRIORITY, ACUConstants::ALL_DATA_ETHERNET_PERIOD_US);
 HT_TASK::Task send_core_data_ethernet_task(HT_TASK::DUMMY_FUNCTION, handle_send_ACU_core_ethernet_data, ACUConstants::CORE_DATA_ETHERNET_PRIORITY, ACUConstants::CORE_DATA_ETHERNET_PERIOD_US);
 HT_TASK::Task send_CAN_task(HT_TASK::DUMMY_FUNCTION, handle_send_all_CAN_data, ACUConstants::SEND_CAN_PRIORITY, ACUConstants::SEND_CAN_PERIOD_US);
-HT_TASK::Task enqueue_charging_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_CCU_CAN_data, ACUConstants::CCU_SEND_PRIORITY, ACUConstants::CCU_SEND_PERIOD_US);
+HT_TASK::Task enqueue_CCU_core_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_CCU_core_CAN_data, ACUConstants::CCU_SEND_PRIORITY, ACUConstants::CCU_SEND_PERIOD_US);
+HT_TASK::Task enqueue_CCU_subA_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_CCU_sub_A_CAN_data, ACUConstants::CCU_SEND_A_PRIORITY, ACUConstants::CCU_SEND_A_PERIOD_US);
+HT_TASK::Task enqueue_CCU_subB_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_CCU_sub_B_CAN_data, ACUConstants::CCU_SEND_B_PRIORITY, ACUConstants::CCU_SEND_B_PERIOD_US);
+
 HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConstants::RECV_CAN_PRIORITY, ACUConstants::RECV_CAN_PERIOD_US);
 
 HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 
-FlexCAN_T4<CAN3> CCU_CAN;
+FlexCAN_Type<CAN3> CCU_CAN;
 
 void setup()
 {
@@ -56,8 +59,11 @@ void setup()
     //scheduler.schedule(send_all_data_ethernet_task);
     //scheduler.schedule(send_core_data_ethernet_task);
 
-    // scheduler.schedule(send_CAN_task);
-    // scheduler.schedule(enqueue_charging_CAN_task);
+    scheduler.schedule(send_CAN_task);
+    scheduler.schedule(enqueue_CCU_core_CAN_task);
+    scheduler.schedule(enqueue_CCU_subA_CAN_task);
+    scheduler.schedule(enqueue_CCU_subB_CAN_task);
+
     scheduler.schedule(sample_CAN_task);
 
     scheduler.schedule(debug_prints_task);

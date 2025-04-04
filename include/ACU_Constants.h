@@ -35,12 +35,20 @@ namespace ACUConstants
     constexpr unsigned long ALL_DATA_ETHERNET_PRIORITY = 10;
     constexpr unsigned long CORE_DATA_ETHERNET_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
     constexpr unsigned long CORE_DATA_ETHERNET_PRIORITY = 6;
-    constexpr unsigned long CCU_SEND_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
+
+    constexpr unsigned long CCU_SEND_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr unsigned long CCU_SEND_PRIORITY = 7;
+    constexpr unsigned long CCU_SEND_A_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
+    constexpr unsigned long CCU_SEND_A_PRIORITY = 11;
+    constexpr unsigned long CCU_SEND_B_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
+    constexpr unsigned long CCU_SEND_B_PRIORITY = 12; 
+
     constexpr unsigned long SEND_CAN_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr unsigned long SEND_CAN_PRIORITY = 8;
     constexpr unsigned long RECV_CAN_PERIOD_US = 1000UL; // 1 000 us = 1 000 Hz
     constexpr unsigned long RECV_CAN_PRIORITY = 0;
+
+
 
     constexpr unsigned long DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
     constexpr unsigned long DEBUG_PRINT_PRIORITY = 5;

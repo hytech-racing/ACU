@@ -118,11 +118,20 @@ bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::Tas
     return true;
 }
 
-bool enqueue_CCU_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    Serial.println("ENqueueing");
-    CCUInterfaceInstance::instance().set_ACU_core_data(ACUCoreDataInstance::instance());
+bool enqueue_CCU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS>(ACUDataInstance::instance());
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
-    //CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_CAN_message();
+    CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
+    return true;
+}
+
+bool enqueue_CCU_sub_A_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_A_CAN_message();
+    return true;
+}
+
+bool enqueue_CCU_sub_B_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_B_CAN_message();
     return true;
 }
 

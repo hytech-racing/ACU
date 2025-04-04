@@ -37,7 +37,11 @@ bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_
 
 bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
-bool enqueue_CCU_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+bool enqueue_CCU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+bool enqueue_CCU_sub_A_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+bool enqueue_CCU_sub_B_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 bool sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 

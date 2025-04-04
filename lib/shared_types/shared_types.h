@@ -26,6 +26,4 @@ struct ACUFaultData_s {
     size_t max_consecutive_invalid_packet_count;
 };
 
-
-
 #endif
