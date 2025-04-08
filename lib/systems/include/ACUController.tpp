@@ -48,7 +48,7 @@ ACUController<num_cells, num_celltemps>::evaluate_accumulator(time_ms current_mi
     if (input_state.max_cell_temp < cell_ot_thresh || has_invalid_packet) {
         _acu_state.last_time_cell_ot_fault_not_present = current_millis;
     }
-    if (input_state.max_consecutive_invalid_packet_count > _parameters.invalid_packet_count_thresh) {
+    if (input_state.max_consecutive_invalid_packet_count < _parameters.invalid_packet_count_thresh) {
         _acu_state.last_time_invalid_packet_present = current_millis;
     }
     _acu_state.prev_time_stamp = current_millis;

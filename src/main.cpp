@@ -41,7 +41,7 @@ HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConst
 
 HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 
-FlexCAN_Type<CAN3> CCU_CAN;
+FlexCAN_T4<CAN3> CCU_CAN;
 
 void setup()
 {
@@ -54,7 +54,7 @@ void setup()
     scheduler.schedule(kick_watchdog_task);
     scheduler.schedule(sample_bms_data_task);
     scheduler.schedule(eval_accumulator_task);
-    //scheduler.schedule(write_cell_balancing_config_task);
+    scheduler.schedule(write_cell_balancing_config_task);
 
     //scheduler.schedule(send_all_data_ethernet_task);
     //scheduler.schedule(send_core_data_ethernet_task);

@@ -67,7 +67,6 @@ void CCUInterface::handle_enqueue_acu_voltages_B_CAN_message() {
             cell += 3;
             CAN_util::enqueue_msg(&detailed_msg, &Pack_BMS_DETAILED_VOLTAGES_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
         }
-        Serial.println();
     }
 } 
 

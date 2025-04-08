@@ -5,7 +5,7 @@ CANTXBufferType ACUCANInterfaceImpl::ccu_can_tx_buffer;
 
 void ACUCANInterfaceImpl::on_ccu_can_receive(const CAN_message_t &msg)
 {   
-    //Serial.println("CAN MSG received from CCU line");
+    // Serial.println("CAN MSG received from CCU line");
     // Serial.print("MSG ID: ");
     // Serial.println(msg.id, HEX);
     uint8_t buf[sizeof(CAN_message_t)];
@@ -20,7 +20,7 @@ void ACUCANInterfaceImpl::acu_CAN_recv(CANInterfaces &interfaces, const CAN_mess
     case CCU_STATUS_CANID:
     {
         interfaces.ccu_interface.receive_CCU_status_message(msg, millis);
-        // Serial.println("CAN Message with CCU ID Received");
+        //Serial.println("CAN Message with CCU ID Received");
         break;
     }
     default:

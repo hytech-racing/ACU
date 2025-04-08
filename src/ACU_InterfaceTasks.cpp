@@ -8,6 +8,10 @@ void initialize_all_interfaces()
     Serial.begin(115200);
     analogReadResolution(12);
 
+    /* Watchdog Interface */
+    WatchdogInstance::create();
+    WatchdogInstance::instance().init(); 
+
     /* ACU Data Struct */
     ACUDataInstance::create();
     ACUCoreDataInstance::create();
@@ -15,10 +19,6 @@ void initialize_all_interfaces()
     /* BMS Driver */
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();
-
-    /* Watchdog Interface */
-    WatchdogInstance::create();
-    WatchdogInstance::instance().init(); 
 
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
@@ -73,7 +73,7 @@ bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &ta
     auto start = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.begin();
     auto end = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.end();
     ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(start, end);
-    //print_bms_data(data);
+    print_bms_data(data);
 
     return true;
 }
@@ -211,27 +211,27 @@ void print_bms_data(bms_data data)
     }
     Serial.print("Number of Global Faults: ");
     Serial.println(ACUDataInstance::instance().max_consecutive_invalid_packet_count);
-    Serial.println("Number of Consecutive Faults Per Chip: ");
-    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-        Serial.print("CHIP ");
-        Serial.print(c);
-        Serial.print(": ");
-        // Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
-        // Serial.print(" ");
-        Serial.print(data.valid_read_packets[c].valid_read_cells_1_to_3);
-        Serial.print(" ");
-        Serial.print(data.valid_read_packets[c].valid_read_cells_4_to_6);
-        Serial.print(" ");
-        Serial.print(data.valid_read_packets[c].valid_read_cells_7_to_9);
-        Serial.print(" ");
-        Serial.print(data.valid_read_packets[c].valid_read_cells_10_to_12);
-        Serial.print(" ");
-        Serial.print(data.valid_read_packets[c].valid_read_gpios_1_to_3);
-        Serial.print(" ");
-        Serial.print(data.valid_read_packets[c].valid_read_gpios_4_to_6);
-        Serial.print("\t");
-    }
-    Serial.println();
+    // Serial.println("Number of Consecutive Faults Per Chip: ");
+    // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
+    //     Serial.print("CHIP ");
+    //     Serial.print(c);
+    //     Serial.print(": ");
+    //     // Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
+    //     // Serial.print(" ");
+    //     Serial.print(data.valid_read_packets[c].valid_read_cells_1_to_3);
+    //     Serial.print(" ");
+    //     Serial.print(data.valid_read_packets[c].valid_read_cells_4_to_6);
+    //     Serial.print(" ");
+    //     Serial.print(data.valid_read_packets[c].valid_read_cells_7_to_9);
+    //     Serial.print(" ");
+    //     Serial.print(data.valid_read_packets[c].valid_read_cells_10_to_12);
+    //     Serial.print(" ");
+    //     Serial.print(data.valid_read_packets[c].valid_read_gpios_1_to_3);
+    //     Serial.print(" ");
+    //     Serial.print(data.valid_read_packets[c].valid_read_gpios_4_to_6);
+    //     Serial.print("\t");
+    // }
+    // Serial.println();
     Serial.println();
 }
 
