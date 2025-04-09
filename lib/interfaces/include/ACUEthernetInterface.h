@@ -21,9 +21,9 @@ public:
 
   void init_ethernet_device();
 
-  void handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData_s &data);
+  void handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData &data);
 
-  void handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData_s &data);
+  void handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData &data);
 
   /**
    * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUCoreData_s.
@@ -31,7 +31,7 @@ public:
    * @param shared_state Minimum data ACU must send for car to run.
    * @return A populated instance of the outgoing protoc struct.
    */
-  hytech_msgs_ACUCoreData_s make_acu_core_data_msg(const ACUCoreData_s &shared_state);
+  hytech_msgs_ACUCoreData make_acu_core_data_msg(const ACUCoreData_s &shared_state);
 
   /**
    * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUAllData_s.
@@ -39,7 +39,7 @@ public:
    * @param shared_state Detailed, unprocessed data from ACU sensors.
    * @return A populated instance of the outgoing protoc struct.
    */
-  hytech_msgs_ACUAllData_s make_acu_all_data_msg(const ACUAllDataType_s &shared_state);
+  hytech_msgs_ACUAllData make_acu_all_data_msg(const ACUAllDataType_s &shared_state);
   /**
    * Function to take a populated protoc struct from VCR and update ACUCoreData.
    *

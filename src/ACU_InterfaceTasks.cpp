@@ -14,7 +14,7 @@ void initialize_all_interfaces()
 
     /* ACU Data Struct */
     ACUDataInstance::create();
-    ACUCoreDataInstance::create();
+    ACUAllDataInstance::create();
 
     /* BMS Driver */
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
@@ -52,11 +52,15 @@ bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &ta
     ACUDataInstance::instance().cell_temps = data.cell_temperatures;
 
     /* Store into ACUCoreDataInstance */
-    ACUCoreDataInstance::instance().avg_cell_voltage = ACUDataInstance::instance().avg_cell_voltage;
-    ACUCoreDataInstance::instance().max_cell_voltage = ACUDataInstance::instance().max_cell_voltage;
-    ACUCoreDataInstance::instance().min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;
-    ACUCoreDataInstance::instance().pack_voltage = ACUDataInstance::instance().pack_voltage;
-    ACUCoreDataInstance::instance().max_cell_temp = ACUDataInstance::instance().max_cell_temp;
+    ACUAllDataInstance::instance().core_data.avg_cell_voltage = ACUDataInstance::instance().avg_cell_voltage;
+    ACUAllDataInstance::instance().core_data.max_cell_voltage = ACUDataInstance::instance().max_cell_voltage;
+    ACUAllDataInstance::instance().core_data.min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;
+    ACUAllDataInstance::instance().core_data.pack_voltage = ACUDataInstance::instance().pack_voltage;
+    ACUAllDataInstance::instance().core_data.max_cell_temp = ACUDataInstance::instance().max_cell_temp;
+    
+    ACUAllDataInstance::instance().max_cell_voltage_id = data.max_cell_voltage_id;
+    ACUAllDataInstance::instance().min_cell_voltage_id = data.min_cell_voltage_id;
+    ACUAllDataInstance::instance().max_cell_temp_id = data.max_cell_temperature_cell_id;
 
 
     for (size_t chip = 0; chip < data.valid_read_packets.size() ; chip++)
@@ -73,6 +77,10 @@ bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &ta
     auto start = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.begin();
     auto end = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.end();
     ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(start, end);
+
+    ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
+    ACUAllDataInstance::instance().consecutive_invalid_packet_counts = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts;
+    
     print_bms_data(data);
 
     return true;
@@ -86,27 +94,14 @@ bool write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::
 
 bool handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUCoreData_s data = {.pack_voltage = ACUDataInstance::instance().pack_voltage,
-                        .min_cell_voltage = ACUDataInstance::instance().min_cell_voltage,
-                        .avg_cell_voltage = ACUDataInstance::instance().pack_voltage / ACUConstants::NUM_CELLS,
-                        .max_cell_temp = ACUDataInstance::instance().max_cell_temp };
-    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(data));
+    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(ACUAllDataInstance::instance().core_data));
     
     return true;
 }
 
 bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUAllDataType_s data = {};
-    for (size_t cell = 0; cell < ACUConstants::NUM_CELLS; cell++)
-    {
-        data.cell_voltages[cell] = ACUDataInstance::instance().voltages[cell];
-    }
-    for (size_t temp = 0; temp < ACUConstants::NUM_CELL_TEMPS; temp++)
-    {
-        data.cell_temps[temp] = ACUDataInstance::instance().cell_temps[temp];
-    }
-    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(data));
+    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
 
     return true;
 }
