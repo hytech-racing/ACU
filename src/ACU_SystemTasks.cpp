@@ -13,7 +13,7 @@ bool initialize_all_systems()
 
     /* Delegate Function Definitions */
     etl::delegate<bool()> charge_state_request = etl::delegate<bool()>::create([]() -> bool
-                                                                               { return CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested; });
+                                                                            { return CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested; });
 
     etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool
                                                                         { return !ACUDataInstance::instance().acu_ok; });
@@ -27,7 +27,7 @@ bool initialize_all_systems()
                                                                                 { ACUDataInstance::instance().charging_enabled = true; });
 
     etl::delegate<void()> disable_cell_balancing = etl::delegate<void()>::create([]() -> void
-                                                                                 { ACUDataInstance::instance().charging_enabled = false; });
+                                                                                { ACUDataInstance::instance().charging_enabled = false; });
     etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
 
     etl::delegate<void()> reinitialize_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_high>(WatchdogInstance::instance());
@@ -44,8 +44,8 @@ bool initialize_all_systems()
                                     disable_cell_balancing,
                                     disable_watchdog,
                                     reinitialize_watchdog,
-                                    disable_n_latch_en,
-                                    reset_latch);
+                                    reset_latch, 
+                                    disable_n_latch_en);
 
     return true;
 }

@@ -87,9 +87,9 @@ bool write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::
 bool handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUCoreData_s data = {.pack_voltage = ACUDataInstance::instance().pack_voltage,
-                          .min_cell_voltage = ACUDataInstance::instance().min_cell_voltage,
-                          .avg_cell_voltage = ACUDataInstance::instance().pack_voltage / ACUConstants::NUM_CELLS,
-                          .max_cell_temp = ACUDataInstance::instance().max_cell_temp };
+                        .min_cell_voltage = ACUDataInstance::instance().min_cell_voltage,
+                        .avg_cell_voltage = ACUDataInstance::instance().pack_voltage / ACUConstants::NUM_CELLS,
+                        .max_cell_temp = ACUDataInstance::instance().max_cell_temp };
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(data));
     
     return true;

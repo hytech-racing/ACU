@@ -13,7 +13,7 @@ void WatchdogInterface::init() {
     // Initial Pin States for OUTPUT pins
     digitalWrite(_teensy_ok_pin, HIGH);
     digitalWrite(_teensy_wd_kick_pin, LOW); // watchdog state set to low to start
-    digitalWrite(_teensy_n_latch_en_pin, HIGH); 
+    digitalWrite(_teensy_n_latch_en_pin, LOW); 
 
     analogReadResolution(12);
 }

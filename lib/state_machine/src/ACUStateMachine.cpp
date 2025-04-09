@@ -16,7 +16,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
                 _set_state(ACUState_e::CHARGING, current_millis);
                 break;
             }
-            if (_has_bms_fault() /*|| _has_imd_fault()*/) {
+            if (_has_bms_fault() || _has_imd_fault()) {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
@@ -28,15 +28,19 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
                 _set_state(ACUState_e::ACTIVE, current_millis);
                 break;
             }
-            if (_has_bms_fault() /*|| _has_imd_fault()*/) {
+            if (_has_bms_fault() || _has_imd_fault()) {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
             break;
         }
         case ACUState_e::FAULTED: 
-        {
-            if (_received_valid_shdn_out() && !(_has_bms_fault() /*|| _has_imd_fault()*/)) {
+        {   
+            if ((current_millis - _last_state_changed_time > 500) && !(_has_bms_fault())) {
+                _reinitialize_watchdog();
+            }
+
+            if (_received_valid_shdn_out() && !(_has_bms_fault() || _has_imd_fault())) {
                 _set_state(ACUState_e::STARTUP, current_millis);
                 break;
             }
@@ -74,7 +78,7 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
         }
         case ACUState_e::FAULTED: 
         {
-            _reset_latch();
+            _set_n_latch_en_low();
             _reinitialize_watchdog();
             break;
         }
@@ -103,7 +107,9 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
         case ACUState_e::FAULTED: 
         {   
             _disable_watchdog();
-            _disable_n_latch_en();
+            _set_n_latch_en_high();
+
+            _last_state_changed_time = curr_millis;
             break;
         }
         default:

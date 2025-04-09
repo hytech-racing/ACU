@@ -28,8 +28,8 @@ public:
         etl::delegate<void()> disable_cell_balancing,
         etl::delegate<void()> disable_watchdog,
         etl::delegate<void()> reinitialize_watchdog,
-        etl::delegate<void()> disable_n_latch_en,
-        etl::delegate<void()> reset_latch
+        etl::delegate<void()> reset_latch,
+        etl::delegate<void()> disable_n_latch_en
     ) :
     _charge_state_requested(charge_state_requested),
     _has_bms_fault(has_bms_fault),
@@ -39,8 +39,8 @@ public:
     _disable_cell_balancing(disable_cell_balancing),
     _disable_watchdog(disable_watchdog),
     _reinitialize_watchdog(reinitialize_watchdog),
-    _disable_n_latch_en(disable_n_latch_en),
-    _reset_latch(reset_latch)
+    _set_n_latch_en_high(reset_latch),
+    _set_n_latch_en_low(disable_n_latch_en)
     {
         _current_state = ACUState_e::STARTUP;
     };
@@ -69,6 +69,7 @@ private:
     void _handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis);
         
     ACUState_e _current_state;
+    unsigned long _last_state_changed_time; // time of last state change
 
     // Lamdas for state machine abstraction, functions defined in main
     etl::delegate<bool()> _charge_state_requested; 
@@ -80,8 +81,8 @@ private:
     etl::delegate<void()> _disable_cell_balancing;
     etl::delegate<void()> _disable_watchdog;
     etl::delegate<void()> _reinitialize_watchdog;
-    etl::delegate<void()> _disable_n_latch_en;
-    etl::delegate<void()> _reset_latch;
+    etl::delegate<void()> _set_n_latch_en_high;
+    etl::delegate<void()> _set_n_latch_en_low;
 };
 
 using ACUStateMachineInstance = etl::singleton<ACUStateMachine>;
