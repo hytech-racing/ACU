@@ -13,13 +13,14 @@ void ACUEthernetInterface::init_ethernet_device() {
 }
 
 void ACUEthernetInterface::handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData &data) {
-    handle_ethernet_socket_send_pb<(size_t)1024>(EthernetIPDefsInstance::instance().acu_ip, 
+
+    handle_ethernet_socket_send_pb<hytech_msgs_ACUAllData_size>(EthernetIPDefsInstance::instance().acu_ip, 
                                                 EthernetIPDefsInstance::instance().DBData_port,
                                                 &_acu_all_data_send_socket, data, hytech_msgs_ACUAllData_fields);
 }
 
 void ACUEthernetInterface::handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData &data) {
-    handle_ethernet_socket_send_pb<(size_t)1024>(EthernetIPDefsInstance::instance().acu_ip, 
+    handle_ethernet_socket_send_pb<hytech_msgs_ACUCoreData_size>(EthernetIPDefsInstance::instance().acu_ip, 
                                                 EthernetIPDefsInstance::instance().VCRData_port,
                                                 &_acu_core_data_send_socket, data, hytech_msgs_ACUCoreData_fields);
 
@@ -45,19 +46,20 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
 {
     hytech_msgs_ACUAllData out;
 
-    for (size_t i = 0; i < out.cell_voltages_count; ++i)
+    for (size_t i = 0; i < 126; ++i)
     {
         out.cell_voltages[i] = shared_state.cell_voltages[i];
     }
-
-    for (size_t i = 0; i < out.cell_temperatures_count; ++i)
+    
+    for (size_t i = 0; i < 48; i++)
     {
         out.cell_temperatures[i] = shared_state.cell_temps[i];
     }
-    for (size_t i = 0; i < out.invalid_packet_chip_counts_count; ++i)
-    {
+
+    for (size_t i = 0; i < 12; i++) {
         out.invalid_packet_chip_counts[i] = shared_state.consecutive_invalid_packet_counts[i];
     }
+
     out.has_core_data = true;
     out.core_data = make_acu_core_data_msg(shared_state.core_data);
     out.max_consecutive_invalid_packet_count = shared_state.max_consecutive_invalid_packet_count;

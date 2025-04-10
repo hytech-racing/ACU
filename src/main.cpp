@@ -56,7 +56,7 @@ void setup()
     scheduler.schedule(eval_accumulator_task);
     scheduler.schedule(write_cell_balancing_config_task);
 
-    //scheduler.schedule(send_all_data_ethernet_task);
+    scheduler.schedule(send_all_data_ethernet_task);
     scheduler.schedule(send_core_data_ethernet_task);
 
     scheduler.schedule(send_CAN_task);

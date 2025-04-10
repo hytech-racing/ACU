@@ -101,15 +101,18 @@ bool handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT
 
 bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
-
+    // Serial.println("Sending ACU All Data over Ethernet");
+    hytech_msgs_ACUAllData out = ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance());
+    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(out);
     return true;
 }
 
 bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
     // Serial.println("Sending");
-    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
+    if (CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested) {
+        ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
+    }
     return true;
 }
 
