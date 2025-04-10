@@ -112,6 +112,7 @@ bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::Tas
     // Serial.println("Sending");
     if (CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested) {
         ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
+        //Serial.println("Sending CAN messages");
     }
     return true;
 }

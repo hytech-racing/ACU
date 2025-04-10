@@ -48,8 +48,6 @@ namespace ACUConstants
     constexpr unsigned long RECV_CAN_PERIOD_US = 1000UL; // 1 000 us = 1 000 Hz
     constexpr unsigned long RECV_CAN_PRIORITY = 0;
 
-
-
     constexpr unsigned long DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
     constexpr unsigned long DEBUG_PRINT_PRIORITY = 5;
 
