@@ -15,6 +15,7 @@ namespace WATCHDOG_DEFAULT_PARAMS
     constexpr const pin TS_OUT_FILTERED_PIN = 17;
     constexpr const pin PACK_OUT_FILTERED_PIN = 18;
     constexpr const pin IMD_OK_PIN = 25;
+    constexpr const pin BSPD_CURRENT_PIN = 27;
     constexpr const pin SHDN_OUT_PIN = 38;
 };
 
@@ -36,6 +37,7 @@ public:
         pin shdn_out_pin = WATCHDOG_DEFAULT_PARAMS::SHDN_OUT_PIN,
         pin ts_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::TS_OUT_FILTERED_PIN,
         pin pack_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::PACK_OUT_FILTERED_PIN,
+        pin bspd_current_pin = WATCHDOG_DEFAULT_PARAMS::BSPD_CURRENT_PIN,
         const unsigned long kick_interval_ms = 10UL) : 
                         _teensy_wd_kick_pin(wd_kick_pin),
                         _teensy_ok_pin(teensy_ok_pin),
@@ -44,6 +46,7 @@ public:
                         _teensy_shdn_out_pin(shdn_out_pin),
                         _teensy_ts_out_filtered_pin(ts_out_filtered_pin),
                         _teensy_pack_out_filtered_pin(pack_out_filtered_pin),
+                        _teensy_bspd_current_pin(bspd_current_pin),
                         _watchdog_kick_interval(kick_interval_ms),
                         _watchdog_time(0), 
                         _watchdog_state(false)
@@ -64,6 +67,7 @@ private:
     pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
     pin _teensy_ts_out_filtered_pin;
     pin _teensy_pack_out_filtered_pin;
+    pin _teensy_bspd_current_pin;
 
 
     // following is taken from VCR Watchdog System
@@ -111,6 +115,8 @@ public:
     */
     volt read_ts_out_filtered();
     volt read_pack_out_filtered();
+
+    volt read_bspd_current();
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;

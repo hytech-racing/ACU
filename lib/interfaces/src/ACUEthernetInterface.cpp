@@ -24,7 +24,7 @@ void ACUEthernetInterface::handle_send_ethernet_acu_core_data(const hytech_msgs_
                                                 EthernetIPDefsInstance::instance().VCRData_port,
                                                 &_acu_core_data_send_socket, data, hytech_msgs_ACUCoreData_fields);
 
-    handle_ethernet_socket_send_pb<(size_t)1024>(EthernetIPDefsInstance::instance().acu_ip, 
+    handle_ethernet_socket_send_pb<hytech_msgs_ACUCoreData_size>(EthernetIPDefsInstance::instance().acu_ip, 
                                                 EthernetIPDefsInstance::instance().DBData_port,
                                                 &_acu_core_data_send_socket, data, hytech_msgs_ACUCoreData_fields);
 }
@@ -68,7 +68,8 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     out.max_cell_temp_id = shared_state.max_cell_temp_id;
     out.measured_tractive_system_voltage = shared_state.measured_tractive_system_voltage;
     out.measured_pack_voltage = shared_state.measured_pack_voltage;
-    
+    out.measured_bspd_current = shared_state.measured_bspd_current;
+
     return out;
 }
 

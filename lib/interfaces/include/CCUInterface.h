@@ -38,6 +38,8 @@ public:
 
     void receive_CCU_status_message(const CAN_message_t &msg, unsigned long curr_millis);
 
+    void set_system_latch_state(unsigned long curr_millis, bool is_latched);
+
     CCUCANInterfaceData_s get_latest_data(unsigned long curr_millis);
 
     template <size_t num_cells, size_t num_celltemps>

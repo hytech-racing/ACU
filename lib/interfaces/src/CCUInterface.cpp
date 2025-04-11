@@ -8,12 +8,12 @@ void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned
     if (ccu_msg.charger_enabled == false || (_curr_data.charging_requested && ccu_msg.charger_enabled)) {
         _curr_data.last_time_charging_requested = curr_millis;
     } 
-    // Serial.printf("Charging Requested: %d\n", _curr_data.charging_requested);
+    //Serial.printf("Charging Requested: %d\n", _curr_data.charging_requested);
 }
 
 void CCUInterface::handle_enqueue_acu_status_CAN_message() {
     BMS_STATUS_t msg = {};
-    if (_curr_data.charging_requested == true) {
+    if (_curr_data.charging_requested) {
         msg.state = 2; // charging
     } else {
         msg.state = 1; // discharging
@@ -70,8 +70,11 @@ void CCUInterface::handle_enqueue_acu_voltages_B_CAN_message() {
     }
 } 
 
+void CCUInterface::set_system_latch_state(unsigned long curr_millis, bool is_latched) {
+    _curr_data.charging_requested = is_latched && ((curr_millis - _curr_data.last_time_charging_requested) < _min_charging_enable_threshold);
+}
+
 CCUCANInterfaceData_s CCUInterface::get_latest_data(unsigned long curr_millis) {
-    _curr_data.charging_requested = (curr_millis - _curr_data.last_time_charging_requested) < _min_charging_enable_threshold;
     return _curr_data;
 }
 

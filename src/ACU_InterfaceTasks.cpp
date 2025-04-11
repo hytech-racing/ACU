@@ -25,7 +25,10 @@ void initialize_all_interfaces()
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
 
     /* CCU Interface */
-    CCUInterfaceInstance::create(sys_time::hal_millis(), 500);
+    CCUInterfaceInstance::create(sys_time::hal_millis(), 100);
+
+    /* VCR Interface */
+    VCRInterfaceInstance::create(sys_time::hal_millis());
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance());
@@ -52,6 +55,8 @@ bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &ta
     ACUDataInstance::instance().cell_temps = data.cell_temperatures;
 
     /* Store into ACUCoreDataInstance */
+    ACUAllDataInstance::instance().cell_voltages = data.voltages;
+    ACUAllDataInstance::instance().cell_temps = data.cell_temperatures;
     ACUAllDataInstance::instance().core_data.avg_cell_voltage = ACUDataInstance::instance().avg_cell_voltage;
     ACUAllDataInstance::instance().core_data.max_cell_voltage = ACUDataInstance::instance().max_cell_voltage;
     ACUAllDataInstance::instance().core_data.min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;
@@ -81,7 +86,7 @@ bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &ta
     ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
     ACUAllDataInstance::instance().consecutive_invalid_packet_counts = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts;
     
-    print_bms_data(data);
+    // print_bms_data(data);
 
     return true;
 }
@@ -102,35 +107,49 @@ bool handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT
 bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     // Serial.println("Sending ACU All Data over Ethernet");
+    ACUAllDataInstance::instance().measured_tractive_system_voltage = WatchdogInstance::instance().read_pack_out_filtered();
+    ACUAllDataInstance::instance().measured_pack_voltage = WatchdogInstance::instance().read_pack_out_filtered();
+    ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
     hytech_msgs_ACUAllData out = ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance());
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(out);
+
     return true;
 }
 
 bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
     // Serial.println("Sending");
-    if (CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested) {
-        ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
-        //Serial.println("Sending CAN messages");
-    }
+    CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), WatchdogInstance::instance().read_shdn_out());
+    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
+    //Serial.println("Sending CAN messages");
     return true;
 }
 
-bool enqueue_CCU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+bool enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(), ACUDataInstance::instance().acu_ok);
+    VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
+    return true;
+}
+
+bool enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS>(ACUDataInstance::instance());
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
     return true;
 }
 
-bool enqueue_CCU_sub_A_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_A_CAN_message();
+
+bool enqueue_ACU_sub_A_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    if (CCUInterfaceInstance::instance().is_charging_requested()) {
+        CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_A_CAN_message();
+    }
     return true;
 }
 
-bool enqueue_CCU_sub_B_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_B_CAN_message();
+bool enqueue_ACU_sub_B_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    if (CCUInterfaceInstance::instance().is_charging_requested()) {
+        CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_B_CAN_message();
+    }
     return true;
 }
 

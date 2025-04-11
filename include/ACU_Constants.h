@@ -28,7 +28,7 @@ namespace ACUConstants
     constexpr unsigned long SAMPLE_BMS_PERIOD_US = 200000UL; // 200 000 us = 5Hz
     constexpr unsigned long SAMPLE_BMS_PRIORITY = 2;
     constexpr unsigned long EVAL_ACC_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
-    constexpr unsigned long EVAL_ACC_PRIORITY = 3;
+    constexpr unsigned long EVAL_ACC_PRIORITY = 10;
     constexpr unsigned long WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr unsigned long WRITE_CELL_BALANCE_PRIORITY = 4;
     constexpr unsigned long ALL_DATA_ETHERNET_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
@@ -36,14 +36,16 @@ namespace ACUConstants
     constexpr unsigned long CORE_DATA_ETHERNET_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
     constexpr unsigned long CORE_DATA_ETHERNET_PRIORITY = 6;
 
-    constexpr unsigned long CCU_SEND_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
-    constexpr unsigned long CCU_SEND_PRIORITY = 10;
+    constexpr unsigned long CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+    constexpr unsigned long CCU_SEND_PRIORITY = 11;
+    constexpr unsigned long ACU_OK_CAN_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+    constexpr unsigned long ACU_OK_CAN_PRIORITY = 3;
     constexpr unsigned long CCU_SEND_A_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
-    constexpr unsigned long CCU_SEND_A_PRIORITY = 11;
+    constexpr unsigned long CCU_SEND_A_PRIORITY = 12;
     constexpr unsigned long CCU_SEND_B_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
-    constexpr unsigned long CCU_SEND_B_PRIORITY = 12; 
+    constexpr unsigned long CCU_SEND_B_PRIORITY = 13; 
 
-    constexpr unsigned long SEND_CAN_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
+    constexpr unsigned long SEND_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
     constexpr unsigned long SEND_CAN_PRIORITY = 8;
     constexpr unsigned long RECV_CAN_PERIOD_US = 1000UL; // 1 000 us = 1 000 Hz
     constexpr unsigned long RECV_CAN_PRIORITY = 0;
