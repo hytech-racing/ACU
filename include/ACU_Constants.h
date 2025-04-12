@@ -31,7 +31,7 @@ namespace ACUConstants
     constexpr unsigned long EVAL_ACC_PRIORITY = 10;
     constexpr unsigned long WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr unsigned long WRITE_CELL_BALANCE_PRIORITY = 4;
-    constexpr unsigned long ALL_DATA_ETHERNET_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
+    constexpr unsigned long ALL_DATA_ETHERNET_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr unsigned long ALL_DATA_ETHERNET_PRIORITY = 7;
     constexpr unsigned long CORE_DATA_ETHERNET_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
     constexpr unsigned long CORE_DATA_ETHERNET_PRIORITY = 6;

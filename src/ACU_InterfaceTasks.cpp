@@ -110,8 +110,8 @@ bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_
     ACUAllDataInstance::instance().measured_tractive_system_voltage = WatchdogInstance::instance().read_pack_out_filtered();
     ACUAllDataInstance::instance().measured_pack_voltage = WatchdogInstance::instance().read_pack_out_filtered();
     ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
-    hytech_msgs_ACUAllData out = ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance());
-    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(out);
+    
+    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
 
     return true;
 }

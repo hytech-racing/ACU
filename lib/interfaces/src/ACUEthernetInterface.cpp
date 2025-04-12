@@ -15,7 +15,7 @@ void ACUEthernetInterface::init_ethernet_device() {
 void ACUEthernetInterface::handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData &data) {
 
     handle_ethernet_socket_send_pb<hytech_msgs_ACUAllData_size>(EthernetIPDefsInstance::instance().drivebrain_ip, 
-                                                EthernetIPDefsInstance::instance().ACUCoreData_port,
+                                                EthernetIPDefsInstance::instance().ACUAllData_port,
                                                 &_acu_all_data_send_socket, data, hytech_msgs_ACUAllData_fields);
 }
 
@@ -23,6 +23,7 @@ void ACUEthernetInterface::handle_send_ethernet_acu_core_data(const hytech_msgs_
     // handle_ethernet_socket_send_pb<hytech_msgs_ACUCoreData_size>(EthernetIPDefsInstance::instance().drivebrain_ip, 
     //                                             EthernetIPDefsInstance::instance().ACUCoreData_port,
     //                                             &_acu_core_data_send_socket, data, hytech_msgs_ACUCoreData_fields);
+
 
     // handle_ethernet_socket_send_pb<hytech_msgs_ACUCoreData_size>(EthernetIPDefsInstance::instance().acu_ip, 
     //                                             EthernetIPDefsInstance::instance().DBData_port,
@@ -44,7 +45,7 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
 
 hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllDataType_s &shared_state)
 {
-    hytech_msgs_ACUAllData out;
+    hytech_msgs_ACUAllData out = {};
 
     for (size_t i = 0; i < 126; ++i)
     {

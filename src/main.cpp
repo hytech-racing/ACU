@@ -58,14 +58,13 @@ void setup()
     scheduler.schedule(write_cell_balancing_config_task);
 
     scheduler.schedule(send_all_data_ethernet_task);
-    scheduler.schedule(send_core_data_ethernet_task);
+    //scheduler.schedule(send_core_data_ethernet_task);
 
     scheduler.schedule(send_CAN_task);
     scheduler.schedule(enqueue_CCU_core_CAN_task);
     scheduler.schedule(enqueue_CCU_subA_CAN_task);
     scheduler.schedule(enqueue_CCU_subB_CAN_task);
     scheduler.schedule(enqueue_ACU_OK_CAN_task);
-
 
     scheduler.schedule(sample_CAN_task);
 
