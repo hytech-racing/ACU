@@ -75,7 +75,7 @@ struct ValidPacketData_s
     bool valid_read_cells_10_to_12 = true;
     bool valid_read_gpios_1_to_3 = true;
     bool valid_read_gpios_4_to_6 = true;
-    bool all_valid_reads = true;
+    bool all_invalid_reads = true;
 };
 
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>

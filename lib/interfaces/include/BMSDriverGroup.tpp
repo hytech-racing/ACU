@@ -144,7 +144,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         {
             size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
 
-            _bms_data.valid_read_packets[chip_index].all_valid_reads = _check_if_all_valid(chip_index);
+            _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
             if (_check_if_all_invalid(chip_index))
             {
                 continue;

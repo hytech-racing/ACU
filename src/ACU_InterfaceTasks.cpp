@@ -67,27 +67,32 @@ bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &ta
     ACUAllDataInstance::instance().min_cell_voltage_id = data.min_cell_voltage_id;
     ACUAllDataInstance::instance().max_cell_temp_id = data.max_cell_temperature_cell_id;
 
-
-    for (size_t chip = 0; chip < data.valid_read_packets.size() ; chip++)
+    std::array<size_t, ACUConstants::NUM_CHIPS> chip_max_invalid_cmd_counts = {};
+    for (size_t chip = 0; chip < data.valid_read_packets.size(); chip++)
     {
-        if (!data.valid_read_packets[chip].all_valid_reads) // only if all 6 read commands fail for this chip
-        {
-            ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip]++;
-        }
-        else
-        {
-            ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = 0;
-        }
+        ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = (data.valid_read_packets[chip].all_invalid_reads) ? ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip]++ : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count : 0;
+        std::array<size_t, 6> temp = {ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count};
+        chip_max_invalid_cmd_counts[chip] = *etl::max_element(temp.begin(), temp.end());        
     }
-    auto start = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.begin();
-    auto end = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.end();
-    ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(start, end);
+
+    //auto start = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.begin();
+    //auto end = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.end();
+    ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
 
     ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
     ACUAllDataInstance::instance().consecutive_invalid_packet_counts = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts;
-    
-    // print_bms_data(data);
-
+    print_bms_data(data);
     return true;
 }
 
@@ -173,7 +178,7 @@ void print_bms_data(bms_data data)
     Serial.print("V\tLocation of Minimum Voltage: ");
     Serial.println(data.min_cell_voltage_id);
 
-    Serial.print("Maxmimum Voltage: ");
+    Serial.print("Maximum Voltage: ");
     Serial.print(data.max_cell_voltage, 4);
     Serial.print("V\tLocation of Maximum Voltage: ");
     Serial.println(data.max_cell_voltage_id);
@@ -229,27 +234,27 @@ void print_bms_data(bms_data data)
     }
     Serial.print("Number of Global Faults: ");
     Serial.println(ACUDataInstance::instance().max_consecutive_invalid_packet_count);
-    // Serial.println("Number of Consecutive Faults Per Chip: ");
-    // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-    //     Serial.print("CHIP ");
-    //     Serial.print(c);
-    //     Serial.print(": ");
-    //     // Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
-    //     // Serial.print(" ");
-    //     Serial.print(data.valid_read_packets[c].valid_read_cells_1_to_3);
-    //     Serial.print(" ");
-    //     Serial.print(data.valid_read_packets[c].valid_read_cells_4_to_6);
-    //     Serial.print(" ");
-    //     Serial.print(data.valid_read_packets[c].valid_read_cells_7_to_9);
-    //     Serial.print(" ");
-    //     Serial.print(data.valid_read_packets[c].valid_read_cells_10_to_12);
-    //     Serial.print(" ");
-    //     Serial.print(data.valid_read_packets[c].valid_read_gpios_1_to_3);
-    //     Serial.print(" ");
-    //     Serial.print(data.valid_read_packets[c].valid_read_gpios_4_to_6);
-    //     Serial.print("\t");
-    // }
-    // Serial.println();
+    Serial.println("Number of Consecutive Faults Per Chip: ");
+    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
+        Serial.print("CHIP ");
+        Serial.print(c);
+        Serial.print(": ");
+        // Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
+        // Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
+        Serial.print("\t");
+    }
+    Serial.println();
     Serial.println();
 }
 
@@ -296,6 +301,18 @@ bool debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskIn
 
     Serial.print("CCU Charging Requested? : ");
     Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
+    Serial.println();
+
+    Serial.print("Number of Global Faults: ");
+    Serial.println(ACUDataInstance::instance().max_consecutive_invalid_packet_count);
+    Serial.println("Number of Consecutive Faults Per Chip: ");
+    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
+        Serial.print("CHIP ");
+        Serial.print(c);
+        Serial.print(": ");
+        Serial.print(ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[c]);
+        Serial.print("\t");
+    }
     Serial.println();
 
     return true;
