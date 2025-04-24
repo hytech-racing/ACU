@@ -21,6 +21,9 @@ struct CCUCANInterfaceData_s
 {
     unsigned long last_time_charging_requested;
     bool charging_requested;
+    size_t detailed_voltages_ic_id;
+    size_t detailed_voltages_group_id;
+    size_t detailed_voltages_cell_id;
 };
 
 class CCUInterface
@@ -32,6 +35,9 @@ public:
     {
         _curr_data.last_time_charging_requested = 0;
         _curr_data.charging_requested = false;
+        _curr_data.detailed_voltages_group_id = 0;
+        _curr_data.detailed_voltages_ic_id = 0;
+        _curr_data.detailed_voltages_cell_id = 0;
     };
 
     bool is_charging_requested() { return _curr_data.charging_requested; }
@@ -61,8 +67,7 @@ public:
 
     void handle_enqueue_acu_status_CAN_message();
     void handle_enqueue_acu_core_voltages_CAN_message();
-    void handle_enqueue_acu_voltages_A_CAN_message();
-    void handle_enqueue_acu_voltages_B_CAN_message();
+    void handle_enqueue_acu_voltages_CAN_message();
 
 private:
     CCUCANInterfaceData_s _curr_data;

@@ -32,8 +32,8 @@ HT_TASK::Task send_all_data_ethernet_task(HT_TASK::DUMMY_FUNCTION, handle_send_A
 HT_TASK::Task send_core_data_ethernet_task(HT_TASK::DUMMY_FUNCTION, handle_send_ACU_core_ethernet_data, ACUConstants::CORE_DATA_ETHERNET_PRIORITY, ACUConstants::CORE_DATA_ETHERNET_PERIOD_US);
 HT_TASK::Task send_CAN_task(HT_TASK::DUMMY_FUNCTION, handle_send_all_CAN_data, ACUConstants::SEND_CAN_PRIORITY, ACUConstants::SEND_CAN_PERIOD_US);
 HT_TASK::Task enqueue_CCU_core_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_core_CAN_data, ACUConstants::CCU_SEND_PRIORITY, ACUConstants::CCU_SEND_PERIOD_US);
-HT_TASK::Task enqueue_CCU_subA_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_sub_A_CAN_data, ACUConstants::CCU_SEND_A_PRIORITY, ACUConstants::CCU_SEND_A_PERIOD_US);
-HT_TASK::Task enqueue_CCU_subB_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_sub_B_CAN_data, ACUConstants::CCU_SEND_B_PRIORITY, ACUConstants::CCU_SEND_B_PERIOD_US);
+HT_TASK::Task enqueue_CCU_all_voltages_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_voltages_CAN_data, ACUConstants::CCU_SEND_A_PRIORITY, ACUConstants::CCU_SEND_A_PERIOD_US);
+HT_TASK::Task enqueue_CCU_all_temps_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_temps_CAN_data, ACUConstants::CCU_SEND_B_PRIORITY, ACUConstants::CCU_SEND_B_PERIOD_US);
 HT_TASK::Task enqueue_ACU_OK_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_ok_CAN_data, ACUConstants::ACU_OK_CAN_PRIORITY, ACUConstants::ACU_OK_CAN_PERIOD_US);
 
 HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConstants::RECV_CAN_PRIORITY, ACUConstants::RECV_CAN_PERIOD_US);
@@ -60,13 +60,13 @@ void setup()
 
     scheduler.schedule(send_CAN_task);
     scheduler.schedule(enqueue_CCU_core_CAN_task);
-    scheduler.schedule(enqueue_CCU_subA_CAN_task);
-    scheduler.schedule(enqueue_CCU_subB_CAN_task);
+    scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
+    scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
     scheduler.schedule(enqueue_ACU_OK_CAN_task);
 
     scheduler.schedule(sample_CAN_task);
 
-    // scheduler.schedule(debug_prints_task);
+    scheduler.schedule(debug_prints_task);
 
     handle_CAN_setup(CCU_CAN, ACUConstants::CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
 }

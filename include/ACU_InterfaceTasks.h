@@ -39,9 +39,9 @@ bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::Tas
 
 bool enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
-bool enqueue_ACU_sub_A_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+bool enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
-bool enqueue_ACU_sub_B_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+bool enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 bool enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 

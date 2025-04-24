@@ -40,9 +40,9 @@ namespace ACUConstants
     constexpr unsigned long CCU_SEND_PRIORITY = 11;
     constexpr unsigned long ACU_OK_CAN_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr unsigned long ACU_OK_CAN_PRIORITY = 3;
-    constexpr unsigned long CCU_SEND_A_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
+    constexpr unsigned long CCU_SEND_A_PERIOD_US = 500000UL; // 500 000 us = 2 Hz
     constexpr unsigned long CCU_SEND_A_PRIORITY = 12;
-    constexpr unsigned long CCU_SEND_B_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
+    constexpr unsigned long CCU_SEND_B_PERIOD_US = 500000UL; // 5 000 000 us = 2 Hz
     constexpr unsigned long CCU_SEND_B_PRIORITY = 13; 
 
     constexpr unsigned long SEND_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
@@ -54,7 +54,7 @@ namespace ACUConstants
     constexpr unsigned long DEBUG_PRINT_PRIORITY = 5;
 
     /* Message Interface */
-    const uint32_t CAN_baudrate = 1000000;
+    const uint32_t CAN_baudrate = 500000;
 }
 
 #endif
