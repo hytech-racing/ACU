@@ -10,6 +10,8 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 
+#include "device_fw_version.h"
+
 #include <etl/singleton.h>
 
 using namespace qindesign::network;
