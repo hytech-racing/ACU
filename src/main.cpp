@@ -41,6 +41,7 @@ HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConst
 HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 
 FlexCAN_T4<CAN3> CCU_CAN;
+FlexCAN_T4<CAN2> EM_CAN;
 
 void setup()
 {
@@ -68,7 +69,8 @@ void setup()
 
     scheduler.schedule(debug_prints_task);
 
-    handle_CAN_setup(CCU_CAN, ACUConstants::CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
+    handle_CAN_setup(CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
+    handle_CAN_setup(EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
 }
 
 void loop()

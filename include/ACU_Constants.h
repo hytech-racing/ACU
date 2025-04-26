@@ -54,7 +54,8 @@ namespace ACUConstants
     constexpr unsigned long DEBUG_PRINT_PRIORITY = 5;
 
     /* Message Interface */
-    const uint32_t CAN_baudrate = 1000000;
+    const uint32_t Veh_CAN_baudrate = 1000000;
+    const uint32_t EM_CAN_baudrate = 500000;
 }
 
 #endif
