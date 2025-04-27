@@ -24,6 +24,10 @@ struct CCUCANInterfaceData_s
     size_t detailed_voltages_ic_id;
     size_t detailed_voltages_group_id;
     size_t detailed_voltages_cell_id;
+    size_t detailed_temps_ic_id;
+    size_t detailed_temps_group_id;
+    size_t detailed_temps_cell_id;
+    size_t detailed_temps_board_id;
 };
 
 class CCUInterface
@@ -38,6 +42,10 @@ public:
         _curr_data.detailed_voltages_group_id = 0;
         _curr_data.detailed_voltages_ic_id = 0;
         _curr_data.detailed_voltages_cell_id = 0;
+        _curr_data.detailed_temps_group_id = 0;
+        _curr_data.detailed_temps_ic_id = 0;
+        _curr_data.detailed_temps_cell_id = 0;
+        _curr_data.detailed_temps_board_id = 0;
     };
 
     bool is_charging_requested() { return _curr_data.charging_requested; }
@@ -48,26 +56,31 @@ public:
 
     CCUCANInterfaceData_s get_latest_data(unsigned long curr_millis);
 
-    template <size_t num_cells, size_t num_celltemps>
-    void set_ACU_data(ACUData_s<num_cells, num_celltemps> input)
+    template <size_t num_cells, size_t num_celltemps, size_t num_chips>
+    void set_ACU_data(ACUAllData_s<num_cells, num_celltemps, num_chips> input)
     {
-        _acu_core_data.avg_cell_voltage = input.avg_cell_voltage;
-        _acu_core_data.max_cell_voltage = input.max_cell_voltage;
-        _acu_core_data.min_cell_voltage = input.min_cell_voltage;
-        _acu_core_data.pack_voltage = input.pack_voltage;
+        _acu_core_data.avg_cell_voltage = input.core_data.avg_cell_voltage;
+        _acu_core_data.max_cell_voltage = input.core_data.max_cell_voltage;
+        _acu_core_data.min_cell_voltage = input.core_data.min_cell_voltage;
+        _acu_core_data.pack_voltage = input.core_data.pack_voltage;
         for (size_t c = 0; c < num_cells; c++)
         {
-            _acu_all_data.cell_voltages[c] = input.voltages[c];
+            _acu_all_data.cell_voltages[c] = input.cell_voltages[c];
         }
         for (size_t temp = 0; temp < num_celltemps; temp++)
         {
             _acu_all_data.cell_temps[temp] = input.cell_temps[temp];
         }
+        for (size_t board = 0; board < num_chips; board++) {
+            _acu_all_data.board_temps[board] = input.board_temps[board];
+        }
+        _acu_all_data.max_board_temp = input.max_board_temp;
     }
 
     void handle_enqueue_acu_status_CAN_message();
     void handle_enqueue_acu_core_voltages_CAN_message();
     void handle_enqueue_acu_voltages_CAN_message();
+    void handle_enqueue_acu_temps_CAN_message();
 
 private:
     CCUCANInterfaceData_s _curr_data;

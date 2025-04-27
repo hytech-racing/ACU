@@ -13,6 +13,7 @@ namespace ACUConstants
     constexpr size_t NUM_CELLS = 126;
     constexpr size_t NUM_CELL_TEMPS = 48;
     constexpr size_t NUM_CHIPS = 12;
+    constexpr size_t NUM_BOARD_TEMPS = 12;
     constexpr size_t NUM_CHIP_SELECTS = 1;
 
     // Initialize chip_select, chip_select_per_chip, and address
@@ -23,7 +24,7 @@ namespace ACUConstants
     /* Task Times */
     constexpr unsigned long TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
     constexpr unsigned long TICK_SM_PRIORITY = 9;
-    constexpr unsigned long KICK_WATCHDOG_PERIOD_US = 2000UL; // 2 000 us = 500 Hz | to compensate for delays, otherwise get 20ms watchdog periods->bad
+    constexpr unsigned long KICK_WATCHDOG_PERIOD_US = 1000UL; // 1 000 us = 100 Hz | to compensate for delays, otherwise get 20ms watchdog periods->bad
     constexpr unsigned long WATCHDOG_PRIORITY = 1;
     constexpr unsigned long SAMPLE_BMS_PERIOD_US = 200000UL; // 200 000 us = 5Hz
     constexpr unsigned long SAMPLE_BMS_PRIORITY = 2;
@@ -40,9 +41,9 @@ namespace ACUConstants
     constexpr unsigned long CCU_SEND_PRIORITY = 11;
     constexpr unsigned long ACU_OK_CAN_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr unsigned long ACU_OK_CAN_PRIORITY = 3;
-    constexpr unsigned long CCU_SEND_A_PERIOD_US = 500000UL; // 500 000 us = 2 Hz
+    constexpr unsigned long CCU_SEND_A_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
     constexpr unsigned long CCU_SEND_A_PRIORITY = 12;
-    constexpr unsigned long CCU_SEND_B_PERIOD_US = 500000UL; // 5 000 000 us = 2 Hz
+    constexpr unsigned long CCU_SEND_B_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
     constexpr unsigned long CCU_SEND_B_PRIORITY = 13; 
 
     constexpr unsigned long SEND_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz

@@ -38,7 +38,7 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
     detailed_msg.voltage_0_ro = HYTECH_voltage_0_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id]); 
     detailed_msg.voltage_1_ro = HYTECH_voltage_1_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id+1]); 
     detailed_msg.voltage_2_ro = HYTECH_voltage_2_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id+2]); 
-    Serial.printf("Chip %d Group %d\n", _curr_data.detailed_voltages_ic_id, _curr_data.detailed_voltages_group_id);
+    //Serial.printf("Chip %d Group %d\n", _curr_data.detailed_voltages_ic_id, _curr_data.detailed_voltages_group_id);
     if (_curr_data.detailed_voltages_ic_id % 2 == 0) {
         _curr_data.detailed_voltages_group_id = (_curr_data.detailed_voltages_group_id == 3) ? 0 : _curr_data.detailed_voltages_group_id+1;
     } else {
@@ -50,6 +50,32 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
     _curr_data.detailed_voltages_cell_id = (_curr_data.detailed_voltages_cell_id == 123) ? 0 : _curr_data.detailed_voltages_cell_id+3;
     
     CAN_util::enqueue_msg(&detailed_msg, &Pack_BMS_DETAILED_VOLTAGES_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
+} 
+
+void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
+    BMS_DETAILED_TEMPS_t detailed_msg = {};
+    detailed_msg.ic_id = static_cast<uint8_t>(_curr_data.detailed_temps_group_id);
+    detailed_msg.group_id = static_cast<uint8_t>(_curr_data.detailed_temps_ic_id);
+    detailed_msg.thermistor_id_0_ro = HYTECH_thermistor_id_0_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id]); 
+    detailed_msg.thermistor_id_1_ro = HYTECH_thermistor_id_1_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id+1]); 
+    detailed_msg.thermistor_id_2_ro = HYTECH_thermistor_id_2_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id+2]); 
+    //Serial.printf("Chip %d Group %d\n", _curr_data.detailed_temps_ic_id, _curr_data.detailed_temps_group_id);
+    _curr_data.detailed_temps_group_id = (_curr_data.detailed_temps_group_id == 1) ? 0 : _curr_data.detailed_temps_group_id+1;
+    if (_curr_data.detailed_temps_group_id == 0) {
+        _curr_data.detailed_temps_ic_id = (_curr_data.detailed_temps_ic_id == 11) ? 0 : _curr_data.detailed_temps_ic_id+1;
+    }
+    _curr_data.detailed_temps_cell_id = (_curr_data.detailed_temps_cell_id == 45) ? 0 : _curr_data.detailed_temps_cell_id+3;
+    CAN_util::enqueue_msg(&detailed_msg, &Pack_BMS_DETAILED_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
+
+    BMS_ONBOARD_TEMPS_t board_temp_msg = {};
+    board_temp_msg.high_temp_ro = HYTECH_high_temp_ro_toS(_acu_all_data.max_board_temp);
+    CAN_util::enqueue_msg(&board_temp_msg, &Pack_BMS_ONBOARD_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
+
+    BMS_ONBOARD_DETAILED_TEMPS_t detailed_board_temp_msg = {};
+    detailed_board_temp_msg.ic_id = _curr_data.detailed_temps_board_id;
+    detailed_board_temp_msg.temp_0_ro = HYTECH_temp_0_ro_toS(_acu_all_data.board_temps[_curr_data.detailed_temps_board_id]);
+    _curr_data.detailed_temps_board_id = (_curr_data.detailed_temps_board_id == 11) ? 0 : _curr_data.detailed_temps_board_id+1;
+    CAN_util::enqueue_msg(&detailed_board_temp_msg, &Pack_BMS_ONBOARD_DETAILED_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 } 
 
 void CCUInterface::set_system_latch_state(unsigned long curr_millis, bool is_latched) {

@@ -55,10 +55,10 @@ struct ACUControllerParameters {
     volt v_diff_to_init_cb = 0;
 };
 
-template <size_t num_cells, size_t num_celltemps>
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 class ACUController
 {
-    using ACUData = etl::singleton<ACUData_s<num_cells, num_celltemps>>;
+    using ACUData = etl::singleton<ACUData_s<num_cells, num_celltemps, num_boardtemps>>;
     using ACUStatus = ACUControllerData_s<num_cells>;
     
 public:
@@ -107,7 +107,7 @@ public:
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps> &input_state);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state);
 private:
     /**
      * Calculate Cell Balancing values
@@ -158,8 +158,8 @@ private:
     const ACUControllerParameters _parameters = {};
 };
 
-template<size_t num_cells, size_t num_celltemps>
-using ACUControllerInstance = etl::singleton<ACUController<num_cells, num_celltemps>>;
+template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+using ACUControllerInstance = etl::singleton<ACUController<num_cells, num_celltemps, num_boardtemps>>;
 
 #include "ACUController.tpp"
 #endif

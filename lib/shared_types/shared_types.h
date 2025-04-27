@@ -1,7 +1,7 @@
 #ifndef __SHAREDTYPES_H__ 
 #define __SHAREDTYPES_H__
 
-template<size_t num_cells, size_t num_celltemps>
+template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 struct ACUData_s {
     volt min_cell_voltage;
     volt max_cell_voltage;
@@ -13,6 +13,7 @@ struct ACUData_s {
 
     std::array<bool, num_cells> cell_balancing_statuses;
     std::array<celsius, num_celltemps> cell_temps;
+    std::array<celsius, num_boardtemps> board_temps;
 
     size_t max_consecutive_invalid_packet_count;
 
