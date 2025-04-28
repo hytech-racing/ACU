@@ -1,6 +1,7 @@
 #include "ACU_InterfaceTasks.h"
 
 using chip_type = LTC6811_Type_e;
+auto start_time = std::chrono::high_resolution_clock::now();
 
 void initialize_all_interfaces()
 {
@@ -37,13 +38,13 @@ void initialize_all_interfaces()
     CANInterfacesInstance::create(CCUInterfaceInstance::instance());
 }
 
-bool run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis());
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     auto data = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
     
@@ -100,23 +101,23 @@ bool sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &ta
     ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
     ACUAllDataInstance::instance().consecutive_invalid_packet_counts = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts;
     //print_bms_data(data);
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUDataInstance::instance().cell_balancing_statuses);
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(ACUAllDataInstance::instance().core_data));
     
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     // Serial.println("Sending ACU All Data over Ethernet");
     ACUAllDataInstance::instance().measured_tractive_system_voltage = WatchdogInstance::instance().read_pack_out_filtered();
@@ -125,51 +126,51 @@ bool handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_
     
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
 
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
     // Serial.println("Sending");
     CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), WatchdogInstance::instance().read_shdn_out());
     ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
     //Serial.println("Sending CAN messages");
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(), ACUDataInstance::instance().acu_ok);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>(ACUAllDataInstance::instance());
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
 
-bool enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     if (CCUInterfaceInstance::instance().is_charging_requested()) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_CAN_message();
     }
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     if (CCUInterfaceInstance::instance().is_charging_requested() || true) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_temps_CAN_message();
     }
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     // Serial.println("Sampling");
     etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
     process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
 /* Print Functions */
@@ -265,7 +266,7 @@ void print_bms_data(bms_data data)
     Serial.println();
 }
 
-bool debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     if (ACUDataInstance::instance().acu_ok)
     {
@@ -322,5 +323,5 @@ bool debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskIn
     }
     Serial.println();
 
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }

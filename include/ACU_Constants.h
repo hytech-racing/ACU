@@ -22,37 +22,37 @@ namespace ACUConstants
     constexpr std::array<int, NUM_CHIPS> ADDR = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // only for addressable bms chips
 
     /* Task Times */
-    constexpr unsigned long TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
-    constexpr unsigned long TICK_SM_PRIORITY = 9;
-    constexpr unsigned long KICK_WATCHDOG_PERIOD_US = 1000UL; // 1 000 us = 100 Hz | to compensate for delays, otherwise get 20ms watchdog periods->bad
-    constexpr unsigned long WATCHDOG_PRIORITY = 1;
-    constexpr unsigned long SAMPLE_BMS_PERIOD_US = 200000UL; // 200 000 us = 5Hz
-    constexpr unsigned long SAMPLE_BMS_PRIORITY = 2;
-    constexpr unsigned long EVAL_ACC_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
-    constexpr unsigned long EVAL_ACC_PRIORITY = 10;
-    constexpr unsigned long WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr unsigned long WRITE_CELL_BALANCE_PRIORITY = 4;
-    constexpr unsigned long ALL_DATA_ETHERNET_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
-    constexpr unsigned long ALL_DATA_ETHERNET_PRIORITY = 7;
-    constexpr unsigned long CORE_DATA_ETHERNET_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
-    constexpr unsigned long CORE_DATA_ETHERNET_PRIORITY = 6;
+    constexpr uint32_t TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+    constexpr uint32_t TICK_SM_PRIORITY = 9;
+    constexpr uint32_t KICK_WATCHDOG_PERIOD_US = 1000UL; // 1 000 us = 100 Hz | to compensate for delays, otherwise get 20ms watchdog periods->bad
+    constexpr uint32_t WATCHDOG_PRIORITY = 1;
+    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 200000UL; // 200 000 us = 5Hz
+    constexpr uint32_t SAMPLE_BMS_PRIORITY = 2;
+    constexpr uint32_t EVAL_ACC_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
+    constexpr uint32_t EVAL_ACC_PRIORITY = 10;
+    constexpr uint32_t WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+    constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 4;
+    constexpr uint32_t ALL_DATA_ETHERNET_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
+    constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 7;
+    constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
+    constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 6;
 
-    constexpr unsigned long CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr unsigned long CCU_SEND_PRIORITY = 11;
-    constexpr unsigned long ACU_OK_CAN_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr unsigned long ACU_OK_CAN_PRIORITY = 3;
-    constexpr unsigned long CCU_SEND_A_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
-    constexpr unsigned long CCU_SEND_A_PRIORITY = 12;
-    constexpr unsigned long CCU_SEND_B_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
-    constexpr unsigned long CCU_SEND_B_PRIORITY = 13; 
+    constexpr uint32_t CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+    constexpr uint32_t CCU_SEND_PRIORITY = 11;
+    constexpr uint32_t ACU_OK_CAN_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+    constexpr uint32_t ACU_OK_CAN_PRIORITY = 3;
+    constexpr uint32_t CCU_SEND_A_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
+    constexpr uint32_t CCU_SEND_A_PRIORITY = 12;
+    constexpr uint32_t CCU_SEND_B_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
+    constexpr uint32_t CCU_SEND_B_PRIORITY = 13; 
 
-    constexpr unsigned long SEND_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
-    constexpr unsigned long SEND_CAN_PRIORITY = 8;
-    constexpr unsigned long RECV_CAN_PERIOD_US = 1000UL; // 1 000 us = 1 000 Hz
-    constexpr unsigned long RECV_CAN_PRIORITY = 0;
+    constexpr uint32_t SEND_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
+    constexpr uint32_t SEND_CAN_PRIORITY = 8;
+    constexpr uint32_t RECV_CAN_PERIOD_US = 1000UL; // 1 000 us = 1 000 Hz
+    constexpr uint32_t RECV_CAN_PRIORITY = 0;
 
-    constexpr unsigned long DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
-    constexpr unsigned long DEBUG_PRINT_PRIORITY = 5;
+    constexpr uint32_t DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
+    constexpr uint32_t DEBUG_PRINT_PRIORITY = 5;
 
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;

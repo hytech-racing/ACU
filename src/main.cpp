@@ -67,13 +67,26 @@ void setup()
 
     scheduler.schedule(sample_CAN_task);
 
-    scheduler.schedule(debug_prints_task);
+    // scheduler.schedule(debug_prints_task);
 
     handle_CAN_setup(CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
     handle_CAN_setup(EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
+
+    Serial.print("Setup Sys Time: ");
+    Serial.println();
+    Serial.println(micros());
+    Serial.print("Setup Next Run Time: ");
+    uint32_t next = kick_watchdog_task._taskInfo.nextExecutionMicros;
+    Serial.println(next);
+    delay(5000);
 }
 
 void loop()
 {  
+    Serial.print(" Current Time: ");
+    Serial.print(micros());
+    Serial.print(" Next Run Time: ");
+    uint32_t next = kick_watchdog_task._taskInfo.nextExecutionMicros;
+    Serial.println(next);
     scheduler.run();
 }

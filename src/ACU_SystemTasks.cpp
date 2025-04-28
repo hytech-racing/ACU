@@ -50,18 +50,18 @@ bool initialize_all_systems()
     return true;
 }
 
-bool evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     auto acu_status = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().evaluate_accumulator(sys_time::hal_millis(), ACUDataInstance::instance()); // verified
     ACUDataInstance::instance().acu_ok = !acu_status.has_fault;
     ACUDataInstance::instance().cell_balancing_statuses = acu_status.cell_balancing_statuses;
 
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
-bool tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo) {
+HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo) {
     ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
-    return true;
+    return HT_TASK::TaskResponse::YIELD;
 }
 
