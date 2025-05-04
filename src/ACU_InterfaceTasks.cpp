@@ -313,6 +313,10 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("State of Charge: ");
     Serial.print(ACUDataInstance::instance().SoC * 100, 2);
     Serial.println("%");
+    Serial.print("Measured GLV: ");
+    Serial.print(WatchdogInstance::instance().read_global_lv_value());
+    Serial.println("V");
+    Serial.println();
 
     Serial.print("Number of Global Faults: ");
     Serial.println(ACUDataInstance::instance().max_consecutive_invalid_packet_count);

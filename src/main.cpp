@@ -69,7 +69,7 @@ void setup()
 
     scheduler.schedule(debug_prints_task);
 
-    handle_CAN_setup(CCU_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
+    handle_CAN_setup(CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
     handle_CAN_setup(EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
 }
 

@@ -16,6 +16,7 @@ void ACUCANInterfaceImpl::on_em_can_receive(const CAN_message_t &msg)
     uint8_t buf[sizeof(CAN_message_t)];
     memmove(buf, &msg, sizeof(msg));
     ccu_can_tx_buffer.push_back(buf, sizeof(CAN_message_t));
+    em_can_rx_buffer.push_back(buf, sizeof(CAN_message_t));
 }
 
 void ACUCANInterfaceImpl::acu_CAN_recv(CANInterfaces &interfaces, const CAN_message_t &msg, unsigned long millis)

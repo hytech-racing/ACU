@@ -46,8 +46,7 @@ void WatchdogInterface::set_n_latch_en_high() {
 }
 
 bool WatchdogInterface::read_imd_ok() {
-    bool data = digitalRead(_teensy_imd_ok_pin);
-    return data; // idk if this would actually work, like if a LOW is a threshold or smth
+    return analogRead(_teensy_imd_ok_pin) * (3.3 / 4095.0) > 0.2; // idk if this would actually work, like if a LOW is a threshold or smth
 }
 
 bool WatchdogInterface::read_shdn_out() {
