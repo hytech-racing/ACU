@@ -16,7 +16,6 @@ template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 typename ACUController<num_cells, num_celltemps, num_boardtemps>::ACUStatus
 ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state)
 {   
-    // _acu_state.charging_enabled = false; // comment after CCU CAN read implemented
     _acu_state.charging_enabled = input_state.charging_enabled;
     
     bool has_invalid_packet = false;
@@ -42,6 +41,9 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     if (input_state.pack_voltage > _parameters.min_pack_total_v || has_invalid_packet) {
         _acu_state.last_time_pack_uv_fault_not_present = current_millis;
     }
+    printf("%.2f\n", input_state.pack_voltage);
+    printf("%d\n", current_millis);
+    printf("%d\n", _acu_state.last_time_pack_uv_fault_not_present);
     // Update temp fault time stamps
     if (input_state.max_board_temp < _parameters.charging_ot_thresh_c || has_invalid_packet) { // charging ot thresh will be the lower of the 2
         _acu_state.last_time_board_ot_fault_not_present = current_millis;
