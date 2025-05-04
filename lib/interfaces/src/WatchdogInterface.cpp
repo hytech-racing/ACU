@@ -18,7 +18,7 @@ void WatchdogInterface::init() {
     analogReadResolution(12);
 }
 
-bool WatchdogInterface::update_watchdog_state(unsigned long curr_millis) {
+bool WatchdogInterface::update_watchdog_state(uint32_t curr_millis) {
     if ((curr_millis - _watchdog_time) > _watchdog_kick_interval) {
         _watchdog_state = !_watchdog_state;
         _watchdog_time = curr_millis;

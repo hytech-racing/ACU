@@ -23,6 +23,7 @@ namespace acu_controller_default_params
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
     constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
+    constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
 };
 
 template <size_t num_cells>
@@ -34,8 +35,9 @@ struct ACUControllerData_s
     time_ms last_time_board_ot_fault_not_present;
     time_ms last_time_pack_uv_fault_not_present;
     time_ms last_time_invalid_packet_present;
-    time_ms prev_time_stamp;
-
+    time_ms prev_bms_time_stamp;
+    time_ms prev_em_time_stamp;
+    float SoC;
     bool has_fault;
     bool charging_enabled;
 
@@ -53,6 +55,7 @@ struct ACUControllerParameters {
     time_ms max_allowed_temp_fault_dur = 0;
     time_ms max_allowed_invalid_packet_fault_dur = 0;
     volt v_diff_to_init_cb = 0;
+    float pack_nominal_capacity = 0;
 };
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
@@ -83,7 +86,8 @@ public:
                     time_ms max_volt_fault_dur = acu_controller_default_params::MAX_VOLTAGE_FAULT_DUR,
                     time_ms max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR,
                     time_ms max_invalid_packet_dur = acu_controller_default_params::MAX_INVALID_PACKET_FAULT_DUR,
-                    volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB) : 
+                    volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB,
+                    float pack_nominal_capacity = acu_controller_default_params::PACK_NOMINAL_CAPACITY_AH) : 
         _parameters {
             ov_thresh_v,
             uv_thresh_v,
@@ -94,7 +98,8 @@ public:
             max_volt_fault_dur,
             max_temp_fault_dur,
             max_invalid_packet_dur,
-            v_diff_init_cb
+            v_diff_init_cb,
+            pack_nominal_capacity
         }
         {};
 
@@ -108,6 +113,11 @@ public:
      * @post updates configuration bytes and sends configuration command
      */
     ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state);
+
+    /**
+     * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
+    */
+    float get_state_of_charge(float em_current, uint32_t delta_time_ms);
 private:
     /**
      * Calculate Cell Balancing values
@@ -138,12 +148,6 @@ private:
      * @return boolean, true if there has been global invalid packets for > MAX DURATION
     */
     bool _check_invalid_packet_faults(time_ms current_millis);
-
-    /**
-     * NOTE: TBD
-    */
-    void _coulomb_counting();
-
 private:
     /**
      * @brief ACU State Holder

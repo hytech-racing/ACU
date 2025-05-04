@@ -38,7 +38,7 @@ public:
         pin ts_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::TS_OUT_FILTERED_PIN,
         pin pack_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::PACK_OUT_FILTERED_PIN,
         pin bspd_current_pin = WATCHDOG_DEFAULT_PARAMS::BSPD_CURRENT_PIN,
-        const unsigned long kick_interval_ms = 10UL) : 
+        const uint32_t kick_interval_ms = 10UL) : 
                         _teensy_wd_kick_pin(wd_kick_pin),
                         _teensy_ok_pin(teensy_ok_pin),
                         _teensy_n_latch_en_pin(n_latch_pin),
@@ -72,8 +72,8 @@ private:
 
     // following is taken from VCR Watchdog System
     /* Watchdog last kicked time */
-    unsigned long _watchdog_kick_interval;
-    unsigned long _watchdog_time;
+    uint32_t _watchdog_kick_interval;
+    uint32_t _watchdog_time;
     bool _watchdog_state;
     /* Watchdog output state */
 
@@ -83,7 +83,7 @@ public:
      * @param curr_millis time of ACU time
      * @post IF reach interval, _watchdog_time updated and state switched
     */
-    bool update_watchdog_state(unsigned long curr_millis);
+    bool update_watchdog_state(uint32_t curr_millis);
 
     /**
      * Sets Teensy_OK LOW

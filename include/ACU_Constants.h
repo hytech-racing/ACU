@@ -26,7 +26,7 @@ namespace ACUConstants
     constexpr uint32_t TICK_SM_PRIORITY = 9;
     constexpr uint32_t KICK_WATCHDOG_PERIOD_US = 1000UL; // 1 000 us = 100 Hz | to compensate for delays, otherwise get 20ms watchdog periods->bad
     constexpr uint32_t WATCHDOG_PRIORITY = 1;
-    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 200000UL; // 200 000 us = 5Hz
+    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 100000UL; // 100 000 us = 10Hz
     constexpr uint32_t SAMPLE_BMS_PRIORITY = 2;
     constexpr uint32_t EVAL_ACC_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
     constexpr uint32_t EVAL_ACC_PRIORITY = 10;

@@ -8,6 +8,8 @@ void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms syste
     _acu_state.last_time_cell_ot_fault_not_present = system_start_time;
     _acu_state.last_time_pack_uv_fault_not_present = system_start_time;
     _acu_state.last_time_invalid_packet_present = system_start_time;
+    _acu_state.prev_bms_time_stamp = system_start_time;
+    _acu_state.SoC = 1.0;
 }
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
@@ -51,7 +53,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     if (input_state.max_consecutive_invalid_packet_count < _parameters.invalid_packet_count_thresh) {
         _acu_state.last_time_invalid_packet_present = current_millis;
     }
-    _acu_state.prev_time_stamp = current_millis;
+    _acu_state.prev_bms_time_stamp = current_millis;
     
     // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot ONLY if the data packet is all valid
     _acu_state.has_fault = _check_faults(current_millis);
@@ -73,6 +75,16 @@ std::array<bool, num_cells> ACUController<num_cells, num_celltemps, num_boardtem
         }
     }
     return cb;
+}
+
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_charge(float em_current, uint32_t delta_time_ms)
+{
+    float delta_ah = (em_current) * ((float) (delta_time_ms / 1000.0f) / 3600.0f); // amp hours
+    _acu_state.SoC -= delta_ah / _parameters.pack_nominal_capacity;
+    if (_acu_state.SoC < 0.0) _acu_state.SoC = 0;
+    if (_acu_state.SoC > 1.0) _acu_state.SoC = 1;
+    return _acu_state.SoC;
 }
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
@@ -103,10 +115,4 @@ bool ACUController<num_cells, num_celltemps, num_boardtemps>::_check_invalid_pac
 {   
     bool invalid_packet_fault = (current_millis - _acu_state.last_time_invalid_packet_present) > _parameters.max_allowed_invalid_packet_fault_dur;
     return invalid_packet_fault;
-}
-
-template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
-void ACUController<num_cells, num_celltemps, num_boardtemps>::_coulomb_counting()
-{
-    // Numbers
 }

@@ -34,8 +34,11 @@ void initialize_all_interfaces()
     /* VCR Interface */
     VCRInterfaceInstance::create(sys_time::hal_millis());
 
+    /* EM Interface */
+    EMInterfaceInstance::create(sys_time::hal_millis());
+
     /* CAN Interfaces Construct */
-    CANInterfacesInstance::create(CCUInterfaceInstance::instance());
+    CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
 }
 
 HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
@@ -131,10 +134,8 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 
 HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    // Serial.println("Sending");
     CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), WatchdogInstance::instance().read_shdn_out());
     ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
-    //Serial.println("Sending CAN messages");
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -167,9 +168,9 @@ HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMic
 }
 
 HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    // Serial.println("Sampling");
     etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
     process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
+    process_ring_buffer(ACUCANInterfaceImpl::em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
     return HT_TASK::TaskResponse::YIELD;
 }
 
