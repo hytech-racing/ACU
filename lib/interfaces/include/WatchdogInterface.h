@@ -17,6 +17,7 @@ namespace WATCHDOG_DEFAULT_PARAMS
     constexpr const pin IMD_OK_PIN = 25;
     constexpr const pin BSPD_CURRENT_PIN = 27;
     constexpr const pin SHDN_OUT_PIN = 38;
+    constexpr const pin SCALED_24V_PIN = 39;
 };
 
 class WatchdogInterface
@@ -38,6 +39,7 @@ public:
         pin ts_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::TS_OUT_FILTERED_PIN,
         pin pack_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::PACK_OUT_FILTERED_PIN,
         pin bspd_current_pin = WATCHDOG_DEFAULT_PARAMS::BSPD_CURRENT_PIN,
+        pin scaled_24V_pin = WATCHDOG_DEFAULT_PARAMS::SCALED_24V_PIN,
         const uint32_t kick_interval_ms = 10UL) : 
                         _teensy_wd_kick_pin(wd_kick_pin),
                         _teensy_ok_pin(teensy_ok_pin),
@@ -47,6 +49,7 @@ public:
                         _teensy_ts_out_filtered_pin(ts_out_filtered_pin),
                         _teensy_pack_out_filtered_pin(pack_out_filtered_pin),
                         _teensy_bspd_current_pin(bspd_current_pin),
+                        _teensy_scaled_24V_pin(scaled_24V_pin),
                         _watchdog_kick_interval(kick_interval_ms),
                         _watchdog_time(0), 
                         _watchdog_state(false)
@@ -68,7 +71,7 @@ private:
     pin _teensy_ts_out_filtered_pin;
     pin _teensy_pack_out_filtered_pin;
     pin _teensy_bspd_current_pin;
-
+    pin _teensy_scaled_24V_pin;
 
     // following is taken from VCR Watchdog System
     /* Watchdog last kicked time */
@@ -117,6 +120,11 @@ public:
     volt read_pack_out_filtered();
 
     volt read_bspd_current();
+
+    /**
+     * @return voltage value of GLV, nominal 24V
+    */
+    volt read_global_lv_value();
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;

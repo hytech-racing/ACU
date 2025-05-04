@@ -26,7 +26,7 @@ void initialize_all_interfaces()
     /* Get Initial Pack Voltage for SoC and SoH Approximations */
     auto data = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
     ACUDataInstance::instance().pack_voltage = data.total_voltage;
-    
+
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
@@ -99,9 +99,6 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
             ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count};
         chip_max_invalid_cmd_counts[chip] = *etl::max_element(temp.begin(), temp.end());        
     }
-
-    //auto start = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.begin();
-    //auto end = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts.end();
     ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
 
     ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
@@ -313,8 +310,6 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
 
     Serial.print("CCU Charging Requested? : ");
     Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
-    Serial.println();
-
     Serial.print("State of Charge: ");
     Serial.print(ACUDataInstance::instance().SoC * 100, 2);
     Serial.println("%");

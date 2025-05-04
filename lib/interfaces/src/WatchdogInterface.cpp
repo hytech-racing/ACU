@@ -72,3 +72,6 @@ volt WatchdogInterface::read_bspd_current() {
     return data;
 }
 
+volt WatchdogInterface::read_global_lv_value() {
+    volt data = static_cast<float>(analogRead(_teensy_scaled_24V_pin)) * (3.3 / 4095.0) / (0.1067); // input before voltage divider (4.3k / (4.3k + 36k))
+}
