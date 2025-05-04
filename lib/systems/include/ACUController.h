@@ -24,7 +24,9 @@ namespace acu_controller_default_params
     constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
     constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
-};
+    constexpr const float PACK_MAX_VOLTAGE = 529.2; // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
+    constexpr const float PACK_MIN_VOLTAGE = 378.0; // from data sheet^ but just assume 126 * 3.0V
+}
 
 template <size_t num_cells>
 struct ACUControllerData_s
@@ -56,6 +58,8 @@ struct ACUControllerParameters {
     time_ms max_allowed_invalid_packet_fault_dur = 0;
     volt v_diff_to_init_cb = 0;
     float pack_nominal_capacity = 0;
+    float pack_max_voltage = 0;
+    float pack_min_voltage = 0;
 };
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
@@ -87,7 +91,9 @@ public:
                     time_ms max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR,
                     time_ms max_invalid_packet_dur = acu_controller_default_params::MAX_INVALID_PACKET_FAULT_DUR,
                     volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB,
-                    float pack_nominal_capacity = acu_controller_default_params::PACK_NOMINAL_CAPACITY_AH) : 
+                    float pack_nominal_capacity = acu_controller_default_params::PACK_NOMINAL_CAPACITY_AH,
+                    float pack_max_voltage = acu_controller_default_params::PACK_MAX_VOLTAGE,
+                    float pack_min_voltage = acu_controller_default_params::PACK_MIN_VOLTAGE) : 
         _parameters {
             ov_thresh_v,
             uv_thresh_v,
@@ -99,14 +105,16 @@ public:
             max_temp_fault_dur,
             max_invalid_packet_dur,
             v_diff_init_cb,
-            pack_nominal_capacity
+            pack_nominal_capacity,
+            pack_max_voltage,
+            pack_min_voltage
         }
         {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
      */
-    void init(time_ms system_start_time);
+    void init(time_ms system_start_time, volt pack_voltage);
 
     /**
      * @pre voltage data has been recorded

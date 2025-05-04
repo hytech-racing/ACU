@@ -1,7 +1,7 @@
 #include "ACUController.h"
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
-void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms system_start_time) {
+void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms system_start_time, volt pack_voltage) {
     _acu_state.last_time_ov_fault_not_present = system_start_time;
     _acu_state.last_time_uv_fault_not_present = system_start_time;
     _acu_state.last_time_board_ot_fault_not_present = system_start_time;
@@ -9,7 +9,7 @@ void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms syste
     _acu_state.last_time_pack_uv_fault_not_present = system_start_time;
     _acu_state.last_time_invalid_packet_present = system_start_time;
     _acu_state.prev_bms_time_stamp = system_start_time;
-    _acu_state.SoC = 1.0;
+    _acu_state.SoC = (pack_voltage - _parameters.pack_min_voltage) / (_parameters.pack_max_voltage - _parameters.pack_min_voltage);
 }
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>

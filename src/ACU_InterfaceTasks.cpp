@@ -23,7 +23,10 @@ void initialize_all_interfaces()
     /* BMS Driver */
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();
-
+    /* Get Initial Pack Voltage for SoC and SoH Approximations */
+    auto data = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
+    ACUDataInstance::instance().pack_voltage = data.total_voltage;
+    
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
@@ -311,6 +314,10 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("CCU Charging Requested? : ");
     Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
     Serial.println();
+
+    Serial.print("State of Charge: ");
+    Serial.print(ACUDataInstance::instance().SoC * 100, 2);
+    Serial.println("%");
 
     Serial.print("Number of Global Faults: ");
     Serial.println(ACUDataInstance::instance().max_consecutive_invalid_packet_count);

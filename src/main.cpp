@@ -46,7 +46,7 @@ FlexCAN_T4<CAN2> EM_CAN;
 void setup()
 {
     /* Interface and System initialization */
-    initialize_all_interfaces();
+    initialize_all_interfaces(); // must init first
     initialize_all_systems();
 
     scheduler.setTimingFunction(micros);
