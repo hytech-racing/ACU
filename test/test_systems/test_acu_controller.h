@@ -14,7 +14,6 @@ bool charging_enabled;
 TEST (ACUControllerTesting, initial_state) {
     ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create();
     ACUController controller = ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::instance();
-
     charging_enabled = false;
     std::array<bool, num_cells> cb = {0};
     uint32_t start_time = 0;
