@@ -1,13 +1,15 @@
 #include "ACU_InterfaceTasks.h"
 
 using chip_type = LTC6811_Type_e;
-auto start_time = std::chrono::high_resolution_clock::now();
+const auto start_time = std::chrono::high_resolution_clock::now();
+
 
 void initialize_all_interfaces()
 {
     SPI.begin();
-    Serial.begin(115200);
-    analogReadResolution(12);
+    SPI.setClockDivider(SPI_CLOCK_DIV2);
+    Serial.begin(ACUConstants::SERIAL_BAUDRATE);
+    analogReadResolution(ACUConstants::ANALOG_READ_RESOLUTION);
 
     /* Watchdog Interface */
     WatchdogInstance::create();
@@ -79,25 +81,26 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     ACUAllDataInstance::instance().max_cell_voltage_id = data.max_cell_voltage_id;
     ACUAllDataInstance::instance().min_cell_voltage_id = data.min_cell_voltage_id;
     ACUAllDataInstance::instance().max_cell_temp_id = data.max_cell_temperature_cell_id;
-    
 
     std::array<size_t, ACUConstants::NUM_CHIPS> chip_max_invalid_cmd_counts = {};
+    std::array<size_t, sizeof(BMSFaultCountData_s)> temp = {};
     for (size_t chip = 0; chip < data.valid_read_packets.size(); chip++)
     {
-        ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = (data.valid_read_packets[chip].all_invalid_reads) ? ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip]++ : 0;
-        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count : 0;
-        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count : 0;
-        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count : 0;
-        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count : 0;
-        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count : 0;
-        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count : 0;
-        std::array<size_t, 6> temp = {ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count,
+        // ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = (data.valid_read_packets[chip].all_invalid_reads) ? ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip]++ : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count+1 : 0;
+        temp = {ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count,
             ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count,
             ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count,
             ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count,
             ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count,
             ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count};
-        chip_max_invalid_cmd_counts[chip] = *etl::max_element(temp.begin(), temp.end());        
+        chip_max_invalid_cmd_counts[chip] = *etl::max_element(temp.begin(), temp.end());      
+        ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = chip_max_invalid_cmd_counts[chip];
     }
     ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
 
@@ -135,7 +138,7 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
     CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), WatchdogInstance::instance().read_shdn_out());
-    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &CCU_CAN);
+    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -327,6 +330,18 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print(": ");
         Serial.print(ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[c]);
         Serial.print("\t");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
+        Serial.print(" ");
+        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
+        Serial.print(" ");
     }
     Serial.println();
 

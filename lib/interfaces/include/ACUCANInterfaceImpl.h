@@ -1,5 +1,5 @@
-#ifndef __ACU_CAN_INTERFACE_H__
-#define __ACU_CAN_INTERFACE_H__
+#ifndef ACUCANINTERFACEIMPL_H
+#define ACUCANINTERFACEIMPL_H
 
 #include <cstdint>
 #include <tuple>
@@ -19,8 +19,9 @@
 #include "VCRInterface.h"
 #include "EMInterface.h"
 
-using CANRXBufferType = Circular_Buffer<uint8_t, (uint32_t)16, sizeof(CAN_message_t)>;
-using CANTXBufferType = Circular_Buffer<uint8_t, (uint32_t)128, sizeof(CAN_message_t)>;
+const size_t CAN_MSG_SIZE = sizeof(CAN_message_t);
+using CANRXBufferType = Circular_Buffer<uint8_t, (uint32_t)16, CAN_MSG_SIZE>;
+using CANTXBufferType = Circular_Buffer<uint8_t, (uint32_t)128, CAN_MSG_SIZE>;
 
 /* RX buffers for CAN extern declarations*/
 template <CAN_DEV_TABLE CAN_DEV> using FlexCAN_Type = FlexCAN_T4<CAN_DEV, RX_SIZE_256, TX_SIZE_16>;
@@ -35,14 +36,13 @@ struct CANInterfaces {
 };
 using CANInterfacesInstance = etl::singleton<CANInterfaces>;
 
-extern FlexCAN_T4<CAN3> CCU_CAN;
-extern FlexCAN_T4<CAN2> EM_CAN;
-
 namespace ACUCANInterfaceImpl {
-
     extern CANRXBufferType ccu_can_rx_buffer;
     extern CANRXBufferType em_can_rx_buffer;
     extern CANTXBufferType ccu_can_tx_buffer;
+
+    extern FlexCAN_Type<CAN3> CCU_CAN;
+    extern FlexCAN_Type<CAN2> EM_CAN;
 
     void on_ccu_can_receive(const CAN_message_t &msg);
     void on_em_can_receive(const CAN_message_t &msg);
@@ -53,4 +53,4 @@ namespace ACUCANInterfaceImpl {
     
 }; // namespace ACUCANInterfaceImpl
 
-#endif // __ACU_CAN_INTERFACE_H__
+#endif // ACUCANINTERFACEIMPL_H

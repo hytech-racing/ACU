@@ -1,5 +1,5 @@
-#ifndef __ACUCONTROLLER_H__
-#define __ACUCONTROLLER_H__
+#ifndef ACUCONTROLLER_H
+#define ACUCONTROLLER_H
 
 #include <array>
 #include <stddef.h>
@@ -18,7 +18,7 @@ namespace acu_controller_default_params
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 45.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
-    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 10; // Same as voltage fault count
+    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 100; // Same as voltage fault count
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
     constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults

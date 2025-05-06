@@ -1,5 +1,5 @@
-#ifndef __SHAREDTYPES_H__ 
-#define __SHAREDTYPES_H__
+#ifndef SHAREDTYPES_H
+#define SHAREDTYPES_H
 
 template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 struct ACUData_s {
@@ -23,12 +23,12 @@ struct ACUData_s {
 };
 
 struct BMSFaultCountData_s {
-    size_t invalid_cell_1_to_3_count;
-    size_t invalid_cell_4_to_6_count;
-    size_t invalid_cell_7_to_9_count;
-    size_t invalid_cell_10_to_12_count;
-    size_t invalid_gpio_1_to_3_count;
-    size_t invalid_gpio_4_to_6_count;
+    uint8_t invalid_cell_1_to_3_count;
+    uint8_t invalid_cell_4_to_6_count;
+    uint8_t invalid_cell_7_to_9_count;
+    uint8_t invalid_cell_10_to_12_count;
+    uint8_t invalid_gpio_1_to_3_count;
+    uint8_t invalid_gpio_4_to_6_count;
 };
 
 template<size_t num_chips>

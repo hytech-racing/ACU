@@ -35,15 +35,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
     {
         if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
         {
-            _write_and_delay_LOW(_chip_select[cs], 400);
+            _write_and_delay_low(_chip_select[cs], 400);
             SPI.transfer16(0);
-            _write_and_delay_HIGH(_chip_select[cs], 400);
+            _write_and_delay_high(_chip_select[cs], 400);
         }
         else
         {
-            _write_and_delay_LOW(_chip_select[cs], 400);
+            _write_and_delay_low(_chip_select[cs], 400);
             SPI.transfer(0);
-            _write_and_delay_HIGH(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+            _write_and_delay_high(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
         }
     }
 }
@@ -587,7 +587,6 @@ std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
         bms_data.valid_read_packets[chip + chip_iterator].valid_read_cells_7_to_9 = _check_if_valid_packet(cv_7_to_9, param_iterator);
         bms_data.valid_read_packets[chip + chip_iterator].valid_read_cells_10_to_12 = _check_if_valid_packet(cv_10_to_12, param_iterator);
     }
-
     return combined_cv_1_to_12;
 }
 

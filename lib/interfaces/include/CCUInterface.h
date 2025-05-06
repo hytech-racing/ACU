@@ -1,5 +1,5 @@
-#ifndef __CCU_INTERFACE_H__
-#define __CCU_INTERFACE_H__
+#ifndef CCU_INTERFACE_H
+#define CCU_INTERFACE_H
 
 #include <cstdint>
 #include <tuple>
@@ -13,9 +13,9 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 
-constexpr size_t NUM_CELLS = 126;
-constexpr size_t NUM_CELLTEMPS = 48;
-constexpr size_t NUM_CHIPS = 12;
+constexpr const size_t NUM_CELLS = 126;
+constexpr const size_t NUM_CELLTEMPS = 48;
+constexpr const size_t NUM_CHIPS = 12;
 
 struct CCUCANInterfaceData_s
 {
@@ -92,4 +92,4 @@ private:
 
 using CCUInterfaceInstance = etl::singleton<CCUInterface>;
 
-#endif
+#endif // CCU_INTERFACE_H

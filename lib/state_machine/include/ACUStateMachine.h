@@ -1,5 +1,5 @@
-#ifndef __ACU_STATE_MACHINE_H__
-#define __ACU_STATE_MACHINE_H__
+#ifndef ACU_STATE_MACHINE_H
+#define ACU_STATE_MACHINE_H
 
 /* From shared-firmware-types */
 #include "SharedFirmwareTypes.h"

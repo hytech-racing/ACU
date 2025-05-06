@@ -10,10 +10,11 @@
 #include <cstring>
 
 using namespace qindesign::network;
-EthernetUDP send_socket; 
-EthernetUDP recv_socket; 
+const EthernetUDP send_socket; 
+const EthernetUDP recv_socket; 
 
 const uint32_t delay_ms = 10;
+const size_t buf_len = 8;
 
 void init_ethernet_device()
 {
@@ -27,11 +28,11 @@ void test_ethernet()
     int packet_size = recv_socket.parsePacket();
     if (packet_size > 0)
         {
-        uint8_t buffer[8];
-        size_t read_bytes = recv_socket.read(buffer, sizeof(buffer));
-        recv_socket.read(buffer, 8);
+        std::array<uint8_t, buf_len> buffer;
+        size_t read_bytes = recv_socket.read(buffer.data(), buffer.size());
+        recv_socket.read(buffer.data(), buf_len);
         Serial.println("recvd data: ");
-        for(size_t i =0; i<8; i++)
+        for(uint8_t i =0; i<buf_len; i++)
         {
             Serial.print(buffer[i]);
         }
@@ -39,9 +40,8 @@ void test_ethernet()
     }
 
     send_socket.beginPacket(EthernetIPDefsInstance::instance().drivebrain_ip, EthernetIPDefsInstance::instance().DBData_port);
-    uint8_t send_buf[8] = {0x45, 0x45, 0x45, 0x22, 0x22, 0x22, 0x22, 0x22};
-    
-    send_socket.write(send_buf, 8);
+    std::array<uint8_t, buf_len> send_buf = {0x45, 0x45, 0x45, 0x22, 0x22, 0x22, 0x22, 0x22};
+    send_socket.write(send_buf.data(), send_buf.size());
     send_socket.endPacket();
 }
 

@@ -1,6 +1,6 @@
 #include "CCUInterface.h"
 
-#include "ACUCANInterface.h"
+#include "ACUCANInterfaceImpl.h"
 
 void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned long curr_millis) {
     CCU_STATUS_t ccu_msg;

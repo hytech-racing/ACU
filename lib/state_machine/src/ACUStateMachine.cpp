@@ -67,14 +67,6 @@ void ACUStateMachine::_set_state(ACUState_e new_state, unsigned long curr_millis
 void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis)
 {
     switch(prev_state) {
-        case ACUState_e::STARTUP: 
-        {
-            break;
-        }
-        case ACUState_e::ACTIVE: 
-        {
-            break;
-        }
         case ACUState_e::CHARGING: 
         {
             _disable_cell_balancing();
@@ -97,10 +89,6 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
         case ACUState_e::STARTUP: 
         {
             _reinitialize_watchdog();
-            break;
-        }
-        case ACUState_e::ACTIVE: 
-        {   
             break;
         }
         case ACUState_e::CHARGING: 

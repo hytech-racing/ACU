@@ -33,9 +33,9 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
 */
 inline void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices);
 
-inline void _write_and_delay_HIGH(int cs, int delay_microSeconds);
+inline void _write_and_delay_high(int cs, int delay_microSeconds);
 
-inline void _write_and_delay_LOW(int cs, int delay_microSeconds);
+inline void _write_and_delay_low(int cs, int delay_microSeconds);
 
 #include <LTCSPIInterface.tpp>
 #endif

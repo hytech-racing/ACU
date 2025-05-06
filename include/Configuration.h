@@ -1,5 +1,5 @@
-#ifndef __CONFIGURATION_H__
-#define __CONFIGURATION_H__
+#ifndef CONFIGURATION_H
+#define CONFIGURATION_H
 
 #include <cstdint>
 #include <stddef.h>
@@ -30,7 +30,7 @@ const uint16_t under_voltage_threshold = 1874;  // 3.0V  // Minimum voltage valu
 const uint16_t over_voltage_threshold = 2625;   // 4.2V  // Maximum voltage value following datasheet formula: Comparison Voltage = VOV • 16 • 100μV
 const uint16_t gpio_enable = 0x1F;
 const uint16_t CRC15_POLY = 0x4599;             // Used for calculating the PEC table for LTC6811
-const float cv_adc_conversion_time_us = 13;
-const float gpio_adc_conversion_time_us = 3.1;
+const float cv_adc_conversion_time_us = 13.0f;
+const float gpio_adc_conversion_time_us = 3.1f;
 
 #endif

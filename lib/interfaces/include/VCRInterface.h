@@ -1,5 +1,5 @@
-#ifndef __VCR_INTERFACE_H__
-#define __VCR_INTERFACE_H__
+#ifndef VCR_INTERFACE_H
+#define VCR_INTERFACE_H
 
 #include <cstdint>
 #include <tuple>

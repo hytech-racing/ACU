@@ -26,5 +26,5 @@ jobs:
     - name: Run Tests
       run: pio test -e test_systems_env
 
-    # - name: run checks
-    #   run: pio check -e teensy41 --fail-on-defect high
+    - name: run checks
+      run: pio check -e teensy41 --fail-on-defect high

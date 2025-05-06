@@ -41,15 +41,12 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     if (input_state.pack_voltage > _parameters.min_pack_total_v || has_invalid_packet) {
         _acu_state.last_time_pack_uv_fault_not_present = current_millis;
     }
-    printf("%.2f\n", input_state.pack_voltage);
-    printf("%d\n", current_millis);
-    printf("%d\n", _acu_state.last_time_pack_uv_fault_not_present);
     // Update temp fault time stamps
-    if (input_state.max_board_temp < _parameters.charging_ot_thresh_c || has_invalid_packet) { // charging ot thresh will be the lower of the 2
+    celsius ot_thresh = _acu_state.charging_enabled ? _parameters.charging_ot_thresh_c : _parameters.running_ot_thresh_c;
+    if (input_state.max_board_temp < ot_thresh || has_invalid_packet) { // charging ot thresh will be the lower of the 2
         _acu_state.last_time_board_ot_fault_not_present = current_millis;
     }
-    celsius cell_ot_thresh = _acu_state.charging_enabled ? _parameters.charging_ot_thresh_c : _parameters.running_ot_thresh_c;
-    if (input_state.max_cell_temp < cell_ot_thresh || has_invalid_packet) {
+    if (input_state.max_cell_temp < ot_thresh || has_invalid_packet) {
         _acu_state.last_time_cell_ot_fault_not_present = current_millis;
     }
     if (input_state.max_consecutive_invalid_packet_count < _parameters.invalid_packet_count_thresh) {

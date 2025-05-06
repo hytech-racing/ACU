@@ -21,12 +21,12 @@ std::array<uint8_t, data_size> _receive_SPI_data() {
     return data_in;
 }
 
-void _write_and_delay_LOW(int cs, int delay_microSeconds) {
+void _write_and_delay_low(int cs, int delay_microSeconds) {
     digitalWrite(cs, LOW);
     delayMicroseconds(delay_microSeconds);
 }
 
-void _write_and_delay_HIGH(int cs, int delay_microSeconds) {
+void _write_and_delay_high(int cs, int delay_microSeconds) {
     digitalWrite(cs, HIGH);
     delayMicroseconds(delay_microSeconds);
 }
@@ -35,13 +35,13 @@ template <size_t buffer_size>
 void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
-    _write_and_delay_LOW(cs, 5);
+    _write_and_delay_low(cs, 5);
 
     _transfer_SPI_data<4>(cmd_and_pec);
 
     _transfer_SPI_data<buffer_size>(data);
 
-    _write_and_delay_HIGH(cs, 5);   
+    _write_and_delay_high(cs, 5);   
     SPI.endTransaction();
 }
 
@@ -51,12 +51,12 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
     
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompts SPI enable
-    _write_and_delay_LOW(cs, 5);
+    _write_and_delay_low(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
  
     read_in = _receive_SPI_data<buffer_size>();
     
-    _write_and_delay_HIGH(cs, 5); 
+    _write_and_delay_high(cs, 5); 
     SPI.endTransaction();
     return read_in;
 }
@@ -64,7 +64,7 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
 void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
-    _write_and_delay_LOW(cs, 5);
+    _write_and_delay_low(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
     for (size_t i = 0; i < num_stacked_devices; i++) {
         SPI.transfer(0);
@@ -73,7 +73,7 @@ void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t n
     while (timer < 15) {
         SPI.transfer(0);
     }
-    _write_and_delay_HIGH(cs, 5);
+    _write_and_delay_high(cs, 5);
     // End Messager
     SPI.endTransaction();
 }

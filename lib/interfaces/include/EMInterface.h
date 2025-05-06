@@ -1,5 +1,5 @@
-#ifndef __EM_INTERFACE_H__
-#define __EM_INTERFACE_H__
+#ifndef EMINTERFACE_H
+#define EMINTERFACE_H
 
 #include <etl/singleton.h>
 
@@ -29,4 +29,4 @@ private:
 
 using EMInterfaceInstance = etl::singleton<EMInterface>;
 
-#endif // __CCU_INTERFACE_H__
+#endif // EMINTERFACE_H

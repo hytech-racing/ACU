@@ -1,5 +1,5 @@
-#ifndef __WATCHDOG_INTERFACE_H__
-#define __WATCHDOG_INTERFACE_H__
+#ifndef WATCHDOG_INTERFACE_H
+#define WATCHDOG_INTERFACE_H
 
 #include <Arduino.h>
 #include "SharedFirmwareTypes.h"
@@ -7,7 +7,7 @@
 
 using pin = size_t;
 
-namespace WATCHDOG_DEFAULT_PARAMS
+namespace pin_default_params
 {
     constexpr const pin TEENSY_OK_PIN = 3;
     constexpr const pin WD_KICK_PIN = 4;       
@@ -31,15 +31,15 @@ public:
      * @param shdn_out_pin INPUT - in FAULT state, if SHDN
     */
     WatchdogInterface(
-        pin teensy_ok_pin = WATCHDOG_DEFAULT_PARAMS::TEENSY_OK_PIN,
-        pin wd_kick_pin = WATCHDOG_DEFAULT_PARAMS::WD_KICK_PIN, 
-        pin n_latch_pin = WATCHDOG_DEFAULT_PARAMS::N_LATCH_EN_PIN,
-        pin imd_ok_pin = WATCHDOG_DEFAULT_PARAMS::IMD_OK_PIN, 
-        pin shdn_out_pin = WATCHDOG_DEFAULT_PARAMS::SHDN_OUT_PIN,
-        pin ts_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::TS_OUT_FILTERED_PIN,
-        pin pack_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::PACK_OUT_FILTERED_PIN,
-        pin bspd_current_pin = WATCHDOG_DEFAULT_PARAMS::BSPD_CURRENT_PIN,
-        pin scaled_24V_pin = WATCHDOG_DEFAULT_PARAMS::SCALED_24V_PIN,
+        pin teensy_ok_pin = pin_default_params::TEENSY_OK_PIN,
+        pin wd_kick_pin = pin_default_params::WD_KICK_PIN, 
+        pin n_latch_pin = pin_default_params::N_LATCH_EN_PIN,
+        pin imd_ok_pin = pin_default_params::IMD_OK_PIN, 
+        pin shdn_out_pin = pin_default_params::SHDN_OUT_PIN,
+        pin ts_out_filtered_pin = pin_default_params::TS_OUT_FILTERED_PIN,
+        pin pack_out_filtered_pin = pin_default_params::PACK_OUT_FILTERED_PIN,
+        pin bspd_current_pin = pin_default_params::BSPD_CURRENT_PIN,
+        pin scaled_24V_pin = pin_default_params::SCALED_24V_PIN,
         const uint32_t kick_interval_ms = 10UL) : 
                         _teensy_wd_kick_pin(wd_kick_pin),
                         _teensy_ok_pin(teensy_ok_pin),
@@ -74,11 +74,16 @@ private:
     pin _teensy_scaled_24V_pin;
 
     // following is taken from VCR Watchdog System
-    /* Watchdog last kicked time */
+    /* Watchdog last kicked time and output state */
     uint32_t _watchdog_kick_interval;
     uint32_t _watchdog_time;
     bool _watchdog_state;
-    /* Watchdog output state */
+    
+    const float _bit_resolution = 4095.0F;
+    const float _teensy41_max_input_voltage = 3.3F;
+    const float _teensy41_min_digital_read_voltage_thresh = 0.2F;
+    const float _teensy41_max_digital_read_voltage_thresh = 3.0F;
+    const float _
 
 public: 
     /**
