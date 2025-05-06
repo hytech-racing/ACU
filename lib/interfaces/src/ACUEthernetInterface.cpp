@@ -46,18 +46,18 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
 hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllDataType_s &shared_state)
 {
     hytech_msgs_ACUAllData out = {};
-    out.cell_voltages_count = 126;
-    for (size_t i = 0; i < 126; ++i)
+    out.cell_voltages_count = _num_cells;
+    for (uint8_t i = 0; i < _num_cells; i++)
     {
         out.cell_voltages[i] = shared_state.cell_voltages[i];
     }
-    out.cell_temperatures_count = 48;
-    for (size_t i = 0; i < 48; i++)
+    out.cell_temperatures_count = _num_celltemps;
+    for (uint8_t i = 0; i < _num_celltemps; i++)
     {
         out.cell_temperatures[i] = shared_state.cell_temps[i];
     }
-    out.invalid_packet_chip_counts_count = 12;
-    for (size_t i = 0; i < 12; i++) {
+    out.invalid_packet_chip_counts_count = _num_chips;
+    for (uint8_t i = 0; i < _num_chips; i++) {
         out.invalid_packet_chip_counts[i] = shared_state.consecutive_invalid_packet_counts[i];
     }
 

@@ -78,6 +78,8 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
             _reinitialize_watchdog();
             break;
         }
+        case ACUState_e::STARTUP:
+        case ACUState_e::ACTIVE:
         default:
             break;
     }
@@ -100,10 +102,10 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
         {   
             _disable_watchdog();
             _set_n_latch_en_high();
-
             _last_state_changed_time = curr_millis;
             break;
         }
+        case ACUState_e::ACTIVE:
         default:
             break;
     }

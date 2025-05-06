@@ -23,23 +23,22 @@
 
 /* Scheduler setup */
 const HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
-namespace {
-    HT_TASK::Task tick_state_machine_task(HT_TASK::DUMMY_FUNCTION, tick_state_machine, ACUConstants::TICK_SM_PRIORITY, ACUConstants::TICK_SM_PERIOD_US);
-    HT_TASK::Task kick_watchdog_task(HT_TASK::DUMMY_FUNCTION, run_kick_watchdog, ACUConstants::WATCHDOG_PRIORITY, ACUConstants::KICK_WATCHDOG_PERIOD_US); 
-    HT_TASK::Task sample_bms_data_task(HT_TASK::DUMMY_FUNCTION, sample_bms_data, ACUConstants::SAMPLE_BMS_PRIORITY, ACUConstants::SAMPLE_BMS_PERIOD_US);
-    HT_TASK::Task eval_accumulator_task(HT_TASK::DUMMY_FUNCTION, evaluate_accumulator, ACUConstants::EVAL_ACC_PRIORITY, ACUConstants::EVAL_ACC_PERIOD_US);
-    HT_TASK::Task write_cell_balancing_config_task(HT_TASK::DUMMY_FUNCTION, write_cell_balancing_config, ACUConstants::WRITE_CELL_BALANCE_PRIORITY, ACUConstants::WRITE_CELL_BALANCE_PERIOD_US);
-    HT_TASK::Task send_all_data_ethernet_task(HT_TASK::DUMMY_FUNCTION, handle_send_ACU_all_ethernet_data, ACUConstants::ALL_DATA_ETHERNET_PRIORITY, ACUConstants::ALL_DATA_ETHERNET_PERIOD_US);
-    HT_TASK::Task send_core_data_ethernet_task(HT_TASK::DUMMY_FUNCTION, handle_send_ACU_core_ethernet_data, ACUConstants::CORE_DATA_ETHERNET_PRIORITY, ACUConstants::CORE_DATA_ETHERNET_PERIOD_US);
-    HT_TASK::Task send_CAN_task(HT_TASK::DUMMY_FUNCTION, handle_send_all_CAN_data, ACUConstants::SEND_CAN_PRIORITY, ACUConstants::SEND_CAN_PERIOD_US);
-    HT_TASK::Task enqueue_CCU_core_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_core_CAN_data, ACUConstants::CCU_SEND_PRIORITY, ACUConstants::CCU_SEND_PERIOD_US);
-    HT_TASK::Task enqueue_CCU_all_voltages_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_voltages_CAN_data, ACUConstants::CCU_SEND_A_PRIORITY, ACUConstants::CCU_SEND_A_PERIOD_US);
-    HT_TASK::Task enqueue_CCU_all_temps_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_temps_CAN_data, ACUConstants::CCU_SEND_B_PRIORITY, ACUConstants::CCU_SEND_B_PERIOD_US);
-    HT_TASK::Task enqueue_ACU_OK_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_ok_CAN_data, ACUConstants::ACU_OK_CAN_PRIORITY, ACUConstants::ACU_OK_CAN_PERIOD_US);
-    HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConstants::RECV_CAN_PRIORITY, ACUConstants::RECV_CAN_PERIOD_US);
 
-    HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
-};
+::HT_TASK::Task tick_state_machine_task(HT_TASK::DUMMY_FUNCTION, tick_state_machine, ACUConstants::TICK_SM_PRIORITY, ACUConstants::TICK_SM_PERIOD_US);
+::HT_TASK::Task kick_watchdog_task(HT_TASK::DUMMY_FUNCTION, run_kick_watchdog, ACUConstants::WATCHDOG_PRIORITY, ACUConstants::KICK_WATCHDOG_PERIOD_US); 
+::HT_TASK::Task sample_bms_data_task(HT_TASK::DUMMY_FUNCTION, sample_bms_data, ACUConstants::SAMPLE_BMS_PRIORITY, ACUConstants::SAMPLE_BMS_PERIOD_US);
+::HT_TASK::Task eval_accumulator_task(HT_TASK::DUMMY_FUNCTION, evaluate_accumulator, ACUConstants::EVAL_ACC_PRIORITY, ACUConstants::EVAL_ACC_PERIOD_US);
+::HT_TASK::Task write_cell_balancing_config_task(HT_TASK::DUMMY_FUNCTION, write_cell_balancing_config, ACUConstants::WRITE_CELL_BALANCE_PRIORITY, ACUConstants::WRITE_CELL_BALANCE_PERIOD_US);
+::HT_TASK::Task send_all_data_ethernet_task(HT_TASK::DUMMY_FUNCTION, handle_send_ACU_all_ethernet_data, ACUConstants::ALL_DATA_ETHERNET_PRIORITY, ACUConstants::ALL_DATA_ETHERNET_PERIOD_US);
+::HT_TASK::Task send_core_data_ethernet_task(HT_TASK::DUMMY_FUNCTION, handle_send_ACU_core_ethernet_data, ACUConstants::CORE_DATA_ETHERNET_PRIORITY, ACUConstants::CORE_DATA_ETHERNET_PERIOD_US);
+::HT_TASK::Task send_CAN_task(HT_TASK::DUMMY_FUNCTION, handle_send_all_CAN_data, ACUConstants::SEND_CAN_PRIORITY, ACUConstants::SEND_CAN_PERIOD_US);
+::HT_TASK::Task enqueue_CCU_core_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_core_CAN_data, ACUConstants::CCU_SEND_PRIORITY, ACUConstants::CCU_SEND_PERIOD_US);
+::HT_TASK::Task enqueue_CCU_all_voltages_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_voltages_CAN_data, ACUConstants::CCU_SEND_A_PRIORITY, ACUConstants::CCU_SEND_A_PERIOD_US);
+::HT_TASK::Task enqueue_CCU_all_temps_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_temps_CAN_data, ACUConstants::CCU_SEND_B_PRIORITY, ACUConstants::CCU_SEND_B_PERIOD_US);
+::HT_TASK::Task enqueue_ACU_OK_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_ok_CAN_data, ACUConstants::ACU_OK_CAN_PRIORITY, ACUConstants::ACU_OK_CAN_PERIOD_US);
+::HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConstants::RECV_CAN_PRIORITY, ACUConstants::RECV_CAN_PERIOD_US);
+
+::HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 
 FlexCAN_Type<CAN3> ACUCANInterfaceImpl::CCU_CAN;
 FlexCAN_Type<CAN2> ACUCANInterfaceImpl::EM_CAN;

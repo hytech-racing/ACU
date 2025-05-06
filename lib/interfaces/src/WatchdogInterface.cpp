@@ -44,7 +44,7 @@ void WatchdogInterface::set_n_latch_en_high() {
 }
 
 bool WatchdogInterface::read_imd_ok() {
-    return (static_cast<float>(analogRead(_teensy_imd_ok_pin)) * (_teensy41_max_input_voltage / _bit_resolution)) > 0.2f; // idk if this would actually work, like if a LOW is a threshold or smth
+    return (static_cast<float>(analogRead(_teensy_imd_ok_pin)) * (_teensy41_max_input_voltage / _bit_resolution)) > _teensy41_min_digital_read_voltage_thresh; // idk if this would actually work, like if a LOW is a threshold or smth
 }
 
 bool WatchdogInterface::read_shdn_out() {
@@ -54,22 +54,22 @@ bool WatchdogInterface::read_shdn_out() {
 
 volt WatchdogInterface::read_ts_out_filtered() {
     // 3.3 V for pin voltage cap. and 4095 for bit resolution
-    volt data = static_cast<float>(analogRead(_teensy_ts_out_filtered_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (0.0047f); 
+    volt data = static_cast<float>(analogRead(_teensy_ts_out_filtered_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_pack_and_ts_out_conv_factor); 
     return data;
 }
 
 volt WatchdogInterface::read_pack_out_filtered() {
-    volt data = static_cast<float>(analogRead(_teensy_pack_out_filtered_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (0.0047f);
+    volt data = static_cast<float>(analogRead(_teensy_pack_out_filtered_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_pack_and_ts_out_conv_factor);
     return data;
 }
 
 volt WatchdogInterface::read_bspd_current() {
     // 3.3 V for pin voltage cap. and 4095 for bit resolution
-    volt data = static_cast<float>(analogRead(_teensy_bspd_current_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / 0.5118f; //((24.16 / 5.0) * (4.3 / 36.0)); 
+    volt data = static_cast<float>(analogRead(_teensy_bspd_current_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / _bspd_current_conv_factor; //((24.16 / 5.0) * (4.3 / 36.0)); 
     return data;
 }
 
 volt WatchdogInterface::read_global_lv_value() {
-    volt data = static_cast<float>(analogRead(_teensy_scaled_24V_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (0.1067f); // input before voltage divider (4.3k / (4.3k + 36k))
+    volt data = static_cast<float>(analogRead(_teensy_scaled_24V_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_glv_conv_factor); // input before voltage divider (4.3k / (4.3k + 36k))
     return data;
 }

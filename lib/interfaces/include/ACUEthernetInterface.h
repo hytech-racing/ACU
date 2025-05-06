@@ -16,10 +16,21 @@
 
 using namespace qindesign::network;
 
-class ACUEthernetInterface 
+namespace acu_ethernet_params {
+  constexpr const uint8_t num_cells = 126;
+  constexpr const uint8_t num_celltemps = 48;
+  constexpr const uint8_t num_chips = 12;
+};
+
+class ACUEthernetInterface
 {
 public:
-  ACUEthernetInterface() {};
+  ACUEthernetInterface(uint8_t num_cells = acu_ethernet_params::num_cells, 
+                        uint8_t num_celltemps = acu_ethernet_params::num_celltemps,
+                        uint8_t num_chips = acu_ethernet_params::num_chips) :
+                        _num_cells(num_cells),
+                        _num_celltemps(num_celltemps),
+                        _num_chips(num_chips) {};
 
   void init_ethernet_device();
 
@@ -52,15 +63,16 @@ public:
    */
   void receive_pb_msg_vcr(const hytech_msgs_VCRData_s &msg_in, ACUCoreData_s &shared_state);
 
-private: 
+private:
   /* Ethernet Sockets */
   EthernetUDP _acu_core_data_send_socket;
   EthernetUDP _acu_all_data_send_socket;
   EthernetUDP _vcr_data_recv_socket;
   EthernetUDP _db_data_recv_socket;
-  
-  /* IP Address */
 
+  const uint8_t _num_cells = 0;
+  const uint8_t _num_celltemps = 0;
+  const uint8_t _num_chips = 0;
 };
 
 using ACUEthernetInterfaceInstance = etl::singleton<ACUEthernetInterface>;
