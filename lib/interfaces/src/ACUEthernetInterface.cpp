@@ -47,19 +47,13 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
 {
     hytech_msgs_ACUAllData out = {};
     out.cell_voltages_count = _num_cells;
-    for (uint8_t i = 0; i < _num_cells; i++)
-    {
-        out.cell_voltages[i] = shared_state.cell_voltages[i];
-    }
+    std::copy(shared_state.cell_voltages.data(), shared_state.cell_voltages.data() + _num_cells, out.cell_voltages);
+    
     out.cell_temperatures_count = _num_celltemps;
-    for (uint8_t i = 0; i < _num_celltemps; i++)
-    {
-        out.cell_temperatures[i] = shared_state.cell_temps[i];
-    }
+    std::copy(shared_state.cell_temps.data(), shared_state.cell_temps.data() + _num_celltemps, out.cell_temperatures);
+    
     out.invalid_packet_chip_counts_count = _num_chips;
-    for (uint8_t i = 0; i < _num_chips; i++) {
-        out.invalid_packet_chip_counts[i] = shared_state.consecutive_invalid_packet_counts[i];
-    }
+    std::copy(shared_state.consecutive_invalid_packet_counts.data(), shared_state.consecutive_invalid_packet_counts.data() + _num_chips, out.invalid_packet_chip_counts);
 
     out.has_core_data = true;
     out.core_data = make_acu_core_data_msg(shared_state.core_data);

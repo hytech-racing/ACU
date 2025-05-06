@@ -35,15 +35,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
     {
         if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
         {
-            _write_and_delay_low(_chip_select[cs], 400);
+            ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
             SPI.transfer16(0);
-            _write_and_delay_high(_chip_select[cs], 400);
+            ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400);
         }
         else
         {
-            _write_and_delay_low(_chip_select[cs], 400);
+            ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
             SPI.transfer(0);
-            _write_and_delay_high(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+            ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
         }
     }
 }
@@ -112,22 +112,22 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         // Get buffers for each group we care about, all at once for ONE chip select line
         _start_wakeup_protocol();
         auto cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
-        auto data_in_cell_voltages_1_to_3 = read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+        auto data_in_cell_voltages_1_to_3 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
         _start_wakeup_protocol();
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, -1);
-        auto data_in_cell_voltages_4_to_6 = read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+        auto data_in_cell_voltages_4_to_6 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
         _start_wakeup_protocol();
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, -1);
-        auto data_in_cell_voltages_7_to_9 = read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+        auto data_in_cell_voltages_7_to_9 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
         _start_wakeup_protocol();
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, -1);
-        auto data_in_cell_voltages_10_to_12 = read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+        auto data_in_cell_voltages_10_to_12 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
         _start_wakeup_protocol();
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, -1);
-        auto data_in_auxillaries_1_to_3 = read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+        auto data_in_auxillaries_1_to_3 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
         _start_wakeup_protocol();
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, -1);
-        auto data_in_auxillaries_4_to_6 = read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+        auto data_in_auxillaries_4_to_6 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
 
         // store the data for all chips on a chip select into one array, no PEC included
         std::array<uint8_t, 24 * (num_chips / num_chip_selects)> data_in_cell_voltages_1_to_12 = _package_cell_voltages(_bms_data, cs, data_in_cell_voltages_1_to_3,
@@ -192,27 +192,27 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_addre
         _start_wakeup_protocol();
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, chip);
-        auto data_in_3_cell_voltages = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        auto data_in_3_cell_voltages = ltc_spi_interface::read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
         std::copy(data_in_3_cell_voltages.begin(), data_in_3_cell_voltages.begin() + 6, data_in_cell_voltages_1_to_12.begin());
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, chip);
-        data_in_3_cell_voltages = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        data_in_3_cell_voltages = ltc_spi_interface::read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
         std::copy(data_in_3_cell_voltages.begin(), data_in_3_cell_voltages.begin() + 6, data_in_cell_voltages_1_to_12.begin() + 6);
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, chip);
-        data_in_3_cell_voltages = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        data_in_3_cell_voltages = ltc_spi_interface::read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
         std::copy(data_in_3_cell_voltages.begin(), data_in_3_cell_voltages.begin() + 6, data_in_cell_voltages_1_to_12.begin() + 12);
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, chip);
-        data_in_3_cell_voltages = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        data_in_3_cell_voltages = ltc_spi_interface::read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
         std::copy(data_in_3_cell_voltages.begin(), data_in_3_cell_voltages.begin() + 6, data_in_cell_voltages_1_to_12.begin() + 18);
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, chip);
-        auto data_in_3_auxillaries = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        auto data_in_3_auxillaries = ltc_spi_interface::read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
         std::copy(data_in_3_auxillaries.begin(), data_in_3_auxillaries.begin() + 6, data_in_auxillaries_1_to_5.begin());
 
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, chip);
-        data_in_3_auxillaries = read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
+        data_in_3_auxillaries = ltc_spi_interface::read_registers_command<8>(_chip_select_per_chip[chip], cmd_pec);
         std::copy(data_in_3_auxillaries.begin(), data_in_3_auxillaries.begin() + 4, data_in_auxillaries_1_to_5.begin() + 6);
 
         // DEBUG: Check to see that the PEC is what we expect it to be
@@ -418,7 +418,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
                 j++;
             }
         }
-        write_registers_command<data_size>(_chip_select[cs], cmd_and_pec, full_buffer);
+        ltc_spi_interface::write_registers_command<data_size>(_chip_select[cs], cmd_and_pec, full_buffer);
     }
 }
 
@@ -437,7 +437,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
         temp_pec = _calculate_specific_PEC(buffer_format.data(), 6);
         std::copy(buffer_format.data(), buffer_format.data() + 6, full_buffer.data());
         std::copy(temp_pec.data(), temp_pec.data() + 2, full_buffer.data() + 6);
-        write_registers_command<8>(_chip_select_per_chip[i], cmd_and_pec, full_buffer);
+        ltc_spi_interface::write_registers_command<8>(_chip_select_per_chip[i], cmd_and_pec, full_buffer);
     }
 }
 
@@ -493,7 +493,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
     // Needs to be sent on each chip select line
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        adc_conversion_command(_chip_select[cs], cmd_and_pec, (num_chips / num_chip_selects));
+        ltc_spi_interface::adc_conversion_command(_chip_select[cs], cmd_and_pec, (num_chips / num_chip_selects));
     }
 }
 

@@ -21,18 +21,18 @@ std::array<uint8_t, data_size> _receive_SPI_data() {
     return data_in;
 }
 
-void _write_and_delay_low(int cs, int delay_microSeconds) {
+void ltc_spi_interface::_write_and_delay_low(int cs, int delay_microSeconds) {
     digitalWrite(cs, LOW);
     delayMicroseconds(delay_microSeconds);
 }
 
-void _write_and_delay_high(int cs, int delay_microSeconds) {
+void ltc_spi_interface::_write_and_delay_high(int cs, int delay_microSeconds) {
     digitalWrite(cs, HIGH);
     delayMicroseconds(delay_microSeconds);
 }
 
 template <size_t buffer_size>
-void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data) {
+void ltc_spi_interface::write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
     _write_and_delay_low(cs, 5);
@@ -46,7 +46,7 @@ void write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const s
 }
 
 template <size_t buffer_size>
-std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec) {
+std::array<uint8_t, buffer_size> ltc_spi_interface::read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec) {
     std::array<uint8_t, buffer_size> read_in;
     
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
@@ -61,7 +61,7 @@ std::array<uint8_t, buffer_size> read_registers_command(int cs, std::array<uint8
     return read_in;
 }
 
-void adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices) {
+void ltc_spi_interface::adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices) {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
     _write_and_delay_low(cs, 5);
