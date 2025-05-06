@@ -74,7 +74,7 @@ public:
         for (size_t board = 0; board < num_chips; board++) {
             _acu_all_data.board_temps[board] = input.board_temps[board];
         }
-        _acu_all_data.max_board_temp = input.max_board_temp;
+        _acu_all_data.core_data.max_board_temp = input.core_data.max_board_temp;
     }
 
     void handle_enqueue_acu_status_CAN_message();

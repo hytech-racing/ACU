@@ -58,8 +58,7 @@ HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const
     ACUDataInstance::instance().cell_balancing_statuses = acu_status.cell_balancing_statuses;
 
     EMData_s em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
-    ACUDataInstance::instance().SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_state_of_charge(em_data.em_current, em_data.time_since_prev_msg_ms);
-
+    ACUAllDataInstance::instance().SoC = ACUDataInstance::instance().SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_state_of_charge(em_data.em_current, em_data.time_since_prev_msg_ms);
     return HT_TASK::TaskResponse::YIELD;
 }
 

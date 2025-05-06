@@ -76,7 +76,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     ACUAllDataInstance::instance().core_data.min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;
     ACUAllDataInstance::instance().core_data.pack_voltage = ACUDataInstance::instance().pack_voltage;
     ACUAllDataInstance::instance().core_data.max_cell_temp = ACUDataInstance::instance().max_cell_temp;
-    ACUAllDataInstance::instance().max_board_temp = ACUDataInstance::instance().max_board_temp;
+    ACUAllDataInstance::instance().core_data.max_board_temp = ACUDataInstance::instance().max_board_temp;
 
     ACUAllDataInstance::instance().max_cell_voltage_id = data.max_cell_voltage_id;
     ACUAllDataInstance::instance().min_cell_voltage_id = data.min_cell_voltage_id;
@@ -86,7 +86,6 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     std::array<size_t, sizeof(BMSFaultCountData_s)> temp = {};
     for (size_t chip = 0; chip < data.valid_read_packets.size(); chip++)
     {
-        // ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = (data.valid_read_packets[chip].all_invalid_reads) ? ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip]++ : 0;
         ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
         ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
         ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
@@ -125,11 +124,12 @@ HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sy
 
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    // Serial.println("Sending ACU All Data over Ethernet");
     ACUAllDataInstance::instance().measured_tractive_system_voltage = WatchdogInstance::instance().read_pack_out_filtered();
     ACUAllDataInstance::instance().measured_pack_voltage = WatchdogInstance::instance().read_pack_out_filtered();
     ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
-    
+    ACUAllDataInstance::instance().core_data.measured_glv = WatchdogInstance::instance().read_global_lv_value();
+    ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered();
+    ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered();
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
 
     return HT_TASK::TaskResponse::YIELD;
