@@ -83,7 +83,7 @@ private:
     const float _teensy41_max_input_voltage = 3.3F;
     const float _teensy41_min_digital_read_voltage_thresh = 0.2F;
     const float _teensy41_max_digital_read_voltage_thresh = 3.0F;
-    const float _
+    
 
 public: 
     /**
