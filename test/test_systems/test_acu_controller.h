@@ -105,6 +105,6 @@ TEST (ACUControllerTesting, faulted_state) {
     ASSERT_EQ(status.last_time_ov_fault_not_present, init_time); // because they're past thresh...
     ASSERT_EQ(status.last_time_uv_fault_not_present, init_time); 
     ASSERT_EQ(status.last_time_cell_ot_fault_not_present, init_time);
-    ASSERT_EQ(status.last_time_board_ot_fault_not_present, init_time);
+    ASSERT_EQ(status.last_time_board_ot_fault_not_present, start_time); // when not charging, we don't have a fault if board temp is sub 60C
     ASSERT_EQ(status.last_time_pack_uv_fault_not_present, start_time); // but since this, 430 > 420, then it keeps start_time
 }
