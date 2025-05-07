@@ -63,15 +63,15 @@ public:
 
 private:
     /* Pin Assignments */
-    pin _teensy_wd_kick_pin;  // > Needs to flip at 100 Hz to keep BMS_OK high
-    pin _teensy_ok_pin;   // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
-    pin _teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
-    pin _teensy_imd_ok_pin; // < READ from IMD hardware, go to FAULT state if HIGH
-    pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
-    pin _teensy_ts_out_filtered_pin;
-    pin _teensy_pack_out_filtered_pin;
-    pin _teensy_bspd_current_pin;
-    pin _teensy_scaled_24V_pin;
+    const pin _teensy_wd_kick_pin;  // > Needs to flip at 100 Hz to keep BMS_OK high
+    const pin _teensy_ok_pin;   // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
+    const pin _teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
+    const pin _teensy_imd_ok_pin; // < READ from IMD hardware, go to FAULT state if HIGH
+    const pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
+    const pin _teensy_ts_out_filtered_pin;
+    const pin _teensy_pack_out_filtered_pin;
+    const pin _teensy_bspd_current_pin;
+    const pin _teensy_scaled_24V_pin;
 
     // following is taken from VCR Watchdog System
     /* Watchdog last kicked time and output state */
@@ -83,9 +83,9 @@ private:
     const float _teensy41_max_input_voltage = 3.3F;
     const float _teensy41_min_digital_read_voltage_thresh = 0.2F;
     const float _teensy41_max_digital_read_voltage_thresh = 3.0F;
-    const float _pack_and_ts_out_conv_factor = 0.0047F;
+    const float _pack_and_ts_out_conv_factor = 0.00492F;
     const float _bspd_current_conv_factor = 0.5118F;
-    const float _glv_conv_factor = 0.1067F;
+    const float _glv_conv_factor = 0.1031F;
 
 public: 
     /**

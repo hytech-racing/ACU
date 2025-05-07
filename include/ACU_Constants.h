@@ -35,11 +35,11 @@ namespace ACUConstants
     constexpr uint32_t EVAL_ACC_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
     constexpr uint32_t EVAL_ACC_PRIORITY = 10;
     constexpr uint32_t WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 4;
-    constexpr uint32_t ALL_DATA_ETHERNET_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
-    constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 7;
-    constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 200000UL; // 200 000 us = 5 Hz
-    constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 6;
+    constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 6;
+    constexpr uint32_t ALL_DATA_ETHERNET_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
+    constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 5;
+    constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
+    constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 4;
 
     constexpr uint32_t CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t CCU_SEND_PRIORITY = 11;
@@ -56,7 +56,7 @@ namespace ACUConstants
     constexpr uint32_t RECV_CAN_PRIORITY = 0;
 
     constexpr uint32_t DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
-    constexpr uint32_t DEBUG_PRINT_PRIORITY = 5;
+    constexpr uint32_t DEBUG_PRINT_PRIORITY = 7;
 
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
