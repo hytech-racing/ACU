@@ -75,7 +75,7 @@ private:
 
     // following is taken from VCR Watchdog System
     /* Watchdog last kicked time and output state */
-    uint32_t _watchdog_kick_interval;
+    const uint32_t _watchdog_kick_interval;
     uint32_t _watchdog_time;
     bool _watchdog_state;
     
@@ -101,7 +101,6 @@ public:
     */
     void set_teensy_ok_low();
     void set_teensy_ok_high();
-
 
     /**
      * Sets n_latch_en low
