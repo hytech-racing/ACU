@@ -319,10 +319,10 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("CCU Charging Requested? : ");
     Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
     Serial.print("State of Charge: ");
-    Serial.print(ACUDataInstance::instance().SoC * 100, 2);
+    Serial.print(ACUDataInstance::instance().SoC * 100, 3);
     Serial.println("%");
     Serial.print("Measured GLV: ");
-    Serial.print(WatchdogInstance::instance().read_global_lv_value());
+    Serial.print(WatchdogInstance::instance().read_global_lv_value(), 3);
     Serial.println("V");
     Serial.println();
 
