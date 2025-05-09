@@ -116,7 +116,9 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUDataInstance::instance().cell_balancing_statuses);
+    if (ACUDataInstance::instance().charging_enabled) {
+        BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUDataInstance::instance().cell_balancing_statuses);
+    }
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -183,12 +185,9 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
 
 HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     /* Find the maximums of GLV, Pack out, and TS Out within every ethernet send period */
-    volt glv = WatchdogInstance::instance().read_global_lv_value();
-    volt pack_out = WatchdogInstance::instance().read_pack_out_filtered();
-    volt ts_out = WatchdogInstance::instance().read_ts_out_filtered();
-    if (glv > ACUAllDataInstance::instance().core_data.measured_glv) { ACUAllDataInstance::instance().core_data.measured_glv = glv; }
-    if (pack_out > ACUAllDataInstance::instance().core_data.measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = pack_out; }
-    if (ts_out > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = ts_out; }
+    if (WatchdogInstance::instance().read_global_lv_value() > ACUAllDataInstance::instance().core_data.measured_glv) { ACUAllDataInstance::instance().core_data.measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
+    if (WatchdogInstance::instance().read_pack_out_filtered() > ACUAllDataInstance::instance().core_data.measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
+    if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -332,7 +331,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print(ACUDataInstance::instance().SoC * 100, 3);
     Serial.println("%");
     Serial.print("Measured GLV: ");
-    Serial.print(WatchdogInstance::instance().read_global_lv_value(), 3);
+    Serial.print(ACUAllDataInstance::instance().core_data.measured_glv, 3);
     Serial.println("V");
     Serial.println();
 
