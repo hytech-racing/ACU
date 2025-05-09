@@ -39,8 +39,8 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
 
     out.measured_glv = shared_state.measured_glv;
     out.max_board_temp = shared_state.max_board_temp;
-    out.measured_pack_out = shared_state.measured_pack_out_voltage;
-    out.measured_ts_out = shared_state.measured_ts_out_voltage;
+    out.measured_pack_voltage = shared_state.measured_pack_out_voltage;
+    out.measured_tractive_system_voltage = shared_state.measured_ts_out_voltage;
 
     return out;
 }
@@ -50,7 +50,7 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     hytech_msgs_ACUAllData out = {};
     out.has_core_data = true;
     out.core_data = make_acu_core_data_msg(shared_state.core_data);
-    
+
     out.cell_voltages_count = _num_cells;
     std::copy(shared_state.cell_voltages.data(), shared_state.cell_voltages.data() + _num_cells, out.cell_voltages);
     
@@ -67,8 +67,6 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     out.max_cell_voltage_id = shared_state.max_cell_voltage_id;
     out.min_cell_voltage_id = shared_state.min_cell_voltage_id;
     out.max_cell_temp_id = shared_state.max_cell_temp_id;
-    out.measured_tractive_system_voltage = shared_state.measured_tractive_system_voltage;
-    out.measured_pack_voltage = shared_state.measured_pack_voltage;
     out.measured_bspd_current = shared_state.measured_bspd_current;
     out.valid_packet_rate = shared_state.valid_packet_rate;
     out.SoC = shared_state.SoC;

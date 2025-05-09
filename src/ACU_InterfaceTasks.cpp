@@ -129,14 +129,12 @@ HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sy
 
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUAllDataInstance::instance().measured_tractive_system_voltage = WatchdogInstance::instance().read_pack_out_filtered();
-    ACUAllDataInstance::instance().measured_pack_voltage = WatchdogInstance::instance().read_pack_out_filtered();
     ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
-    ACUAllDataInstance::instance().core_data.measured_glv = WatchdogInstance::instance().read_global_lv_value();
-    ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered();
-    ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered();
     
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
+    ACUAllDataInstance::instance().core_data.measured_glv = 0;
+    ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = 0;
+    ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = 0;
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -188,8 +186,9 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
     volt glv = WatchdogInstance::instance().read_global_lv_value();
     volt pack_out = WatchdogInstance::instance().read_pack_out_filtered();
     volt ts_out = WatchdogInstance::instance().read_ts_out_filtered();
-    
-
+    if (glv > ACUAllDataInstance::instance().core_data.measured_glv) { ACUAllDataInstance::instance().core_data.measured_glv = glv; }
+    if (pack_out > ACUAllDataInstance::instance().core_data.measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = pack_out; }
+    if (ts_out > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = ts_out; }
     return HT_TASK::TaskResponse::YIELD;
 }
 
