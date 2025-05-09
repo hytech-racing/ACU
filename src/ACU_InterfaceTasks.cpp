@@ -183,6 +183,16 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
     return HT_TASK::TaskResponse::YIELD;
 }
 
+HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    /* Find the maximums of GLV, Pack out, and TS Out within every ethernet send period */
+    volt glv = WatchdogInstance::instance().read_global_lv_value();
+    volt pack_out = WatchdogInstance::instance().read_pack_out_filtered();
+    volt ts_out = WatchdogInstance::instance().read_ts_out_filtered();
+    
+
+    return HT_TASK::TaskResponse::YIELD;
+}
+
 /* Print Functions */
 template <typename bms_data>
 void print_bms_data(bms_data data)

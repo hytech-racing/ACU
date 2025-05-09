@@ -4,6 +4,7 @@
 #include "ACU_Constants.h"
 #include "ACU_Globals.h"
 #include "shared_types.h"
+#include "SharedFirmwareTypes.h"
 
 /* Interface Library Includes */
 #include "BMSDriverGroup.h"
@@ -47,6 +48,8 @@ void initialize_all_interfaces();
 ::HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+::HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 

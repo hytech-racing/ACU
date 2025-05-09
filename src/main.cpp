@@ -36,7 +36,7 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 ::HT_TASK::Task enqueue_CCU_all_temps_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_temps_CAN_data, ACUConstants::CCU_SEND_B_PRIORITY, ACUConstants::CCU_SEND_B_PERIOD_US);
 ::HT_TASK::Task enqueue_ACU_OK_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_ok_CAN_data, ACUConstants::ACU_OK_CAN_PRIORITY, ACUConstants::ACU_OK_CAN_PERIOD_US);
 ::HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConstants::RECV_CAN_PRIORITY, ACUConstants::RECV_CAN_PERIOD_US);
-
+::HT_TASK::Task idle_sample_task(HT_TASK::DUMMY_FUNCTION, idle_sample_interfaces, ACUConstants::IDLE_SAMPLE_PRIORITY, ACUConstants::IDLE_SAMPLE_PERIOD_US);
 ::HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 
 FlexCAN_Type<CAN3> ACUCANInterfaceImpl::CCU_CAN;

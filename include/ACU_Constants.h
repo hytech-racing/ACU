@@ -53,10 +53,13 @@ namespace ACUConstants
     constexpr uint32_t SEND_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
     constexpr uint32_t SEND_CAN_PRIORITY = 8;
     constexpr uint32_t RECV_CAN_PERIOD_US = 1000UL; // 1 000 us = 1 000 Hz
-    constexpr uint32_t RECV_CAN_PRIORITY = 0;
+    constexpr uint32_t RECV_CAN_PRIORITY = 7;
 
     constexpr uint32_t DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
-    constexpr uint32_t DEBUG_PRINT_PRIORITY = 7;
+    constexpr uint32_t DEBUG_PRINT_PRIORITY = 20;
+
+    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+    constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
 
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
