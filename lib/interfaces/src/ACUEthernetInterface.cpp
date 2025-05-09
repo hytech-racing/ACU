@@ -1,6 +1,8 @@
 #include "ACUEthernetInterface.h"
 #include "SharedFirmwareTypes.h"
-
+#include "ht_can_version.h"
+#include "hytech_msgs_version.h"
+#include "Arduino.h"
 #include <algorithm>
 
 void ACUEthernetInterface::init_ethernet_device() {
@@ -46,6 +48,9 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
 hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllDataType_s &shared_state)
 {
     hytech_msgs_ACUAllData out = {};
+    out.has_core_data = true;
+    out.core_data = make_acu_core_data_msg(shared_state.core_data);
+    
     out.cell_voltages_count = _num_cells;
     std::copy(shared_state.cell_voltages.data(), shared_state.cell_voltages.data() + _num_cells, out.cell_voltages);
     
@@ -58,8 +63,6 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     out.board_temperatures_count = _num_chips;
     std::copy(shared_state.board_temps.data(), shared_state.board_temps.data() + _num_chips, out.board_temperatures);
 
-    out.has_core_data = true;
-    out.core_data = make_acu_core_data_msg(shared_state.core_data);
     out.max_consecutive_invalid_packet_count = shared_state.max_consecutive_invalid_packet_count;
     out.max_cell_voltage_id = shared_state.max_cell_voltage_id;
     out.min_cell_voltage_id = shared_state.min_cell_voltage_id;
@@ -75,14 +78,9 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     out.firmware_version_info.project_is_dirty = shared_state.fw_version_info.project_is_dirty;
     out.firmware_version_info.project_on_main_or_master = shared_state.fw_version_info.project_on_main_or_master;
     std::copy(shared_state.fw_version_info.fw_version_hash.begin(), shared_state.fw_version_info.fw_version_hash.end(), out.firmware_version_info.git_hash);
-
+    out.has_msg_versions = true;
+    out.msg_versions.ht_can_version = HT_CAN_LIB_VERSION;
+    strncpy(out.msg_versions.ht_proto_version, version, sizeof(out.msg_versions.ht_proto_version));
+    out.msg_versions.ht_proto_version[sizeof(out.msg_versions.ht_proto_version) - 1] = '\0';
     return out;
-}
-
-void ACUEthernetInterface::receive_pb_msg_vcr(const hytech_msgs_VCRData_s &msg_in, ACUCoreData_s &shared_state)
-{
-    shared_state.avg_cell_voltage = msg_in.ams_data.average_cell_voltage;
-    shared_state.max_cell_temp = msg_in.ams_data.max_temp_celsius;
-    shared_state.min_cell_voltage = msg_in.ams_data.min_cell_voltage;
-    shared_state.pack_voltage = msg_in.ams_data.total_pack_voltage;
 }

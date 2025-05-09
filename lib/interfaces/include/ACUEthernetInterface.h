@@ -53,15 +53,6 @@ public:
    * @return A populated instance of the outgoing protoc struct.
    */
   hytech_msgs_ACUAllData make_acu_all_data_msg(const ACUAllDataType_s &shared_state);
-  /**
-   * Function to take a populated protoc struct from VCR and update ACUCoreData.
-   *
-   * @param msg_in A reference to a populated protoc struct.
-   * @param shared_state A reference to ACUCoreData_s.
-   *
-   * @post After this function completes, shared_state will have updated contents of VCRData.
-   */
-  void receive_pb_msg_vcr(const hytech_msgs_VCRData_s &msg_in, ACUCoreData_s &shared_state);
 
 private:
   /* Ethernet Sockets */

@@ -135,6 +135,7 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
     ACUAllDataInstance::instance().core_data.measured_glv = WatchdogInstance::instance().read_global_lv_value();
     ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered();
     ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered();
+    
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
 
     return HT_TASK::TaskResponse::YIELD;
