@@ -1,5 +1,5 @@
-#ifndef __WATCHDOG_INTERFACE_H__
-#define __WATCHDOG_INTERFACE_H__
+#ifndef WATCHDOG_INTERFACE_H
+#define WATCHDOG_INTERFACE_H
 
 #include <Arduino.h>
 #include "SharedFirmwareTypes.h"
@@ -7,7 +7,7 @@
 
 using pin = size_t;
 
-namespace WATCHDOG_DEFAULT_PARAMS
+namespace pin_default_params
 {
     constexpr const pin TEENSY_OK_PIN = 3;
     constexpr const pin WD_KICK_PIN = 4;       
@@ -15,7 +15,9 @@ namespace WATCHDOG_DEFAULT_PARAMS
     constexpr const pin TS_OUT_FILTERED_PIN = 17;
     constexpr const pin PACK_OUT_FILTERED_PIN = 18;
     constexpr const pin IMD_OK_PIN = 25;
+    constexpr const pin BSPD_CURRENT_PIN = 27;
     constexpr const pin SHDN_OUT_PIN = 38;
+    constexpr const pin SCALED_24V_PIN = 39;
 };
 
 class WatchdogInterface
@@ -29,14 +31,16 @@ public:
      * @param shdn_out_pin INPUT - in FAULT state, if SHDN
     */
     WatchdogInterface(
-        pin teensy_ok_pin = WATCHDOG_DEFAULT_PARAMS::TEENSY_OK_PIN,
-        pin wd_kick_pin = WATCHDOG_DEFAULT_PARAMS::WD_KICK_PIN, 
-        pin n_latch_pin = WATCHDOG_DEFAULT_PARAMS::N_LATCH_EN_PIN,
-        pin imd_ok_pin = WATCHDOG_DEFAULT_PARAMS::IMD_OK_PIN, 
-        pin shdn_out_pin = WATCHDOG_DEFAULT_PARAMS::SHDN_OUT_PIN,
-        pin ts_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::TS_OUT_FILTERED_PIN,
-        pin pack_out_filtered_pin = WATCHDOG_DEFAULT_PARAMS::PACK_OUT_FILTERED_PIN,
-        const unsigned long kick_interval_ms = 10UL) : 
+        pin teensy_ok_pin = pin_default_params::TEENSY_OK_PIN,
+        pin wd_kick_pin = pin_default_params::WD_KICK_PIN, 
+        pin n_latch_pin = pin_default_params::N_LATCH_EN_PIN,
+        pin imd_ok_pin = pin_default_params::IMD_OK_PIN, 
+        pin shdn_out_pin = pin_default_params::SHDN_OUT_PIN,
+        pin ts_out_filtered_pin = pin_default_params::TS_OUT_FILTERED_PIN,
+        pin pack_out_filtered_pin = pin_default_params::PACK_OUT_FILTERED_PIN,
+        pin bspd_current_pin = pin_default_params::BSPD_CURRENT_PIN,
+        pin scaled_24V_pin = pin_default_params::SCALED_24V_PIN,
+        const uint32_t kick_interval_ms = 10UL) : 
                         _teensy_wd_kick_pin(wd_kick_pin),
                         _teensy_ok_pin(teensy_ok_pin),
                         _teensy_n_latch_en_pin(n_latch_pin),
@@ -44,6 +48,8 @@ public:
                         _teensy_shdn_out_pin(shdn_out_pin),
                         _teensy_ts_out_filtered_pin(ts_out_filtered_pin),
                         _teensy_pack_out_filtered_pin(pack_out_filtered_pin),
+                        _teensy_bspd_current_pin(bspd_current_pin),
+                        _teensy_scaled_24V_pin(scaled_24V_pin),
                         _watchdog_kick_interval(kick_interval_ms),
                         _watchdog_time(0), 
                         _watchdog_state(false)
@@ -57,21 +63,29 @@ public:
 
 private:
     /* Pin Assignments */
-    pin _teensy_wd_kick_pin;  // > Needs to flip at 100 Hz to keep BMS_OK high
-    pin _teensy_ok_pin;   // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
-    pin _teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
-    pin _teensy_imd_ok_pin; // < READ from IMD hardware, go to FAULT state if HIGH
-    pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
-    pin _teensy_ts_out_filtered_pin;
-    pin _teensy_pack_out_filtered_pin;
-
+    const pin _teensy_wd_kick_pin;  // > Needs to flip at 100 Hz to keep BMS_OK high
+    const pin _teensy_ok_pin;   // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
+    const pin _teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
+    const pin _teensy_imd_ok_pin; // < READ from IMD hardware, go to FAULT state if HIGH
+    const pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
+    const pin _teensy_ts_out_filtered_pin;
+    const pin _teensy_pack_out_filtered_pin;
+    const pin _teensy_bspd_current_pin;
+    const pin _teensy_scaled_24V_pin;
 
     // following is taken from VCR Watchdog System
-    /* Watchdog last kicked time */
-    unsigned long _watchdog_kick_interval;
-    unsigned long _watchdog_time;
+    /* Watchdog last kicked time and output state */
+    const uint32_t _watchdog_kick_interval;
+    uint32_t _watchdog_time;
     bool _watchdog_state;
-    /* Watchdog output state */
+    
+    const float _bit_resolution = 4095.0F;
+    const float _teensy41_max_input_voltage = 3.3F;
+    const float _teensy41_min_digital_read_voltage_thresh = 0.2F;
+    const float _teensy41_max_digital_read_voltage_thresh = 3.0F;
+    const float _pack_and_ts_out_conv_factor = 0.00482F;
+    const float _bspd_current_conv_factor = 0.5118F;
+    const float _glv_conv_factor = 0.1036F;
 
 public: 
     /**
@@ -79,7 +93,7 @@ public:
      * @param curr_millis time of ACU time
      * @post IF reach interval, _watchdog_time updated and state switched
     */
-    bool update_watchdog_state(unsigned long curr_millis);
+    bool update_watchdog_state(uint32_t curr_millis);
 
     /**
      * Sets Teensy_OK LOW
@@ -87,7 +101,6 @@ public:
     */
     void set_teensy_ok_low();
     void set_teensy_ok_high();
-
 
     /**
      * Sets n_latch_en low
@@ -111,6 +124,13 @@ public:
     */
     volt read_ts_out_filtered();
     volt read_pack_out_filtered();
+
+    volt read_bspd_current();
+
+    /**
+     * @return voltage value of GLV, nominal 24V
+    */
+    volt read_global_lv_value();
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;

@@ -1,55 +1,67 @@
 #include "ACUController.h"
 
-template <size_t num_cells>
-void ACUController<num_cells>::init(time_ms system_start_time) {
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms system_start_time, volt pack_voltage) {
     _acu_state.last_time_ov_fault_not_present = system_start_time;
     _acu_state.last_time_uv_fault_not_present = system_start_time;
     _acu_state.last_time_board_ot_fault_not_present = system_start_time;
     _acu_state.last_time_cell_ot_fault_not_present = system_start_time;
-    _acu_state.last_time_pack_uv_fault_not_present= system_start_time;
+    _acu_state.last_time_pack_uv_fault_not_present = system_start_time;
+    _acu_state.last_time_invalid_packet_present = system_start_time;
+    _acu_state.prev_bms_time_stamp = system_start_time;
+    _acu_state.SoC = (pack_voltage <= _parameters.pack_min_voltage) ? 0.0 : ((pack_voltage - _parameters.pack_min_voltage) / (_parameters.pack_max_voltage - _parameters.pack_min_voltage));
 }
 
-template <size_t num_cells>
-typename ACUController<num_cells>::ACUStatus
-ACUController<num_cells>::evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_cells> &input_state)
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+typename ACUController<num_cells, num_celltemps, num_boardtemps>::ACUStatus
+ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state)
 {   
-    _acu_state.charging_enabled = charging_enabled;
+    _acu_state.charging_enabled = input_state.charging_enabled;
+    
+    bool has_invalid_packet = false;
+    if (input_state.max_consecutive_invalid_packet_count != 0) { // meaning that at least one of the packets is invalid
+        has_invalid_packet = true;
+    }
+
     // Cell balancing calculations
     if (_acu_state.charging_enabled)
     {
-        _acu_state.cb = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
-    } else {
-        // Fill with zeros, no balancing
-        _acu_state.cb.fill(0);
+        _acu_state.cell_balancing_statuses = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
+    } else { // Fill with zeros, no balancing
+        _acu_state.cell_balancing_statuses.fill(0);
     }
 
     // Update voltage fault time stamps
-    if (input_state.max_cell_voltage < _parameters.ov_thresh_v) { 
+    if (input_state.max_cell_voltage < _parameters.ov_thresh_v || has_invalid_packet) { 
         _acu_state.last_time_ov_fault_not_present = current_millis;
     } 
-    if (input_state.min_cell_voltage > _parameters.uv_thresh_v) { 
+    if (input_state.min_cell_voltage > _parameters.uv_thresh_v || has_invalid_packet) { 
         _acu_state.last_time_uv_fault_not_present = current_millis;
     }
-    if (input_state.pack_voltage > _parameters.min_pack_total_v) {
+    if (input_state.pack_voltage > _parameters.min_pack_total_v || has_invalid_packet) {
         _acu_state.last_time_pack_uv_fault_not_present = current_millis;
     }
     // Update temp fault time stamps
-    if (input_state.max_board_temp < _parameters.charging_ot_thresh_c) { // charging ot thresh will be the lower of the 2
+    celsius ot_thresh = _acu_state.charging_enabled ? _parameters.charging_ot_thresh_c : _parameters.running_ot_thresh_c;
+    if (input_state.max_board_temp < ot_thresh || has_invalid_packet) { // charging ot thresh will be the lower of the 2
         _acu_state.last_time_board_ot_fault_not_present = current_millis;
     }
-    celsius cell_ot_thresh = _acu_state.charging_enabled ? _parameters.charging_ot_thresh_c : _parameters.running_ot_thresh_c;
-    if (input_state.max_cell_temp < cell_ot_thresh) {
+    if (input_state.max_cell_temp < ot_thresh || has_invalid_packet) {
         _acu_state.last_time_cell_ot_fault_not_present = current_millis;
     }
+    if (input_state.max_consecutive_invalid_packet_count < _parameters.invalid_packet_count_thresh) {
+        _acu_state.last_time_invalid_packet_present = current_millis;
+    }
+    _acu_state.prev_bms_time_stamp = current_millis;
     
-    // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot
+    // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot ONLY if the data packet is all valid
     _acu_state.has_fault = _check_faults(current_millis);
 
     return _acu_state;
 }
 
-template <size_t num_cells>
-std::array<bool, num_cells> ACUController<num_cells>::_calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage)
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+std::array<bool, num_cells> ACUController<num_cells, num_celltemps, num_boardtemps>::_calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage)
 {
     std::array<bool, num_cells> cb = {false};
 
@@ -64,14 +76,24 @@ std::array<bool, num_cells> ACUController<num_cells>::_calculate_cell_balance_st
     return cb;
 }
 
-template <size_t num_cells>
-bool ACUController<num_cells>::_check_faults(time_ms current_millis)
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_charge(float em_current, uint32_t delta_time_ms)
 {
-    return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis);
+    float delta_ah = (em_current) * ((float) (delta_time_ms / 1000.0f) / 3600.0f); // amp hours
+    _acu_state.SoC -= delta_ah / _parameters.pack_nominal_capacity;
+    if (_acu_state.SoC < 0.0) _acu_state.SoC = 0;
+    if (_acu_state.SoC > 1.0) _acu_state.SoC = 1;
+    return _acu_state.SoC;
 }
 
-template <size_t num_cells>
-bool ACUController<num_cells>::_check_voltage_faults(time_ms current_millis)
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+bool ACUController<num_cells, num_celltemps, num_boardtemps>::_check_faults(time_ms current_millis)
+{   
+    return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis) || _check_invalid_packet_faults(current_millis);
+}
+
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+bool ACUController<num_cells, num_celltemps, num_boardtemps>::_check_voltage_faults(time_ms current_millis)
 {
     bool ov_fault = (current_millis - _acu_state.last_time_ov_fault_not_present) > _parameters.max_allowed_voltage_fault_dur;
     bool uv_fault = (current_millis - _acu_state.last_time_uv_fault_not_present) > _parameters.max_allowed_voltage_fault_dur;
@@ -79,16 +101,17 @@ bool ACUController<num_cells>::_check_voltage_faults(time_ms current_millis)
     return ov_fault || uv_fault || pack_fault;
 }
 
-template <size_t num_cells>
-bool ACUController<num_cells>::_check_temperature_faults(time_ms current_millis)
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+bool ACUController<num_cells, num_celltemps, num_boardtemps>::_check_temperature_faults(time_ms current_millis)
 {
     bool cell_ot_fault = (current_millis - _acu_state.last_time_cell_ot_fault_not_present) > _parameters.max_allowed_temp_fault_dur;
     bool board_ot_fault = (current_millis - _acu_state.last_time_board_ot_fault_not_present) > _parameters.max_allowed_temp_fault_dur;
     return cell_ot_fault || board_ot_fault;
 }
 
-template <size_t num_cells>
-void ACUController<num_cells>::_coulomb_counting()
-{
-    // Numbers
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+bool ACUController<num_cells, num_celltemps, num_boardtemps>::_check_invalid_packet_faults(time_ms current_millis)
+{   
+    bool invalid_packet_fault = (current_millis - _acu_state.last_time_invalid_packet_present) > _parameters.max_allowed_invalid_packet_fault_dur;
+    return invalid_packet_fault;
 }

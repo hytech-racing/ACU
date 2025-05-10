@@ -3,13 +3,16 @@
 void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
     switch(_current_state) {
         case ACUState_e::STARTUP: 
-        {
-            _set_state(ACUState_e::DRIVING, current_millis);
+        {   
+            if (_received_valid_shdn_out()) {
+                _set_state(ACUState_e::ACTIVE, current_millis);
+                break;
+            }
             break;
         }
-        case ACUState_e::DRIVING: 
+        case ACUState_e::ACTIVE: 
         {
-            if (_received_CCU_message()) {
+            if (_charge_state_requested()) {
                 _set_state(ACUState_e::CHARGING, current_millis);
                 break;
             }
@@ -21,18 +24,26 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
         }
         case ACUState_e::CHARGING: 
         {   
-            if (!_received_CCU_message()) {
-                _set_state(ACUState_e::DRIVING, current_millis);
+            if (!_charge_state_requested()) {
+                _set_state(ACUState_e::ACTIVE, current_millis);
                 break;
             }
             if (_has_bms_fault() || _has_imd_fault()) {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
+            if (!_received_valid_shdn_out()) {
+                _set_state(ACUState_e::ACTIVE, current_millis);
+                break;
+            }
             break;
         }
         case ACUState_e::FAULTED: 
-        {
+        {   
+            if ((current_millis - _last_state_changed_time > 500) && !(_has_bms_fault())) {
+                _reinitialize_watchdog();
+            }
+
             if (_received_valid_shdn_out() && !(_has_bms_fault() || _has_imd_fault())) {
                 _set_state(ACUState_e::STARTUP, current_millis);
                 break;
@@ -56,14 +67,6 @@ void ACUStateMachine::_set_state(ACUState_e new_state, unsigned long curr_millis
 void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis)
 {
     switch(prev_state) {
-        case ACUState_e::STARTUP: 
-        {
-            break;
-        }
-        case ACUState_e::DRIVING: 
-        {
-            break;
-        }
         case ACUState_e::CHARGING: 
         {
             _disable_cell_balancing();
@@ -71,10 +74,12 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
         }
         case ACUState_e::FAULTED: 
         {
-            _reset_latch();
+            _set_n_latch_en_low();
             _reinitialize_watchdog();
             break;
         }
+        case ACUState_e::STARTUP:
+        case ACUState_e::ACTIVE:
         default:
             break;
     }
@@ -88,21 +93,19 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
             _reinitialize_watchdog();
             break;
         }
-        case ACUState_e::DRIVING: 
-        {   
-            break;
-        }
         case ACUState_e::CHARGING: 
-        {
+        {   
             _enable_cell_balancing();
             break;
         }
         case ACUState_e::FAULTED: 
-        {
+        {   
             _disable_watchdog();
-            _disable_n_latch_en();
+            _set_n_latch_en_high();
+            _last_state_changed_time = curr_millis;
             break;
         }
+        case ACUState_e::ACTIVE:
         default:
             break;
     }

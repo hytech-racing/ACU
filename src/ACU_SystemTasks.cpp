@@ -2,42 +2,42 @@
 
 /* Interface Function Dependencies */
 #include "WatchdogInterface.h"
+#include "CCUInterface.h"
+#include "EMInterface.h"
 
-/* Delegate Function Definitions */
-etl::delegate<bool()> received_CCU_message = etl::delegate<bool()>::create([]() -> bool {
-    return false;
-});
-
-etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool {
-    return ACUDataInstance::instance().acu_ok;
-});
-
-etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_imd_ok>(WatchdogInstance::instance());
-
-etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_shdn_out>(WatchdogInstance::instance());
-
-etl::delegate<void()> enable_cell_balancing = etl::delegate<void()>::create([]() -> void {
-    ACUDataInstance::instance().charging_enabled = true;
-});
-
-etl::delegate<void()> disable_cell_balancing = etl::delegate<void()>::create([]() -> void {
-    ACUDataInstance::instance().charging_enabled = false;
-});
-
-etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
-
-etl::delegate<void()> reinitialize_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_high>(WatchdogInstance::instance());
-
-etl::delegate<void()> disable_n_latch_en = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_n_latch_en_low>(WatchdogInstance::instance());
-
-etl::delegate<void()> reset_latch = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_n_latch_en_high>(WatchdogInstance::instance());
-
-bool initialize_all_systems() {
+bool initialize_all_systems()
+{
     // Initialize the ACU Controller
-    ACUControllerInstance<NUM_CELLS>::create();
-    ACUControllerInstance<NUM_CELLS>::instance().init(sys_time::hal_millis());
+    ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::create();
+    ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().init(sys_time::hal_millis(), ACUDataInstance::instance().pack_voltage);
     /* State Machine Initialization */
-    ACUStateMachineInstance::create(received_CCU_message,
+
+    /* Delegate Function Definitions */
+    etl::delegate<bool()> charge_state_request = etl::delegate<bool()>::create([]() -> bool
+                                                                            { return CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested; });
+
+    etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool
+                                                                        { return !ACUDataInstance::instance().acu_ok; });
+
+    etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
+                                                                        { return !WatchdogInstance::instance().read_imd_ok(); });
+
+    etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_shdn_out>(WatchdogInstance::instance());
+
+    etl::delegate<void()> enable_cell_balancing = etl::delegate<void()>::create([]() -> void
+                                                                                { ACUDataInstance::instance().charging_enabled = true; });
+
+    etl::delegate<void()> disable_cell_balancing = etl::delegate<void()>::create([]() -> void
+                                                                                { ACUDataInstance::instance().charging_enabled = false; });
+    etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
+
+    etl::delegate<void()> reinitialize_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_high>(WatchdogInstance::instance());
+
+    etl::delegate<void()> disable_n_latch_en = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_n_latch_en_low>(WatchdogInstance::instance());
+
+    etl::delegate<void()> reset_latch = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_n_latch_en_high>(WatchdogInstance::instance());
+
+    ACUStateMachineInstance::create(charge_state_request,
                                     has_bms_fault,
                                     has_imd_fault,
                                     received_valid_shdn_out,
@@ -45,9 +45,26 @@ bool initialize_all_systems() {
                                     disable_cell_balancing,
                                     disable_watchdog,
                                     reinitialize_watchdog,
-                                    disable_n_latch_en,
-                                    reset_latch);
+                                    reset_latch, 
+                                    disable_n_latch_en);
 
     return true;
+}
+
+HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+{
+    auto acu_status = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().evaluate_accumulator(sys_time::hal_millis(), ACUDataInstance::instance()); // verified
+    ACUDataInstance::instance().acu_ok = !acu_status.has_fault;
+    ACUDataInstance::instance().cell_balancing_statuses = acu_status.cell_balancing_statuses;
+
+    EMData_s em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
+    ACUAllDataInstance::instance().SoC = ACUDataInstance::instance().SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_state_of_charge(em_data.em_current, em_data.time_since_prev_msg_ms);
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo) {
+    ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
+
+    return HT_TASK::TaskResponse::YIELD;
 }
 

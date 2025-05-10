@@ -19,19 +19,23 @@
 #include "ht_sched.hpp"
 #include "ht_task.hpp"
 
-elapsedMillis timer = 0;
+const elapsedMillis timer = 0;
 
 using chip_type = LTC6811_Type_e;
 
+const size_t sample_period_ms = 250;
+const uint8_t spi_baudrate = 115200;
+const uint8_t num_cells_per_board = 21;
+
 // Initialize chip_select, chip_select_per_chip, and address
-constexpr int num_chips = 12; 
-constexpr int num_chip_selects = 1;
-std::array<int, num_chip_selects> cs = {10};
-std::array<int, num_chips> cs_per_chip = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
-std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+const constexpr int num_chips = 12; 
+const constexpr int num_chip_selects = 1;
+const std::array<int, num_chip_selects> cs = {10};
+const std::array<int, num_chips> cs_per_chip = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
+const std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
 // Instantiate BMS Driver Group
-BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
+const BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
 template <typename driver_data>
 void print_voltages(driver_data data)
@@ -52,7 +56,7 @@ void print_voltages(driver_data data)
 
     Serial.print("Average Voltage: ");
 
-    Serial.print(data.total_voltage / ((num_chips / 2) * 21), 4);
+    Serial.print(data.total_voltage / ((num_chips / 2) * num_cells_per_board), 4);
 
     Serial.println("V");
 
@@ -105,7 +109,7 @@ void print_voltages(driver_data data)
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(spi_baudrate);
     SPI.begin();
     BMSGroup.init();
     Serial.println("Setup Finished!");
@@ -124,7 +128,7 @@ void loop()
 
     WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
 
-    if (timer > 250) // Need an actual schedular
+    if (timer > sample_period_ms) // Need an actual schedular
     {   
         // reset timer
         timer = 0;

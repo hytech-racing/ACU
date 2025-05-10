@@ -1,5 +1,5 @@
-#ifndef __ACUCONTROLLER_H__
-#define __ACUCONTROLLER_H__
+#ifndef ACUCONTROLLER_H
+#define ACUCONTROLLER_H
 
 #include <array>
 #include <stddef.h>
@@ -7,6 +7,7 @@
 #include <cstdint>
 #include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 
 using time_ms = uint32_t;
 
@@ -17,10 +18,15 @@ namespace acu_controller_default_params
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 45.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
+    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 200; // Same as voltage fault count
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
+    constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
-};
+    constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
+    constexpr const float PACK_MAX_VOLTAGE = 529.2; // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
+    constexpr const float PACK_MIN_VOLTAGE = 378.0; // from data sheet^ but just assume 126 * 3.0V
+}
 
 template <size_t num_cells>
 struct ACUControllerData_s
@@ -30,11 +36,14 @@ struct ACUControllerData_s
     time_ms last_time_cell_ot_fault_not_present;
     time_ms last_time_board_ot_fault_not_present;
     time_ms last_time_pack_uv_fault_not_present;
-
+    time_ms last_time_invalid_packet_present;
+    time_ms prev_bms_time_stamp;
+    time_ms prev_em_time_stamp;
+    float SoC;
     bool has_fault;
     bool charging_enabled;
 
-    std::array<bool, num_cells> cb;
+    std::array<bool, num_cells> cell_balancing_statuses;
 };
 
 struct ACUControllerParameters {
@@ -43,19 +52,24 @@ struct ACUControllerParameters {
     celsius charging_ot_thresh_c = 0;
     celsius running_ot_thresh_c = 0;
     volt min_pack_total_v = 0;
+    size_t invalid_packet_count_thresh = 0;
     time_ms max_allowed_voltage_fault_dur = 0;
     time_ms max_allowed_temp_fault_dur = 0;
+    time_ms max_allowed_invalid_packet_fault_dur = 0;
     volt v_diff_to_init_cb = 0;
+    float pack_nominal_capacity = 0;
+    float pack_max_voltage = 0;
+    float pack_min_voltage = 0;
 };
 
-template<size_t num_cells>
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 class ACUController
 {
-    using ACUData = etl::singleton<ACUData_s<num_cells>>;
+    using ACUData = etl::singleton<ACUData_s<num_cells, num_celltemps, num_boardtemps>>;
     using ACUStatus = ACUControllerData_s<num_cells>;
     
 public:
-   
+
 
     /**
      * ACU Controller Constructor
@@ -72,31 +86,46 @@ public:
                     celsius charging_ot_thresh_c = acu_controller_default_params::CHARGING_OT_THRESH, 
                     celsius running_ot_thresh_c = acu_controller_default_params::RUNNING_OT_THRESH,
                     volt min_pack_total_voltage = acu_controller_default_params::MIN_PACK_TOTAL_VOLTAGE,
+                    size_t invalid_packet_count_thresh = acu_controller_default_params::MAX_INVALID_PACKET_FAULT_COUNT,
                     time_ms max_volt_fault_dur = acu_controller_default_params::MAX_VOLTAGE_FAULT_DUR,
                     time_ms max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR,
-                    volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB) : 
+                    time_ms max_invalid_packet_dur = acu_controller_default_params::MAX_INVALID_PACKET_FAULT_DUR,
+                    volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB,
+                    float pack_nominal_capacity = acu_controller_default_params::PACK_NOMINAL_CAPACITY_AH,
+                    float pack_max_voltage = acu_controller_default_params::PACK_MAX_VOLTAGE,
+                    float pack_min_voltage = acu_controller_default_params::PACK_MIN_VOLTAGE) : 
         _parameters {
             ov_thresh_v,
             uv_thresh_v,
             charging_ot_thresh_c,
             running_ot_thresh_c,
             min_pack_total_voltage,
+            invalid_packet_count_thresh,
             max_volt_fault_dur,
             max_temp_fault_dur,
-            v_diff_init_cb
+            max_invalid_packet_dur,
+            v_diff_init_cb,
+            pack_nominal_capacity,
+            pack_max_voltage,
+            pack_min_voltage
         }
         {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
      */
-    void init(time_ms system_start_time);
+    void init(time_ms system_start_time, volt pack_voltage);
 
     /**
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, bool charging_enabled, const ACUData_s<num_cells> &input_state);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state);
+
+    /**
+     * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
+    */
+    float get_state_of_charge(float em_current, uint32_t delta_time_ms);
 private:
     /**
      * Calculate Cell Balancing values
@@ -124,10 +153,9 @@ private:
     bool _check_temperature_faults(time_ms current_millis);
 
     /**
-     * NOTE: TBD
+     * @return boolean, true if there has been global invalid packets for > MAX DURATION
     */
-    void _coulomb_counting();
-
+    bool _check_invalid_packet_faults(time_ms current_millis);
 private:
     /**
      * @brief ACU State Holder
@@ -142,8 +170,8 @@ private:
     const ACUControllerParameters _parameters = {};
 };
 
-template<size_t num_cells>
-using ACUControllerInstance = etl::singleton<ACUController<num_cells>>;
+template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+using ACUControllerInstance = etl::singleton<ACUController<num_cells, num_celltemps, num_boardtemps>>;
 
 #include "ACUController.tpp"
 #endif

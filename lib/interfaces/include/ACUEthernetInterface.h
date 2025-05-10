@@ -3,54 +3,69 @@
 
 /* External Libraries */
 #include "hytech_msgs.pb.h"
+#include "QNEthernet.h"
+#include "EthernetAddressDefs.h"
 #include "ProtobufMsgInterface.h"
+
 #include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 
-namespace ACUEthernetInterface
-{
-  /**
-     * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUCoreData_s.
-     *
-     * @param shared_state Minimum data ACU must send for car to run.
-     * @return A populated instance of the outgoing protoc struct.
-     */
-    hytech_msgs_ACUCoreData_s make_acu_core_data_msg(const ACUCoreData_s &shared_state);
+#include "device_fw_version.h"
 
-    /**
-     * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUAllData_s.
-     *
-     * @param shared_state Detailed, unprocessed data from ACU sensors.
-     * @return A populated instance of the outgoing protoc struct.
-     */
-    hytech_msgs_ACUAllData_s make_acu_all_data_msg(const ACUAllData_s &shared_state);
+#include <etl/singleton.h>
 
-    /**
-     * Function to take a populated protoc struct from VCR and update ACUCoreData.
-     * 
-     * @param msg_in A reference to a populated protoc struct.
-     * @param shared_state A reference to ACUCoreData_s.
-     * 
-     * @post After this function completes, shared_state will have updated contents of VCRData.
-     */
-    void receive_pb_msg_vcr(const hytech_msgs_VCRData_s &msg_in, ACUCoreData_s &shared_state);
+using namespace qindesign::network;
 
-    /**
-     * Helper function to copy veh_vec data.
-     *
-     * @param original A populated instance of a veh_vec.
-     * @param destination A reference to an unpopulated instance of veh_vec.
-     * @post The destination veh_vec will be populated with the data from the original.
-     */
-    // template <typename from_T, typename to_T>
-    // void copy_veh_vec_members(const from_T& from, to_T& to)
-    // {
-    //   to.FL = from.FL;
-    //   to.FR = from.FR;
-    //   to.RL = from.RL;
-    //   to.RR = from.RR;
-    // }
-
-    //void handle_send_ethernet_data(const hytech_msgs_VCRData_s &data);
+namespace acu_ethernet_params {
+  constexpr const uint8_t num_cells = 126;
+  constexpr const uint8_t num_celltemps = 48;
+  constexpr const uint8_t num_chips = 12;
 };
+
+class ACUEthernetInterface
+{
+public:
+  ACUEthernetInterface(uint8_t num_cells = acu_ethernet_params::num_cells, 
+                        uint8_t num_celltemps = acu_ethernet_params::num_celltemps,
+                        uint8_t num_chips = acu_ethernet_params::num_chips) :
+                        _num_cells(num_cells),
+                        _num_celltemps(num_celltemps),
+                        _num_chips(num_chips) {};
+
+  void init_ethernet_device();
+
+  void handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData &data);
+
+  void handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData &data);
+
+  /**
+   * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUCoreData_s.
+   *
+   * @param shared_state Minimum data ACU must send for car to run.
+   * @return A populated instance of the outgoing protoc struct.
+   */
+  hytech_msgs_ACUCoreData make_acu_core_data_msg(const ACUCoreData_s &shared_state);
+
+  /**
+   * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUAllData_s.
+   *
+   * @param shared_state Detailed, unprocessed data from ACU sensors.
+   * @return A populated instance of the outgoing protoc struct.
+   */
+  hytech_msgs_ACUAllData make_acu_all_data_msg(const ACUAllDataType_s &shared_state);
+
+private:
+  /* Ethernet Sockets */
+  EthernetUDP _acu_core_data_send_socket;
+  EthernetUDP _acu_all_data_send_socket;
+  EthernetUDP _vcr_data_recv_socket;
+  EthernetUDP _db_data_recv_socket;
+
+  const uint8_t _num_cells = 0;
+  const uint8_t _num_celltemps = 0;
+  const uint8_t _num_chips = 0;
+};
+
+using ACUEthernetInterfaceInstance = etl::singleton<ACUEthernetInterface>;
 
 #endif /* ACU_ETHERNET_INTERFACE_H */
