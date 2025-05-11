@@ -132,7 +132,7 @@ HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sy
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
-    
+
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
     ACUAllDataInstance::instance().core_data.measured_glv = 0;
     ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = 0;
@@ -170,7 +170,7 @@ HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sys
 }
 
 HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    if (CCUInterfaceInstance::instance().is_charging_requested() || true) {
+    if (CCUInterfaceInstance::instance().is_charging_requested()) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_temps_CAN_message();
     }
     return HT_TASK::TaskResponse::YIELD;
