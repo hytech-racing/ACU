@@ -64,11 +64,11 @@ template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 std::array<bool, num_cells> ACUController<num_cells, num_celltemps, num_boardtemps>::_calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage)
 {
     std::array<bool, num_cells> cb = {false};
-
+    const volt min_discharge_voltage_thresh = 3.7F;
     for (size_t cell = 0; cell < num_cells; cell++)
     {
         volt cell_voltage = voltages[cell];
-        if ((cell_voltage) - min_voltage > _parameters.v_diff_to_init_cb) // && max_voltage - (cell_voltage) < 200 &&
+        if (((cell_voltage) - min_voltage > _parameters.v_diff_to_init_cb) && (cell_voltage > min_discharge_voltage_thresh)) // && max_voltage - (cell_voltage) < 200 &&
         {                                   
             cb[cell] = true;
         }
