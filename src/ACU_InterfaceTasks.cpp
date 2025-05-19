@@ -148,7 +148,7 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(), ACUDataInstance::instance().bms_ok);
+    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(), WatchdogInstance::instance().read_shdn_out());
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
