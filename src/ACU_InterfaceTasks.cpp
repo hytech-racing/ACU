@@ -17,6 +17,7 @@ void initialize_all_interfaces()
 
     /* ACU Data Struct */
     ACUDataInstance::create();
+    ACUDataInstance::instance().bms_ok = true;
     ACUAllDataInstance::create();
     ACUAllDataInstance::instance().fw_version_info.fw_version_hash = convert_version_to_char_arr(device_status_t::firmware_version);
     ACUAllDataInstance::instance().fw_version_info.project_on_main_or_master = device_status_t::project_on_main_or_master;
@@ -147,7 +148,7 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(), ACUDataInstance::instance().acu_ok);
+    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(), ACUDataInstance::instance().bms_ok);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -284,7 +285,7 @@ void print_bms_data(bms_data data)
 
 HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    if (ACUDataInstance::instance().acu_ok)
+    if (ACUDataInstance::instance().bms_ok)
     {
         Serial.print("BMS is OK\n");
     }

@@ -35,7 +35,7 @@ class CCUInterface
 public:
     CCUInterface() = delete;
 
-    CCUInterface(unsigned long init_millis, unsigned long charing_enable_threshold_ms) : _min_charging_enable_threshold(charing_enable_threshold_ms)
+    CCUInterface(unsigned long init_millis, unsigned long charging_enable_threshold_ms) : _min_charging_enable_threshold(charging_enable_threshold_ms)
     {
         _curr_data.last_time_charging_requested = 0;
         _curr_data.charging_requested = false;

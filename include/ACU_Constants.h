@@ -43,7 +43,7 @@ namespace ACUConstants
 
     constexpr uint32_t CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t CCU_SEND_PRIORITY = 11;
-    constexpr uint32_t ACU_OK_CAN_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+    constexpr uint32_t ACU_OK_CAN_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
     constexpr uint32_t ACU_OK_CAN_PRIORITY = 3;
     constexpr uint32_t CCU_SEND_A_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t CCU_SEND_A_PRIORITY = 12;
