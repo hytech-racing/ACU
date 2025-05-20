@@ -29,7 +29,8 @@ public:
         etl::delegate<void()> disable_watchdog,
         etl::delegate<void()> reinitialize_watchdog,
         etl::delegate<void()> reset_latch,
-        etl::delegate<void()> disable_n_latch_en
+        etl::delegate<void()> disable_n_latch_en,
+        uint32_t curr_millis
     ) :
     _charge_state_requested(charge_state_requested),
     _has_bms_fault(has_bms_fault),
@@ -43,6 +44,7 @@ public:
     _set_n_latch_en_low(disable_n_latch_en)
     {
         _current_state = ACUState_e::STARTUP;
+        _last_state_changed_time = curr_millis;
     };
 
     void tick_state_machine(unsigned long current_millis);

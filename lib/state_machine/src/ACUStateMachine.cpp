@@ -8,7 +8,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
                 _set_state(ACUState_e::ACTIVE, current_millis);
                 break;
             }
-            if (_has_bms_fault() || _has_imd_fault()) {
+            if ((current_millis - _last_state_changed_time > 2000) && (_has_bms_fault() || _has_imd_fault())) {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }

@@ -48,7 +48,8 @@ bool initialize_all_systems()
                                     disable_watchdog,
                                     reinitialize_watchdog,
                                     reset_latch, 
-                                    disable_n_latch_en);
+                                    disable_n_latch_en,
+                                    sys_time::hal_millis());
 
     return true;
 }
