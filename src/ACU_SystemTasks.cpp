@@ -22,7 +22,7 @@ bool initialize_all_systems()
                                                                         { return !ACUDataInstance::instance().bms_ok; });
 
     etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
-                                                                        { return !WatchdogInstance::instance().read_imd_ok(); });
+                                                                        { return !WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()); });
 
     etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_shdn_out>(WatchdogInstance::instance());
 

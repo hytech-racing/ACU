@@ -13,7 +13,7 @@ void initialize_all_interfaces()
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init(); 
+    WatchdogInstance::instance().init(sys_time::hal_millis()); 
 
     /* ACU Data Struct */
     ACUDataInstance::create();
@@ -148,7 +148,7 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(), ACUStateMachineInstance::instance().get_state() != ACUState_e::FAULTED);
+    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()), ACUStateMachineInstance::instance().get_state() != ACUState_e::FAULTED);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -294,7 +294,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print("BMS is NOT OK\n");
     }
 
-    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
+    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()));
     Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
 
     Serial.print("TS OUT Filtered: ");

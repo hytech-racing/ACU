@@ -59,7 +59,7 @@ public:
      * @pre constructor called and instance created
      * @post Pins on Teensy configured and written as IN/OUT
     */ 
-    void init();
+    void init(uint32_t init_millis);
 
 private:
     /* Pin Assignments */
@@ -78,7 +78,10 @@ private:
     const uint32_t _watchdog_kick_interval;
     uint32_t _watchdog_time;
     bool _watchdog_state;
+    bool _in_imd_startup_period;
     
+    uint32_t _init_millis = 0;
+    const uint32_t _imd_startup_time = 2000;
     const float _bit_resolution = 4095.0F;
     const float _teensy41_max_input_voltage = 3.3F;
     const float _teensy41_min_digital_read_voltage_thresh = 0.2F;
@@ -112,7 +115,7 @@ public:
     /**
      * @return the state of the IMD, HIGH = NO FAULT
     */
-    bool read_imd_ok();
+    bool read_imd_ok(uint32_t curr_millis);
 
     /**
      * @return the state of SHDN_OUT, HIGH = CAR was STARTED UP
