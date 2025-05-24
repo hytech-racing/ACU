@@ -80,7 +80,7 @@ template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_charge(float em_current, uint32_t delta_time_ms)
 {
     float delta_ah = (em_current) * ((float) (delta_time_ms / 1000.0f) / 3600.0f); // amp hours
-    _acu_state.SoC -= delta_ah / _parameters.pack_nominal_capacity;
+    _acu_state.SoC += delta_ah / _parameters.pack_nominal_capacity; // should be -= but EM inverted
     if (_acu_state.SoC < 0.0) _acu_state.SoC = 0;
     if (_acu_state.SoC > 1.0) _acu_state.SoC = 1;
     return _acu_state.SoC;
