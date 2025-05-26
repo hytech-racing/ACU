@@ -33,8 +33,8 @@ void CCUInterface::handle_enqueue_acu_core_voltages_CAN_message() {
 
 void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
     BMS_DETAILED_VOLTAGES_t detailed_msg = {};
-    detailed_msg.ic_id = static_cast<uint8_t>(_curr_data.detailed_voltages_group_id);
-    detailed_msg.group_id = static_cast<uint8_t>(_curr_data.detailed_voltages_ic_id);
+    detailed_msg.ic_id = static_cast<uint8_t>(_curr_data.detailed_voltages_ic_id);
+    detailed_msg.group_id = static_cast<uint8_t>(_curr_data.detailed_voltages_group_id);
     detailed_msg.voltage_0_ro = HYTECH_voltage_0_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id]); 
     detailed_msg.voltage_1_ro = HYTECH_voltage_1_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id+1]); 
     detailed_msg.voltage_2_ro = HYTECH_voltage_2_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id+2]); 
@@ -54,8 +54,8 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
 
 void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     BMS_DETAILED_TEMPS_t detailed_msg = {};
-    detailed_msg.ic_id = static_cast<uint8_t>(_curr_data.detailed_temps_group_id);
-    detailed_msg.group_id = static_cast<uint8_t>(_curr_data.detailed_temps_ic_id);
+    detailed_msg.ic_id = static_cast<uint8_t>(_curr_data.detailed_temps_ic_id);
+    detailed_msg.group_id = static_cast<uint8_t>(_curr_data.detailed_temps_group_id);
     detailed_msg.thermistor_id_0_ro = HYTECH_thermistor_id_0_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id]); 
     detailed_msg.thermistor_id_1_ro = HYTECH_thermistor_id_1_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id+1]); 
     detailed_msg.thermistor_id_2_ro = HYTECH_thermistor_id_2_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id+2]); 
