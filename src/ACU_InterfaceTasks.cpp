@@ -148,7 +148,16 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()), ACUStateMachineInstance::instance().get_state() != ACUState_e::FAULTED);
+    if (ACUStateMachineInstance::instance().get_state() != ACUState_e::FAULTED) {
+        ACUDataInstance::instance().veh_bms_fault_latched = ACUDataInstance::instance().veh_imd_fault_latched = false;
+    } 
+    if (!WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis())) {
+        ACUDataInstance::instance().veh_imd_fault_latched = true;
+    }
+    if (!ACUDataInstance::instance().bms_ok) {
+        ACUDataInstance::instance().veh_bms_fault_latched = true;
+    }
+    VCRInterfaceInstance::instance().set_monitoring_data(!ACUDataInstance::instance().veh_imd_fault_latched, !ACUDataInstance::instance().veh_bms_fault_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
