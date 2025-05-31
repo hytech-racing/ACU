@@ -90,12 +90,14 @@ struct BMSData
     volt min_cell_voltage;
     volt max_cell_voltage;
     celsius max_cell_temp;
+    celsius min_cell_temp;
     celsius max_board_temp;
     size_t min_cell_voltage_id;              // 0 - 125
     size_t max_cell_voltage_id;              // 0 - 125
     size_t max_board_temperature_segment_id; // 0 - 11
     size_t max_humidity_segment_id;          // DNP
     size_t max_cell_temperature_cell_id;     // 0 - 47
+    size_t min_cell_temperature_cell_id;     // 0 - 47
     volt total_voltage;
     celsius average_cell_temperature;
 };
@@ -105,6 +107,7 @@ struct ReferenceMaxMin
     volt total_voltage = 0;
     volt max_cell_voltage = 0;
     volt min_cell_voltage = 65535;
+    celsius min_cell_temp_voltage = 65535;
     celsius max_cell_temp_voltage = 0;
     celsius max_board_temp_voltage = 0;
     celsius total_thermistor_temps = 0;
