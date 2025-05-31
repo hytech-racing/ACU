@@ -80,7 +80,8 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
 
 void CCUInterface::set_system_latch_state(unsigned long curr_millis, bool is_latched) {
     _curr_data.charging_requested = is_latched && ((curr_millis - _curr_data.last_time_charging_requested) < _min_charging_enable_threshold);
-}
+    _curr_data.is_connected_to_CCU = ((curr_millis - _curr_data.last_time_charging_requested) < _min_charging_enable_threshold);
+}  
 
 CCUCANInterfaceData_s CCUInterface::get_latest_data(unsigned long curr_millis) {
     return _curr_data;

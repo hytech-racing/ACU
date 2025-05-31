@@ -171,14 +171,14 @@ HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, 
 
 
 HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    if (CCUInterfaceInstance::instance().is_charging_requested()) {
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU()) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_CAN_message();
     }
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    if (CCUInterfaceInstance::instance().is_charging_requested()) {
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU()) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_temps_CAN_message();
     }
     return HT_TASK::TaskResponse::YIELD;
