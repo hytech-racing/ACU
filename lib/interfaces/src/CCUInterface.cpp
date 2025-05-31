@@ -1,6 +1,7 @@
 #include "CCUInterface.h"
 
 #include "ACUCANInterfaceImpl.h"
+#include "hytech.h"
 
 void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned long curr_millis) {
     CCU_STATUS_t ccu_msg;
@@ -69,7 +70,9 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     CAN_util::enqueue_msg(&detailed_msg, &Pack_BMS_DETAILED_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
     BMS_ONBOARD_TEMPS_t board_temp_msg = {};
-    board_temp_msg.high_temp_ro = HYTECH_high_temp_ro_toS(_acu_all_data.core_data.max_board_temp);
+    board_temp_msg.max_board_temp_ro = HYTECH_max_board_temp_ro_toS(_acu_all_data.core_data.max_board_temp);
+    board_temp_msg.high_cell_temp_ro = HYTECH_high_cell_temp_ro_toS(_acu_all_data.core_data.max_cell_temp);
+    board_temp_msg.low_cell_temp_ro = HYTECH_low_cell_temp_ro_toS(_acu_all_data.core_data.min_cell_temp);
     CAN_util::enqueue_msg(&board_temp_msg, &Pack_BMS_ONBOARD_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
     BMS_TEMPS_t temps_msg = {};

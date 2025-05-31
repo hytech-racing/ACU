@@ -9,6 +9,7 @@ struct ACUData_s {
     volt avg_cell_voltage;
     std::array<volt, num_cells> voltages;
     celsius max_cell_temp; 
+    celsius min_cell_temp; 
     celsius max_board_temp;
     float SoC;
     std::array<bool, num_cells> cell_balancing_statuses;

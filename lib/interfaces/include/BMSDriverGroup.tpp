@@ -171,6 +171,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.total_voltage = _sum_cell_voltages();
     _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
     _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
+    _bms_data.min_cell_temp = _bms_data.cell_temperatures[_bms_data.min_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
     return _bms_data;
 }
@@ -329,6 +330,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         {
             max_min_reference.max_cell_temp_voltage = gpio_in;
             bms_data.max_cell_temperature_cell_id = gpio_count;
+        }
+        if (gpio_in < max_min_reference.min_cell_temp_voltage)
+        {
+            max_min_reference.min_cell_temp_voltage = gpio_in;
+            bms_data.min_cell_temperature_cell_id = gpio_count;
         }
     }
     else

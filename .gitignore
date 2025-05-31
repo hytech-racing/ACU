@@ -4,3 +4,5 @@
 **/.DS_Store
 
 get-platformio.py
+.cache/
+compile_commands.json
