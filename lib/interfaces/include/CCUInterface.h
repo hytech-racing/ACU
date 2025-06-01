@@ -81,6 +81,7 @@ public:
             _acu_all_data.board_temps[board] = input.board_temps[board];
         }
         _acu_all_data.core_data.max_board_temp = input.core_data.max_board_temp;
+        _acu_all_data.core_data.min_cell_temp = input.core_data.min_cell_temp;
         _acu_all_data.core_data.max_cell_temp = input.core_data.max_cell_temp;
     }
 

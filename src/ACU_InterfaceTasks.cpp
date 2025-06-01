@@ -65,6 +65,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     ACUDataInstance::instance().avg_cell_voltage = data.total_voltage / ACUConstants::NUM_CELLS;
     ACUDataInstance::instance().max_board_temp = data.max_board_temp;
     ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
+    ACUDataInstance::instance().min_cell_temp = data.min_cell_temp;
     ACUDataInstance::instance().cell_temps = data.cell_temperatures;
     ACUDataInstance::instance().max_board_temp = data.max_board_temp;
 

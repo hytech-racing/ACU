@@ -75,10 +75,6 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     board_temp_msg.low_cell_temp_ro = HYTECH_low_cell_temp_ro_toS(_acu_all_data.core_data.min_cell_temp);
     CAN_util::enqueue_msg(&board_temp_msg, &Pack_BMS_ONBOARD_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
-    BMS_TEMPS_t temps_msg = {};
-    temps_msg.high_temp_ro = HYTECH_high_temp_ro_toS(_acu_all_data.core_data.max_cell_temp);
-    CAN_util::enqueue_msg(&temps_msg, &Pack_BMS_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
-
     BMS_ONBOARD_DETAILED_TEMPS_t detailed_board_temp_msg = {};
     detailed_board_temp_msg.ic_id = _curr_data.detailed_temps_board_id;
     detailed_board_temp_msg.temp_0_ro = HYTECH_temp_0_ro_toS(_acu_all_data.board_temps[_curr_data.detailed_temps_board_id]);
