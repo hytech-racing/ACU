@@ -13,10 +13,11 @@ void initialize_all_interfaces()
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init(); 
+    WatchdogInstance::instance().init(sys_time::hal_millis()); 
 
     /* ACU Data Struct */
     ACUDataInstance::create();
+    ACUDataInstance::instance().bms_ok = true;
     ACUAllDataInstance::create();
     ACUAllDataInstance::instance().fw_version_info.fw_version_hash = convert_version_to_char_arr(device_status_t::firmware_version);
     ACUAllDataInstance::instance().fw_version_info.project_on_main_or_master = device_status_t::project_on_main_or_master;
@@ -64,6 +65,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     ACUDataInstance::instance().avg_cell_voltage = data.total_voltage / ACUConstants::NUM_CELLS;
     ACUDataInstance::instance().max_board_temp = data.max_board_temp;
     ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
+    ACUDataInstance::instance().min_cell_temp = data.min_cell_temp;
     ACUDataInstance::instance().cell_temps = data.cell_temperatures;
     ACUDataInstance::instance().max_board_temp = data.max_board_temp;
 
@@ -76,6 +78,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     ACUAllDataInstance::instance().core_data.min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;
     ACUAllDataInstance::instance().core_data.pack_voltage = ACUDataInstance::instance().pack_voltage;
     ACUAllDataInstance::instance().core_data.max_cell_temp = ACUDataInstance::instance().max_cell_temp;
+    ACUAllDataInstance::instance().core_data.min_cell_temp = ACUDataInstance::instance().min_cell_temp;
     ACUAllDataInstance::instance().core_data.max_board_temp = ACUDataInstance::instance().max_board_temp;
 
     ACUAllDataInstance::instance().max_cell_voltage_id = data.max_cell_voltage_id;
@@ -116,9 +119,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    if (ACUDataInstance::instance().charging_enabled) {
-        BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUDataInstance::instance().cell_balancing_statuses);
-    }
+    BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUDataInstance::instance().cell_balancing_statuses);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -149,7 +150,16 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    VCRInterfaceInstance::instance().set_monitoring_data(WatchdogInstance::instance().read_imd_ok(), ACUDataInstance::instance().acu_ok);
+    if (ACUStateMachineInstance::instance().get_state() != ACUState_e::FAULTED) {
+        ACUDataInstance::instance().veh_bms_fault_latched = ACUDataInstance::instance().veh_imd_fault_latched = false;
+    } 
+    if (!WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis())) {
+        ACUDataInstance::instance().veh_imd_fault_latched = true;
+    }
+    if (!ACUDataInstance::instance().bms_ok) {
+        ACUDataInstance::instance().veh_bms_fault_latched = true;
+    }
+    VCRInterfaceInstance::instance().set_monitoring_data(!ACUDataInstance::instance().veh_imd_fault_latched, !ACUDataInstance::instance().veh_bms_fault_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -163,14 +173,14 @@ HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, 
 
 
 HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    if (CCUInterfaceInstance::instance().is_charging_requested()) {
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU()) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_CAN_message();
     }
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    if (CCUInterfaceInstance::instance().is_charging_requested()) {
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU()) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_temps_CAN_message();
     }
     return HT_TASK::TaskResponse::YIELD;
@@ -286,7 +296,7 @@ void print_bms_data(bms_data data)
 
 HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    if (ACUDataInstance::instance().acu_ok)
+    if (ACUDataInstance::instance().bms_ok)
     {
         Serial.print("BMS is OK\n");
     }
@@ -295,7 +305,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print("BMS is NOT OK\n");
     }
 
-    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok());
+    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()));
     Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
 
     Serial.print("TS OUT Filtered: ");

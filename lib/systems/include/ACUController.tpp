@@ -64,11 +64,11 @@ template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 std::array<bool, num_cells> ACUController<num_cells, num_celltemps, num_boardtemps>::_calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage)
 {
     std::array<bool, num_cells> cb = {false};
-
+    const volt min_discharge_voltage_thresh = 3.8F;
     for (size_t cell = 0; cell < num_cells; cell++)
     {
         volt cell_voltage = voltages[cell];
-        if ((cell_voltage) - min_voltage > _parameters.v_diff_to_init_cb) // && max_voltage - (cell_voltage) < 200 &&
+        if (((cell_voltage) - min_voltage > _parameters.v_diff_to_init_cb) && (cell_voltage > min_discharge_voltage_thresh)) // && max_voltage - (cell_voltage) < 200 &&
         {                                   
             cb[cell] = true;
         }
@@ -80,7 +80,7 @@ template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_charge(float em_current, uint32_t delta_time_ms)
 {
     float delta_ah = (em_current) * ((float) (delta_time_ms / 1000.0f) / 3600.0f); // amp hours
-    _acu_state.SoC -= delta_ah / _parameters.pack_nominal_capacity;
+    _acu_state.SoC += delta_ah / _parameters.pack_nominal_capacity; // should be -= but EM inverted
     if (_acu_state.SoC < 0.0) _acu_state.SoC = 0;
     if (_acu_state.SoC > 1.0) _acu_state.SoC = 1;
     return _acu_state.SoC;

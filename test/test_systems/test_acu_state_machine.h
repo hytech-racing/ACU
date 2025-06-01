@@ -65,7 +65,8 @@ ACUStateMachine state_machine = ACUStateMachine(
     disable_watchdog,
     reinitialize_watchdog,
     disable_n_latch_en,
-    reset_latch
+    reset_latch,
+    0
 );
 
 TEST (ACUStateMachineTesting, initial_state) {

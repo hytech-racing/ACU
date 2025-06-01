@@ -38,22 +38,22 @@ TEST (ACUControllerTesting, charging_state) {
     charging_enabled = true;
     std::array<bool, num_cells> cb = {0,1,0,0,1,0,0,0,1,1,0,0}; // 0b001100010010
     const uint32_t init_time = 2450;
-    const uint32_t start_time = 2500;
+    const uint32_t start_time = 3500;
     
     controller.init(init_time, 430.0);
 
     ACUData_s<num_cells, num_cell_temps, num_board_temps> data= {
-        3.21, // min cell v
-        3.53, // max cell v
+        3.7, // min cell v
+        3.85, // max cell v
         430.00, // pack v
         0.0, // avg v - don't care
-        {3.23, 3.24, 3.23, 3.21, 3.3, 3.22, 3.21, 3.23, 3.26, 3.27, 3.22, 3.22} // individual cell voltage data
+        {3.7, 3.81, 3.7, 3.7, 3.81, 3.76, 3.7, 3.7, 3.84, 3.85, 3.75, 3.75} // individual cell voltage data
     };
     data.charging_enabled = charging_enabled;
 
     auto status = controller.evaluate_accumulator(init_time, data);
 
-    ASSERT_NEAR(data.min_cell_voltage, 3.21, 0.0001);
+    ASSERT_NEAR(data.min_cell_voltage, 3.7, 0.0001);
 
     status = controller.evaluate_accumulator(start_time, data);
 
@@ -75,7 +75,7 @@ TEST (ACUControllerTesting, faulted_state) {
     charging_enabled = false; // or true doesn't matter
     std::array<bool, num_cells> cb = {0};
     const uint32_t init_time = 2450;
-    const uint32_t start_time = 3000;
+    const uint32_t start_time = 3500;
     
     controller.init(init_time, 430.0);
 

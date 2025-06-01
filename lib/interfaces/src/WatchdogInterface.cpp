@@ -1,6 +1,6 @@
 #include "WatchdogInterface.h"
 
-void WatchdogInterface::init() {
+void WatchdogInterface::init(uint32_t init_millis) {
     // Pin Configuration
     pinMode(_teensy_ok_pin, OUTPUT);
     pinMode(_teensy_wd_kick_pin, OUTPUT);
@@ -14,6 +14,8 @@ void WatchdogInterface::init() {
     digitalWrite(_teensy_ok_pin, HIGH);
     digitalWrite(_teensy_wd_kick_pin, LOW); // watchdog state set to low to start
     digitalWrite(_teensy_n_latch_en_pin, LOW); 
+    _init_millis = init_millis;
+    _in_imd_startup_period = true; 
 }
 
 bool WatchdogInterface::update_watchdog_state(uint32_t curr_millis) {
@@ -43,7 +45,13 @@ void WatchdogInterface::set_n_latch_en_high() {
     digitalWrite(_teensy_n_latch_en_pin, HIGH);
 }
 
-bool WatchdogInterface::read_imd_ok() {
+bool WatchdogInterface::read_imd_ok(uint32_t curr_millis) {
+    if (_in_imd_startup_period) {
+        if ((curr_millis - _init_millis) >= _imd_startup_time) { // give 2 seconds for IMD to startup
+            _in_imd_startup_period = false;
+        }
+        return true;
+    }
     return (static_cast<float>(analogRead(_teensy_imd_ok_pin)) * (_teensy41_max_input_voltage / _bit_resolution)) > _teensy41_min_digital_read_voltage_thresh; // idk if this would actually work, like if a LOW is a threshold or smth
 }
 

@@ -20,7 +20,9 @@ constexpr const size_t NUM_CHIPS = 12;
 struct CCUCANInterfaceData_s
 {
     unsigned long last_time_charging_requested;
+    unsigned long prev_ccu_msg_recv_ms;
     bool charging_requested;
+    bool is_connected_to_CCU;
     size_t detailed_voltages_ic_id;
     size_t detailed_voltages_group_id;
     size_t detailed_voltages_cell_id;
@@ -35,10 +37,12 @@ class CCUInterface
 public:
     CCUInterface() = delete;
 
-    CCUInterface(unsigned long init_millis, unsigned long charing_enable_threshold_ms) : _min_charging_enable_threshold(charing_enable_threshold_ms)
+    CCUInterface(unsigned long init_millis, unsigned long charging_enable_threshold_ms) : _min_charging_enable_threshold(charging_enable_threshold_ms)
     {
         _curr_data.last_time_charging_requested = 0;
+        _curr_data.prev_ccu_msg_recv_ms = 0;
         _curr_data.charging_requested = false;
+        _curr_data.is_connected_to_CCU = false;
         _curr_data.detailed_voltages_group_id = 0;
         _curr_data.detailed_voltages_ic_id = 0;
         _curr_data.detailed_voltages_cell_id = 0;
@@ -49,6 +53,8 @@ public:
     };
 
     bool is_charging_requested() { return _curr_data.charging_requested; }
+
+    bool is_connected_to_CCU() {return _curr_data.is_connected_to_CCU; }
 
     void receive_CCU_status_message(const CAN_message_t &msg, unsigned long curr_millis);
 
@@ -75,6 +81,8 @@ public:
             _acu_all_data.board_temps[board] = input.board_temps[board];
         }
         _acu_all_data.core_data.max_board_temp = input.core_data.max_board_temp;
+        _acu_all_data.core_data.min_cell_temp = input.core_data.min_cell_temp;
+        _acu_all_data.core_data.max_cell_temp = input.core_data.max_cell_temp;
     }
 
     void handle_enqueue_acu_status_CAN_message();

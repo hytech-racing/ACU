@@ -18,9 +18,9 @@ namespace acu_controller_default_params
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 45.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
-    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 10000; // Same as voltage fault count
-    constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 500; // At 4 Hz, we'll know if there is an error within 3 seconds of startup
-    constexpr const time_ms MAX_TEMP_FAULT_DUR = 500; // Same as voltage fault count
+    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 1000000; // Same as voltage fault count
+    constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 1000; // At 15 Hz, we'll know if there is an error within 3 seconds of startup
+    constexpr const time_ms MAX_TEMP_FAULT_DUR = 1000; 
     constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
     constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
