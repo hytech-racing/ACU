@@ -46,7 +46,7 @@ void initialize_all_interfaces()
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
-    ShutdownInterfaceInstance::create(ACUConstants::SHUTDOWN_PIN_NUMBER);
+    ShutdownInterfaceInstance::create(ACUConstants::SHUTDOWN_PIN_NUMBER); // NOLINT i dont care
     // pinMode(38, INPUT);  // shutdown pin
 }
 
@@ -383,6 +383,6 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
 HT_TASK::TaskResponse debug_shtdown_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     Serial.print("shutdown line read state: ");
-    Serial.println(digitalRead(38));
+    Serial.println(digitalRead(38)); // NOLINT
     return HT_TASK::TaskResponse::YIELD;
 }

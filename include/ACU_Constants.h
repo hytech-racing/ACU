@@ -62,11 +62,13 @@ namespace ACUConstants
     constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
 
+    constexpr uint32_t SHUTDOWN_PIN_NUMBER = 38;
+    
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
     const uint32_t EM_CAN_baudrate = 500000;
     
-    const int SHUTDOWN_PIN_NUMBER = 38;
+    
 }
 
 #endif
