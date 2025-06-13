@@ -26,8 +26,8 @@ namespace acu_controller_default_params
     constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
     constexpr const float PACK_MAX_VOLTAGE = 529.2; // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
     constexpr const float PACK_MIN_VOLTAGE = 378.0; // from data sheet^ but just assume 126 * 3.0V
-    constexpr const celsius BALANCE_TEMP_LIMIT_C = 52.0;
-    constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 34.0; // Celsius
+    constexpr const celsius BALANCE_TEMP_LIMIT_C = 55.0;
+    constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 40.0; // Celsius
 }
 
 template <size_t num_cells>
