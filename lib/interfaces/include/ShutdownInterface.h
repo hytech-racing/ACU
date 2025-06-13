@@ -1,5 +1,5 @@
-#ifndef __SHUTDOWNINTERFACE_H__
-#define __SHUTDOWNINTERFACE_H__
+#ifndef SHUTDOWNINTERFACE_H
+#define SHUTDOWNINTERFACE_H
 
 
 #include <etl/singleton.h>
@@ -23,4 +23,4 @@ class ShutdownInterface
 };
 
 using ShutdownInterfaceInstance = etl::singleton<ShutdownInterface>;
-#endif // __SHUTDOWNINTERFACE_H__
+#endif // SHUTDOWNINTERFACE_H
