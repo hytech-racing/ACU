@@ -56,6 +56,7 @@ namespace ACUConstants
     constexpr uint32_t RECV_CAN_PRIORITY = 7;
 
     constexpr uint32_t DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
+    constexpr uint32_t DEBUG_SHUTDOWN_PRINT_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
     constexpr uint32_t DEBUG_PRINT_PRIORITY = 20;
 
     constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
@@ -64,6 +65,8 @@ namespace ACUConstants
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
     const uint32_t EM_CAN_baudrate = 500000;
+    
+    const int SHUTDOWN_PIN_NUMBER = 38;
 }
 
 #endif

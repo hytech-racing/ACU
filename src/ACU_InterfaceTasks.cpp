@@ -1,5 +1,6 @@
 #include "ACU_InterfaceTasks.h"
 
+
 using chip_type = LTC6811_Type_e;
 const auto start_time = std::chrono::high_resolution_clock::now();
 const size_t num_total_bms_packets = ACUConstants::NUM_CHIPS * sizeof(BMSFaultCountData_s);
@@ -45,6 +46,8 @@ void initialize_all_interfaces()
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
+    ShutdownInterfaceInstance::create(ACUConstants::SHUTDOWN_PIN_NUMBER);
+    // pinMode(38, INPUT);  // shutdown pin
 }
 
 HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
@@ -133,6 +136,8 @@ HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sy
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
+    
+    ACUAllDataInstance::instance().shutdown_has_gone_low = ShutdownInterfaceInstance::instance().get_latest_status();
 
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
     ACUAllDataInstance::instance().core_data.measured_glv = 0;
@@ -198,6 +203,9 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
     if (WatchdogInstance::instance().read_global_lv_value() > ACUAllDataInstance::instance().core_data.measured_glv) { ACUAllDataInstance::instance().core_data.measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
     if (WatchdogInstance::instance().read_pack_out_filtered() > ACUAllDataInstance::instance().core_data.measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
     if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
+
+    ShutdownInterfaceInstance::instance().sample_shutdown_state();
+    
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -369,5 +377,12 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     }
     Serial.println();
 
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse debug_shtdown_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+{
+    Serial.print("shutdown line read state: ");
+    Serial.println(digitalRead(38));
     return HT_TASK::TaskResponse::YIELD;
 }

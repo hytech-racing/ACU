@@ -24,7 +24,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     }
 
     // Cell balancing calculations
-    if (_acu_state.charging_enabled)
+    if (_acu_state.charging_enabled && (input_state.max_board_temp < _parameters.balance_temp_limit_c))
     {
         _acu_state.cell_balancing_statuses = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
     } else { // Fill with zeros, no balancing
