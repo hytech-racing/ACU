@@ -56,7 +56,11 @@ bool WatchdogInterface::read_imd_ok(uint32_t curr_millis) {
 }
 
 bool WatchdogInterface::read_shdn_out() {
-    bool data = digitalRead(_teensy_shdn_out_pin);
+    return (static_cast<float>(analogRead(_teensy_shdn_out_pin)) * (_teensy41_max_input_voltage / _bit_resolution)) > _teensy41_min_digital_read_voltage_thresh; ;
+}
+
+volt WatchdogInterface::read_shdn_out_voltage() {
+    volt data = static_cast<float>(analogRead(_teensy_shdn_out_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_shdn_out_conv_factor);
     return data;
 }
 

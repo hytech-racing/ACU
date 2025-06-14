@@ -11,7 +11,6 @@ ShutdownInterface::ShutdownInterface(int shutdown_pin_number):
 
 void ShutdownInterface::sample_shutdown_state()
 {
-
     if(_updateable) {
         _shutdown_high = digitalRead(_shutdown_pin_number);
         // becomes NOT updateable if the shutdown is LOW

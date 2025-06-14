@@ -37,10 +37,15 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
     out.avg_cell_voltage = shared_state.avg_cell_voltage;
     out.max_cell_temp = shared_state.max_cell_temp;
 
-    out.measured_glv = shared_state.measured_glv;
+    out.max_measured_glv = shared_state.max_measured_glv;
     out.max_board_temp = shared_state.max_board_temp;
-    out.measured_pack_voltage = shared_state.measured_pack_out_voltage;
-    out.measured_tractive_system_voltage = shared_state.measured_ts_out_voltage;
+    out.max_measured_pack_voltage = shared_state.max_measured_pack_out_voltage;
+    out.max_measured_tractive_system_voltage = shared_state.max_measured_ts_out_voltage;
+
+    out.min_measured_glv = shared_state.max_measured_glv;
+    out.min_measured_shdn_out_voltage = shared_state.min_shdn_out_voltage;
+    out.min_measured_pack_voltage = shared_state.min_measured_pack_out_voltage;
+    out.min_measured_tractive_system_voltage = shared_state.min_measured_ts_out_voltage;
 
     return out;
 }

@@ -140,9 +140,13 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
     ACUAllDataInstance::instance().shutdown_has_gone_low = ShutdownInterfaceInstance::instance().get_latest_status();
 
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
-    ACUAllDataInstance::instance().core_data.measured_glv = 0;
-    ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = 0;
-    ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = 0;
+    ACUAllDataInstance::instance().core_data.max_measured_glv = 0;
+    ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = 0;
+    ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage = 0;
+    ACUAllDataInstance::instance().core_data.min_measured_glv = 65535;
+    ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage = 65535;
+    ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage = 65535;
+    ACUAllDataInstance::instance().core_data.min_shdn_out_voltage = 65535;
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -200,9 +204,19 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
 
 HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     /* Find the maximums of GLV, Pack out, and TS Out within every ethernet send period */
-    if (WatchdogInstance::instance().read_global_lv_value() > ACUAllDataInstance::instance().core_data.measured_glv) { ACUAllDataInstance::instance().core_data.measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
-    if (WatchdogInstance::instance().read_pack_out_filtered() > ACUAllDataInstance::instance().core_data.measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
-    if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
+    const float glv = WatchdogInstance::instance().read_global_lv_value(); // NOLINT
+    const float pack_out = WatchdogInstance::instance().read_pack_out_filtered(); // NOLINT
+    const float ts_out = WatchdogInstance::instance().read_ts_out_filtered(); // NOLINT
+    const float shdn_out = WatchdogInstance::instance().read_shdn_out_voltage(); // NOLINT
+
+    if (glv > ACUAllDataInstance::instance().core_data.max_measured_glv) { ACUAllDataInstance::instance().core_data.max_measured_glv = glv; }
+    if (pack_out > ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = pack_out; }
+    if (ts_out > ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage = ts_out; }
+    
+    if (glv < ACUAllDataInstance::instance().core_data.min_measured_glv) { ACUAllDataInstance::instance().core_data.min_measured_glv = glv; }
+    if (pack_out < ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage = pack_out; }
+    if (ts_out < ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage = ts_out; }
+    if (shdn_out < ACUAllDataInstance::instance().core_data.min_shdn_out_voltage) { ACUAllDataInstance::instance().core_data.min_shdn_out_voltage = shdn_out; }
 
     ShutdownInterfaceInstance::instance().sample_shutdown_state();
     
@@ -349,7 +363,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print(ACUDataInstance::instance().SoC * 100, 3);
     Serial.println("%");
     Serial.print("Measured GLV: ");
-    Serial.print(ACUAllDataInstance::instance().core_data.measured_glv, 3);
+    Serial.print(ACUAllDataInstance::instance().core_data.max_measured_glv, 3);
     Serial.println("V");
     Serial.println();
 
