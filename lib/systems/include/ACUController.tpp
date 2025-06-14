@@ -32,6 +32,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
 
     
     bool allow_balancing = ((balance_enableable && _acu_state.charging_enabled));
+    // bool allow_balancing = balance_enableable;
 
     if (allow_balancing)
     {
