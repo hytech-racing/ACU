@@ -28,11 +28,11 @@ const uint8_t spi_baudrate = 115200;
 const uint8_t num_cells_per_board = 21;
 
 // Initialize chip_select, chip_select_per_chip, and address
-const constexpr int num_chips = 12; 
+const constexpr int num_chips = 2; 
 const constexpr int num_chip_selects = 1;
 const std::array<int, num_chip_selects> cs = {10};
-const std::array<int, num_chips> cs_per_chip = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
-const std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+const std::array<int, num_chips> cs_per_chip = {10, 10};
+const std::array<int, num_chips> addr = {0, 1};
 
 // Instantiate BMS Driver Group
 const BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
@@ -104,6 +104,39 @@ void print_voltages(driver_data data)
         temp_index++;
     }
     Serial.println();
+
+    std::array<size_t, num_chips> consecutive_invalid_packet_counts;
+    std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
+    size_t num_valid_packets = 0;
+    std::array<size_t, sizeof(BMSFaultCountData_s)> temp = {};
+    std::array<size_t, ACUConstants::NUM_CHIPS> chip_max_invalid_cmd_counts = {};
+    for (size_t chip = 0; chip < num_chips; chip++)
+    {
+        chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
+        chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
+        chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
+        chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count+1 : 0;
+        chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count+1 : 0;
+        chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count+1 : 0;
+        num_valid_packets += static_cast<size_t>(data.valid_read_packets[chip].valid_read_cells_1_to_3 + data.valid_read_packets[chip].valid_read_cells_4_to_6 + data.valid_read_packets[chip].valid_read_cells_7_to_9 + 
+                            data.valid_read_packets[chip].valid_read_cells_10_to_12 + data.valid_read_packets[chip].valid_read_gpios_1_to_3 + data.valid_read_packets[chip].valid_read_gpios_4_to_6);
+
+        temp = {chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count,
+            chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count,
+            chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count,
+            chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count,
+            chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count,
+            chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count};
+        chip_max_invalid_cmd_counts[chip] = *etl::max_element(temp.begin(), temp.end());      
+        consecutive_invalid_packet_counts[chip] = chip_max_invalid_cmd_counts[chip];
+
+        Serial.print("Chip ");
+        Serial.println(chip);
+        Serial.print("Max consecutive invalid packets: ");
+        Serial.println(consecutive_invalid_packet_counts[chip]);
+    }
+    
+    Serial.println();
     Serial.println();
 }
 
@@ -120,7 +153,7 @@ void setup()
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init();
+    // WatchdogInstance::instance().init();
 }
 
 void loop()
