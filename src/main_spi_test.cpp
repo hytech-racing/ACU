@@ -104,6 +104,64 @@ void print_voltages(driver_data data)
         temp_index++;
     }
     Serial.println();
+    Serial.println();
+    
+    size_t imd_chip_index = 1;
+    for(auto chip_voltages : data.imd_voltages_by_chip)
+    {
+        Serial.print("IMD: Chip ");
+        Serial.println(imd_chip_index);
+        for(auto voltage : chip_voltages)
+        {
+            Serial.print((*voltage), 4);
+            Serial.print("V\t");
+        }
+        imd_chip_index++;
+        Serial.println();
+    }
+    Serial.println();
+    
+    Serial.println("IMD: Cell Voltages");
+    for(auto cell : data.imd_voltages)
+    {
+        Serial.print(cell);
+        Serial.print("V\t");
+    }
+    Serial.println();
+    Serial.println();
+
+    int imd_cti = 0;
+    for(auto temp : data.imd_cell_temperatures)
+    {
+        Serial.print("IMD: temp id ");
+        Serial.print(imd_cti);
+        Serial.print(" val \t");
+        Serial.print(temp);
+        Serial.print("\t");
+        if (imd_cti % 4 == 3) Serial.println();
+        imd_cti++;
+    }
+    Serial.println();
+
+    int imd_temp_index = 0;
+    for(auto bt : data.imd_board_temperatures)
+    {
+        Serial.print("IMD: board temp id ");
+        Serial.print(imd_temp_index);
+        Serial.print(" val ");
+        Serial.print(bt);
+        Serial.print("\t");
+        if (imd_temp_index % 4 == 3) Serial.println();
+        imd_temp_index++;
+    }
+    Serial.println();
+    Serial.println();
+
+    Serial.print("Raw SPI Read: ");
+    Serial.println(SPI.transfer(0));
+
+    Serial.println();
+    Serial.println();
 
     std::array<size_t, num_chips> consecutive_invalid_packet_counts;
     std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;

@@ -87,6 +87,10 @@ struct BMSData
     std::array<volt, num_cells> voltages;
     std::array<celsius, 4 * num_chips> cell_temperatures;
     std::array<celsius, num_board_thermistors> board_temperatures;
+    std::array<std::array<etl::optional<volt>, 12>, num_chips> imd_voltages_by_chip;
+    std::array<volt, num_cells> imd_voltages;
+    std::array<celsius, 4 * num_chips> imd_cell_temperatures;
+    std::array<celsius, num_board_thermistors> imd_board_temperatures;
     volt min_cell_voltage;
     volt max_cell_voltage;
     celsius max_cell_temp;
@@ -201,7 +205,7 @@ private:
 
     BMSDriverData _read_data_through_address();
 
-    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
+    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num, bool imd);
 
     void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count);
 

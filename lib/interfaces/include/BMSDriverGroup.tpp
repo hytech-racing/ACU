@@ -145,10 +145,10 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
 
             _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
-            if (_check_if_all_invalid(chip_index))
-            {
-                continue;
-            }
+            // if (_check_if_all_invalid(chip_index))
+            // {
+            //     continue;
+            // }
 
             // load cell voltages function
             std::array<uint8_t, 24> cv_1_to_12_for_one_chip;
@@ -238,6 +238,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 {
     int cell_count = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
     std::array<volt, 12> chip_voltages_in;
+    std::array<volt, 12> imd_chip_voltages_in;
     
     ValidPacketData_s packet_data = bms_data.valid_read_packets[chip_index];
     bool invalid_A = !packet_data.valid_read_cells_1_to_3;
@@ -247,25 +248,29 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
     for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
     {
-        if (_check_specific_packet_group_is_invalid(cell_Index, invalid_A, invalid_B, invalid_C, invalid_D)) {
-            battery_cell_count++;
-            continue;
-        }
-
         std::array<uint8_t, 2> data_in_cell_voltage;
         auto start = data_in_cv_1_to_12.begin() + (cell_Index * 2);
         auto end = start + 2;
         std::copy(start, end, data_in_cell_voltage.begin());
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
-        chip_voltages_in[cell_Index] = voltage_in / 10000.0;
 
+        imd_chip_voltages_in[cell_Index] = voltage_in / 10000.0;
+        bms_data.imd_voltages[battery_cell_count] = imd_chip_voltages_in[cell_Index];
+
+        if (_check_specific_packet_group_is_invalid(cell_Index, invalid_A, invalid_B, invalid_C, invalid_D)) {
+            battery_cell_count++;
+            continue;
+        }
+
+        chip_voltages_in[cell_Index] = imd_chip_voltages_in[cell_Index];
         bms_data.voltages[battery_cell_count] = chip_voltages_in[cell_Index];
         _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, chip_voltages_in[cell_Index], battery_cell_count);
 
         battery_cell_count++;
     }
     std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages_by_chip[chip_index].data());
+    std::copy(imd_chip_voltages_in.data(), imd_chip_voltages_in.data() + cell_count, bms_data.imd_voltages_by_chip[chip_index].data());
 
     return bms_data;
 }
@@ -283,20 +288,17 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
 
     for (int gpio_Index = 0; gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
     {
-        if (_check_specific_packet_group_is_invalid(gpio_Index, invalid_A, invalid_B, invalid_C, invalid_D)) {
-            gpio_count++;
-            continue;
-        }
-
+        bool imd_only = true;
         std::array<uint8_t, 2> data_in_gpio_voltage;
         auto start = data_in_gpio_1_to_5.begin() + (gpio_Index * 2);
         auto end = start + 2;
         std::copy(start, end, data_in_gpio_voltage.begin());
 
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
-        _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
+        imd_only = _check_specific_packet_group_is_invalid(gpio_Index, invalid_A, invalid_B, invalid_C, invalid_D); // if any group invalid, we only save to imd data
+        _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index, imd_only);
         if (gpio_Index < 4) {
-            gpio_count++;
+            gpio_count++; // TODO: Check with David why we have multiple gpio_count++'s, and why the different conditions
         }
     }
     return bms_data;
@@ -319,12 +321,16 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num, bool imd_only)
 {
     if (gpio_Index < 4) // These are all thermistors [0,1,2,3]
     {
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
-        bms_data.cell_temperatures[gpio_count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 272.15; // calculation for thermistor temperature in C
+        bms_data.imd_cell_temperatures[gpio_count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 272.15; // calculation for thermistor temperature in C
+        if(imd_only){ // we do not want non-PEC check data to be saved
+            return;
+        }
+        bms_data.cell_temperatures[gpio_count] = bms_data.imd_cell_temperatures[gpio_count];
         max_min_reference.total_thermistor_temps += bms_data.cell_temperatures[gpio_count];
         if (gpio_in > max_min_reference.max_cell_temp_voltage)
         {
@@ -341,7 +347,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
     {
         constexpr float mcp_9701_temperature_coefficient = 0.0195f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
-        bms_data.board_temperatures[chip_num] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
+        bms_data.imd_board_temperatures[chip_num] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
+        if(imd_only){ // we do not want non-PEC check data to be saved
+            return;
+        }
+        bms_data.board_temperatures[chip_num] = bms_data.imd_board_temperatures[chip_num];
         // bms_data.board_temperatures[(chip_num +2)/2] = 0;
         if (gpio_in > max_min_reference.max_board_temp_voltage)
         {
