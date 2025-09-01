@@ -40,7 +40,7 @@ public:
         pin pack_out_filtered_pin = pin_default_params::PACK_OUT_FILTERED_PIN,
         pin bspd_current_pin = pin_default_params::BSPD_CURRENT_PIN,
         pin scaled_24V_pin = pin_default_params::SCALED_24V_PIN,
-        const uint32_t kick_interval_ms = 10UL) : 
+        const uint32_t kick_interval_ms = 9UL) : 
                         _teensy_wd_kick_pin(wd_kick_pin),
                         _teensy_ok_pin(teensy_ok_pin),
                         _teensy_n_latch_en_pin(n_latch_pin),

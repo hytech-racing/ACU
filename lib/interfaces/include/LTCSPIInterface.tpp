@@ -53,7 +53,7 @@ std::array<uint8_t, buffer_size> ltc_spi_interface::read_registers_command(int c
     // Prompts SPI enable
     _write_and_delay_low(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
- 
+
     read_in = _receive_SPI_data<buffer_size>();
     
     _write_and_delay_high(cs, 5); 
