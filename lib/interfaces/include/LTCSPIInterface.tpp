@@ -69,10 +69,6 @@ void ltc_spi_interface::adc_conversion_command(int cs, std::array<uint8_t, 4> cm
     for (size_t i = 0; i < num_stacked_devices; i++) {
         SPI.transfer(0);
     }
-    elapsedMillis timer = 0;
-    while (timer < 15) {
-        SPI.transfer(0);
-    }
     _write_and_delay_high(cs, 5);
     // End Messager
     SPI.endTransaction();

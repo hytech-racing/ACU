@@ -96,20 +96,20 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
-    // _start_wakeup_protocol();             // wakes all of the ICs on the chip select line
-    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
-
-    // _start_wakeup_protocol();
-    _start_GPIO_ADC_conversion();
-
+    BMSDriverData rtn;
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
-        return _read_data_through_broadcast();
+        rtn = _read_data_through_broadcast();
     }
     else
     {
-        return _read_data_through_address();
+        rtn = _read_data_through_address();
     }
+
+    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
+    _start_GPIO_ADC_conversion();
+
+    return rtn;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -525,7 +525,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
 
     // Needs to be sent on each chip select line
     for (size_t cs = 0; cs < num_chip_selects; cs++) {
-        _start_wakeup_protocol(_chip_select[cs]);
+        _start_wakeup_protocol(cs);
         ltc_spi_interface::adc_conversion_command(_chip_select[cs], cmd_and_pec, (num_chips / num_chip_selects));
     }
 }
