@@ -181,15 +181,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             end = start + 10;
             std::copy(start, end, gpio_1_to_5_for_one_chip.begin());
             _bms_data = _load_auxillaries(_bms_data, max_min_reference, gpio_1_to_5_for_one_chip, chip_index, gpio_count);
-
-            // Serial.print("CHIP # "); Serial.print(chip_index); Serial.println(" : "); 
-            // for (auto voltage : _bms_data.voltages_by_chip[chip_index])
-            // {
-            //     if (voltage) {
-            //         Serial.print(*(voltage), 4); Serial.print(" ");
-            //     }
-            // }
-            // Serial.println();
         }
         
     }
@@ -490,7 +481,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage
         _start_ADC_conversion_through_address(cmd);
     }
 
-    delay(cv_adc_conversion_time_us); // us
+    delay(cv_adc_conversion_time_us); // ms
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -510,7 +501,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
         _start_ADC_conversion_through_address(cmd);
     }
 
-    delay(gpio_adc_conversion_time_us); // us
+    delay(gpio_adc_conversion_time_us); // ms
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -620,12 +611,7 @@ std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
         bms_data.valid_read_packets[chip + chip_iterator].valid_read_cells_7_to_9 = _check_if_valid_packet(cv_7_to_9, param_iterator);
         bms_data.valid_read_packets[chip + chip_iterator].valid_read_cells_10_to_12 = _check_if_valid_packet(cv_10_to_12, param_iterator);
     }
-
-    // for (int i = 0; i < 24 * num_chips_on_chip_select; i++) {
-    //     Serial.print(combined_cv_1_to_12[i]); Serial.print(" ");
-    // }
-    // Serial.println();
-
+    
     return combined_cv_1_to_12;
 }
 
