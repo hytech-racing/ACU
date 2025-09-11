@@ -7,13 +7,13 @@ const size_t num_total_bms_packets = ACUConstants::NUM_CHIPS * sizeof(BMSFaultCo
 void initialize_all_interfaces()
 {
     SPI.begin();
-    SPI.setClockDivider(SPI_CLOCK_DIV2); // 16MHz (Arduino Clock Frequency) / 2 = 8MHz -> SPI Clock
+    SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 2 = 8MHz -> SPI Clock
     Serial.begin(ACUConstants::SERIAL_BAUDRATE);
     analogReadResolution(ACUConstants::ANALOG_READ_RESOLUTION);
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init(sys_time::hal_millis()); 
+    WatchdogInstance::instance().init(sys_time::hal_millis());
 
     /* ACU Data Struct */
     ACUDataInstance::create();
@@ -200,6 +200,9 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
     if (WatchdogInstance::instance().read_pack_out_filtered() > ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
     if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
     
+    if (WatchdogInstance::instance().read_global_lv_value() < ACUAllDataInstance::instance().core_data.min_measured_glv) { ACUAllDataInstance::instance().core_data.min_measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
+    if (WatchdogInstance::instance().read_pack_out_filtered() < ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
+    if (WatchdogInstance::instance().read_ts_out_filtered() < ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
     if (WatchdogInstance::instance().read_shdn_voltage() < ACUAllDataInstance::instance().core_data.min_shdn_out_voltage) { ACUAllDataInstance::instance().core_data.min_shdn_out_voltage = WatchdogInstance::instance().read_shdn_voltage(); }
     
     return HT_TASK::TaskResponse::YIELD;
