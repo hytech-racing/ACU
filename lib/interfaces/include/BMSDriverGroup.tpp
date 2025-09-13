@@ -164,7 +164,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
             if (_check_if_all_invalid(chip_index))
             {
-                Serial.print("we have invalid data at chip index "); Serial.println(chip_index);
                 continue;
             }
 
@@ -267,7 +266,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
     {
         if (_check_specific_packet_group_is_invalid(cell_Index, invalid_A, invalid_B, invalid_C, invalid_D)) {
             battery_cell_count++;
-            Serial.print("checked specific packet is invalid at "); Serial.println(battery_cell_count);
             continue;
         }
 
@@ -481,7 +479,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage
         _start_ADC_conversion_through_address(cmd);
     }
 
-    delay(cv_adc_conversion_time_us); // ms
+    // delay(cv_adc_conversion_time_us); // ms
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -501,7 +499,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
         _start_ADC_conversion_through_address(cmd);
     }
 
-    delay(gpio_adc_conversion_time_us); // ms
+    // delay(gpio_adc_conversion_time_us); // ms
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>

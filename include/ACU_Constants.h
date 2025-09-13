@@ -32,7 +32,7 @@ namespace ACUConstants
     constexpr uint32_t WATCHDOG_PRIORITY = 1;
     constexpr uint32_t SAMPLE_BMS_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr uint32_t SAMPLE_BMS_PRIORITY = 2;
-    constexpr uint32_t EVAL_ACC_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
+    constexpr uint32_t EVAL_ACC_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr uint32_t EVAL_ACC_PRIORITY = 10;
     constexpr uint32_t WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 6;
