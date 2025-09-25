@@ -43,6 +43,9 @@ void initialize_all_interfaces()
     /* EM Interface */
     EMInterfaceInstance::create(sys_time::hal_millis());
 
+    PowerSensorInstance::create(sys_time::hal_millis());
+    PowerSensorInstance::instance().init(sys_time::hal_millis());
+
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
 }
@@ -198,6 +201,12 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
     if (WatchdogInstance::instance().read_global_lv_value() > ACUAllDataInstance::instance().core_data.measured_glv) { ACUAllDataInstance::instance().core_data.measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
     if (WatchdogInstance::instance().read_pack_out_filtered() > ACUAllDataInstance::instance().core_data.measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
     if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
+    uint32_t now = sys_time::hal_millis();
+    if (PowerSensorInstance::instance().read_latest_voltage(now) > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) {
+        ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = PowerSensorInstance::instance().read_latest_current(now);
+    }
+    ACUAllDataInstance::instance().measured_bspd_current = PowerSensorInstance::instance().read_latest_current(now);
+
     return HT_TASK::TaskResponse::YIELD;
 }
 
