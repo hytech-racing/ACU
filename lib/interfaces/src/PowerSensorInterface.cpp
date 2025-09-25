@@ -18,21 +18,23 @@ void PowerSensorInterface::init(uint32_t init_millis)
 
     // Configure analog pins as inputs (explicit; analogRead works without this
     // on many cores but being explicit clarifies intent).
-    pinMode(voltage_pin_, INPUT);
-    pinMode(current_pin_, INPUT);
+    pinMode(_voltage_pin, INPUT);
+    pinMode(_current_pin, INPUT);
 }
 
 
-volt PowerSensorInterface::read_latest_voltage(uint32_t /* curr_millis */)
+volt PowerSensorInterface::read_latest_voltage()
 {
-    const float raw = static_cast<float>(analogRead(voltage_pin_));
-    const float volts = raw * (TEENSY_MAX_INPUT_VOLTAGE / BIT_RESOLUTION) * PACK_AND_TS_OUT_CONV_FACTOR;
+    const float raw = static_cast<float>(analogRead(_voltage_pin));
+    const float volts = raw * (_teensy_max_input_voltage / _bit_resolution) * _pack_out_ts_conv_factor;
     return static_cast<volt>(volts);
+    // return 1.0f;
 }
 
 
-float PowerSensorInterface::read_latest_current(uint32_t /* curr_millis */)
+float PowerSensorInterface::read_latest_current()
 {
-    const float raw = static_cast<float>(analogRead(current_pin_));
-    return raw * (TEENSY_MAX_INPUT_VOLTAGE / BIT_RESOLUTION) * CURRENT_CONV_FACTOR;
+    const float raw = static_cast<float>(analogRead(_current_pin));
+    return raw * (_teensy_max_input_voltage / _bit_resolution) * _current_conv_factor;
+    // return 1.0f;
 }
