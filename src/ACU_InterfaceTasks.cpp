@@ -203,7 +203,7 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
     if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
     uint32_t now = sys_time::hal_millis();
     if (PowerSensorInstance::instance().read_latest_voltage(now) > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) {
-        ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = PowerSensorInstance::instance().read_latest_current(now);
+        ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = PowerSensorInstance::instance().read_latest_voltage(now);
     }
     ACUAllDataInstance::instance().measured_bspd_current = PowerSensorInstance::instance().read_latest_current(now);
 
