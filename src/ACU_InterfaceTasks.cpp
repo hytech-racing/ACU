@@ -8,13 +8,13 @@ const size_t num_total_bms_packets = ACUConstants::NUM_CHIPS * sizeof(BMSFaultCo
 void initialize_all_interfaces()
 {
     SPI.begin();
-    SPI.setClockDivider(SPI_CLOCK_DIV2); // 16MHz (Arduino Clock Frequency) / 2 = 8MHz -> SPI Clock
+    SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
     Serial.begin(ACUConstants::SERIAL_BAUDRATE);
     analogReadResolution(ACUConstants::ANALOG_READ_RESOLUTION);
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init(sys_time::hal_millis()); 
+    WatchdogInstance::instance().init(sys_time::hal_millis());
 
     /* ACU Data Struct */
     ACUDataInstance::create();
@@ -117,7 +117,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
     ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
     ACUAllDataInstance::instance().consecutive_invalid_packet_counts = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts;
-    //print_bms_data(data);
+    // print_bms_data(data);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -344,7 +344,12 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     }
 
     Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()));
+
+    Serial.printf("SHDN VOLTAGE: %d\t", WatchdogInstance::instance().read_shdn_voltage());
     Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
+
+    Serial.printf("PRECHARGE VOLTAGE: %d\t", WatchdogInstance::instance().read_precharge_voltage());
+    Serial.printf("PRECHARGE OUT: %d\n", WatchdogInstance::instance().read_precharge_out());
 
     Serial.print("TS OUT Filtered: ");
     Serial.println(WatchdogInstance::instance().read_ts_out_filtered(), 4);
@@ -385,27 +390,27 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
 
     Serial.print("Number of Global Faults: ");
     Serial.println(ACUDataInstance::instance().max_consecutive_invalid_packet_count);
-    Serial.println("Number of Consecutive Faults Per Chip: ");
-    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-        Serial.print("CHIP ");
-        Serial.print(c);
-        Serial.print(": ");
-        Serial.print(ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[c]);
-        Serial.print("\t");
-        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
-        Serial.print(" ");
-        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
-        Serial.print(" ");
-        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
-        Serial.print(" ");
-        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
-        Serial.print(" ");
-    }
-    Serial.println();
+    // Serial.println("Number of Consecutive Faults Per Chip: ");
+    // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
+    //     Serial.print("CHIP ");
+    //     Serial.print(c);
+    //     Serial.print(": ");
+    //     Serial.print(ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[c]);
+    //     Serial.print("\t");
+    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
+    //     Serial.print(" ");
+    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
+    //     Serial.print(" ");
+    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
+    //     Serial.print(" ");
+    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
+    //     Serial.print(" ");
+    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
+    //     Serial.print(" ");
+    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
+    //     Serial.print(" ");
+    // }
+    // Serial.println();
 
     return HT_TASK::TaskResponse::YIELD;
 }

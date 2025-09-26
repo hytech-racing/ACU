@@ -57,7 +57,7 @@ void setup()
     scheduler.schedule(write_cell_balancing_config_task);
 
     scheduler.schedule(send_all_data_ethernet_task);
-    scheduler.schedule(send_core_data_ethernet_task);
+    scheduler.schedule(send_core_data_ethernet_task); // waiting on update on drivebrain
 
     scheduler.schedule(send_CAN_task);
     scheduler.schedule(enqueue_CCU_core_CAN_task);
@@ -68,7 +68,7 @@ void setup()
     scheduler.schedule(sample_CAN_task);
     scheduler.schedule(idle_sample_task);
 
-    scheduler.schedule(debug_prints_task);
+    // scheduler.schedule(debug_prints_task);
 
     handle_CAN_setup(ACUCANInterfaceImpl::CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
     handle_CAN_setup(ACUCANInterfaceImpl::EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);

@@ -33,18 +33,24 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
 {
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
-        {
-            ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
-            SPI.transfer16(0);
-            ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400);
-        }
-        else
-        {
-            ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
-            SPI.transfer(0);
-            ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
-        }
+        _start_wakeup_protocol(cs);
+    }
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_protocol(size_t cs)
+{
+    if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
+    {
+        ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
+        SPI.transfer16(0);
+        ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400);
+    }
+    else
+    {
+        ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
+        SPI.transfer(0);
+        ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
     }
 }
 
@@ -79,20 +85,20 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
-    _start_wakeup_protocol();             // wakes all of the ICs on the chip select line
-    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
-
-    _start_wakeup_protocol();
-    _start_GPIO_ADC_conversion();
-
+    BMSDriverData bms_data;
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
-        return _read_data_through_broadcast();
+        bms_data = _read_data_through_broadcast();
     }
     else
     {
-        return _read_data_through_address();
+        bms_data = _read_data_through_address();
     }
+
+    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
+    _start_GPIO_ADC_conversion();
+
+    return bms_data;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -110,25 +116,25 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         write_configuration(_config.dcto_read, _cell_discharge_en);
 
         // Get buffers for each group we care about, all at once for ONE chip select line
-        _start_wakeup_protocol();
+        _start_wakeup_protocol(cs);
         auto cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
         auto data_in_cell_voltages_1_to_3 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol();
+        _start_wakeup_protocol(cs);
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, -1);
         auto data_in_cell_voltages_4_to_6 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol();
+        _start_wakeup_protocol(cs);
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, -1);
         auto data_in_cell_voltages_7_to_9 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol();
+        _start_wakeup_protocol(cs);
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, -1);
         auto data_in_cell_voltages_10_to_12 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol();
+        _start_wakeup_protocol(cs);
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, -1);
         auto data_in_auxillaries_1_to_3 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol();
+        _start_wakeup_protocol(cs);
         cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, -1);
         auto data_in_auxillaries_4_to_6 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-
+        
         // store the data for all chips on a chip select into one array, no PEC included
         std::array<uint8_t, 24 * (num_chips / num_chip_selects)> data_in_cell_voltages_1_to_12 = _package_cell_voltages(_bms_data, cs, data_in_cell_voltages_1_to_3,
                                                                                                                         data_in_cell_voltages_4_to_6,
@@ -152,20 +158,21 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             // load cell voltages function
             std::array<uint8_t, 24> cv_1_to_12_for_one_chip;
-            auto start = data_in_cell_voltages_1_to_12.begin() + (chip_index * 24);
+            auto start = data_in_cell_voltages_1_to_12.begin() + (chip * 24);
             auto end = start + 24;
             std::copy(start, end, cv_1_to_12_for_one_chip.begin());
             _bms_data = _load_cell_voltages(_bms_data, max_min_reference, cv_1_to_12_for_one_chip, chip_index, battery_cell_count);
 
             // load humidity / temperatures function
             std::array<uint8_t, 10> gpio_1_to_5_for_one_chip;
-            start = data_in_temps_1_to_5.begin() + (chip_index * 10);
+            start = data_in_temps_1_to_5.begin() + (chip * 10);
             end = start + 10;
             std::copy(start, end, gpio_1_to_5_for_one_chip.begin());
             _bms_data = _load_auxillaries(_bms_data, max_min_reference, gpio_1_to_5_for_one_chip, chip_index, gpio_count);
         }
+        
     }
-
+    
     _bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
     _bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _sum_cell_voltages();
@@ -244,7 +251,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
     bool invalid_B = !packet_data.valid_read_cells_4_to_6;
     bool invalid_C = !packet_data.valid_read_cells_7_to_9;
     bool invalid_D = !packet_data.valid_read_cells_10_to_12;
-
     for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
     {
         if (_check_specific_packet_group_is_invalid(cell_Index, invalid_A, invalid_B, invalid_C, invalid_D)) {
@@ -266,7 +272,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
         battery_cell_count++;
     }
     std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages_by_chip[chip_index].data());
-
     return bms_data;
 }
 
@@ -462,8 +467,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage
     {
         _start_ADC_conversion_through_address(cmd);
     }
-
-    delay(cv_adc_conversion_time_us); // us
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -482,8 +485,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
     {
         _start_ADC_conversion_through_address(cmd);
     }
-
-    delay(gpio_adc_conversion_time_us); // us
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -497,8 +498,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
     std::copy(pec.begin(), pec.end(), cmd_and_pec.begin() + 2);       // Copy next two bytes (pec)
 
     // Needs to be sent on each chip select line
-    for (size_t cs = 0; cs < num_chip_selects; cs++)
-    {
+    for (size_t cs = 0; cs < num_chip_selects; cs++) {
+        _start_wakeup_protocol(cs);
         ltc_spi_interface::adc_conversion_command(_chip_select[cs], cmd_and_pec, (num_chips / num_chip_selects));
     }
 }
@@ -593,6 +594,7 @@ std::array<uint8_t, 24 * (num_chips / num_chip_selects)> BMSDriverGroup<num_chip
         bms_data.valid_read_packets[chip + chip_iterator].valid_read_cells_7_to_9 = _check_if_valid_packet(cv_7_to_9, param_iterator);
         bms_data.valid_read_packets[chip + chip_iterator].valid_read_cells_10_to_12 = _check_if_valid_packet(cv_10_to_12, param_iterator);
     }
+    
     return combined_cv_1_to_12;
 }
 
