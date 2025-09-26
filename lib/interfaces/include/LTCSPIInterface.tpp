@@ -53,7 +53,7 @@ std::array<uint8_t, buffer_size> ltc_spi_interface::read_registers_command(int c
     // Prompts SPI enable
     _write_and_delay_low(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
- 
+
     read_in = _receive_SPI_data<buffer_size>();
     
     _write_and_delay_high(cs, 5); 
@@ -67,10 +67,6 @@ void ltc_spi_interface::adc_conversion_command(int cs, std::array<uint8_t, 4> cm
     _write_and_delay_low(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
     for (size_t i = 0; i < num_stacked_devices; i++) {
-        SPI.transfer(0);
-    }
-    elapsedMillis timer = 0;
-    while (timer < 15) {
         SPI.transfer(0);
     }
     _write_and_delay_high(cs, 5);

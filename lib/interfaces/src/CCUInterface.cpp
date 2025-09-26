@@ -20,7 +20,7 @@ void CCUInterface::handle_enqueue_acu_status_CAN_message() {
     } else {
         msg.state = 1; // discharging
     }
-    // Serial.println("ACU STATUS CAN msg enqueued");
+
     CAN_util::enqueue_msg(&msg, &Pack_BMS_STATUS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 }  
 
@@ -40,7 +40,7 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
     detailed_msg.voltage_0_ro = HYTECH_voltage_0_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id]); 
     detailed_msg.voltage_1_ro = HYTECH_voltage_1_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id+1]); 
     detailed_msg.voltage_2_ro = HYTECH_voltage_2_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id+2]); 
-    //Serial.printf("Chip %d Group %d\n", _curr_data.detailed_voltages_ic_id, _curr_data.detailed_voltages_group_id);
+
     if (_curr_data.detailed_voltages_ic_id % 2 == 0) {
         _curr_data.detailed_voltages_group_id = (_curr_data.detailed_voltages_group_id == 3) ? 0 : _curr_data.detailed_voltages_group_id+1;
     } else {
@@ -61,7 +61,7 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     detailed_msg.thermistor_id_0_ro = HYTECH_thermistor_id_0_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id]); 
     detailed_msg.thermistor_id_1_ro = HYTECH_thermistor_id_1_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id+1]); 
     detailed_msg.thermistor_id_2_ro = HYTECH_thermistor_id_2_ro_toS(_acu_all_data.cell_temps[_curr_data.detailed_temps_cell_id+2]); 
-    //Serial.printf("Chip %d Group %d\n", _curr_data.detailed_temps_ic_id, _curr_data.detailed_temps_group_id);
+    
     _curr_data.detailed_temps_group_id = (_curr_data.detailed_temps_group_id == 1) ? 0 : _curr_data.detailed_temps_group_id+1;
     if (_curr_data.detailed_temps_group_id == 0) {
         _curr_data.detailed_temps_ic_id = (_curr_data.detailed_temps_ic_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.detailed_temps_ic_id+1;

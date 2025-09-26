@@ -55,8 +55,25 @@ bool WatchdogInterface::read_imd_ok(uint32_t curr_millis) {
     return (static_cast<float>(analogRead(_teensy_imd_ok_pin)) * (_teensy41_max_input_voltage / _bit_resolution)) > _teensy41_min_digital_read_voltage_thresh; // idk if this would actually work, like if a LOW is a threshold or smth
 }
 
+volt WatchdogInterface::read_shdn_voltage() {
+    // 3.3 V for pin voltage cap. and 4095 for bit resolution
+    volt data = static_cast<float>(analogRead(_teensy_shdn_out_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_shutdown_conv_factor); 
+    return data;
+}
+
 bool WatchdogInterface::read_shdn_out() {
-    bool data = digitalRead(_teensy_shdn_out_pin);
+    bool data = read_shdn_voltage() > _shutdown_voltage_digital_threshold; // read shdn out goes high if shutdown voltage is > 12 volts
+    return data;
+}
+
+volt WatchdogInterface::read_precharge_voltage() {
+    // 3.3 V for pin voltage cap
+    volt data = static_cast<float>(analogRead(_teensy_precharge_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_precharge_conv_factor);
+    return data;
+}
+
+bool WatchdogInterface::read_precharge_out() {
+    bool data = read_precharge_voltage() > _teensy41_min_digital_read_voltage_thresh;
     return data;
 }
 
