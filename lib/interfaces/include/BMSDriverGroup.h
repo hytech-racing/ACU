@@ -201,6 +201,8 @@ private:
      */
     void _start_wakeup_protocol();
 
+    void _start_wakeup_protocol(size_t cs);
+
     BMSDriverData _read_data_through_broadcast();
 
     BMSDriverData _read_data_through_address();
