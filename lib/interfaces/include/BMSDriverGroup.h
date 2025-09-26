@@ -84,12 +84,12 @@ struct BMSData
     std::array<ValidPacketData_s, num_chips> valid_read_packets;
 
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages_by_chip;
-    std::array<volt, num_cells> voltages;
-    std::array<celsius, 4 * num_chips> cell_temperatures;
-    std::array<celsius, num_board_thermistors> board_temperatures;
     std::array<std::array<etl::optional<volt>, 12>, num_chips> imd_voltages_by_chip;
+    std::array<volt, num_cells> voltages;
     std::array<volt, num_cells> imd_voltages;
+    std::array<celsius, 4 * num_chips> cell_temperatures;
     std::array<celsius, 4 * num_chips> imd_cell_temperatures;
+    std::array<celsius, num_board_thermistors> board_temperatures;
     std::array<celsius, num_board_thermistors> imd_board_temperatures;
     volt min_cell_voltage;
     volt max_cell_voltage;
