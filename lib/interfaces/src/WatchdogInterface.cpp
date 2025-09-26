@@ -62,7 +62,7 @@ volt WatchdogInterface::read_shdn_voltage() {
 }
 
 bool WatchdogInterface::read_shdn_out() {
-    bool data = read_shdn_voltage() > 12.0F; // read shdn out goes high if shutdown voltage is > 12 volts
+    bool data = read_shdn_voltage() > _shutdown_voltage_digital_threshold; // read shdn out goes high if shutdown voltage is > 12 volts
     return data;
 }
 

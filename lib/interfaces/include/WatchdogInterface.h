@@ -95,6 +95,7 @@ private:
     const float _pack_and_ts_out_conv_factor = 0.00482F;
     const float _bspd_current_conv_factor = 0.5118F;
     const float _glv_conv_factor = 0.1036F;
+    const float _shutdown_voltage_digital_threshold = 12.0F;
 
 public: 
     /**
