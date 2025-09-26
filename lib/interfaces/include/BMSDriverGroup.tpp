@@ -33,18 +33,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
 {
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
-        {
-            ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
-            SPI.transfer16(0);
-            ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400);
-        }
-        else
-        {
-            ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
-            SPI.transfer(0);
-            ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
-        }
+        _start_wakeup_protocol(cs);
     }
 }
 

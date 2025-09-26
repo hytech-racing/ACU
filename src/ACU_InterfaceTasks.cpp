@@ -7,7 +7,7 @@ const size_t num_total_bms_packets = ACUConstants::NUM_CHIPS * sizeof(BMSFaultCo
 void initialize_all_interfaces()
 {
     SPI.begin();
-    SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 2 = 8MHz -> SPI Clock
+    SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
     Serial.begin(ACUConstants::SERIAL_BAUDRATE);
     analogReadResolution(ACUConstants::ANALOG_READ_RESOLUTION);
 
@@ -113,7 +113,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
     ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
     ACUAllDataInstance::instance().consecutive_invalid_packet_counts = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts;
-    print_bms_data(data);
+    // print_bms_data(data);
     return HT_TASK::TaskResponse::YIELD;
 }
 
