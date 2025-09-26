@@ -96,20 +96,20 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
-    BMSDriverData rtn;
+    BMSDriverData bms_data;
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
-        rtn = _read_data_through_broadcast();
+        bms_data = _read_data_through_broadcast();
     }
     else
     {
-        rtn = _read_data_through_address();
+        bms_data = _read_data_through_address();
     }
 
     _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
     _start_GPIO_ADC_conversion();
 
-    return rtn;
+    return bms_data;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -478,8 +478,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage
     {
         _start_ADC_conversion_through_address(cmd);
     }
-
-    // delay(cv_adc_conversion_time_us); // ms
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -498,8 +496,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
     {
         _start_ADC_conversion_through_address(cmd);
     }
-
-    // delay(gpio_adc_conversion_time_us); // ms
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
