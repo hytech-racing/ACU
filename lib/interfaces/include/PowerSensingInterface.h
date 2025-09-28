@@ -5,7 +5,7 @@
 #include "SharedFirmwareTypes.h"
 #include "etl/singleton.h"
 
-using pin = size_t;
+using pin = uint8_t;
 
 namespace pin_power_sensing_params
 {
