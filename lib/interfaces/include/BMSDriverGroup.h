@@ -137,6 +137,17 @@ struct BMSDriverGroupConfig_s
     const float gpio_adc_conversion_time_us = 3.1;
 };
 
+enum CurrentGroup_e
+{
+    CURRENT_GROUP_A = 0,
+    CURRENT_GROUP_B,
+    CURRENT_GROUP_C,
+    CURRENT_GROUP_D,
+    CURRENT_GROUP_AUX_A,
+    CURRENT_GROUP_AUX_B,
+    NUM_CURRENT_GROUPS
+};
+
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
@@ -145,6 +156,9 @@ public:
     using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
+    
+    CurrentGroup_e current_read_group = CurrentGroup_e::CURRENT_GROUP_A;
+   // std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chips> cell_voltages_1_12_buffer;
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -209,7 +223,7 @@ private:
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num, bool imd);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const float &voltage_in, size_t &cell_count);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 

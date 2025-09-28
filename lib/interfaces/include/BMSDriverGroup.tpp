@@ -114,41 +114,112 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         write_configuration(_config.dcto_read, _cell_discharge_en);
+    
+        std::array<uint8_t, 4> cmd_pec;
+        std::array<uint8_t, data_size> spi_data;
 
         // Get buffers for each group we care about, all at once for ONE chip select line
         _start_wakeup_protocol(cs);
-        auto cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
-        auto data_in_cell_voltages_1_to_3 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol(cs);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, -1);
-        auto data_in_cell_voltages_4_to_6 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol(cs);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, -1);
-        auto data_in_cell_voltages_7_to_9 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol(cs);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, -1);
-        auto data_in_cell_voltages_10_to_12 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol(cs);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, -1);
-        auto data_in_auxillaries_1_to_3 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
-        _start_wakeup_protocol(cs);
-        cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, -1);
-        auto data_in_auxillaries_4_to_6 = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+
+        switch (this->current_read_group) {
+            case CurrentGroup_e::CURRENT_GROUP_A:
+                cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
+                spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+                break;
+            case CurrentGroup_e::CURRENT_GROUP_B:
+                cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, -1);
+                spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+                break;
+            case CurrentGroup_e::CURRENT_GROUP_C:
+                cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, -1);
+                spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+                break;
+            case CurrentGroup_e::CURRENT_GROUP_D:
+                cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, -1);
+                spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+                break;
+            case CurrentGroup_e::CURRENT_GROUP_AUX_A:
+                cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, -1);
+                spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+                break;
+            case CurrentGroup_e::CURRENT_GROUP_AUX_B:
+                cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, -1);
+                spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
+                break;
+        }
+
+        // WHAT HAPPENS FOR EACH CHIP:
+        // 1) Packaging: copy it to combined
+       // 2) Set valid_read_packetts for specific chip for cell group 
+       // 3) Packaging returns all cell_voltages 
+    // 4) load cell takes specific chip 
+    // it uses valid_read_packets from its index 
+    // check invalidity and skip if detected (the chip assignment)
+    // copies to imd voltage by chip
+        for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++) {
+            size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
+            int cell_count = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
+            std::array<uint8_t, 2> data_in_cell_voltage;
+            uint8_t start_cell_index, end_cell_index;
+            bool valid_data_packet;
+
+            switch(this->current_read_group) {
+                case CurrentGroup_e::CURRENT_GROUP_A:
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = valid_data_packet = _check_if_all_valid(spi_data, 8 * chip);
+                    start_cell_index = 0;
+                    end_cell_index = (cell_count >= 3) ? 3 : cell_count;
+                    break;
+                case CurrentGroup_e::CURRENT_GROUP_B:
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    start_cell_index = 3;
+                    end_cell_index = 6;
+                    break;
+                case CurrentGroup_e::CURRENT_GROUP_C:
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    start_cell_index = 6;
+                    end_cell_index = 9;
+                    break;
+                case CurrentGroup_e::CURRENT_GROUP_D:
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    start_cell_index = 9;
+                    end_cell_index = (cell_count >= 12) ? 12 : cell_count;
+                    break;
+                case CurrentGroup_e::CURRENT_GROUP_AUX_A:
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    break;
+                case CurrentGroup_e::CURRENT_GROUP_AUX_B:
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    break;  
+            }
+
+            if (valid_data_packet) {
+                if (this->current_read_group <= CurrentGroup_e::CURRENT_GROUP_D) {
+                        // Cell voltage reading
+                    for (uint8_t cell_index = start_cell_index; cell_index < end_cell_index; ++cell_index) {
+                        std::copy(spi_data.begin() + (8 * chip) + (cell_index * 2), spi_data.begin() + (8 * chip) + (cell_index * 2) + 2, data_in_cell_voltage.begin());
+                        uint16_t voltage_in = data_in_cell_voltage[0] | (data_in_cell_voltage[1] << 8);
+                        float voltage_f = static_cast<float>(voltage_in) / 10000.0f;
+                        bms_data.voltages[battery_cell_count] = voltage_f;
+                        bms_data.voltages[battery_cell_count] = voltage_f;
+                        _store_voltage_data(bms_data, max_min_reference, voltage_f, battery_cell_count);
+                        battery_cell_count++;
+                    }  
+                } else {
+                        // GPIO reading
+                }
+            }
+
+        }
         
         // store the data for all chips on a chip select into one array, no PEC included
-        std::array<uint8_t, 24 * (num_chips / num_chip_selects)> data_in_cell_voltages_1_to_12 = _package_cell_voltages(_bms_data, cs, data_in_cell_voltages_1_to_3,
-                                                                                                                        data_in_cell_voltages_4_to_6,
-                                                                                                                        data_in_cell_voltages_7_to_9,
-                                                                                                                        data_in_cell_voltages_10_to_12);
 
-        std::array<uint8_t, 10 * (num_chips / num_chip_selects)> data_in_temps_1_to_5 = _package_auxillary_data(_bms_data, cs, data_in_auxillaries_1_to_3,
-                                                                                                                data_in_auxillaries_4_to_6);
 
         // DEBUG: Check to see that the PEC is what we expect it to be
 
         for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++)
         {
             size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
+
 
             _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
             // if (_check_if_all_invalid(chip_index))
@@ -271,7 +342,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
         chip_voltages_in[cell_Index] = imd_chip_voltages_in[cell_Index];
         bms_data.voltages[battery_cell_count] = chip_voltages_in[cell_Index];
-        _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, chip_voltages_in[cell_Index], battery_cell_count);
+        // _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, chip_voltages_in[cell_Index], battery_cell_count); since changed signature
 
         battery_cell_count++;
     }
@@ -311,7 +382,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const float &voltage_in, size_t &cell_count)
 {
     max_min_reference.total_voltage += voltage_in;
     if (voltage_in <= max_min_reference.min_cell_voltage)
