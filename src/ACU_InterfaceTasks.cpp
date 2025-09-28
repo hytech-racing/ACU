@@ -136,6 +136,7 @@ HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sy
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
+    ACUAllDataInstance::instance().measured_ts_current = PowerSensorInstance::instance().read_latest_current();
 
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
     ACUAllDataInstance::instance().core_data.measured_glv = 0;
@@ -200,12 +201,11 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
     /* Find the maximums of GLV, Pack out, and TS Out within every ethernet send period */
     if (WatchdogInstance::instance().read_global_lv_value() > ACUAllDataInstance::instance().core_data.measured_glv) { ACUAllDataInstance::instance().core_data.measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
     if (WatchdogInstance::instance().read_pack_out_filtered() > ACUAllDataInstance::instance().core_data.measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
-    if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
-    if (PowerSensorInstance::instance().read_latest_voltage() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) {
-        ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = PowerSensorInstance::instance().read_latest_voltage();
-    }
-    ACUAllDataInstance::instance().measured_bspd_current = PowerSensorInstance::instance().read_latest_current();
 
+    //Might be need to be removed so it doesn't overwrite PowerSensor voltage
+    if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
+
+    if (PowerSensorInstance::instance().read_latest_voltage() > ACUAllDataInstance::instance().core_data.measured_ts_out_voltage) {ACUAllDataInstance::instance().core_data.measured_ts_out_voltage = PowerSensorInstance::instance().read_latest_voltage();}
     return HT_TASK::TaskResponse::YIELD;
 }
 
