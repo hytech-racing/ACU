@@ -12,7 +12,6 @@
 #include "SystemTimeInterface.h"
 #include "ACUEthernetInterface.h"
 #include "ACUCANInterfaceImpl.h"
-#include "ShutdownInterface.h"
 
 /* For Debugging */
 #include "ACUStateMachine.h"

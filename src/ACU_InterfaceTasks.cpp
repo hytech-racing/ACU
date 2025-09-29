@@ -47,8 +47,6 @@ void initialize_all_interfaces()
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
-    ShutdownInterfaceInstance::create(ACUConstants::SHUTDOWN_PIN_NUMBER); // NOLINT i dont care
-    // pinMode(38, INPUT);  // shutdown pin
 }
 
 HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
@@ -138,7 +136,7 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 {
     ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
     
-    ACUAllDataInstance::instance().shutdown_has_gone_low = ShutdownInterfaceInstance::instance().get_latest_status();
+    ACUAllDataInstance::instance().shutdown_has_gone_low = ACUAllDataInstance::instance().core_data.min_shdn_out_voltage < ACUConstants::VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD;
 
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
     ACUAllDataInstance::instance().core_data.max_measured_glv = 0;
@@ -233,9 +231,7 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
     {
         ACUDataInstance::instance().veh_shdn_out_latched = false;
     }
-
-    ShutdownInterfaceInstance::instance().sample_shutdown_state();
-    
+        
     return HT_TASK::TaskResponse::YIELD;
 }
 
