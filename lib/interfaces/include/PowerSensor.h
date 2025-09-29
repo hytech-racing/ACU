@@ -23,7 +23,7 @@ struct PowerSensorData
 
 // Constants you actually need (set once at construction)
 struct Config {
-    float acceptable_error;
+    int acceptable_error;
     int cs;                         // MCP3208 chip-select pin
     float vref;                     // ADC reference (V) – MCP3208 VREF pin
     float resolution;   
