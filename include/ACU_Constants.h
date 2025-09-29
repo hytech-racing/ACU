@@ -24,7 +24,7 @@ namespace ACUConstants
     /* Interface Constants */
     const size_t ANALOG_READ_RESOLUTION = 12;
     const size_t SERIAL_BAUDRATE = 115200;
-    const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 10.0F;
+    const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
 
     /* Task Times */
