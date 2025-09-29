@@ -41,6 +41,7 @@ namespace mcp_spi_interface {
      */
     uint16_t read_channel(int cs, const std::array<uint8_t, 3>& cmd);
 
-} // namespace mcp_spi_interface
+}
 
-#endif // MCPSPIINTERFACE_H
+#include <MCPSPIInterface.tpp>
+#endif
