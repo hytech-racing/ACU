@@ -414,10 +414,3 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
 
     return HT_TASK::TaskResponse::YIELD;
 }
-
-HT_TASK::TaskResponse debug_shtdown_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
-{
-    Serial.print("shutdown line read state: ");
-    Serial.println(digitalRead(38)); // NOLINT
-    return HT_TASK::TaskResponse::YIELD;
-}
