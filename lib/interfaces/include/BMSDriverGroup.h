@@ -158,7 +158,8 @@ public:
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
     
     CurrentGroup_e current_read_group = CurrentGroup_e::CURRENT_GROUP_A;
-   // std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chips> cell_voltages_1_12_buffer;
+    std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
+    std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
