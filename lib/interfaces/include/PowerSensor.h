@@ -1,9 +1,7 @@
-#include <SharedFirmwareTypes.h>
 #ifndef POWERSENSOR_H
 #define POWERSENSOR_H
-
+#include <SharedFirmwareTypes.h>
 #include <stdint.h>
-
 // Channel codes (D2 D1 D0). We'll use the single-ended CH codes for this sensor.
 enum class CHANNEL_CODES_e : uint8_t
 {
@@ -80,5 +78,4 @@ private:
     PowerSensorData _data;
 };
 
-#include "PowerSensor.cpp"
 #endif // POWERSENSOR_H
