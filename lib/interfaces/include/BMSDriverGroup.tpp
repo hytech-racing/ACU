@@ -242,8 +242,8 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                 size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
                 // load humidity / temperatures function
                 std::array<uint8_t, 10> gpio_1_to_5_for_one_chip;
-                start = data_in_temps_1_to_5.begin() + (chip * 10);
-                end = start + 10;
+                auto start = this->auxillary_1_5_buffer[chip].begin();
+                auto end = start + 10;
                 std::copy(start, end, gpio_1_to_5_for_one_chip.begin());
                 _bms_data = _load_auxillaries(_bms_data, max_min_reference, gpio_1_to_5_for_one_chip, chip_index, gpio_count);
             }
