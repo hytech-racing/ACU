@@ -14,7 +14,6 @@ void mcp_spi_interface::_write_and_delay_high(int cs, int us) {
   delayMicroseconds(us);
 }
 
-// --- Command builder ---
 std::array<uint8_t,3>
 mcp_spi_interface::make_cmd(uint8_t channel, bool singleEnded) {
   const uint8_t b0 = singleEnded ? MCP_START_READING_SINGLE : MCP_START_READING_DIFF;
@@ -37,4 +36,9 @@ uint16_t mcp_spi_interface::read_channel(int cs, const std::array<uint8_t,3>& cm
   SPI.endTransaction();
 
   return static_cast<uint16_t>(((hi & 0x0F) << 8) | lo); //combines hi and low bits
+}
+
+volt mcp_spi_interface::read_channel_voltage(int cs, const std::array<uint8_t,3>& cmd) {
+  return static_cast<float>(read_channel(cs, cmd)) * REFERENCE_VOLTAGE / RESOLUTION;
+
 }

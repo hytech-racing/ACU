@@ -2,9 +2,10 @@
 #include "MCPSPIInterface.h"
 #include <Arduino.h> 
 #include <SPI.h>
+#include "SharedFirmwareTypes.h"
 
 using mcp_spi_interface::make_cmd;
-using mcp_spi_interface::read_channel;
+using mcp_spi_interface::read_channel_voltage;
 
 // Initialize the ADC chip-select pin.
 void PowerSensor::init() {
@@ -13,37 +14,51 @@ void PowerSensor::init() {
 }
 
 //Reads single values not differential
-uint16_t PowerSensor::_read_raw(CHANNEL_CODES_e ch) {
-    auto cmd = make_cmd(static_cast<uint8_t>(ch), true);
-    return read_channel(_cfg.cs, cmd);
+volt PowerSensor::_read_voltage(CHANNEL_CODES_e ch) {
+    auto cmd = make_cmd(static_cast<uint8_t>(ch), true); 
+    return read_channel_voltage(_cfg.cs, cmd);
 }
 
-bool PowerSensor::_is_valid(CHANNEL_CODES_e ch, uint16_t raw){
-    if (abs(_read_raw(ch) - raw) <= _cfg.acceptable_error){
-        return true;
+//Checks if the data from the channel is correct
+volt PowerSensor::_read_and_validate(CHANNEL_CODES_e ch){
+    uint16_t first_read = _read_voltage(ch);
+    uint16_t second_read = _read_voltage(ch);
+    if (abs(first_read - second_read) <= _cfg.acceptable_error){
+        return second_read;
     }
-    return false;
+    return ERROR_CODE;
 }
+
+float PowerSensor::_calculate_current(uint16_t v_out, uint16_t v_ref){
+    return (v_out - v_ref) / _cfg.sensor_v_per_a;
+}
+
+volt PowerSensor::_calculate_voltage(uint16_t voltage){
+    return voltage*_cfg.voltage_divider_gain;
+}
+
+float PowerSensor::_calculate_power(){
+    return _data.current * _data.power;
+}
+
+
 // Public: perform one measurement and return bus voltage and current
 PowerSensorData PowerSensor::read_data() {
-    // 1) Raw ADC reads from configured channels
-    const uint16_t raw_v   = _read_raw(_cfg.ch_voltage);      // divider node (e.g., CH0)
-    bool raw_v_is_valid = _is_valid(_cfg.ch_voltage, raw_v);
-    const uint16_t raw_out = _read_raw(_cfg.ch_current_out);  // sensor OUT (e.g., CH1)
-    bool raw_out_is_valid = _is_valid(_cfg.ch_current_out, raw_out);
-    const uint16_t raw_ref = _read_raw(_cfg.ch_current_ref);  // sensor REF (e.g., CH2)
-    bool raw_ref_is_valid = _is_valid(_cfg.ch_current_ref, raw_ref);
-    if (raw_out_is_valid && raw_ref_is_valid){
-        const float v_out  = (static_cast<float>(raw_out) / _cfg.resolution) * _cfg.vref;
-        const float v_ref  = (static_cast<float>(raw_ref) / _cfg.resolution) * _cfg.vref;
-        _data.current = (v_out - v_ref) / _cfg.sensor_v_per_a;
+    
+    const uint16_t voltage_ts = _read_and_validate(_cfg.ch_voltage);      // divider node (e.g., CH0)
+    const uint16_t voltage_out = _read_and_validate(_cfg.ch_current_out);  // sensor OUT (e.g., CH1)
+    const uint16_t voltage_ref = _read_and_validate(_cfg.ch_current_ref);  // sensor REF (e.g., CH2)
+
+    const bool has_valid_current_data = (voltage_ref != ERROR_CODE && voltage_out != ERROR_CODE);
+    const bool has_valid_voltage_data = (voltage_ts != ERROR_CODE);
+    if (has_valid_current_data){
+       _data.current = _calculate_current(voltage_out, voltage_ref);
     }
-    if (raw_v_is_valid){
-        const float v_node = (static_cast<float>(raw_v)   / _cfg.resolution) * _cfg.vref;
-        _data.voltage =  v_node * _cfg.voltage_divider_gain;
+    if (has_valid_voltage_data){
+        _data.voltage =  _calculate_voltage(voltage_ts);
     }
-    if (raw_ref_is_valid && raw_out_is_valid && raw_v_is_valid){
-        _data.power = _data.current * _data.voltage;
+    if (has_valid_current_data && has_valid_voltage_data){
+        _data.power = _calculate_power();
     }
     return _data;
 }

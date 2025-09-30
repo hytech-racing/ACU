@@ -3,6 +3,15 @@
 #include <SharedFirmwareTypes.h>
 #include <stdint.h>
 
+
+struct PowerSensorData
+{
+    float current; // Amps
+    volt  voltage; // Volts (pack/bus)
+    float power; // Power
+};
+
+// The codes for each channel on the MCP3028 (D2 D1 D0)
 enum class CHANNEL_CODES_e : uint8_t
 {
     CH0 = 0,
@@ -14,50 +23,45 @@ enum class CHANNEL_CODES_e : uint8_t
     CH6 = 6,
     CH7 = 7,
 };
-struct PowerSensorData
-{
-    float current; // Amps
-    volt  voltage; // Volts (pack/bus)
-    float power; // Power
-};
 
-// Constants you actually need (set once at construction)
 struct Config {
     int acceptable_error;
     int cs;                         // MCP3208 chip-select pin
-    float vref;                     // ADC reference (V) – MCP3208 VREF pin
-    float resolution;   
     float voltage_divider_gain;
-    float sensor_v_per_a;           // V per A for your current sensor (e.g., 0.006667f)
+    float sensor_v_per_a = 0.005;           // V per A for your current sensor (e.g., 0.005 or 5mV/A)
     CHANNEL_CODES_e ch_voltage      = CHANNEL_CODES_e::CH0; // divider node channel
     CHANNEL_CODES_e ch_current_out  = CHANNEL_CODES_e::CH1; // sensor OUT channel
     CHANNEL_CODES_e ch_current_ref  = CHANNEL_CODES_e::CH2; // sensor REF channel
 };
 
 /**
- * Minimal power sensor wrapped around one MCP3208 (U20 in your schematic).
- * - Voltage from a divider on CH (default CH0)
- * - Current from sensor OUT and REF on CH1 and CH2 (OUT - REF) / (V_per_A)
+ * Minimal power sensor wrapped around one MCP3208 
  */
 class PowerSensor
 {
 public:
+    static constexpr volt ERROR_CODE = -1; 
 
     PowerSensor() = delete;
     PowerSensor(const Config& cfg) : _cfg(cfg) {};
 
     void init();
-    // One-shot read: returns bus voltage and current.
+
+    // One-shot read: returns and validates bus voltage and current.
     PowerSensorData read_data();
 
 private:
-    uint16_t _read_raw(CHANNEL_CODES_e ch);
-
-    bool _is_valid(CHANNEL_CODES_e ch, uint16_t raw);
+    volt _read_voltage(CHANNEL_CODES_e ch);
+    
+    float _calculate_current(uint16_t v_out, uint16_t v_ref);
+    volt _calculate_voltage(uint16_t v_raw);
+    float _calculate_power();
+    volt _read_and_validate(CHANNEL_CODES_e ch);
 
 private:
     Config _cfg;
     PowerSensorData _data;
+    
 };
 
 #endif // POWERSENSOR_H
