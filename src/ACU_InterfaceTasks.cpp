@@ -71,11 +71,8 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 
     /* Store into ACUCoreDataInstance */
     ACUAllDataInstance::instance().cell_voltages = data.voltages;
-    ACUAllDataInstance::instance().imd_voltages = data.imd_voltages;
     ACUAllDataInstance::instance().cell_temps = data.cell_temperatures;
-    ACUAllDataInstance::instance().imd_cell_temperatures = data.imd_cell_temperatures;
     ACUAllDataInstance::instance().board_temps = data.board_temperatures;
-    ACUAllDataInstance::instance().imd_board_temperatures = data.imd_board_temperatures;
     ACUAllDataInstance::instance().core_data.avg_cell_voltage = ACUDataInstance::instance().avg_cell_voltage;
     ACUAllDataInstance::instance().core_data.max_cell_voltage = ACUDataInstance::instance().max_cell_voltage;
     ACUAllDataInstance::instance().core_data.min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;

@@ -57,18 +57,15 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
 
     out.cell_voltages_count = _num_cells;
     std::copy(shared_state.cell_voltages.data(), shared_state.cell_voltages.data() + _num_cells, out.cell_voltages);
-    std::copy(shared_state.imd_voltages.data(), shared_state.imd_voltages.data() + _num_cells, out.imd_cell_voltages);
-    
+
     out.cell_temperatures_count = _num_celltemps;
     std::copy(shared_state.cell_temps.data(), shared_state.cell_temps.data() + _num_celltemps, out.cell_temperatures);
-    std::copy(shared_state.imd_cell_temperatures.data(), shared_state.imd_cell_temperatures.data() + _num_celltemps, out.imd_cell_temperatures);
-    
+
     out.invalid_packet_chip_counts_count = _num_chips;
     std::copy(shared_state.consecutive_invalid_packet_counts.data(), shared_state.consecutive_invalid_packet_counts.data() + _num_chips, out.invalid_packet_chip_counts);
 
     out.board_temperatures_count = _num_chips;
     std::copy(shared_state.board_temps.data(), shared_state.board_temps.data() + _num_chips, out.board_temperatures);
-    std::copy(shared_state.imd_board_temperatures.data(), shared_state.imd_board_temperatures.data() + _num_chips, out.imd_board_temperatures);
 
     out.max_consecutive_invalid_packet_count = shared_state.max_consecutive_invalid_packet_count;
     out.max_cell_voltage_id = shared_state.max_cell_voltage_id;
