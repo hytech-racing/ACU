@@ -241,7 +241,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                 size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
                 // load humidity / temperatures function
                 std::array<uint8_t, 10> gpio_1_to_5_for_one_chip;
-                auto start = this->auxillary_1_5_buffer[chip].begin();
+                auto start = this->auxillary_1_5_buffer[chip_index].begin();
                 auto end = start + 10;
                 std::copy(start, end, gpio_1_to_5_for_one_chip.begin());
                 _bms_data = _load_auxillaries(_bms_data, max_min_reference, gpio_1_to_5_for_one_chip, chip_index, gpio_count);
@@ -259,6 +259,8 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
     _bms_data.min_cell_temp = _bms_data.cell_temperatures[_bms_data.min_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
+
+    this->current_read_group = (this->current_read_group + 1) % CurrentGroup_e::NUM_CURRENT_GROUPS;
     return _bms_data;
 }
 
@@ -346,7 +348,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
         chip_voltages_in[cell_Index] = voltage_in / 10000.0;
         bms_data.voltages[battery_cell_count] = chip_voltages_in[cell_Index];
-        // _store_voltage_data(bms_data, max_min_ref, chip_voltages_in, chip_voltages_in[cell_Index], battery_cell_count); since changed signature
+        _store_voltage_data(bms_data, max_min_ref, chip_voltages_in[cell_Index], battery_cell_count); 
 
         battery_cell_count++;
     }
@@ -375,7 +377,9 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
         _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
         if (gpio_Index < 4) {
-            gpio_count++; // TODO: Check with David why we have multiple gpio_count++'s, and why the different conditions
+            gpio_count++; // we are using gpio count for calculation of average cell temperature, 
+            // however on each chip we have 4 cell temps + 1 board temp, which doesn't need to go into calc
+            // so we're ignoring counter increment for board temp
         }
     }
     return bms_data;
@@ -400,7 +404,10 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
 {
-    if (gpio_Index < 4) // These are all thermistors [0,1,2,3]
+    // there is 8 cell temperatures per chip, and 2 board temperatures per board, so 4+1 per chip
+
+
+    if (gpio_Index < 4) // These are all thermistors [0,1,2,3]. 
     {
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
         bms_data.cell_temperatures[gpio_count] = 1 / ((1 / 298.15) + (1 / 3984.0) * log(thermistor_resistance / 10000.0)) - 272.15; // calculation for thermistor temperature in C
@@ -416,11 +423,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
             bms_data.min_cell_temperature_cell_id = gpio_count;
         }
     }
-    else
+    else // this is apparently the case for temperature sensor for the BOARD, not the cells. There is 2 per segment
     {
         constexpr float mcp_9701_temperature_coefficient = 0.0195f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
-        bms_data.board_temperatures[chip_num] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient;
+        bms_data.board_temperatures[chip_num] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient; // 2 per board = 1 per chip
         // bms_data.board_temperatures[(chip_num +2)/2] = 0;
         if (gpio_in > max_min_reference.max_board_temp_voltage)
         {

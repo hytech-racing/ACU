@@ -153,9 +153,6 @@ public:
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
     
-    CurrentGroup_e current_read_group = CurrentGroup_e::CURRENT_GROUP_A;
-    std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
-    std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -194,6 +191,11 @@ public:
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
 private:
+
+    CurrentGroup_e current_read_group = CurrentGroup_e::CURRENT_GROUP_A;
+    std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
+    std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
+
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data
@@ -242,16 +244,6 @@ private:
     void _start_ADC_conversion_through_broadcast(const std::array<uint8_t, 2> &cmd_code);
 
     void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
-
-    std::array<uint8_t, 24 * (num_chips / num_chip_selects)> _package_cell_voltages(BMSDriverData &bms_data, size_t chip_select_index,
-                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_1_to_3,
-                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_4_to_6,
-                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_7_to_9,
-                                                                                    const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &cv_10_to_12);
-
-    std::array<uint8_t, 10 * (num_chips / num_chip_selects)> _package_auxillary_data(BMSDriverData &bms_data, size_t chip_select_index,
-                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
-                                                                                     const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6);
 
     BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
                                       size_t chip_index, size_t &battery_cell_count);
