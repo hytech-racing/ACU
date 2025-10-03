@@ -167,8 +167,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             uint8_t start_cell_index;
 
             //relevant for GPIO reading
-
-
             switch(this->current_read_group) {
                 case CurrentGroup_e::CURRENT_GROUP_A:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
@@ -212,13 +210,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         
         // store the data for all chips on a chip select into one array, no PEC included
 
-
         // DEBUG: Check to see that the PEC is what we expect it to be
         if (this->current_read_group == CurrentGroup_e::CURRENT_GROUP_D) {
             for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++)
             {
                 size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
-
 
                 _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
                 if (_check_if_all_invalid(chip_index))
@@ -405,8 +401,6 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
 {
     // there is 8 cell temperatures per chip, and 2 board temperatures per board, so 4+1 per chip
-
-
     if (gpio_Index < 4) // These are all thermistors [0,1,2,3]. 
     {
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
