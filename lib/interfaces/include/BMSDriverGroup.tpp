@@ -247,9 +247,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         }
     }
 
-
-        
-    
     _bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
     _bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _sum_cell_voltages();

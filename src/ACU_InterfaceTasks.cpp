@@ -57,75 +57,63 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 {
     auto data = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
     
-    if (BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_current_read_group() == CurrentGroup_e::CURRENT_GROUP_AUX_A) // one ahead
+    /* Store into ACUDataInstance */
+    ACUDataInstance::instance().voltages = data.voltages;
+    ACUDataInstance::instance().min_cell_voltage = data.min_cell_voltage;
+    ACUDataInstance::instance().max_cell_voltage = data.max_cell_voltage;
+    ACUDataInstance::instance().pack_voltage = data.total_voltage;
+    ACUDataInstance::instance().avg_cell_voltage = data.total_voltage / ACUConstants::NUM_CELLS;
+    ACUDataInstance::instance().max_board_temp = data.max_board_temp;
+    ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
+    ACUDataInstance::instance().min_cell_temp = data.min_cell_temp;
+    ACUDataInstance::instance().cell_temps = data.cell_temperatures;
+    ACUDataInstance::instance().max_board_temp = data.max_board_temp;
+
+    /* Store into ACUCoreDataInstance */
+    ACUAllDataInstance::instance().cell_voltages = data.voltages;
+    ACUAllDataInstance::instance().cell_temps = data.cell_temperatures;
+    ACUAllDataInstance::instance().board_temps = data.board_temperatures;
+    ACUAllDataInstance::instance().core_data.avg_cell_voltage = ACUDataInstance::instance().avg_cell_voltage;
+    ACUAllDataInstance::instance().core_data.max_cell_voltage = ACUDataInstance::instance().max_cell_voltage;
+    ACUAllDataInstance::instance().core_data.min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;
+    ACUAllDataInstance::instance().core_data.pack_voltage = ACUDataInstance::instance().pack_voltage;
+    ACUAllDataInstance::instance().core_data.max_cell_temp = ACUDataInstance::instance().max_cell_temp;
+    ACUAllDataInstance::instance().core_data.min_cell_temp = ACUDataInstance::instance().min_cell_temp;
+    ACUAllDataInstance::instance().core_data.max_board_temp = ACUDataInstance::instance().max_board_temp;
+
+    ACUAllDataInstance::instance().max_cell_voltage_id = data.max_cell_voltage_id;
+    ACUAllDataInstance::instance().min_cell_voltage_id = data.min_cell_voltage_id;
+    ACUAllDataInstance::instance().max_cell_temp_id = data.max_cell_temperature_cell_id;
+
+    std::array<size_t, ACUConstants::NUM_CHIPS> chip_max_invalid_cmd_counts = {};
+    std::array<size_t, sizeof(BMSFaultCountData_s)> temp = {};
+    size_t num_valid_packets = 0;
+    
+    for (size_t chip = 0; chip < data.valid_read_packets.size(); chip++)
     {
-        ACUDataInstance::instance().voltages = data.voltages;
-        ACUDataInstance::instance().min_cell_voltage = data.min_cell_voltage;
-        ACUDataInstance::instance().max_cell_voltage = data.max_cell_voltage;
-        ACUDataInstance::instance().pack_voltage = data.total_voltage;
-        ACUDataInstance::instance().avg_cell_voltage = data.total_voltage / ACUConstants::NUM_CELLS;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count+1 : 0;
+        ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count+1 : 0;
+        num_valid_packets += static_cast<size_t>(data.valid_read_packets[chip].valid_read_cells_1_to_3 + data.valid_read_packets[chip].valid_read_cells_4_to_6 + data.valid_read_packets[chip].valid_read_cells_7_to_9 + 
+                              data.valid_read_packets[chip].valid_read_cells_10_to_12 + data.valid_read_packets[chip].valid_read_gpios_1_to_3 + data.valid_read_packets[chip].valid_read_gpios_4_to_6);
 
-        ACUAllDataInstance::instance().cell_voltages = data.voltages;
-        ACUAllDataInstance::instance().core_data.avg_cell_voltage = ACUDataInstance::instance().avg_cell_voltage;
-        ACUAllDataInstance::instance().core_data.max_cell_voltage = ACUDataInstance::instance().max_cell_voltage;
-        ACUAllDataInstance::instance().core_data.min_cell_voltage = ACUDataInstance::instance().min_cell_voltage;
-        ACUAllDataInstance::instance().core_data.pack_voltage = ACUDataInstance::instance().pack_voltage;
-        ACUAllDataInstance::instance().max_cell_voltage_id = data.max_cell_voltage_id;
-        ACUAllDataInstance::instance().min_cell_voltage_id = data.min_cell_voltage_id;
-
-        std::array<size_t, ACUConstants::NUM_CHIPS> chip_max_invalid_cmd_counts = {};
-        std::array<size_t, sizeof(BMSFaultCountData_s)> temp = {};
-        size_t num_valid_voltage_packets = 0;
-        
-        for (size_t chip = 0; chip < data.valid_read_packets.size(); chip++)
-        {
-            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
-            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
-            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
-            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count+1 : 0;
-        }
-    } 
-    else if (BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_current_read_group() == CurrentGroup_e::CURRENT_GROUP_A)
-    {
-        ACUDataInstance::instance().max_board_temp = data.max_board_temp;
-        ACUDataInstance::instance().max_cell_temp = data.max_cell_temp;
-        ACUDataInstance::instance().min_cell_temp = data.min_cell_temp;
-        ACUDataInstance::instance().cell_temps = data.cell_temperatures;
-        ACUDataInstance::instance().max_board_temp = data.max_board_temp;
-
-        ACUAllDataInstance::instance().cell_temps = data.cell_temperatures;
-        ACUAllDataInstance::instance().board_temps = data.board_temperatures;
-        ACUAllDataInstance::instance().core_data.max_cell_temp = ACUDataInstance::instance().max_cell_temp;
-        ACUAllDataInstance::instance().core_data.min_cell_temp = ACUDataInstance::instance().min_cell_temp;
-        ACUAllDataInstance::instance().core_data.max_board_temp = ACUDataInstance::instance().max_board_temp;
-        ACUAllDataInstance::instance().max_cell_temp_id = data.max_cell_temperature_cell_id;
-
-        std::array<size_t, ACUConstants::NUM_CHIPS> chip_max_invalid_cmd_counts = {};
-        std::array<size_t, sizeof(BMSFaultCountData_s)> temp = {};
-        size_t num_valid_packets = 0;
-        
-        for (size_t chip = 0; chip < data.valid_read_packets.size(); chip++)
-        {
-            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count+1 : 0;
-            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count+1 : 0;
-            num_valid_packets += static_cast<size_t>(data.valid_read_packets[chip].valid_read_cells_1_to_3 + data.valid_read_packets[chip].valid_read_cells_4_to_6 + data.valid_read_packets[chip].valid_read_cells_7_to_9 + 
-                                data.valid_read_packets[chip].valid_read_cells_10_to_12 + data.valid_read_packets[chip].valid_read_gpios_1_to_3 + data.valid_read_packets[chip].valid_read_gpios_4_to_6);
-
-            temp = {ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count,
-                ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count,
-                ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count,
-                ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count,
-                ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count,
-                ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count};
-            chip_max_invalid_cmd_counts[chip] = *etl::max_element(temp.begin(), temp.end());      
-            ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = chip_max_invalid_cmd_counts[chip];
-        }
-
-        ACUAllDataInstance::instance().valid_packet_rate = static_cast<float>(static_cast<float>(num_valid_packets) / num_total_bms_packets);
-        ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
-        ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
-        ACUAllDataInstance::instance().consecutive_invalid_packet_counts = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts; 
+        temp = {ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count,
+            ACUFaultDataInstance::instance().chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count};
+        chip_max_invalid_cmd_counts[chip] = *etl::max_element(temp.begin(), temp.end());      
+        ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[chip] = chip_max_invalid_cmd_counts[chip];
     }
+    ACUAllDataInstance::instance().valid_packet_rate = static_cast<float>(static_cast<float>(num_valid_packets) / num_total_bms_packets);
+    ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
+    ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
+    ACUAllDataInstance::instance().consecutive_invalid_packet_counts = ACUFaultDataInstance::instance().consecutive_invalid_packet_counts;
+    // print_bms_data(data);
     return HT_TASK::TaskResponse::YIELD;
 }
 
