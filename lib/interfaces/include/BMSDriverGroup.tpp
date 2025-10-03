@@ -171,28 +171,26 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             switch(this->current_read_group) {
                 case CurrentGroup_e::CURRENT_GROUP_A:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 0;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_B:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 3;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_C:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 6;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_D:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 9;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_AUX_A:
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
-                    // valid_data_packet = _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3;
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_AUX_B:
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
-                    // valid_data_packet = _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6;
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = _check_if_valid_packet(spi_data, 8 * chip);
                     break;  
             }
 
@@ -369,6 +367,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
 
     for (int gpio_Index = 0; gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
     {
+        if (_check_specific_packet_group_is_invalid(gpio_Index, invalid_A, invalid_B, invalid_C, invalid_D)) {
+            gpio_count++;
+            continue;
+        }
+
         std::array<uint8_t, 2> data_in_gpio_voltage;
         auto start = data_in_gpio_1_to_5.begin() + (gpio_Index * 2);
         auto end = start + 2;
