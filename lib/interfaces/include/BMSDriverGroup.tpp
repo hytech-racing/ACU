@@ -164,8 +164,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             std::array<uint8_t, 2> data_in_cell_voltage;
             std::array<uint8_t, 2> data_in_gpio_voltage;
 
-            uint8_t start_cell_index, end_cell_index;
-            bool valid_data_packet;
+            uint8_t start_cell_index;
 
             //relevant for GPIO reading
 
@@ -174,22 +173,18 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                 case CurrentGroup_e::CURRENT_GROUP_A:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 0;
-                    end_cell_index = (cell_count >= 3) ? 3 : cell_count;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_B:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 3;
-                    end_cell_index = 6;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_C:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 6;
-                    end_cell_index = 9;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_D:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 9;
-                    end_cell_index = (cell_count >= 12) ? 12 : cell_count;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_AUX_A:
                     _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = valid_data_packet = _check_if_valid_packet(spi_data, 8 * chip);
@@ -201,6 +196,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                     break;  
             }
 
+            // don't do calculation for cells that don't exist
+            if (this->current_read_group == CURRENT_GROUP_D && cell_count == 9) {
+                continue;
+            }
+            
             if (this->current_read_group <= CurrentGroup_e::CURRENT_GROUP_D) {
                 std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 6, this->cell_voltages_1_12_buffer[chip].begin() + start_cell_index * 2);
             } else {

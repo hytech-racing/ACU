@@ -190,6 +190,7 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
+    CurrentGroup_e get_current_read_group() const { return current_read_group; }
 private:
 
     CurrentGroup_e current_read_group = CurrentGroup_e::CURRENT_GROUP_A;
