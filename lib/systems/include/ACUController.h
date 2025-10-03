@@ -16,7 +16,7 @@ namespace acu_controller_default_params
     constexpr const volt OV_THRESH = 4.2; // Volts
     constexpr const volt UV_THRESH = 3.05; // Volts
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
-    constexpr const celsius CHARGING_OT_THRESH = 45.0; // Celsius
+    constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
     constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 1000000; // Same as voltage fault count
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 1000; // At 15 Hz, we'll know if there is an error within 3 seconds of startup
@@ -26,6 +26,8 @@ namespace acu_controller_default_params
     constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
     constexpr const float PACK_MAX_VOLTAGE = 529.2; // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
     constexpr const float PACK_MIN_VOLTAGE = 378.0; // from data sheet^ but just assume 126 * 3.0V
+    constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
+    constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
 }
 
 template <size_t num_cells>
@@ -42,7 +44,7 @@ struct ACUControllerData_s
     float SoC;
     bool has_fault;
     bool charging_enabled;
-
+    bool balancing_enabled;
     std::array<bool, num_cells> cell_balancing_statuses;
 };
 
@@ -60,6 +62,8 @@ struct ACUControllerParameters {
     float pack_nominal_capacity = 0;
     float pack_max_voltage = 0;
     float pack_min_voltage = 0;
+    celsius balance_temp_limit_c = 0;
+    celsius balance_enable_temp_c = 0;
 };
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
@@ -93,7 +97,9 @@ public:
                     volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB,
                     float pack_nominal_capacity = acu_controller_default_params::PACK_NOMINAL_CAPACITY_AH,
                     float pack_max_voltage = acu_controller_default_params::PACK_MAX_VOLTAGE,
-                    float pack_min_voltage = acu_controller_default_params::PACK_MIN_VOLTAGE) : 
+                    float pack_min_voltage = acu_controller_default_params::PACK_MIN_VOLTAGE,
+                    celsius balance_temp_limit_c = acu_controller_default_params::BALANCE_TEMP_LIMIT_C,
+                    celsius balance_enable_temp_c = acu_controller_default_params::BALANCE_ENABLE_TEMP_THRESH_C) : 
         _parameters {
             ov_thresh_v,
             uv_thresh_v,
@@ -107,7 +113,9 @@ public:
             v_diff_init_cb,
             pack_nominal_capacity,
             pack_max_voltage,
-            pack_min_voltage
+            pack_min_voltage,
+            balance_temp_limit_c,
+            balance_enable_temp_c
         }
         {};
 

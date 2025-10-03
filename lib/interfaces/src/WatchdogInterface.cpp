@@ -66,6 +66,11 @@ bool WatchdogInterface::read_shdn_out() {
     return data;
 }
 
+volt WatchdogInterface::read_shdn_out_voltage() {
+    volt data = static_cast<float>(analogRead(_teensy_shdn_out_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_shdn_out_conv_factor);
+    return data;
+}
+
 volt WatchdogInterface::read_precharge_voltage() {
     // 3.3 V for pin voltage cap
     volt data = static_cast<float>(analogRead(_teensy_precharge_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_precharge_conv_factor);

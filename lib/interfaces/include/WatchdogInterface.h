@@ -93,6 +93,7 @@ private:
     const float _teensy41_min_digital_read_voltage_thresh = 0.2F;
     const float _teensy41_max_digital_read_voltage_thresh = 3.0F;
     const float _pack_and_ts_out_conv_factor = 0.00482F;
+    const float _shdn_out_conv_factor = 0.1036F;
     const float _bspd_current_conv_factor = 0.5118F;
     const float _glv_conv_factor = 0.1036F;
     const float _shutdown_voltage_digital_threshold = 12.0F;
@@ -148,6 +149,11 @@ public:
      * @return voltage value of GLV, nominal 24V
     */
     volt read_global_lv_value();
+
+    /**
+     * @return shdn out voltage
+    */
+    volt read_shdn_out_voltage();
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;

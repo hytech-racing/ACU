@@ -24,6 +24,8 @@ namespace ACUConstants
     /* Interface Constants */
     const size_t ANALOG_READ_RESOLUTION = 12;
     const size_t SERIAL_BAUDRATE = 115200;
+    const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
+    const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
 
     /* Task Times */
     constexpr uint32_t TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
@@ -60,7 +62,7 @@ namespace ACUConstants
 
     constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
-
+    
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
     const uint32_t EM_CAN_baudrate = 500000;

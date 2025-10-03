@@ -10,6 +10,7 @@ void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms syste
     _acu_state.last_time_invalid_packet_present = system_start_time;
     _acu_state.prev_bms_time_stamp = system_start_time;
     _acu_state.SoC = (pack_voltage <= _parameters.pack_min_voltage) ? 0.0 : ((pack_voltage - _parameters.pack_min_voltage) / (_parameters.pack_max_voltage - _parameters.pack_min_voltage));
+    _acu_state.balancing_enabled = false;
 }
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
@@ -24,10 +25,20 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     }
 
     // Cell balancing calculations
-    if (_acu_state.charging_enabled)
+    bool previously_balancing = _acu_state.balancing_enabled;
+    
+    bool balance_enableable = ((previously_balancing && (input_state.max_board_temp < _parameters.balance_temp_limit_c)) || 
+                                (!previously_balancing && (input_state.max_board_temp < _parameters.balance_enable_temp_c)));
+
+    
+    bool allow_balancing = ((balance_enableable && _acu_state.charging_enabled));
+
+    if (allow_balancing)
     {
+        _acu_state.balancing_enabled = true;
         _acu_state.cell_balancing_statuses = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
     } else { // Fill with zeros, no balancing
+        _acu_state.balancing_enabled = false;
         _acu_state.cell_balancing_statuses.fill(0);
     }
 
