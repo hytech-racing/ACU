@@ -191,11 +191,12 @@ public:
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
     CurrentGroup_e get_current_read_group() const { return current_read_group; }
+    void set_current_read_group(CurrentGroup_e group) { current_read_group = group; }
 private:
 
     CurrentGroup_e current_read_group = CurrentGroup_e::CURRENT_GROUP_A;
-    std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
-    std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
+    // std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
+    // std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
 
     /**
      * PEC:
@@ -246,10 +247,10 @@ private:
 
     void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
 
-    BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
-                                      size_t chip_index, size_t &battery_cell_count);
+    BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+                                      size_t chip_index, size_t &battery_cell_count, uint8_t start_cell_index);
 
-    BMSDriverData _load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
+    BMSDriverData _load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
                                     size_t chip_index, size_t &gpio_count);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */

@@ -121,7 +121,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         // Get buffers for each group we care about, all at once for ONE chip select line
         _start_wakeup_protocol(cs);
 
-        switch (this->current_read_group) {
+        switch (this->get_current_read_group()) {
             case CurrentGroup_e::CURRENT_GROUP_A:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
@@ -148,13 +148,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                 break;
         }
 
-        // WHAT HAPPENS FOR EACH CHIP:
-        // 1) Packaging: copy it to combined
-       // 2) Set valid_read_packetts for specific chip for cell group 
-       // 3) Packaging returns all cell_voltages 
-    // 4) load cell takes specific chip 
-    // it uses valid_read_packets from its index 
-    // check invalidity and skip if detected (the chip assignment)
+        
         for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++) {
             size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
 
@@ -165,80 +159,70 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             std::array<uint8_t, 2> data_in_gpio_voltage;
 
             uint8_t start_cell_index;
+            std::array<uint8_t, 6> spi_response;
+            bool valid_spi_data;
 
             //relevant for GPIO reading
-            switch(this->current_read_group) {
+            switch(this->get_current_read_group()) {
                 case CurrentGroup_e::CURRENT_GROUP_A:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 0;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_B:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 3;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_C:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 6;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_D:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 9;
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_AUX_A:
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     break;
                 case CurrentGroup_e::CURRENT_GROUP_AUX_B:
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     break;  
             }
 
-            // don't do calculation for cells that don't exist
-            if (this->current_read_group == CURRENT_GROUP_D && cell_count == 9) {
+            // don't do calculation for cells that don't exist. not putting this above so that package is declared as valid
+            if (this->get_current_read_group() == CURRENT_GROUP_D && cell_count == 9) {
+                battery_cell_count++;
                 continue;
             }
-            
-            if (this->current_read_group <= CurrentGroup_e::CURRENT_GROUP_D) {
-                std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 6, this->cell_voltages_1_12_buffer[chip].begin() + start_cell_index * 2);
+
+            // handle invalid packets
+            if (!_bms_data.valid_read_packets[chip_index].all_invalid_reads) {
+                if (this->get_current_read_group() <= CurrentGroup_e::CURRENT_GROUP_D) {
+                    battery_cell_count += 3;
+                } else {
+                    gpio_count += 4;
+                }
+            }
+
+            if (this->get_current_read_group() == CurrentGroup_e::CURRENT_GROUP_AUX_B) {
+                    std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 4, spi_response.begin());
+                    spi_data[4] = spi_data[5] = 0; // padding to make it 6 bytes
             } else {
-                if (this->current_read_group == CurrentGroup_e::CURRENT_GROUP_AUX_A) {
-                    std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 6, this->auxillary_1_5_buffer[chip_index].begin());
-                } else if (this->current_read_group == CurrentGroup_e::CURRENT_GROUP_AUX_B) {
-                    std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 4, this->auxillary_1_5_buffer[chip_index].begin() + 6);
-                }
+                std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 6, spi_response.begin());
             }
-        }
-        
-        // store the data for all chips on a chip select into one array, no PEC included
 
-        // DEBUG: Check to see that the PEC is what we expect it to be
-        if (this->current_read_group == CurrentGroup_e::CURRENT_GROUP_D) {
-            for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++)
+
+
+            _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
+            if (_check_if_all_invalid(chip_index))
             {
-                size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
-
-                _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
-                if (_check_if_all_invalid(chip_index))
-                {
-                    continue;
-                }
-
-                // load cell voltages function
-                std::array<uint8_t, 24> cv_1_to_12_for_one_chip;
-                auto start = this->cell_voltages_1_12_buffer[chip].begin();
-                auto end = start + 24;
-                std::copy(start, end, cv_1_to_12_for_one_chip.begin());
-                _bms_data = _load_cell_voltages(_bms_data, max_min_reference, cv_1_to_12_for_one_chip, chip_index, battery_cell_count);
+                continue;
             }
-        } 
-        if (this->current_read_group == CurrentGroup_e::CURRENT_GROUP_AUX_B) {
-            for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++) {
-                size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
-                // load humidity / temperatures function
-                std::array<uint8_t, 10> gpio_1_to_5_for_one_chip;
-                auto start = this->auxillary_1_5_buffer[chip_index].begin();
-                auto end = start + 10;
-                std::copy(start, end, gpio_1_to_5_for_one_chip.begin());
-                _bms_data = _load_auxillaries(_bms_data, max_min_reference, gpio_1_to_5_for_one_chip, chip_index, gpio_count);
+
+            
+            if (this->get_current_read_group() <= CurrentGroup_e::CURRENT_GROUP_D) {
+                _bms_data = _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
+            } else {
+                _bms_data = _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count);
             }
         }
     }
@@ -251,7 +235,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.min_cell_temp = _bms_data.cell_temperatures[_bms_data.min_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
 
-    this->current_read_group = (this->current_read_group + 1) % CurrentGroup_e::NUM_CURRENT_GROUPS;
+    this->set_current_read_group((this->get_current_read_group() + 1) % CurrentGroup_e::NUM_CURRENT_GROUPS);
     return _bms_data;
 }
 
@@ -312,63 +296,45 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_addre
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
-                                                                            size_t chip_index, size_t &battery_cell_count)
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+                                                                            size_t chip_index, size_t &battery_cell_count, uint8_t start_cell_index)
 {
-    int cell_count = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
-    std::array<volt, 12> chip_voltages_in;
-    
-    ValidPacketData_s packet_data = bms_data.valid_read_packets[chip_index];
-    bool invalid_A = !packet_data.valid_read_cells_1_to_3;
-    bool invalid_B = !packet_data.valid_read_cells_4_to_6;
-    bool invalid_C = !packet_data.valid_read_cells_7_to_9;
-    bool invalid_D = !packet_data.valid_read_cells_10_to_12;
-    for (int cell_Index = 0; cell_Index < cell_count; cell_Index++)
-    {
-        if (_check_specific_packet_group_is_invalid(cell_Index, invalid_A, invalid_B, invalid_C, invalid_D)) {
-            battery_cell_count++;
-            continue;
-        }
+    // remove validity check. if invalid - won't get to here     
+    // remove 9 cell check, same reason
 
-        std::array<uint8_t, 2> data_in_cell_voltage;
-        auto start = data_in_cv_1_to_12.begin() + (cell_Index * 2);
-        auto end = start + 2;
-        std::copy(start, end, data_in_cell_voltage.begin());
+    std::array<uint8_t, 2> data_in_cell_voltage;
+
+    for (int cell_Index = start_cell_index; cell_Index < start_cell_index+3; cell_Index++)
+    {
+        // not checking for invalidity again
+
+        std::copy(data_in_cv_group.begin() + (cell_Index - start_cell_index) * 2, data_in_cv_group.begin() + (cell_Index - start_cell_index) * 2 + 2, data_in_cell_voltage.begin());
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
 
-        chip_voltages_in[cell_Index] = voltage_in / 10000.0;
-        bms_data.voltages[battery_cell_count] = chip_voltages_in[cell_Index];
-        _store_voltage_data(bms_data, max_min_ref, chip_voltages_in[cell_Index], battery_cell_count); 
+        float voltage_converted = voltage_in / 10000.0;
+        bms_data.voltages[battery_cell_count] = voltage_converted;
+        _store_voltage_data(bms_data, max_min_ref, voltage_converted, battery_cell_count);
 
         battery_cell_count++;
     }
-    std::copy(chip_voltages_in.data(), chip_voltages_in.data() + cell_count, bms_data.voltages_by_chip[chip_index].data());
+    std::copy(data_in_cell_voltage.begin(), data_in_cell_voltage.end(), bms_data.voltages_by_chip[chip_index].begin() + start_cell_index * 2);
     return bms_data;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
-                                                                          size_t chip_index, size_t &gpio_count)
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
+                                                                            size_t chip_index, size_t &gpio_count)
 {
-    ValidPacketData_s packet_data = bms_data.valid_read_packets[chip_index];
-    bool invalid_A = !packet_data.valid_read_gpios_1_to_3;
-    bool invalid_B = !packet_data.valid_read_gpios_4_to_6;
-    bool invalid_C = false;
-    bool invalid_D = false;
+    // invalid packets handled beforehand
+    uint8_t gpio_start_index = this->get_current_read_group() == CurrentGroup_e::CURRENT_GROUP_AUX_A ? 0 : 3;
 
-    for (int gpio_Index = 0; gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
+    for (int gpio_Index = gpio_start_index; gpio_Index < gpio_start_index + 3 && gpio_Index != 5; gpio_Index++) // There are only five Auxillary ports
     {
-        if (_check_specific_packet_group_is_invalid(gpio_Index, invalid_A, invalid_B, invalid_C, invalid_D)) {
-            gpio_count++;
-            continue;
-        }
 
         std::array<uint8_t, 2> data_in_gpio_voltage;
-        auto start = data_in_gpio_1_to_5.begin() + (gpio_Index * 2);
-        auto end = start + 2;
-        std::copy(start, end, data_in_gpio_voltage.begin());
+        std::copy(data_in_gpio_group.begin() + (gpio_Index - gpio_start_index) * 2, data_in_gpio_group.begin() + (gpio_Index - gpio_start_index) * 2 + 2, data_in_gpio_voltage.begin());
 
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
         _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
