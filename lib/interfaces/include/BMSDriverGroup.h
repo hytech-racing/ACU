@@ -190,11 +190,12 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
-    CurrentReadGroup_e get_current_read_group() const { return current_read_group; }
-    void set_current_read_group(CurrentReadGroup_e group) { current_read_group = group; }
 private:
 
-    CurrentReadGroup_e current_read_group = CurrentReadGroup_e::CURRENT_GROUP_A;
+    CurrentReadGroup_e _current_read_group = CurrentReadGroup_e::CURRENT_GROUP_A;
+
+    CurrentReadGroup_e _get_current_read_group() const { return _current_read_group; }
+    void _set_current_read_group(CurrentReadGroup_e group) { _current_read_group = group; }
     // std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
     // std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
 
