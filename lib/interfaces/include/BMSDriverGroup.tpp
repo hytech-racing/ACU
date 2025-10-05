@@ -122,27 +122,27 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         _start_wakeup_protocol(cs);
 
         switch (_get_current_read_group()) {
-            case CurrentGroup_e::CURRENT_GROUP_A:
+            case CurrentReadGroup_e::CURRENT_GROUP_A:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentGroup_e::CURRENT_GROUP_B:
+            case CurrentReadGroup_e::CURRENT_GROUP_B:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentGroup_e::CURRENT_GROUP_C:
+            case CurrentReadGroup_e::CURRENT_GROUP_C:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentGroup_e::CURRENT_GROUP_D:
+            case CurrentReadGroup_e::CURRENT_GROUP_D:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentGroup_e::CURRENT_GROUP_AUX_A:
+            case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentGroup_e::CURRENT_GROUP_AUX_B:
+            case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
@@ -164,26 +164,26 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             //relevant for GPIO reading
             switch(_get_current_read_group()) {
-                case CurrentGroup_e::CURRENT_GROUP_A:
+                case CurrentReadGroup_e::CURRENT_GROUP_A:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 0;
                     break;
-                case CurrentGroup_e::CURRENT_GROUP_B:
+                case CurrentReadGroup_e::CURRENT_GROUP_B:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 3;
                     break;
-                case CurrentGroup_e::CURRENT_GROUP_C:
+                case CurrentReadGroup_e::CURRENT_GROUP_C:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 6;
                     break;
-                case CurrentGroup_e::CURRENT_GROUP_D:
+                case CurrentReadGroup_e::CURRENT_GROUP_D:
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 9;
                     break;
-                case CurrentGroup_e::CURRENT_GROUP_AUX_A:
+                case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
                     _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     break;
-                case CurrentGroup_e::CURRENT_GROUP_AUX_B:
+                case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
                     _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
                     break;
             }
@@ -196,14 +196,14 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             // handle invalid packets
             if (!_bms_data.valid_read_packets[chip_index].all_invalid_reads) {
-                if (_get_current_read_group() <= CurrentGroup_e::CURRENT_GROUP_D) {
+                if (_get_current_read_group() <= CurrentReadGroup_e::CURRENT_GROUP_D) {
                     battery_cell_count += 3;
                 } else {
                     gpio_count += 4;
                 }
             }
 
-            if (_get_current_read_group() == CurrentGroup_e::CURRENT_GROUP_AUX_B) {
+            if (_get_current_read_group() == CurrentReadGroup_e::CURRENT_GROUP_AUX_B) {
                     std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 4, spi_response.begin());
                     spi_data[4] = spi_data[5] = 0; // padding to make it 6 bytes
             } else {
@@ -219,7 +219,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             }
 
 
-            if (_get_current_read_group() <= CurrentGroup_e::CURRENT_GROUP_D) {
+            if (_get_current_read_group() <= CurrentReadGroup_e::CURRENT_GROUP_D) {
                 _bms_data = _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
             } else {
                 _bms_data = _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count);
@@ -235,7 +235,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.min_cell_temp = _bms_data.cell_temperatures[_bms_data.min_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
 
-    _set_current_read_group((_get_current_read_group() + 1) % CurrentGroup_e::NUM_CURRENT_GROUPS);
+    _set_current_read_group((_get_current_read_group() + 1) % CurrentReadGroup_e::NUM_CURRENT_GROUPS);
     return _bms_data;
 }
 
@@ -328,7 +328,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
                                                                             size_t chip_index, size_t &gpio_count)
 {
     // invalid packets handled beforehand
-    uint8_t gpio_start_index = _get_current_read_group() == CurrentGroup_e::CURRENT_GROUP_AUX_A ? 0 : 3;
+    uint8_t gpio_start_index = _get_current_read_group() == CurrentReadGroup_e::CURRENT_GROUP_AUX_A ? 0 : 3;
 
     for (int gpio_Index = gpio_start_index; gpio_Index < gpio_start_index + 3 && gpio_Index != 5; gpio_Index++) // There are only five Auxillary ports
     {

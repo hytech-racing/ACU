@@ -133,7 +133,7 @@ struct BMSDriverGroupConfig_s
     const float gpio_adc_conversion_time_us = 3.1;
 };
 
-enum CurrentGroup_e
+enum CurrentReadGroup_e
 {
     CURRENT_GROUP_A = 0,
     CURRENT_GROUP_B,
@@ -190,11 +190,11 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
-    CurrentGroup_e get_current_read_group() const { return current_read_group; }
-    void set_current_read_group(CurrentGroup_e group) { current_read_group = group; }
+    CurrentReadGroup_e get_current_read_group() const { return current_read_group; }
+    void set_current_read_group(CurrentReadGroup_e group) { current_read_group = group; }
 private:
 
-    CurrentGroup_e current_read_group = CurrentGroup_e::CURRENT_GROUP_A;
+    CurrentReadGroup_e current_read_group = CurrentReadGroup_e::CURRENT_GROUP_A;
     // std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
     // std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
 
