@@ -193,15 +193,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                 continue;
             }
 
-            // handle invalid packets
-            if (!_bms_data.valid_read_packets[chip_index].all_invalid_reads) {
-                if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
-                    battery_cell_count += 3;
-                } else {
-                    gpio_count += 4;
-                }
-            }
-
             if (_current_read_group == CurrentReadGroup_e::CURRENT_GROUP_AUX_B) {
                     std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 4, spi_response.begin());
                     spi_data[4] = spi_data[5] = 0; // padding to make it 6 bytes
@@ -209,19 +200,18 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                 std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 6, spi_response.begin());
             }
 
-
-
             _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
             if (_check_if_all_invalid(chip_index))
             {
                 continue;
             }
 
-
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
                 _bms_data = _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
+                battery_cell_count += 3;
             } else {
                 _bms_data = _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count);
+                gpio_count += 4;
             }
         }
     }
