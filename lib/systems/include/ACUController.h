@@ -28,6 +28,7 @@ namespace acu_controller_default_params
     constexpr const float PACK_MIN_VOLTAGE = 378.0; // from data sheet^ but just assume 126 * 3.0V
     constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
     constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
+    constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
 }
 
 template <size_t num_cells>
@@ -127,8 +128,9 @@ public:
     /**
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
+     * @param pack_current current flowing from the pack in amps (negative during discharge, positive during charge)
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float pack_current);
 
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
