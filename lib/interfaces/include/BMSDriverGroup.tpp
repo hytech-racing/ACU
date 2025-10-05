@@ -160,31 +160,30 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             uint8_t start_cell_index;
             std::array<uint8_t, 6> spi_response;
-            bool valid_spi_data;
 
             //relevant for GPIO reading
             switch(_get_current_read_group()) {
                 case CurrentReadGroup_e::CURRENT_GROUP_A:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 0;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_B:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 3;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_C:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 6;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_D:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = _check_if_valid_packet(spi_data, 8 * chip);
                     start_cell_index = 9;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = valid_spi_data = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = _check_if_valid_packet(spi_data, 8 * chip);
                     break;
             }
 
