@@ -56,7 +56,12 @@ bool initialize_all_systems()
 
 HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    auto acu_status = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().evaluate_accumulator(sys_time::hal_millis(), ACUDataInstance::instance()); // verified
+    // Fetch EM current data first for IR compensation
+    EMData_s em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
+
+    // Evaluate accumulator with IR compensation
+    auto acu_status = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().evaluate_accumulator(sys_time::hal_millis(), ACUDataInstance::instance(), em_data.em_current);
+
     if (acu_status.has_fault) {
         ACUDataInstance::instance().bms_ok = !acu_status.has_fault;
         ACUDataInstance::instance().last_bms_not_ok_eval = sys_time::hal_millis();
@@ -64,7 +69,6 @@ HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const
         ACUDataInstance::instance().bms_ok = true;
     }
     ACUDataInstance::instance().cell_balancing_statuses = acu_status.cell_balancing_statuses;
-    EMData_s em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
     ACUAllDataInstance::instance().SoC = ACUDataInstance::instance().SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_state_of_charge(em_data.em_current, em_data.time_since_prev_msg_ms);
     return HT_TASK::TaskResponse::YIELD;
 }

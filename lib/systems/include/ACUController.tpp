@@ -15,8 +15,21 @@ void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms syste
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 typename ACUController<num_cells, num_celltemps, num_boardtemps>::ACUStatus
-ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state)
-{   
+ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float pack_current)
+{
+    // IR compensation: Internal_V = Read_V - (IR × current)
+    // Note: pack_current is negative during discharge, positive during charge
+    const float CELL_IR = acu_controller_default_params::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells); // Per-cell internal resistance
+    const float PACK_IR = acu_controller_default_params::PACK_INTERNAL_RESISTANCE;
+
+    float cell_voltage_correction = CELL_IR * pack_current;
+    float pack_voltage_correction = PACK_IR * pack_current;
+
+    // Calculate compensated (internal) voltages
+    volt compensated_min_cell_voltage = input_state.min_cell_voltage - cell_voltage_correction;
+    volt compensated_max_cell_voltage = input_state.max_cell_voltage - cell_voltage_correction;
+    volt compensated_pack_voltage = input_state.pack_voltage - pack_voltage_correction;
+
     _acu_state.charging_enabled = input_state.charging_enabled;
     
     bool has_invalid_packet = false;
@@ -36,20 +49,20 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     if (allow_balancing)
     {
         _acu_state.balancing_enabled = true;
-        _acu_state.cell_balancing_statuses = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
+        _acu_state.cell_balancing_statuses = _calculate_cell_balance_statuses(input_state.voltages, compensated_min_cell_voltage);
     } else { // Fill with zeros, no balancing
         _acu_state.balancing_enabled = false;
         _acu_state.cell_balancing_statuses.fill(0);
     }
 
-    // Update voltage fault time stamps
-    if (input_state.max_cell_voltage < _parameters.ov_thresh_v || has_invalid_packet) { 
+    // Update voltage fault time stamps (using compensated voltages)
+    if (compensated_max_cell_voltage < _parameters.ov_thresh_v || has_invalid_packet) {
         _acu_state.last_time_ov_fault_not_present = current_millis;
-    } 
-    if (input_state.min_cell_voltage > _parameters.uv_thresh_v || has_invalid_packet) { 
+    }
+    if (compensated_min_cell_voltage > _parameters.uv_thresh_v || has_invalid_packet) {
         _acu_state.last_time_uv_fault_not_present = current_millis;
     }
-    if (input_state.pack_voltage > _parameters.min_pack_total_v || has_invalid_packet) {
+    if (compensated_pack_voltage > _parameters.min_pack_total_v || has_invalid_packet) {
         _acu_state.last_time_pack_uv_fault_not_present = current_millis;
     }
     // Update temp fault time stamps
