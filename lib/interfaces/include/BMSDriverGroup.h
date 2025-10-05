@@ -75,7 +75,6 @@ struct ValidPacketData_s
     bool valid_read_cells_10_to_12 = true;
     bool valid_read_gpios_1_to_3 = true;
     bool valid_read_gpios_4_to_6 = true;
-    bool all_invalid_reads = true;
 };
 
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
@@ -264,10 +263,6 @@ private:
      */
     bool _check_if_all_valid(size_t chip_index);
 
-    /**
-     * @return bool of whether valid read packets are all 0
-     */
-    bool _check_if_all_invalid(size_t chip_index);
 
     /**
      * @return sum of all cell voltages

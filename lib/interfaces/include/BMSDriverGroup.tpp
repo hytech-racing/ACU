@@ -162,29 +162,42 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             std::array<uint8_t, 6> spi_response;
 
             //relevant for GPIO reading
+            bool current_group_valid = false;
             switch(_current_read_group) {
                 case CurrentReadGroup_e::CURRENT_GROUP_A:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
+                    current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = current_group_valid;
                     start_cell_index = 0;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_B:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = _check_if_valid_packet(spi_data, 8 * chip);
+                    current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = current_group_valid;
                     start_cell_index = 3;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_C:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = _check_if_valid_packet(spi_data, 8 * chip);
+                    current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = current_group_valid;
                     start_cell_index = 6;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_D:
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = _check_if_valid_packet(spi_data, 8 * chip);
+                    current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = current_group_valid;
                     start_cell_index = 9;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = _check_if_valid_packet(spi_data, 8 * chip);
+                    current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = current_group_valid;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = _check_if_valid_packet(spi_data, 8 * chip);
+                    current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
+                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = current_group_valid;
                     break;
+            }
+
+            // Skip processing if current group packet is invalid
+            if (!current_group_valid)
+            {
+                continue;
             }
 
             // don't do calculation for cells that don't exist. not putting this above so that package is declared as valid
@@ -198,12 +211,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                     spi_data[4] = spi_data[5] = 0; // padding to make it 6 bytes
             } else {
                 std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 6, spi_response.begin());
-            }
-
-            _bms_data.valid_read_packets[chip_index].all_invalid_reads = _check_if_all_invalid(chip_index);
-            if (_check_if_all_invalid(chip_index))
-            {
-                continue;
             }
 
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
@@ -626,12 +633,6 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_all_valid
     return data.valid_read_cells_1_to_3 && data.valid_read_cells_4_to_6 && data.valid_read_cells_7_to_9 && data.valid_read_cells_10_to_12 && data.valid_read_gpios_1_to_3 && data.valid_read_gpios_4_to_6;
 }
 
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_all_invalid(size_t chip_index)
-{
-    ValidPacketData_s data = _bms_data.valid_read_packets[chip_index];
-    return !(data.valid_read_cells_1_to_3 || data.valid_read_cells_4_to_6 || data.valid_read_cells_7_to_9 || data.valid_read_cells_10_to_12 || data.valid_read_gpios_1_to_3 || data.valid_read_gpios_4_to_6);
-}
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 volt BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_sum_cell_voltages()
