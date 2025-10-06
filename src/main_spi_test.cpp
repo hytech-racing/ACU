@@ -151,7 +151,7 @@ void setup()
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    // WatchdogInstance::instance().init();
+    WatchdogInstance::instance().init();
 }
 
 void loop()
