@@ -20,7 +20,8 @@ namespace pin_default_params
 
 class ADCInterface
 {
-public:
+    friend class etl::singleton<ADCInterface>;
+private:
     /**
      * @param imd_ok_pin INPUT - LOW represents FAULT on IMD hardware
      * @param shdn_out_pin INPUT - in FAULT state, if SHDN
@@ -42,13 +43,6 @@ public:
             _teensy_scaled_24V_pin(scaled_24V_pin)
     {};
 
-    /**
-     * @pre constructor called and instance created
-     * @post Pins on Teensy configured and written as IN/OUT
-    */ 
-    void init(uint32_t init_millis);
-
-private:
     const pin _teensy_imd_ok_pin; // < READ from IMD hardware, go to FAULT state if HIGH
     const pin _teensy_precharge_pin; // READ from PRECHARGE
     const pin _teensy_shdn_out_pin; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
@@ -73,6 +67,12 @@ private:
     const float _glv_conv_factor = 0.1036F;
     const float _shutdown_voltage_digital_threshold = 12.0F;
 public:
+    /**
+     * @pre constructor called and instance created
+     * @post Pins on Teensy configured and written as IN/OUT
+    */ 
+    void init(uint32_t init_millis);
+
     /**
      * @return the state of the IMD, HIGH = NO FAULT
     */
