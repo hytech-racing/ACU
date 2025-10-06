@@ -14,7 +14,7 @@ void initialize_all_interfaces()
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init(sys_time::hal_millis());
+    WatchdogInstance::instance().init();
 
     /* ACU Data Struct */
     ACUDataInstance::create();
