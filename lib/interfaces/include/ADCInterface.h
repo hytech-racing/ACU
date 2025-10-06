@@ -34,8 +34,8 @@ public:
         pin bspd_current_pin = pin_default_params::BSPD_CURRENT_PIN,
         pin scaled_24V_pin = pin_default_params::SCALED_24V_PIN):
             _teensy_imd_ok_pin(imd_ok_pin),
-            _teensy_shdn_out_pin(shdn_out_pin),
             _teensy_precharge_pin(precharge_pin),
+            _teensy_shdn_out_pin(shdn_out_pin),
             _teensy_ts_out_filtered_pin(ts_out_filtered_pin),
             _teensy_pack_out_filtered_pin(pack_out_filtered_pin),
             _teensy_bspd_current_pin(bspd_current_pin),
