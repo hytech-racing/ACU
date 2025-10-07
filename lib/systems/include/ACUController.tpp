@@ -47,11 +47,12 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
         _acu_state.last_time_ov_fault_not_present = current_millis;
     }
     // Apply IR compensation only for UV check (main concern during high discharge)
-    // Internal_V = Read_V - (IR × current), where current is negative during discharge
+    // Internal_V = Read_V + (IR × discharge_current), where discharge_current is positive during discharge
+    float discharge_current = -pack_current;  // Positive during discharge, negative during charge
     volt min_cell_voltage_to_check = input_state.min_cell_voltage;
     if (input_state.min_cell_voltage <= _parameters.uv_thresh_v) {
         // Only calculate IR compensation when approaching UV threshold
-        min_cell_voltage_to_check = input_state.min_cell_voltage - (CELL_IR * pack_current);
+        min_cell_voltage_to_check = input_state.min_cell_voltage + (CELL_IR * discharge_current);
     }
     if (min_cell_voltage_to_check > _parameters.uv_thresh_v || has_invalid_packet) {
         _acu_state.last_time_uv_fault_not_present = current_millis;
