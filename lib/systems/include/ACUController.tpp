@@ -51,7 +51,6 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     volt min_cell_voltage_to_check = input_state.min_cell_voltage;
     if (input_state.min_cell_voltage <= _parameters.uv_thresh_v) {
         // Only calculate IR compensation when approaching UV threshold
-        const float CELL_IR = acu_controller_default_params::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
         min_cell_voltage_to_check = input_state.min_cell_voltage - (CELL_IR * pack_current);
     }
     if (min_cell_voltage_to_check > _parameters.uv_thresh_v || has_invalid_packet) {

@@ -168,6 +168,10 @@ private:
     bool _check_invalid_packet_faults(time_ms current_millis);
 private:
     /**
+     * @brief Internal resistance per cell (computed from pack resistance divided by number of cells)
+    */
+    static constexpr float CELL_IR = acu_controller_default_params::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
+    /**
      * @brief ACU State Holder
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
      * state is packaged this way so that we can feed it directly into the message interface as a struct
