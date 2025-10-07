@@ -3,9 +3,12 @@
 void ADCInterface::init(uint32_t init_millis) {
     // Pin Configuration
     pinMode(_teensy_imd_ok_pin, INPUT);
+    pinMode(_teensy_precharge_pin, INPUT);
     pinMode(_teensy_shdn_out_pin, INPUT);
     pinMode(_teensy_ts_out_filtered_pin, INPUT);
     pinMode(_teensy_pack_out_filtered_pin, INPUT);
+    pinMode(_teensy_bspd_current_pin, INPUT);
+    pinMode(_teensy_scaled_24V_pin, INPUT);
     
     _init_millis = init_millis;
     _in_imd_startup_period = true; 
