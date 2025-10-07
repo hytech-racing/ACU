@@ -42,13 +42,21 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
         _acu_state.cell_balancing_statuses.fill(0);
     }
 
-    // Update voltage fault time stamps
-    if (input_state.max_cell_voltage < _parameters.ov_thresh_v || has_invalid_packet) {
-        _acu_state.last_time_ov_fault_not_present = current_millis;
-    }
-    // Apply IR compensation only for UV check (main concern during high discharge)
+    // Update voltage fault time stamps with IR compensation
     // Internal_V = Read_V + (IR × discharge_current), where discharge_current is positive during discharge
     float discharge_current = -pack_current;  // Positive during discharge, negative during charge
+
+    // OV check with IR compensation (main concern during charging)
+    volt max_cell_voltage_to_check = input_state.max_cell_voltage;
+    if (input_state.max_cell_voltage >= _parameters.ov_thresh_v) {
+        // Only calculate IR compensation when approaching OV threshold
+        max_cell_voltage_to_check = input_state.max_cell_voltage + (CELL_IR * discharge_current);
+    }
+    if (max_cell_voltage_to_check < _parameters.ov_thresh_v || has_invalid_packet) {
+        _acu_state.last_time_ov_fault_not_present = current_millis;
+    }
+
+    // UV check with IR compensation (main concern during discharging)
     volt min_cell_voltage_to_check = input_state.min_cell_voltage;
     if (input_state.min_cell_voltage <= _parameters.uv_thresh_v) {
         // Only calculate IR compensation when approaching UV threshold
