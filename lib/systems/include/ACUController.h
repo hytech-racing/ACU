@@ -170,7 +170,7 @@ private:
     /**
      * @brief Internal resistance per cell (computed from pack resistance divided by number of cells)
     */
-    static constexpr float CELL_IR = acu_controller_default_params::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
+    static constexpr float CELL_IR = acu_controller_default_params::PACK_INTERNAL_RESISTANCE / num_cells;
     /**
      * @brief ACU State Holder
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
