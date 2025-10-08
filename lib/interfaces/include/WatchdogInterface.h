@@ -12,8 +12,15 @@ namespace pin_default_params
     constexpr const pin TEENSY_OK_PIN = 3;
     constexpr const pin WD_KICK_PIN = 4;       
     constexpr const pin N_LATCH_EN_PIN = 6;
-};
+}
 
+struct WatchdogInterfaceParams_s
+{
+    pin teensy_ok_pin; // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
+    pin teensy_wd_kick_pin; // > Needs to flip at 100 Hz to keep BMS_OK high
+    pin teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
+    uint32_t watchdog_kick_interval;
+};
 class WatchdogInterface
 {
 public:
@@ -22,18 +29,17 @@ public:
      * @param wd_kick_pin OUTPUT - 100 Hz pulse from teensy, one of inputs to Watchdog hardware on ACU 
      * @param n_latch_en_pin OUTPUT - should be HIGH if NOT Faulted
     */
-    WatchdogInterface(
-        pin teensy_ok_pin = pin_default_params::TEENSY_OK_PIN,
-        pin wd_kick_pin = pin_default_params::WD_KICK_PIN, 
-        pin n_latch_pin = pin_default_params::N_LATCH_EN_PIN,
-        const uint32_t kick_interval_ms = 9UL) : 
-                        _teensy_wd_kick_pin(wd_kick_pin),
-                        _teensy_ok_pin(teensy_ok_pin),
-                        _teensy_n_latch_en_pin(n_latch_pin),
-                        _watchdog_kick_interval(kick_interval_ms),
-                        _watchdog_time(0), 
-                        _watchdog_state(false)
-    {};
+    WatchdogInterface(pin teensy_ok_pin = pin_default_params::TEENSY_OK_PIN,
+                        pin teensy_wd_kick_pin = pin_default_params::WD_KICK_PIN, 
+                        pin teensy_n_latch_en_pin = pin_default_params::N_LATCH_EN_PIN,
+                        uint32_t watchdog_kick_interval = 9UL): 
+        _params {
+            teensy_ok_pin,
+            teensy_wd_kick_pin,
+            teensy_n_latch_en_pin,
+            watchdog_kick_interval
+        }
+        {};
     
     /**
      * @pre constructor called and instance created
@@ -41,19 +47,6 @@ public:
     */ 
     void init();
 
-private:
-    /* Pin Assignments */
-    const pin _teensy_wd_kick_pin;  // > Needs to flip at 100 Hz to keep BMS_OK high
-    const pin _teensy_ok_pin;   // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
-    const pin _teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
-
-    // following is taken from VCR Watchdog System
-    /* Watchdog last kicked time and output state */
-    const uint32_t _watchdog_kick_interval;
-    uint32_t _watchdog_time;                                 
-    bool _watchdog_state;
-
-public: 
     /**
      * Get/update watchdog state
      * @param curr_millis time of ACU time
@@ -74,6 +67,15 @@ public:
     */
     void set_n_latch_en_low();
     void set_n_latch_en_high();
+
+private:
+    WatchdogInterfaceParams_s _params = {};
+
+    // @brief timestamp of the last watchdog kick
+    uint32_t _watchdog_time = 0;
+
+    // @brief current output level driven on the watchdog kick pin, true = HIGH
+    bool _watchdog_state = false;
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;
