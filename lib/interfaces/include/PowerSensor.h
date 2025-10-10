@@ -30,8 +30,9 @@ struct Config {
     float voltage_divider_gain;
     float sensor_v_per_a = 0.005;           // V per A for your current sensor (e.g., 0.005 or 5mV/A)
     CHANNEL_CODES_e ch_voltage      = CHANNEL_CODES_e::CH0; // divider node channel
-    CHANNEL_CODES_e ch_current_out  = CHANNEL_CODES_e::CH1; // sensor OUT channel
-    CHANNEL_CODES_e ch_current_ref  = CHANNEL_CODES_e::CH2; // sensor REF channel
+    // CHANNEL_CODES_e ch_current_out  = CHANNEL_CODES_e::CH1; // sensor OUT channel
+    // CHANNEL_CODES_e ch_current_ref  = CHANNEL_CODES_e::CH2; // sensor REF channel
+    CHANNEL_CODES_e ch_current        = CHANNEL_CODES_e::CH3; // channel to read current from
 };
 
 /**
@@ -51,12 +52,12 @@ public:
     PowerSensorData read_data();
 
 private:
-    volt _read_voltage(CHANNEL_CODES_e ch);
+    volt _read_voltage(CHANNEL_CODES_e ch, bool isSingleEnded = true);
     
-    float _calculate_current(uint16_t v_out, uint16_t v_ref);
+    float _calculate_current(uint16_t voltage);
     volt _calculate_voltage(uint16_t v_raw);
     float _calculate_power();
-    volt _read_and_validate(CHANNEL_CODES_e ch);
+    volt _read_and_validate(CHANNEL_CODES_e ch, bool isSingleEnded = true);
 
 private:
     Config _cfg;
