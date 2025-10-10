@@ -42,7 +42,7 @@ namespace config_default_params
     constexpr const float TEENSY41_MAX_INPUT_VOLTAGE = 3.3F;
 }
 
-struct ADCInterfaceParams_s
+struct Pinout_s 
 {
     pin teensy_imd_ok_pin;
     pin teensy_precharge_pin;
@@ -51,23 +51,37 @@ struct ADCInterfaceParams_s
     pin teensy_pack_out_filtered_pin;
     pin teensy_bspd_current_pin;
     pin teensy_scaled_24V_pin;
+};
 
+struct Conversions_s
+{
     float shutdown_conv_factor;
     float precharge_conv_factor;
     float pack_and_ts_out_conv_factor;
     float shdn_out_conv_factor;
     float bspd_current_conv_factor;
     float glv_conv_factor;
+};
 
+struct Thresholds_s
+{
     float teensy41_min_digital_read_voltage_thresh;
     float teensy41_max_digital_read_voltage_thresh;
     float shutdown_voltage_digital_threshold;
+};
 
-    bool _in_imd_startup_period;
-    uint32_t _init_millis;
+struct Configs_s
+{
     uint32_t imd_startup_time;
     float bit_resolution;
     float teensy41_max_input_voltage;
+};
+struct ADCInterfaceParams_s
+{
+    Pinout_s pinouts;
+    Conversions_s conversions;
+    Thresholds_s thresholds;
+    Configs_s configs;
 };
 
 class ADCInterface
@@ -97,25 +111,25 @@ public:
                     float bit_resolution = config_default_params::BIT_RESOLUTION,
                     float teensy41_max_input_voltage = config_default_params::TEENSY41_MAX_INPUT_VOLTAGE):
         _params {
-            teensy_imd_ok_pin,
-            teensy_precharge_pin,
-            teensy_shdn_out_pin,
-            teensy_ts_out_filtered_pin,
-            teensy_pack_out_filtered_pin,
-            teensy_bspd_current_pin,
-            teensy_scaled_24V_pin,
-            shutdown_conv_factor,
-            precharge_conv_factor,
-            pack_and_ts_out_conv_factor,
-            shdn_out_conv_factor,
-            bspd_current_conv_factor,
-            glv_conv_factor,
-            teensy41_min_digital_read_voltage_thresh,
-            teensy41_max_digital_read_voltage_thresh,
-            shutdown_voltage_digital_threshold,
-            imd_startup_time,
-            bit_resolution,
-            teensy41_max_input_voltage
+            {teensy_imd_ok_pin,
+                teensy_precharge_pin,
+                teensy_shdn_out_pin,
+                teensy_ts_out_filtered_pin,
+                teensy_pack_out_filtered_pin,
+                teensy_bspd_current_pin,
+                teensy_scaled_24V_pin},
+            {shutdown_conv_factor,
+                precharge_conv_factor,
+                pack_and_ts_out_conv_factor,
+                shdn_out_conv_factor,
+                bspd_current_conv_factor,
+                glv_conv_factor},
+            {teensy41_min_digital_read_voltage_thresh,
+                teensy41_max_digital_read_voltage_thresh,
+                shutdown_voltage_digital_threshold},
+            {imd_startup_time,
+                bit_resolution,
+                teensy41_max_input_voltage}
         }
         {};
     
