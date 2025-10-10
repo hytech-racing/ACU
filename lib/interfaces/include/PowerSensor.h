@@ -25,7 +25,7 @@ enum class CHANNEL_CODES_e : uint8_t
 };
 
 struct Config {
-    int acceptable_error;
+    float acceptable_error;
     int cs;                         // MCP3208 chip-select pin
     float voltage_divider_gain;
     float sensor_v_per_a = 0.005;           // V per A for your current sensor (e.g., 0.005 or 5mV/A)
@@ -54,8 +54,8 @@ public:
 private:
     volt _read_voltage(CHANNEL_CODES_e ch, bool isSingleEnded = true);
     
-    float _calculate_current(uint16_t voltage);
-    volt _calculate_voltage(uint16_t v_raw);
+    float _calculate_current(volt voltage);
+    volt _calculate_voltage(volt v_raw);
     float _calculate_power();
     volt _read_and_validate(CHANNEL_CODES_e ch, bool isSingleEnded = true);
 

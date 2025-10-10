@@ -21,20 +21,20 @@ volt PowerSensor::_read_voltage(CHANNEL_CODES_e ch, bool isSingleEnded) {
 
 //Checks if the data from the channel is correct
 volt PowerSensor::_read_and_validate(CHANNEL_CODES_e ch, bool isSingleEnded){
-    uint16_t first_read = _read_voltage(ch, isSingleEnded);
-    uint16_t second_read = _read_voltage(ch, isSingleEnded);
+    volt first_read = _read_voltage(ch, isSingleEnded);
+    volt second_read = _read_voltage(ch, isSingleEnded);
     if (abs(first_read - second_read) <= _cfg.acceptable_error){
         return second_read;
     }
     return ERROR_CODE;
 }
 
-float PowerSensor::_calculate_current(uint16_t voltage){
-    return (voltage) / _cfg.sensor_v_per_a;
+float PowerSensor::_calculate_current(volt voltage){
+    return voltage / _cfg.sensor_v_per_a;
 }
 
-volt PowerSensor::_calculate_voltage(uint16_t voltage){
-    return voltage*_cfg.voltage_divider_gain;
+volt PowerSensor::_calculate_voltage(volt voltage){
+    return voltage * _cfg.voltage_divider_gain;
 }
 
 float PowerSensor::_calculate_power(){
@@ -45,11 +45,11 @@ float PowerSensor::_calculate_power(){
 // Public: perform one measurement and return bus voltage and current
 PowerSensorData PowerSensor::read_data() {
     
-    const uint16_t voltage_ts = _read_and_validate(_cfg.ch_voltage);      // divider node (e.g., CH0)
-    // const uint16_t voltage_out = _read_and_validate(_cfg.ch_current_out);  // sensor OUT (e.g., CH1)
-    // const uint16_t voltage_ref = _read_and_validate(_cfg.ch_current_ref);  // sensor REF (e.g., CH2)
+    const volt voltage_ts = _read_and_validate(_cfg.ch_voltage);      // divider node (e.g., CH0)
+    // const volt voltage_out = _read_and_validate(_cfg.ch_current_out);  // sensor OUT (e.g., CH1)
+    // const volt voltage_ref = _read_and_validate(_cfg.ch_current_ref);  // sensor REF (e.g., CH2)
 
-    const uint16_t voltage_current = _read_and_validate(_cfg.ch_current);      // divider node (e.g., CH0)
+    const volt voltage_current = _read_and_validate(_cfg.ch_current);      // divider node (e.g., CH0)
     const bool has_valid_current_data = (voltage_current != ERROR_CODE);
     const bool has_valid_voltage_data = (voltage_ts != ERROR_CODE);
     if (has_valid_current_data){
