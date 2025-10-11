@@ -164,6 +164,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             std::array<uint8_t, 2> data_in_gpio_voltage;
 
             uint8_t start_cell_index = 0;
+            uint8_t start_gpio_index = 0;
             std::array<uint8_t, 6> spi_response;
 
             //relevant for GPIO reading
@@ -192,10 +193,12 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                 case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
                     current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
                     _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = current_group_valid;
+                    start_gpio_index = 0;
                     break;
                 case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
                     current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
                     _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = current_group_valid;
+                    start_gpio_index = 3;
                     break;
             }
 
@@ -220,7 +223,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
                 _bms_data = _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
             } else {
-                _bms_data = _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count);
+                _bms_data = _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count, start_gpio_index);
             }
         }
     }
@@ -333,16 +336,15 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
-                                                                            size_t chip_index, size_t &gpio_count)
+                                                                            size_t chip_index, size_t &gpio_count, uint8_t start_gpio_index)
 {
     // invalid packets handled beforehand
-    uint8_t gpio_start_index = _current_read_group == CurrentReadGroup_e::CURRENT_GROUP_AUX_A ? 0 : 3;
 
-    for (int gpio_Index = gpio_start_index; gpio_Index < gpio_start_index + 3 && gpio_Index != 5; gpio_Index++) // There are only five Auxillary ports
+    for (int gpio_Index = start_gpio_index; gpio_Index < start_gpio_index + 3 && gpio_Index != 5; gpio_Index++) // There are only five Auxillary ports
     {
 
         std::array<uint8_t, 2> data_in_gpio_voltage;
-        std::copy(data_in_gpio_group.begin() + (gpio_Index - gpio_start_index) * 2, data_in_gpio_group.begin() + (gpio_Index - gpio_start_index) * 2 + 2, data_in_gpio_voltage.begin());
+        std::copy(data_in_gpio_group.begin() + (gpio_Index - start_gpio_index) * 2, data_in_gpio_group.begin() + (gpio_Index - start_gpio_index) * 2 + 2, data_in_gpio_voltage.begin());
 
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
         _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
