@@ -18,8 +18,8 @@
 
 enum class LTC6811_Type_e
 {
-    LTC6811_1 = 0,
-    LTC6811_2
+    LTC6811_1 = 0,  ///< Broadcast mode (used in production)
+    LTC6811_2       ///< Address mode (reference only)
 };
 
 // Command Codes
