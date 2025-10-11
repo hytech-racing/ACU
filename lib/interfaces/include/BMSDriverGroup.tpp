@@ -341,7 +341,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
         battery_cell_count++;
     }
-    std::copy(data_in_cell_voltage.begin(), data_in_cell_voltage.end(), bms_data.voltages_by_chip[chip_index].begin() + start_cell_index * 2);
+    std::copy(data_in_cv_group.begin(), data_in_cv_group.end(), bms_data.voltages_by_chip[chip_index].begin() + start_cell_index * 2);
     return bms_data;
 }
 
