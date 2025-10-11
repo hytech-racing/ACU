@@ -208,7 +208,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             if (_current_read_group == CurrentReadGroup_e::CURRENT_GROUP_AUX_B) {
                     std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 4, spi_response.begin());
-                    spi_data[4] = spi_data[5] = 0; // padding to make it 6 bytes
+                    spi_response[4] = spi_response[5] = 0; // padding to make it 6 bytes
             } else {
                 std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 6, spi_response.begin());
             }
