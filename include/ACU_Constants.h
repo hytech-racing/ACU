@@ -66,6 +66,36 @@ namespace ACUConstants
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
     const uint32_t EM_CAN_baudrate = 500000;
+
+    /* ADC Interface */
+    constexpr const size_t TS_OUT_FILTERED_PIN = 17;
+    constexpr const size_t PACK_OUT_FILTERED_PIN = 18;
+    constexpr const size_t IMD_OK_PIN = 25; // < READ from IMD hardware, go to FAULT state if HIGH
+    constexpr const size_t PRECHARGE_PIN = 26; // READ from PRECHARGE
+    constexpr const size_t BSPD_CURRENT_PIN = 27;
+    constexpr const size_t SHDN_OUT_PIN = 38; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
+    constexpr const size_t SCALED_24V_PIN = 39;
+
+    constexpr const float SHUTDOWN_CONV_FACTOR = 0.1155F; // voltage divider -> 4.7k / (4.7k + 36k)
+    constexpr const float PRECHARGE_CONV_FACTOR = 0.6623F; // voltage divider -> 10k / (5.1k + 10k)
+    constexpr const float PACK_AND_TS_OUT_CONV_FACTOR = 0.00482F;
+    constexpr const float SHDN_OUT_CONV_FACTOR = 0.1036F;
+    constexpr const float BSPD_CURRENT_CONV_FACTOR = 0.5118F;
+    constexpr const float GLV_CONV_FACTOR = 0.1036F;
+
+    constexpr const float TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH = 0.2F;
+    constexpr const float TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH = 3.0F;
+    constexpr const float SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD = 12.0F;
+
+    constexpr const uint32_t IMD_STARTUP_TIME = 2000;
+    constexpr const float BIT_RESOLUTION = 4095.0F;
+    constexpr const float TEENSY41_MAX_INPUT_VOLTAGE = 3.3F;
+
+    /* Watchdog Interface */
+    constexpr const size_t TEENSY_OK_PIN = 3;
+    constexpr const size_t WD_KICK_PIN = 4;       
+    constexpr const size_t N_LATCH_EN_PIN = 6;
+    constexpr const uint32_t WATCHDOG_KICK_INTERVAL = 9UL;
 }
 
 #endif
