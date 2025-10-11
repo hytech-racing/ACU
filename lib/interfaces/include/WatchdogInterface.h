@@ -3,31 +3,22 @@
 
 #include <Arduino.h>
 #include "SharedFirmwareTypes.h"
-#include "../../../include/ACU_Constants.h"
 #include "etl/singleton.h"
 
 using pin = size_t;
 
 struct WatchdogInterfaceParams_s
 {
-    pin teensy_ok_pin; // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
-    pin teensy_wd_kick_pin; // > Needs to flip at 100 Hz to keep BMS_OK high
-    pin teensy_n_latch_en_pin; // > Input to Safety Light, true when teensy is not in FAULT state
+    pin teensy_ok_pin; 
+    pin teensy_wd_kick_pin;
+    pin teensy_n_latch_en_pin;
     uint32_t watchdog_kick_interval;
 };
-
-namespace pin_default_params
-{
-    constexpr const WatchdogInterfaceParams_s WATCHDOG_PINOUT = {ACUConstants::TEENSY_OK_PIN, 
-                                                            ACUConstants::WD_KICK_PIN, 
-                                                            ACUConstants::N_LATCH_EN_PIN,
-                                                            ACUConstants::WATCHDOG_KICK_INTERVAL};
-}
 
 class WatchdogInterface
 {
 public:
-    WatchdogInterface(WatchdogInterfaceParams_s params = {pin_default_params::WATCHDOG_PINOUT}):
+    WatchdogInterface(WatchdogInterfaceParams_s params):
         _watchdog_params {
             params
         }

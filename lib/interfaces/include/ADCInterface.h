@@ -3,14 +3,13 @@
 
 #include <Arduino.h>
 #include "SharedFirmwareTypes.h"
-#include "../../../include/ACU_Constants.h"
 #include "etl/singleton.h"
 
 using pin = size_t;
 
 struct ADCPinout_s 
 {
-    pin teensy_imd_ok_pin;
+    pin teensy_imd_ok_pin; 
     pin teensy_precharge_pin;
     pin teensy_shdn_out_pin;
     pin teensy_ts_out_filtered_pin;
@@ -51,36 +50,13 @@ struct ADCInterfaceParams_s
     ADCConfigs_s configs;
 };
 
-namespace adc_interface_default_params
-{
-    constexpr const ADCPinout_s ADC_PINOUT = {ACUConstants::IMD_OK_PIN, 
-                                                ACUConstants::PRECHARGE_PIN, 
-                                                ACUConstants::SHDN_OUT_PIN, 
-                                                ACUConstants::TS_OUT_FILTERED_PIN, 
-                                                ACUConstants::PACK_OUT_FILTERED_PIN, 
-                                                ACUConstants::BSPD_CURRENT_PIN,
-                                                ACUConstants::SCALED_24V_PIN};
-    constexpr const ADCConversions_s ADC_CONVERSIONS = {ACUConstants::SHUTDOWN_CONV_FACTOR,
-                                                         ACUConstants::PRECHARGE_CONV_FACTOR,
-                                                         ACUConstants::PACK_AND_TS_OUT_CONV_FACTOR,
-                                                         ACUConstants::SHDN_OUT_CONV_FACTOR,
-                                                         ACUConstants::BSPD_CURRENT_CONV_FACTOR,
-                                                         ACUConstants::GLV_CONV_FACTOR};
-    constexpr const ADCThresholds_s ADC_THRESHOLDS = {ACUConstants::TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH,
-                                                       ACUConstants::TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH,
-                                                       ACUConstants::SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD};
-    constexpr const ADCConfigs_s ADC_CONFIGS = {ACUConstants::IMD_STARTUP_TIME,
-                                                 ACUConstants::BIT_RESOLUTION,
-                                                 ACUConstants::TEENSY41_MAX_INPUT_VOLTAGE};
-}
-
 class ADCInterface
 {
 public:
-    ADCInterface(ADCPinout_s pinout = adc_interface_default_params::ADC_PINOUT,
-                    ADCConversions_s conversions = adc_interface_default_params::ADC_CONVERSIONS,
-                    ADCThresholds_s thresholds = adc_interface_default_params::ADC_THRESHOLDS,
-                    ADCConfigs_s configs = adc_interface_default_params::ADC_CONFIGS):
+    ADCInterface(ADCPinout_s pinout,
+                    ADCConversions_s conversions,
+                    ADCThresholds_s thresholds,
+                    ADCConfigs_s configs):
         _adc_params {
             {pinout},
             {conversions},
