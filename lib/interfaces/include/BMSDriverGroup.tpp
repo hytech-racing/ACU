@@ -202,7 +202,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             // don't do calculation for cells that don't exist. not putting this above so that package is declared as valid
             if (_current_read_group == CURRENT_GROUP_D && cell_count == 9) {
-                battery_cell_count++;
                 continue;
             }
 
