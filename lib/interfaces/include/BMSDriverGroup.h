@@ -262,6 +262,24 @@ private:
 
     BMSDriverData _read_data_through_broadcast();
 
+    /**
+     * REFERENCE ONLY: LTC6811-2 ADDRESS MODE IS BROKEN AND UNUSED
+     *
+     * This implementation has major bugs and is NOT used in production (it wont compile anyway):
+     *
+     * BUG #1 (Line 284): Function signature mismatch
+     *   - Calls: _load_cell_voltages(..., data_in_cell_voltages_1_to_12, chip, battery_cell_count)
+     *   - Expects: _load_cell_voltages(..., std::array<uint8_t, 6>, chip_index, battery_cell_count, start_cell_index)
+     *   - Problem: Passing 24-byte array where 6-byte array expected, missing start_cell_index parameter
+     *
+     * BUG #2 (Line 285): Wrong function called
+     *   - Calls: _load_auxillaries() which depends on _current_read_group state
+     *   - Should call: _load_auxillaries_address_mode() instead
+     *   - Problem: State variable not updated in address mode, causes incorrect GPIO indexing
+     *
+     * PRODUCTION: All production code uses LTC6811_1 (broadcast mode) exclusively.
+     * See ACU_InterfaceTasks.cpp lines 27-28.
+     */
     BMSDriverData _read_data_through_address();
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
