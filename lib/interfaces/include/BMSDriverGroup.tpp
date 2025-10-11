@@ -158,7 +158,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             std::array<uint8_t, 2> data_in_cell_voltage;
             std::array<uint8_t, 2> data_in_gpio_voltage;
 
-            uint8_t start_cell_index;
+            uint8_t start_cell_index = 0;
             std::array<uint8_t, 6> spi_response;
 
             //relevant for GPIO reading
