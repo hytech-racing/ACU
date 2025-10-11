@@ -95,9 +95,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
         bms_data = _read_data_through_address();
     }
 
-    _start_cell_voltage_ADC_conversion(); // Gets the ICs ready to be read, must delay afterwards by ? us
-    _start_GPIO_ADC_conversion();
-
     return bms_data;
 }
 
@@ -237,24 +234,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     return _bms_data;
 }
 
-/*
- * REFERENCE ONLY: LTC6811-2 ADDRESS MODE IS BROKEN AND UNUSED
- *
- * This implementation has major bugs and is NOT used in production (it wont compile anyway):
- *
- * BUG #1 (Line 284): Function signature mismatch
- *   - Calls: _load_cell_voltages(..., data_in_cell_voltages_1_to_12, chip, battery_cell_count)
- *   - Expects: _load_cell_voltages(..., std::array<uint8_t, 6>, chip_index, battery_cell_count, start_cell_index)
- *   - Problem: Passing 24-byte array where 6-byte array expected, missing start_cell_index parameter
- *
- * BUG #2 (Line 285): Wrong function called
- *   - Calls: _load_auxillaries() which depends on _current_read_group state
- *   - Should call: _load_auxillaries_address_mode() instead
- *   - Problem: State variable not updated in address mode, causes incorrect GPIO indexing
- *
- * PRODUCTION: All production code uses LTC6811_1 (broadcast mode) exclusively.
- * See ACU_InterfaceTasks.cpp lines 27-28.
- */
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_address()
