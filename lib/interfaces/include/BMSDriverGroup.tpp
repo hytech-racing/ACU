@@ -214,10 +214,8 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
 
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
                 _bms_data = _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
-                battery_cell_count += 3;
             } else {
                 _bms_data = _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count);
-                gpio_count += 4;
             }
         }
     }
