@@ -85,6 +85,14 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
+    // Trigger ADC conversions at the start of each complete 6-group read cycle
+    // This ensures all groups (A, B, C, D, AUX_A, AUX_B) read from the same timestamp
+    if (_current_read_group == CurrentReadGroup_e::CURRENT_GROUP_A)
+    {
+        _start_cell_voltage_ADC_conversion();
+        _start_GPIO_ADC_conversion();
+    }
+
     BMSDriverData bms_data;
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
