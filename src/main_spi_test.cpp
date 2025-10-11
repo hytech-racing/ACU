@@ -62,6 +62,17 @@ void print_voltages(driver_data data)
 
     Serial.println("V");
 
+    // BUG TEST: Check for division by zero in temperature calculation
+    Serial.print("Average Cell Temperature: ");
+    Serial.print(data.average_cell_temperature, 2);
+    Serial.print("°C");
+    if (isinf(data.average_cell_temperature)) {
+        Serial.print("WARNING: Temperature average is INFINITY (division by zero bug!)");
+    } else if (isnan(data.average_cell_temperature)) {
+        Serial.print("WARNING: Temperature average is NaN!");
+    }
+    Serial.println();
+
     Serial.println();
 
     size_t chip_index = 1;
