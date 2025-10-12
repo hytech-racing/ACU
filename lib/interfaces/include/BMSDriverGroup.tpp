@@ -468,7 +468,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         size_t j = 0;
-        for (size_t i = num_chips - 1; i-- > 0;)              // This needs to be flipped because when writing a command, primary device holds the last bytes
+        for (size_t i = num_chips; i-- > 0;)              // This needs to be flipped because when writing a command, primary device holds the last bytes
         {                                                     // Find chips with the same CS
             if (_chip_select_per_chip[i] == _chip_select[cs]) // This could be an optimization:  && j < (num_chips + 1) / 2)
             {
