@@ -2,8 +2,6 @@
 #include "Configuration.h"
 #include "BMSDriverGroup.h"
 #include "LTCSPIInterface.h"
-#include <string.h>
-#include <stdio.h>
 #include <array>
 #include <string>
 #include <optional>
