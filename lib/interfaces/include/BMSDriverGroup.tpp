@@ -9,7 +9,7 @@
 #include <optional>
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config) : _pec15Table(_initialize_Pec_Table()),
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(const std::array<int, num_chip_selects>& cs, const std::array<int, num_chips>& cs_per_chip, const std::array<int, num_chips>& addr, const BMSDriverGroupConfig_s& config) : _pec15Table(_initialize_Pec_Table()),
                                                                                                                                                                                         _chip_select(cs),
                                                                                                                                                                                         _chip_select_per_chip(cs_per_chip),
                                                                                                                                                                                         _address(addr),
@@ -486,7 +486,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
 
 /* UNUSED: LTC6811-2 ADDRESS MODE - REFERENCE ONLY
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_through_address(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_through_address(uint8_t dcto_mode, const std::array<uint8_t, 6>& buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses)
 {
     // Need to manipulate the command code to have address, therefore have to send command num_chips times
     std::array<uint8_t, 4> cmd_and_pec;
@@ -559,7 +559,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
 
 /* UNUSED: LTC6811-2 ADDRESS MODE - REFERENCE ONLY
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code)
 {
     // Need to manipulate the command code to have address, therefore have to send command num_chips times
     for (size_t i = 0; i < num_chips; i++)

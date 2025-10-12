@@ -207,7 +207,7 @@ public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
-    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
+    BMSDriverGroup(const std::array<int, num_chip_selects>& cs, const std::array<int, num_chips>& cs_per_chip, const std::array<int, num_chips>& addr, const BMSDriverGroupConfig_s& config = {});
     
 
 public:
@@ -300,7 +300,7 @@ private:
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
-    void _write_config_through_address(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
+    void _write_config_through_address(uint8_t dcto_mode, const std::array<uint8_t, 6>& buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
     /**
      * Writes command to start cell voltage ADC converion
@@ -317,7 +317,7 @@ private:
 
     void _start_ADC_conversion_through_broadcast(const std::array<uint8_t, 2> &cmd_code);
 
-    void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
+    void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
 
     void _load_cell_voltages(BMSDriverData& bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
                                       size_t chip_index, size_t &battery_cell_count, uint8_t start_cell_index);
