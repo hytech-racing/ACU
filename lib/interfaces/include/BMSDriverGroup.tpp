@@ -151,6 +151,9 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
+            default:
+                // NUM_CURRENT_GROUPS is a sentinel value and should never be reached
+                __builtin_unreachable();
         }
 
         
@@ -200,6 +203,9 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
                     _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = current_group_valid;
                     start_gpio_index = 3;
                     break;
+                default:
+                    // NUM_CURRENT_GROUPS is a sentinel value and should never be reached
+                    __builtin_unreachable();
             }
 
             // Skip processing if current group packet is invalid
