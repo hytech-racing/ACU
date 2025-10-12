@@ -163,9 +163,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             // relevant for cell voltage reading
             int cell_count = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
 
-            std::array<uint8_t, 2> data_in_cell_voltage;
-            std::array<uint8_t, 2> data_in_gpio_voltage;
-
             uint8_t start_cell_index = 0;
             uint8_t start_gpio_index = 0;
             std::array<uint8_t, 6> spi_response;
