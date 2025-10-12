@@ -595,16 +595,17 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 std::array<uint8_t, 2> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_generate_formatted_CMD(CMD_CODES_e command, int ic_index)
 {
     std::array<uint8_t, 2> cmd;
+    const uint16_t cmd_val = static_cast<uint16_t>(command);
 
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
-        cmd[0] = (uint8_t)command >> 8;
-        cmd[1] = (uint8_t)command;
+        cmd[0] = static_cast<uint8_t>(cmd_val >> 8);
+        cmd[1] = static_cast<uint8_t>(cmd_val);
     }
     else
     {
-        cmd[0] = (uint8_t)_get_cmd_address(_address[ic_index]) | (uint8_t)command >> 8;
-        cmd[1] = (uint8_t)command;
+        cmd[0] = static_cast<uint8_t>(_get_cmd_address(_address[ic_index]) | (cmd_val >> 8));
+        cmd[1] = static_cast<uint8_t>(cmd_val);
     }
     return cmd;
 }
