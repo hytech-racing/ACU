@@ -358,7 +358,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const float &voltage_in, size_t &cell_count)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, float voltage_in, size_t &cell_count)
 {
     max_min_reference.total_voltage += voltage_in;
     if (voltage_in <= max_min_reference.min_cell_voltage)
@@ -374,7 +374,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
 {
     // there is 8 cell temperatures per chip, and 2 board temperatures per board, so 4+1 per chip
     if (gpio_Index < 4) // These are all thermistors [0,1,2,3]. 
