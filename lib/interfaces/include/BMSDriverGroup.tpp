@@ -221,9 +221,9 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             }
 
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
-                _bms_data = _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
+                _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
             } else {
-                _bms_data = _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count, start_gpio_index);
+                _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count, start_gpio_index);
             }
         }
     }
@@ -308,11 +308,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_addre
 */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+void
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData& bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
                                                                             size_t chip_index, size_t &battery_cell_count, uint8_t start_cell_index)
 {
-    // remove validity check. if invalid - won't get to here     
+    // remove validity check. if invalid - won't get to here
     // remove 9 cell check, same reason
 
     std::array<uint8_t, 2> data_in_cell_voltage;
@@ -332,12 +332,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
         battery_cell_count++;
     }
     std::copy_n(data_in_cv_group.begin(), 6, bms_data.voltages_by_chip[chip_index].begin() + start_cell_index * 2);
-    return bms_data;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
+void
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData& bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
                                                                             size_t chip_index, size_t &gpio_count, uint8_t start_gpio_index)
 {
     // invalid packets handled beforehand
@@ -351,12 +350,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
         _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
         if (gpio_Index < 4) {
-            gpio_count++; // we are using gpio count for calculation of average cell temperature, 
+            gpio_count++; // we are using gpio count for calculation of average cell temperature,
             // however on each chip we have 4 cell temps + 1 board temp, which doesn't need to go into calc
             // so we're ignoring counter increment for board temp
         }
     }
-    return bms_data;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
