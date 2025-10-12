@@ -4,6 +4,8 @@
 #include "LTCSPIInterface.h"
 #include <array>
 #include <string>
+#include <cmath>
+#include <algorithm>
 #include <optional>
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
