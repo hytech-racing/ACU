@@ -212,10 +212,10 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             }
 
             if (_current_read_group == CurrentReadGroup_e::CURRENT_GROUP_AUX_B) {
-                    std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 4, spi_response.begin());
+                    std::copy_n(spi_data.begin() + (8 * chip), 4, spi_response.begin());
                     std::fill(spi_response.begin() + 4, spi_response.end(), 0); // padding to make it 6 bytes
             } else {
-                std::copy(spi_data.begin() + (8 * chip), spi_data.begin() + (8 * chip) + 6, spi_response.begin());
+                std::copy_n(spi_data.begin() + (8 * chip), 6, spi_response.begin());
             }
 
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
@@ -319,7 +319,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
     {
         // not checking for invalidity again
 
-        std::copy(data_in_cv_group.begin() + (cell_Index - start_cell_index) * 2, data_in_cv_group.begin() + (cell_Index - start_cell_index) * 2 + 2, data_in_cell_voltage.begin());
+        std::copy_n(data_in_cv_group.begin() + (cell_Index - start_cell_index) * 2, 2, data_in_cell_voltage.begin());
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
 
@@ -329,7 +329,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
         battery_cell_count++;
     }
-    std::copy(data_in_cv_group.begin(), data_in_cv_group.end(), bms_data.voltages_by_chip[chip_index].begin() + start_cell_index * 2);
+    std::copy_n(data_in_cv_group.begin(), 6, bms_data.voltages_by_chip[chip_index].begin() + start_cell_index * 2);
     return bms_data;
 }
 
@@ -344,7 +344,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
     {
 
         std::array<uint8_t, 2> data_in_gpio_voltage;
-        std::copy(data_in_gpio_group.begin() + (gpio_Index - start_gpio_index) * 2, data_in_gpio_group.begin() + (gpio_Index - start_gpio_index) * 2 + 2, data_in_gpio_voltage.begin());
+        std::copy_n(data_in_gpio_group.begin() + (gpio_Index - start_gpio_index) * 2, 2, data_in_gpio_voltage.begin());
 
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
         _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
@@ -475,8 +475,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
                 buffer_format[4] = ((cell_balance_statuses[i] & 0x0FF));
                 buffer_format[5] = ((dcto_mode & 0x0F) << 4) | ((cell_balance_statuses[i] & 0xF00) >> 8);
                 temp_pec = _calculate_specific_PEC(buffer_format.data(), 6);
-                std::copy(buffer_format.begin(), buffer_format.end(), full_buffer.data() + (j * 8));
-                std::copy(temp_pec.begin(), temp_pec.end(), full_buffer.data() + 6 + (j * 8));
+                std::copy_n(buffer_format.begin(), 6, full_buffer.data() + (j * 8));
+                std::copy_n(temp_pec.begin(), 2, full_buffer.data() + 6 + (j * 8));
                 j++;
             }
         }
@@ -547,8 +547,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
     std::array<uint8_t, 2> cc = {cmd_code[0], cmd_code[1]};
     std::array<uint8_t, 2> pec = _calculate_specific_PEC(cc.data(), 2);
     std::array<uint8_t, 4> cmd_and_pec;
-    std::copy(cmd_code.begin(), cmd_code.end(), cmd_and_pec.begin()); // Copy first two bytes (cmd)
-    std::copy(pec.begin(), pec.end(), cmd_and_pec.begin() + 2);       // Copy next two bytes (pec)
+    std::copy_n(cmd_code.begin(), 2, cmd_and_pec.begin()); // Copy first two bytes (cmd)
+    std::copy_n(pec.begin(), 2, cmd_and_pec.begin() + 2);  // Copy next two bytes (pec)
 
     // Needs to be sent on each chip select line
     for (size_t cs = 0; cs < num_chip_selects; cs++) {
@@ -620,8 +620,8 @@ std::array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_
     std::array<uint8_t, 4> cmd_pec;
     std::array<uint8_t, 2> cmd = _generate_formatted_CMD(command, ic_index);
     std::array<uint8_t, 2> pec = _calculate_specific_PEC(cmd.data(), 2);
-    std::copy(cmd.data(), cmd.data() + 2, cmd_pec.data());     // Copy first two bytes (cmd)
-    std::copy(pec.data(), pec.data() + 2, cmd_pec.data() + 2); // Copy next two bytes (pec)
+    std::copy_n(cmd.data(), 2, cmd_pec.data());     // Copy first two bytes (cmd)
+    std::copy_n(pec.data(), 2, cmd_pec.data() + 2); // Copy next two bytes (pec)
     return cmd_pec;
 }
 
