@@ -634,14 +634,8 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_valid_pac
 {
     std::array<uint8_t, 6> sample_packet;
     std::array<uint8_t, 2> sample_pec;
-    for (int packet = 0; packet < 6; packet++)
-    {
-        sample_packet[packet] = data[param_iterator + packet];
-    }
-    for (int packet = 0; packet < 2; packet++)
-    {
-        sample_pec[packet] = data[param_iterator + packet + 6];
-    }
+    std::copy_n(data.begin() + param_iterator, 6, sample_packet.begin());
+    std::copy_n(data.begin() + param_iterator + 6, 2, sample_pec.begin());
     std::array<uint8_t, 2> calculated_pec = _calculate_specific_PEC(sample_packet.data(), 6);
 
     return calculated_pec[0] == sample_pec[0] && calculated_pec[1] == sample_pec[1];
