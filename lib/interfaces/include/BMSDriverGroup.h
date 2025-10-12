@@ -357,7 +357,7 @@ private:
      * @param length length of data
      * @return unsigned 16 bit PEC, array of uint8_t of length 2
      */
-    std::array<uint8_t, 2> _calculate_specific_PEC(uint8_t *data, int length);
+    std::array<uint8_t, 2> _calculate_specific_PEC(const uint8_t *data, int length);
 
     /**
      * Generates a formmatted 2 byte array for the Command bytes
