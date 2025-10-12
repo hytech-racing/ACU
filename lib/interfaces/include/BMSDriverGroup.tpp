@@ -241,7 +241,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.min_cell_temp = _bms_data.cell_temperatures[_bms_data.min_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
 
-    _current_read_group = static_cast<CurrentReadGroup_e>((_current_read_group + 1) % CurrentReadGroup_e::NUM_CURRENT_GROUPS);
+    _current_read_group = advance_read_group(_current_read_group);
     return _bms_data;
 }
 

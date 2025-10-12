@@ -188,6 +188,18 @@ enum CurrentReadGroup_e
     NUM_CURRENT_GROUPS        ///< Total number of groups in the read cycle (6)
 };
 
+/**
+ * @brief Advances to the next read group in the 6-state cycle (A → B → C → D → AUX_A → AUX_B → A)
+ * @param current The current read group state
+ * @return The next read group, wrapping from CURRENT_GROUP_AUX_B back to CURRENT_GROUP_A
+ */
+[[nodiscard]] constexpr CurrentReadGroup_e advance_read_group(CurrentReadGroup_e current) noexcept
+{
+    return static_cast<CurrentReadGroup_e>(
+        (static_cast<int>(current) + 1) % static_cast<int>(CurrentReadGroup_e::NUM_CURRENT_GROUPS)
+    );
+}
+
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
