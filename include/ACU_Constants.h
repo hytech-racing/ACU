@@ -8,6 +8,10 @@
 #include <array>
 #include <algorithm>
 
+using volt = float;
+using celsius = float;
+using time_ms = uint32_t;
+
 namespace ACUConstants
 {
     constexpr const volt OV_THRESH = 4.2; // Volts

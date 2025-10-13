@@ -10,8 +10,6 @@
 #include "shared_types.h"
 #include "ACU_Constants.h"
 
-using time_ms = uint32_t;
-
 template <size_t num_cells>
 struct ACUControllerData_s
 {
@@ -30,7 +28,8 @@ struct ACUControllerData_s
     std::array<bool, num_cells> cell_balancing_statuses;
 };
 
-struct ACUControllerParameters {
+struct ACUControllerParameters_s
+{
     volt ov_thresh_v = 0;
     volt uv_thresh_v = 0;
     celsius charging_ot_thresh_c = 0;
@@ -55,8 +54,6 @@ class ACUController
     using ACUStatus = ACUControllerData_s<num_cells>;
     
 public:
-
-
     /**
      * ACU Controller Constructor
      * @param ov_thresh_v over voltage threshold value | units in volts 
@@ -136,7 +133,7 @@ private:
     /**
      * @brief Internal resistance per cell (computed from pack resistance divided by number of cells)
     */
-    static constexpr float CELL_IR = acu_controller_default_params::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
+    static constexpr float CELL_IR = ACUConstants::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
     /**
      * @brief ACU State Holder
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
@@ -147,7 +144,7 @@ private:
     /**
      * @brief ACU Controller Parameters holder
     */
-    const ACUControllerParameters _parameters = {};
+    const ACUControllerParameters_s _parameters = {};
 };
 
 template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
