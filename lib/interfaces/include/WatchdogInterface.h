@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "SharedFirmwareTypes.h"
 #include "etl/singleton.h"
+#include "ACU_Constants.h"
 
 using pin = size_t;
 
