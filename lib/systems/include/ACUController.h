@@ -8,28 +8,9 @@
 #include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
+#include "ACU_Constants.h"
 
 using time_ms = uint32_t;
-
-namespace acu_controller_default_params
-{
-    constexpr const volt OV_THRESH = 4.2; // Volts
-    constexpr const volt UV_THRESH = 3.05; // Volts
-    constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
-    constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
-    constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
-    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 1000000; // Same as voltage fault count
-    constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 1000; // At 15 Hz, we'll know if there is an error within 3 seconds of startup
-    constexpr const time_ms MAX_TEMP_FAULT_DUR = 1000; 
-    constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
-    constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
-    constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
-    constexpr const float PACK_MAX_VOLTAGE = 529.2; // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
-    constexpr const float PACK_MIN_VOLTAGE = 378.0; // from data sheet^ but just assume 126 * 3.0V
-    constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
-    constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
-    constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
-}
 
 template <size_t num_cells>
 struct ACUControllerData_s
@@ -86,39 +67,24 @@ public:
      * @param max_volt_fault_dur max number of voltage faults allowed
      * @param max_temp_fault_dur max number of temp faults allowed
     */
-    ACUController(volt ov_thresh_v = acu_controller_default_params::OV_THRESH, 
-                    volt uv_thresh_v = acu_controller_default_params::UV_THRESH, 
-                    celsius charging_ot_thresh_c = acu_controller_default_params::CHARGING_OT_THRESH, 
-                    celsius running_ot_thresh_c = acu_controller_default_params::RUNNING_OT_THRESH,
-                    volt min_pack_total_voltage = acu_controller_default_params::MIN_PACK_TOTAL_VOLTAGE,
-                    size_t invalid_packet_count_thresh = acu_controller_default_params::MAX_INVALID_PACKET_FAULT_COUNT,
-                    time_ms max_volt_fault_dur = acu_controller_default_params::MAX_VOLTAGE_FAULT_DUR,
-                    time_ms max_temp_fault_dur = acu_controller_default_params::MAX_TEMP_FAULT_DUR,
-                    time_ms max_invalid_packet_dur = acu_controller_default_params::MAX_INVALID_PACKET_FAULT_DUR,
-                    volt v_diff_init_cb = acu_controller_default_params::VOLTAGE_DIFF_TO_INIT_CB,
-                    float pack_nominal_capacity = acu_controller_default_params::PACK_NOMINAL_CAPACITY_AH,
-                    float pack_max_voltage = acu_controller_default_params::PACK_MAX_VOLTAGE,
-                    float pack_min_voltage = acu_controller_default_params::PACK_MIN_VOLTAGE,
-                    celsius balance_temp_limit_c = acu_controller_default_params::BALANCE_TEMP_LIMIT_C,
-                    celsius balance_enable_temp_c = acu_controller_default_params::BALANCE_ENABLE_TEMP_THRESH_C) : 
-        _parameters {
-            ov_thresh_v,
-            uv_thresh_v,
-            charging_ot_thresh_c,
-            running_ot_thresh_c,
-            min_pack_total_voltage,
-            invalid_packet_count_thresh,
-            max_volt_fault_dur,
-            max_temp_fault_dur,
-            max_invalid_packet_dur,
-            v_diff_init_cb,
-            pack_nominal_capacity,
-            pack_max_voltage,
-            pack_min_voltage,
-            balance_temp_limit_c,
-            balance_enable_temp_c
-        }
-        {};
+    ACUController(ACUControllerParameters_s params = {
+                    .ov_thresh_v = ACUConstants::OV_THRESH,
+                    .uv_thresh_v = ACUConstants::UV_THRESH,
+                    .charging_ot_thresh_c = ACUConstants::CHARGING_OT_THRESH,
+                    .running_ot_thresh_c = ACUConstants::RUNNING_OT_THRESH,
+                    .min_pack_total_v = ACUConstants::MIN_PACK_TOTAL_VOLTAGE,
+                    .invalid_packet_count_thresh = ACUConstants::MAX_INVALID_PACKET_FAULT_COUNT,
+                    .max_allowed_voltage_fault_dur = ACUConstants::MAX_VOLTAGE_FAULT_DUR,
+                    .max_allowed_temp_fault_dur = ACUConstants::MAX_TEMP_FAULT_DUR,
+                    .max_allowed_invalid_packet_fault_dur = ACUConstants::MAX_INVALID_PACKET_FAULT_DUR,
+                    .v_diff_to_init_cb = ACUConstants::VOLTAGE_DIFF_TO_INIT_CB,
+                    .pack_nominal_capacity = ACUConstants::PACK_NOMINAL_CAPACITY_AH,
+                    .pack_max_voltage = ACUConstants::PACK_MAX_VOLTAGE,
+                    .pack_min_voltage = ACUConstants::PACK_MIN_VOLTAGE,
+                    .balance_temp_limit_c = ACUConstants::BALANCE_TEMP_LIMIT_C,
+                    .balance_enable_temp_c = ACUConstants::BALANCE_ENABLE_TEMP_THRESH_C
+                }
+            ) : _parameters(params) {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
