@@ -18,11 +18,13 @@ struct WatchdogInterfaceParams_s
 class WatchdogInterface
 {
 public:
-    WatchdogInterface(WatchdogInterfaceParams_s params):
-        _watchdog_params {
-            params
-        }
-        {};
+    WatchdogInterface(WatchdogInterfaceParams_s params = {
+                        .teensy_ok_pin = ACUInterfaces::TEENSY_OK_PIN,
+                        .teensy_wd_kick_pin = ACUInterfaces::WD_KICK_PIN,
+                        .teensy_n_latch_en_pin = ACUInterfaces::N_LATCH_EN_PIN,
+                        .watchdog_kick_interval = ACUInterfaces::WATCHDOG_KICK_INTERVAL
+                    }
+                ) : _watchdog_params { params } {}
     
     /**
      * @pre constructor called and instance created

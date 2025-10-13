@@ -9,16 +9,11 @@ void initialize_all_interfaces()
 {
     SPI.begin();
     SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
-    Serial.begin(ACUConstants::SERIAL_BAUDRATE);
-    analogReadResolution(ACUConstants::ANALOG_READ_RESOLUTION);
+    Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
+    analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
 
     /* Watchdog Interface */
-    WatchdogInstance::create(WatchdogInterfaceParams_s {
-                                ACUConstants::watchdog_default_params::TEENSY_OK_PIN,
-                                ACUConstants::watchdog_default_params::WD_KICK_PIN,
-                                ACUConstants::watchdog_default_params::N_LATCH_EN_PIN,
-                                ACUConstants::watchdog_default_params::WATCHDOG_KICK_INTERVAL
-                            });
+    WatchdogInstance::create();
     WatchdogInstance::instance().init();
 
     /* ACU Data Struct */
@@ -51,33 +46,7 @@ void initialize_all_interfaces()
     EMInterfaceInstance::create(sys_time::hal_millis());
 
     /* ADC Interface */
-    ADCInterfaceInstance::create(ADCPinout_s {
-                                    ACUConstants::adc_default_params::pinout::IMD_OK_PIN,
-                                    ACUConstants::adc_default_params::pinout::PRECHARGE_PIN,
-                                    ACUConstants::adc_default_params::pinout::SHDN_OUT_PIN,
-                                    ACUConstants::adc_default_params::pinout::TS_OUT_FILTERED_PIN,
-                                    ACUConstants::adc_default_params::pinout::PACK_OUT_FILTERED_PIN,
-                                    ACUConstants::adc_default_params::pinout::BSPD_CURRENT_PIN,
-                                    ACUConstants::adc_default_params::pinout::SCALED_24V_PIN
-                                },
-                                ADCConversions_s {
-                                    ACUConstants::adc_default_params::conversions::SHUTDOWN_CONV_FACTOR,
-                                    ACUConstants::adc_default_params::conversions::PRECHARGE_CONV_FACTOR,
-                                    ACUConstants::adc_default_params::conversions::PACK_AND_TS_OUT_CONV_FACTOR,
-                                    ACUConstants::adc_default_params::conversions::SHDN_OUT_CONV_FACTOR,
-                                    ACUConstants::adc_default_params::conversions::BSPD_CURRENT_CONV_FACTOR,
-                                    ACUConstants::adc_default_params::conversions::GLV_CONV_FACTOR
-                                },
-                                ADCThresholds_s {
-                                    ACUConstants::adc_default_params::thresholds::TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH,
-                                    ACUConstants::adc_default_params::thresholds::TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH,
-                                    ACUConstants::adc_default_params::thresholds::SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD
-                                },
-                                ADCConfigs_s {
-                                    ACUConstants::adc_default_params::configs::IMD_STARTUP_TIME,
-                                    ACUConstants::adc_default_params::configs::BIT_RESOLUTION,
-                                    ACUConstants::adc_default_params::configs::TEENSY41_MAX_INPUT_VOLTAGE
-                                });
+    ADCInterfaceInstance::create();
     ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 
     /* CAN Interfaces Construct */
