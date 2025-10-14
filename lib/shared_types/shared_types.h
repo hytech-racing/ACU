@@ -23,20 +23,6 @@ struct ACUData_s {
     bool bms_ok; // False when one of the three shutdown conditions is met
 };
 
-struct BMSFaultCountData_s {
-    uint8_t invalid_cell_1_to_3_count;
-    uint8_t invalid_cell_4_to_6_count;
-    uint8_t invalid_cell_7_to_9_count;
-    uint8_t invalid_cell_10_to_12_count;
-    uint8_t invalid_gpio_1_to_3_count;
-    uint8_t invalid_gpio_4_to_6_count;
-};
 
-template<size_t num_chips>
-struct ACUFaultData_s {
-    std::array<size_t, num_chips> consecutive_invalid_packet_counts;
-    size_t max_consecutive_invalid_packet_count;
-    std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
-};
 
 #endif
