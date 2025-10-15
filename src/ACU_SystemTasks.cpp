@@ -4,12 +4,15 @@
 #include "WatchdogInterface.h"
 #include "CCUInterface.h"
 #include "EMInterface.h"
+#include "BMSDriverGroup.h"
+
+using chip_type = LTC6811_Type_e;
 
 bool initialize_all_systems()
 {
     // Initialize the ACU Controller
     ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::create();
-    ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().init(sys_time::hal_millis(), ACUDataInstance::instance().pack_voltage);
+    ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().init(sys_time::hal_millis(), BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data().total_voltage);
     /* State Machine Initialization */
 
     /* Delegate Function Definitions */
@@ -25,10 +28,10 @@ bool initialize_all_systems()
     etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_shdn_out>(WatchdogInstance::instance());
 
     etl::delegate<void()> enable_cell_balancing = etl::delegate<void()>::create([]() -> void
-                                                                                { ACUDataInstance::instance().charging_enabled = true; });
+                                                                                { BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().enableCharging(); });
 
     etl::delegate<void()> disable_cell_balancing = etl::delegate<void()>::create([]() -> void
-                                                                                { ACUDataInstance::instance().charging_enabled = false; });
+                                                                                { BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().disableCharging(); });
     etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
 
     etl::delegate<void()> reinitialize_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_high>(WatchdogInstance::instance());
@@ -54,9 +57,8 @@ bool initialize_all_systems()
 
 HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().evaluate_accumulator(sys_time::hal_millis(), ACUDataInstance::instance()); // verified
+    ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().evaluate_accumulator(sys_time::hal_millis(), BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_acu_data()); // verified
     EMData_s em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
-    ACUAllDataInstance::instance().SoC = ACUDataInstance::instance().SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_state_of_charge(em_data.em_current, em_data.time_since_prev_msg_ms);
     return HT_TASK::TaskResponse::YIELD;
 }
 

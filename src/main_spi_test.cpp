@@ -115,8 +115,6 @@ void setup()
     Serial.println("Setup Finished!");
     Serial.println();
 
-    /* ACU Data Struct */
-    ACUDataInstance::create();
 
     /* Watchdog Interface */
     WatchdogInstance::create();

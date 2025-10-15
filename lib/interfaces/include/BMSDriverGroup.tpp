@@ -7,6 +7,7 @@
 #include <array>
 #include <string>
 #include <optional>
+#include "shared_types.h"
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {}) : _pec15Table(_initialize_Pec_Table()),
@@ -129,8 +130,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_generate_fault_dat
         _bms_data.consecutive_invalid_packet_counts[chip] = chip_max_invalid_cmd_counts[chip];
     }
     ACUAllDataInstance::instance().valid_packet_rate = static_cast<float>(static_cast<float>(num_valid_packets) / num_total_bms_packets);
-    ACUDataInstance::instance().max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
-    ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = ACUDataInstance::instance().max_consecutive_invalid_packet_count;
+    _bms_data.max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
+    ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = _bms_data.max_consecutive_invalid_packet_count;
     ACUAllDataInstance::instance().consecutive_invalid_packet_counts = _bms_data.consecutive_invalid_packet_counts;
 }
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -208,6 +209,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
     _bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _sum_cell_voltages();
+    _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_cells;
     _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
     _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
     _bms_data.min_cell_temp = _bms_data.cell_temperatures[_bms_data.min_cell_temperature_cell_id];
@@ -264,6 +266,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_addre
     _bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
     _bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _sum_cell_voltages();
+    _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_cells;
     _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
     _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
@@ -705,3 +708,7 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_specific_pac
         return group_D_invalid;
     }
 }
+
+
+// template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+// ACUDataDTO BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_acu_data() 

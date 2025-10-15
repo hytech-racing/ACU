@@ -111,7 +111,10 @@ struct BMSData
     size_t max_cell_temperature_cell_id;     // 0 - 47
     size_t min_cell_temperature_cell_id;     // 0 - 47
     volt total_voltage;
+    volt avg_cell_voltage;
     celsius average_cell_temperature;
+
+    bool charging_enabled;
 };
 
 struct ReferenceMaxMin
@@ -150,6 +153,7 @@ class BMSDriverGroup
 {
 public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
+    using ACUDataDTO = ACUData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>;
     using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
@@ -176,7 +180,43 @@ public:
     // void read_thermistor_and_humidity();
     BMSDriverData read_data();
 
+    ACUDataDTO get_acu_data() const
+{
+    ACUDataDTO out{};
 
+    // Basic voltages
+    out.min_cell_voltage = _bms_data.min_cell_voltage;
+    out.max_cell_voltage = _bms_data.max_cell_voltage;
+    out.pack_voltage = _bms_data.total_voltage; 
+
+    // Per-cell array (sizes must match)
+    out.voltages = _bms_data.voltages;
+
+    // Temps
+    out.max_cell_temp  = _bms_data.max_cell_temp;
+    out.min_cell_temp  = _bms_data.min_cell_temp;
+    out.max_board_temp = _bms_data.max_board_temp;
+
+    // Invalid-packet max (derive from fault counters you already maintain)
+    out.max_consecutive_invalid_packet_count = _bms_data.max_consecutive_invalid_packet_count;
+
+    // System-mode flag comes from above the driver
+    out.charging_enabled = _bms_data.charging_enabled;
+
+    return out;
+}
+    void enableCharging()
+    {
+        _bms_data.charging_enabled = true;
+    }
+    void disableCharging()
+    {
+        _bms_data.charging_enabled = false;
+    }
+    BMSDriverData get_data() const
+    {
+        return _bms_data;
+    }
 
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
