@@ -12,7 +12,7 @@
 #include "SystemTimeInterface.h"
 #include "ACUEthernetInterface.h"
 #include "ACUCANInterfaceImpl.h"
-
+#include "FaultLatchManagerInterface.h"
 /* For Debugging */
 #include "ACUStateMachine.h"
 

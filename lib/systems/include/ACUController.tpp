@@ -57,8 +57,11 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     // Determine if there are any faults in the system : ov, uv, under pack voltage, board ot, cell ot ONLY if the data packet is all valid
     _acu_state.has_fault = _check_faults(current_millis);
 
+    // Determine if bms is ok
+    _acu_state.bms_ok = _check_bms_ok(current_millis);
     return _acu_state;
 }
+
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 std::array<bool, num_cells> ACUController<num_cells, num_celltemps, num_boardtemps>::_calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage)
@@ -84,6 +87,18 @@ float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_char
     if (_acu_state.SoC < 0.0) _acu_state.SoC = 0;
     if (_acu_state.SoC > 1.0) _acu_state.SoC = 1;
     return _acu_state.SoC;
+}
+
+template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
+bool ACUController<num_cells, num_celltemps, num_boardtemps>::_check_bms_ok(time_ms current_millis)
+{   
+   if (_acu_state.has_fault) {
+        _acu_state.bms_ok = !acu_status.has_fault;
+        _acu_state.last_bms_not_ok_eval = current_millis;
+    } else if (_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) {
+        _acu_state.bms_ok = true;
+    }
+    return _acu_state.bms_ok;
 }
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>

@@ -41,6 +41,8 @@ struct ACUControllerData_s
     time_ms prev_em_time_stamp;
     float SoC;
     bool has_fault;
+    bool bms_ok;
+    uint32_t last_bms_not_ok_eval;
     bool charging_enabled;
 
     std::array<bool, num_cells> cell_balancing_statuses;
@@ -126,6 +128,8 @@ public:
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
     */
     float get_state_of_charge(float em_current, uint32_t delta_time_ms);
+
+    ACUStatus get_status() const { return _acu_state; };
 private:
     /**
      * Calculate Cell Balancing values
@@ -140,6 +144,10 @@ private:
      */
     bool _check_faults(time_ms current_millis);
 
+    /**
+     * @brief Update the BMS status (bms_ok) based on the time since the last fault not present
+     */
+    bool _check_bms_ok(time_ms current_millis);
     /**
      * @pre voltage data has been gathered
      * @return boolean, true if there exists at least 1 voltage fault
@@ -164,6 +172,7 @@ private:
     */
     ACUStatus _acu_state = {};
 
+    const constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
     /**
      * @brief ACU Controller Parameters holder
     */

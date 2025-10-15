@@ -14,9 +14,12 @@ void initialize_all_interfaces()
     WatchdogInstance::create();
     WatchdogInstance::instance().init(sys_time::hal_millis());
 
+    /* Fault Latch Manager */
+    FaultLatchManagerInstance::create();
+    FaultLatchManagerInstance::instance().set_bms_fault_latched(true); // Start bms latch cleared
+
     /* ACU Data Struct */
     ACUDataInstance::create();
-    ACUDataInstance::instance().bms_ok = true;
     ACUAllDataInstance::create();
     ACUAllDataInstance::instance().fw_version_info.fw_version_hash = convert_version_to_char_arr(device_status_t::firmware_version);
     ACUAllDataInstance::instance().fw_version_info.project_on_main_or_master = device_status_t::project_on_main_or_master;
@@ -122,16 +125,14 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    if (ACUStateMachineInstance::instance().get_state() != ACUState_e::FAULTED) {
-        ACUDataInstance::instance().veh_bms_fault_latched = ACUDataInstance::instance().veh_imd_fault_latched = false;
-    } 
-    if (!WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis())) {
-        ACUDataInstance::instance().veh_imd_fault_latched = true;
-    }
-    if (!ACUDataInstance::instance().bms_ok) {
-        ACUDataInstance::instance().veh_bms_fault_latched = true;
-    }
-    VCRInterfaceInstance::instance().set_monitoring_data(!ACUDataInstance::instance().veh_imd_fault_latched, !ACUDataInstance::instance().veh_bms_fault_latched);
+    bool is_faulted = ACUStateMachineInstance::instance().get_state() == ACUState_e::FAULTED;
+    bool bms_ok = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().bms_ok;
+    bool imd_ok = WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis());
+
+    FaultLatchManagerInstance::instance().clear_if_not_faulted(is_faulted);
+    FaultLatchManagerInstance::instance().update(bms_ok, imd_ok);
+
+    VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -274,7 +275,7 @@ void print_bms_data(bms_data data)
 
 HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    if (ACUDataInstance::instance().bms_ok)
+    if (ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().bms_ok)
     {
         Serial.print("BMS is OK\n");
     }
