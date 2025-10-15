@@ -12,12 +12,11 @@ void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms syste
     _acu_state.SoC = (pack_voltage <= _parameters.pack_min_voltage) ? 0.0 : ((pack_voltage - _parameters.pack_min_voltage) / (_parameters.pack_max_voltage - _parameters.pack_min_voltage));
 }
 
+
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 typename ACUController<num_cells, num_celltemps, num_boardtemps>::ACUStatus
 ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state)
-{   
-    _acu_state.charging_enabled = input_state.charging_enabled;
-    
+{       
     bool has_invalid_packet = false;
     if (input_state.max_consecutive_invalid_packet_count != 0) { // meaning that at least one of the packets is invalid
         has_invalid_packet = true;

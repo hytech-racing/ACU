@@ -130,6 +130,15 @@ public:
     float get_state_of_charge(float em_current, uint32_t delta_time_ms);
 
     ACUStatus get_status() const { return _acu_state; };
+
+       void enableCharging()
+    {
+        _acu_state.charging_enabled = true;
+    }
+    void disableCharging()
+    {
+        _acu_state.charging_enabled = false;
+    }
 private:
     /**
      * Calculate Cell Balancing values

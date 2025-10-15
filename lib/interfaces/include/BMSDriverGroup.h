@@ -200,19 +200,9 @@ public:
     // Invalid-packet max (derive from fault counters you already maintain)
     out.max_consecutive_invalid_packet_count = _bms_data.max_consecutive_invalid_packet_count;
 
-    // System-mode flag comes from above the driver
-    out.charging_enabled = _bms_data.charging_enabled;
-
     return out;
 }
-    void enableCharging()
-    {
-        _bms_data.charging_enabled = true;
-    }
-    void disableCharging()
-    {
-        _bms_data.charging_enabled = false;
-    }
+
     BMSDriverData get_data() const
     {
         return _bms_data;
