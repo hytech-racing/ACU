@@ -172,7 +172,7 @@ private:
     */
     ACUStatus _acu_state = {};
 
-    const constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
+    static constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
     /**
      * @brief ACU Controller Parameters holder
     */
