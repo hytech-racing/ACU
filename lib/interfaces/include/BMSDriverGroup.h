@@ -113,8 +113,6 @@ struct BMSData
     volt total_voltage;
     volt avg_cell_voltage;
     celsius average_cell_temperature;
-
-    bool charging_enabled;
 };
 
 struct ReferenceMaxMin
