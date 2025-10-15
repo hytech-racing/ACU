@@ -72,3 +72,11 @@ volt ADCInterface::read_global_lv_value() {
     volt data = static_cast<float>(analogRead(_adc_params.pinout.teensy_scaled_24V_pin)) * (_adc_params.configs.teensy41_max_input_voltage / _adc_params.configs.bit_resolution) / (_adc_params.conversions.glv_conv_factor); // input before voltage divider (4.3k / (4.3k + 36k))
     return data;
 }
+
+const ADCInterfaceParams_s& ADCInterface::get_adc_params() const {
+    return _adc_params;
+}
+
+bool ADCInterface::is_in_imd_startup_period() const {
+    return _in_imd_startup_period;
+}

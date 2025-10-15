@@ -139,6 +139,16 @@ public:
     */
     volt read_shdn_out_voltage();
     
+    /**
+     * @return ADC parameters
+     */
+    const ADCInterfaceParams_s& get_adc_params() const;
+
+    /**
+     * @return true if still within IMD startup period
+     */
+    bool is_in_imd_startup_period() const;
+    
 private:
     const ADCInterfaceParams_s _adc_params = {};
 
