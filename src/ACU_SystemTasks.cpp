@@ -10,7 +10,14 @@ const constexpr uint32_t bms_not_ok_hold_time_ms = 1000;
 bool initialize_all_systems()
 {
     // Initialize the ACU Controller
-    ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::create();
+    ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::create(ACUControllerThresholds_s {ACUConstants::OV_THRESH,
+                                                                                                                                                    ACUConstants::UV_THRESH,
+                                                                                                                                                    ACUConstants::CHARGING_OT_THRESH,
+                                                                                                                                                    ACUConstants::RUNNING_OT_THRESH,
+                                                                                                                                                    ACUConstants::MIN_PACK_TOTAL_VOLTAGE,
+                                                                                                                                                    ACUConstants::VOLTAGE_DIFF_TO_INIT_CB,
+                                                                                                                                                    ACUConstants::BALANCE_TEMP_LIMIT_C,
+                                                                                                                                                    ACUConstants::BALANCE_ENABLE_TEMP_THRESH_C});
     ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().init(sys_time::hal_millis(), ACUDataInstance::instance().pack_voltage);
     /* State Machine Initialization */
 

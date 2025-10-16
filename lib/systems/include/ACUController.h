@@ -10,6 +10,18 @@
 #include "shared_types.h"
 #include "ACU_Constants.h"
 
+namespace acu_controller_default_parameters
+{
+    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 1000000; // Same as voltage fault count
+    constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 1000; // At 15 Hz, we'll know if there is an error within 3 seconds of startup
+    constexpr const time_ms MAX_TEMP_FAULT_DUR = 1000; 
+    constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
+
+    constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
+    constexpr const float PACK_MAX_VOLTAGE = 529.2; // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
+    constexpr const float PACK_MIN_VOLTAGE = 378.0; // from data sheet^ but just assume 126 * 3.0V
+    constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
+}
 template <size_t num_cells>
 struct ACUControllerData_s
 {
@@ -28,25 +40,39 @@ struct ACUControllerData_s
     std::array<bool, num_cells> cell_balancing_statuses;
 };
 
-struct ACUControllerParameters_s
+struct ACUControllerThresholds_s
 {
     volt ov_thresh_v = 0;
-    volt uv_thresh_v = 0;
+    volt uv_thresh_v = 0; 
     celsius charging_ot_thresh_c = 0;
     celsius running_ot_thresh_c = 0;
     volt min_pack_total_v = 0;
-    size_t invalid_packet_count_thresh = 0;
-    time_ms max_allowed_voltage_fault_dur = 0;
-    time_ms max_allowed_temp_fault_dur = 0;
-    time_ms max_allowed_invalid_packet_fault_dur = 0;
     volt v_diff_to_init_cb = 0;
-    float pack_nominal_capacity = 0;
-    float pack_max_voltage = 0;
-    float pack_min_voltage = 0;
     celsius balance_temp_limit_c = 0;
     celsius balance_enable_temp_c = 0;
 };
 
+struct ACUControllerFaultDurations_s
+{
+    time_ms max_allowed_voltage_fault_dur = 0;
+    time_ms max_allowed_temp_fault_dur = 0;
+    time_ms max_allowed_invalid_packet_fault_dur = 0;
+};
+
+struct ACUControllerPackSpecs_s
+{
+    float pack_nominal_capacity = 0;
+    float pack_max_voltage = 0;
+    float pack_min_voltage = 0;
+};
+
+struct ACUControllerParameters_s 
+{
+    ACUControllerThresholds_s thresholds;
+    size_t invalid_packet_count_thresh = 0;
+    ACUControllerFaultDurations_s fault_durations;
+    ACUControllerPackSpecs_s pack_specs;
+};
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 class ACUController
 {
@@ -64,24 +90,23 @@ public:
      * @param max_volt_fault_dur max number of voltage faults allowed
      * @param max_temp_fault_dur max number of temp faults allowed
     */
-    ACUController(ACUControllerParameters_s params = {
-                    .ov_thresh_v = ACUConstants::OV_THRESH,
-                    .uv_thresh_v = ACUConstants::UV_THRESH,
-                    .charging_ot_thresh_c = ACUConstants::CHARGING_OT_THRESH,
-                    .running_ot_thresh_c = ACUConstants::RUNNING_OT_THRESH,
-                    .min_pack_total_v = ACUConstants::MIN_PACK_TOTAL_VOLTAGE,
-                    .invalid_packet_count_thresh = ACUConstants::MAX_INVALID_PACKET_FAULT_COUNT,
-                    .max_allowed_voltage_fault_dur = ACUConstants::MAX_VOLTAGE_FAULT_DUR,
-                    .max_allowed_temp_fault_dur = ACUConstants::MAX_TEMP_FAULT_DUR,
-                    .max_allowed_invalid_packet_fault_dur = ACUConstants::MAX_INVALID_PACKET_FAULT_DUR,
-                    .v_diff_to_init_cb = ACUConstants::VOLTAGE_DIFF_TO_INIT_CB,
-                    .pack_nominal_capacity = ACUConstants::PACK_NOMINAL_CAPACITY_AH,
-                    .pack_max_voltage = ACUConstants::PACK_MAX_VOLTAGE,
-                    .pack_min_voltage = ACUConstants::PACK_MIN_VOLTAGE,
-                    .balance_temp_limit_c = ACUConstants::BALANCE_TEMP_LIMIT_C,
-                    .balance_enable_temp_c = ACUConstants::BALANCE_ENABLE_TEMP_THRESH_C
-                }
-            ) : _parameters(params) {};
+    ACUController(ACUControllerThresholds_s thresholds,
+                    size_t invalid_packet_count_thresh = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_COUNT,
+                    ACUControllerFaultDurations_s fault_durations = {
+                        .max_allowed_voltage_fault_dur = acu_controller_default_parameters::MAX_VOLTAGE_FAULT_DUR,
+                        .max_allowed_temp_fault_dur = acu_controller_default_parameters::MAX_TEMP_FAULT_DUR,
+                        .max_allowed_invalid_packet_fault_dur = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_DUR
+                    },
+                    ACUControllerPackSpecs_s pack_specs = {
+                        .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
+                        .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
+                        .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE
+                    }
+            ): _acu_parameters {
+                    thresholds,
+                    invalid_packet_count_thresh,
+                    fault_durations,
+                    pack_specs} {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
@@ -133,7 +158,7 @@ private:
     /**
      * @brief Internal resistance per cell (computed from pack resistance divided by number of cells)
     */
-    static constexpr float CELL_IR = ACUConstants::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
+    static constexpr float CELL_IR = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
     /**
      * @brief ACU State Holder
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
@@ -144,7 +169,7 @@ private:
     /**
      * @brief ACU Controller Parameters holder
     */
-    const ACUControllerParameters_s _parameters = {};
+    const ACUControllerParameters_s _acu_parameters = {};
 };
 
 template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
