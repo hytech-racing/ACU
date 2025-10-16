@@ -4,10 +4,18 @@
 #include <Arduino.h>
 #include "SharedFirmwareTypes.h"
 #include "etl/singleton.h"
-#include "ACU_Constants.h"
 
 using pin = size_t;
 
+namespace adc_default_parameters
+{
+    constexpr const float TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH = 0.2F;
+    constexpr const float TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH = 3.0F;
+    constexpr const float SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD = 12.0F;
+
+    constexpr const uint32_t IMD_STARTUP_TIME = 2000;
+    constexpr const float TEENSY41_MAX_INPUT_VOLTAGE = 3.3F;
+}
 struct ADCPinout_s 
 {
     pin teensy_imd_ok_pin; 
@@ -39,7 +47,6 @@ struct ADCThresholds_s
 struct ADCConfigs_s
 {
     uint32_t imd_startup_time;
-    float bit_resolution;
     float teensy41_max_input_voltage;
 };
 
@@ -49,40 +56,31 @@ struct ADCInterfaceParams_s
     ADCConversions_s conversions;
     ADCThresholds_s thresholds;
     ADCConfigs_s configs;
+    float bit_resolution;
 };
 
 class ADCInterface
 {
 public:
-    ADCInterface(ADCPinout_s pinout = {
-                    .teensy_imd_ok_pin = ACUInterfaces::IMD_OK_PIN,
-                    .teensy_precharge_pin = ACUInterfaces::PRECHARGE_PIN,
-                    .teensy_shdn_out_pin = ACUInterfaces::SHDN_OUT_PIN,
-                    .teensy_ts_out_filtered_pin = ACUInterfaces::TS_OUT_FILTERED_PIN,
-                    .teensy_pack_out_filtered_pin = ACUInterfaces::PACK_OUT_FILTERED_PIN,
-                    .teensy_bspd_current_pin = ACUInterfaces::BSPD_CURRENT_PIN,
-                    .teensy_scaled_24V_pin = ACUInterfaces::SCALED_24V_PIN
-                },
-                ADCConversions_s conversions = {
-                    .shutdown_conv_factor = ACUInterfaces::SHUTDOWN_CONV_FACTOR,
-                    .precharge_conv_factor = ACUInterfaces::PRECHARGE_CONV_FACTOR,
-                    .pack_and_ts_out_conv_factor = ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
-                    .shdn_out_conv_factor = ACUInterfaces::SHDN_OUT_CONV_FACTOR,
-                    .bspd_current_conv_factor = ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
-                    .glv_conv_factor = ACUInterfaces::GLV_CONV_FACTOR
-                },
+    ADCInterface(ADCPinout_s pinout,
+                ADCConversions_s conversions,
+                float bit_resolution,
                 ADCThresholds_s thresholds = {
-                    .teensy41_min_digital_read_voltage_thresh = ACUInterfaces::TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH,
-                    .teensy41_max_digital_read_voltage_thresh = ACUInterfaces::TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH,
-                    .shutdown_voltage_digital_threshold = ACUInterfaces::SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD
+                    .teensy41_min_digital_read_voltage_thresh = adc_default_parameters::TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH,
+                    .teensy41_max_digital_read_voltage_thresh = adc_default_parameters::TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH,
+                    .shutdown_voltage_digital_threshold = adc_default_parameters::SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD
                 },
                 ADCConfigs_s configs = {
-                    .imd_startup_time = ACUInterfaces::IMD_STARTUP_TIME,
-                    .bit_resolution = ACUInterfaces::BIT_RESOLUTION,
-                    .teensy41_max_input_voltage = ACUInterfaces::TEENSY41_MAX_INPUT_VOLTAGE
+                    .imd_startup_time = adc_default_parameters::IMD_STARTUP_TIME,
+                    .teensy41_max_input_voltage = adc_default_parameters::TEENSY41_MAX_INPUT_VOLTAGE
                 }
-            ) : _adc_params{ pinout, conversions, thresholds, configs } {}
-    
+        ): _adc_parameters { 
+                pinout, 
+                conversions, 
+                thresholds, 
+                configs, 
+                bit_resolution} {}
+
     /**
      * @pre constructor called and instance created
      * @post Pins on Teensy configured and written as IN/OUT
@@ -148,9 +146,9 @@ public:
      * @return true if still within IMD startup period
      */
     bool is_in_imd_startup_period() const;
-    
+
 private:
-    const ADCInterfaceParams_s _adc_params = {};
+    const ADCInterfaceParams_s _adc_parameters = {};
 
     /**
      * @brief true while within the IMD startup window (set in init())

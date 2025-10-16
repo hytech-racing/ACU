@@ -13,7 +13,9 @@ void initialize_all_interfaces()
     analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
 
     /* Watchdog Interface */
-    WatchdogInstance::create();
+    WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
+                                    ACUInterfaces::WD_KICK_PIN,
+                                    ACUInterfaces::N_LATCH_EN_PIN});
     WatchdogInstance::instance().init();
 
     /* ACU Data Struct */
@@ -46,7 +48,20 @@ void initialize_all_interfaces()
     EMInterfaceInstance::create(sys_time::hal_millis());
 
     /* ADC Interface */
-    ADCInterfaceInstance::create();
+    ADCInterfaceInstance::create(ADCPinout_s {ACUInterfaces::IMD_OK_PIN,
+                                ACUInterfaces::PRECHARGE_PIN,
+                                ACUInterfaces::SHDN_OUT_PIN,
+                                ACUInterfaces::TS_OUT_FILTERED_PIN,
+                                ACUInterfaces::PACK_OUT_FILTERED_PIN,
+                                ACUInterfaces::BSPD_CURRENT_PIN,
+                                ACUInterfaces::SCALED_24V_PIN},
+                                ADCConversions_s {ACUInterfaces::SHUTDOWN_CONV_FACTOR,
+                                ACUInterfaces::PRECHARGE_CONV_FACTOR,
+                                ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
+                                ACUInterfaces::SHDN_OUT_CONV_FACTOR,
+                                ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
+                                ACUInterfaces::GLV_CONV_FACTOR},
+                                ACUInterfaces::BIT_RESOLUTION);
     ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 
     /* CAN Interfaces Construct */

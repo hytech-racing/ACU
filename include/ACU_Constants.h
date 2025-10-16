@@ -29,19 +29,12 @@ namespace ACUInterfaces {
     constexpr const float BSPD_CURRENT_CONV_FACTOR = 0.5118F;
     constexpr const float GLV_CONV_FACTOR = 0.1036F;
 
-    constexpr const float TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH = 0.2F;
-    constexpr const float TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH = 3.0F;
-    constexpr const float SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD = 12.0F;
-
-    constexpr const uint32_t IMD_STARTUP_TIME = 2000;
     constexpr const float BIT_RESOLUTION = 4095.0F;
-    constexpr const float TEENSY41_MAX_INPUT_VOLTAGE = 3.3F;
 
     /* Watchdog Interface */
     constexpr const size_t TEENSY_OK_PIN = 3; // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
     constexpr const size_t WD_KICK_PIN = 4;       // > Needs to flip at 100 Hz to keep BMS_OK high
     constexpr const size_t N_LATCH_EN_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
-    constexpr const uint32_t WATCHDOG_KICK_INTERVAL = 9UL;
 }
 
 namespace ACUConstants

@@ -4,28 +4,34 @@
 #include <Arduino.h>
 #include "SharedFirmwareTypes.h"
 #include "etl/singleton.h"
-#include "ACU_Constants.h"
 
 using pin = size_t;
 
-struct WatchdogInterfaceParams_s
+namespace watchdog_default_parameters
+{
+    constexpr const uint32_t WATCHDOG_KICK_INTERVAL = 9UL;
+}
+
+struct WatchdogPinout_s
 {
     pin teensy_ok_pin; 
     pin teensy_wd_kick_pin;
     pin teensy_n_latch_en_pin;
+};
+struct WatchdogInterfaceParams_s
+{
+    WatchdogPinout_s pinout;
     uint32_t watchdog_kick_interval;
 };
 
 class WatchdogInterface
 {
 public:
-    WatchdogInterface(WatchdogInterfaceParams_s params = {
-                        .teensy_ok_pin = ACUInterfaces::TEENSY_OK_PIN,
-                        .teensy_wd_kick_pin = ACUInterfaces::WD_KICK_PIN,
-                        .teensy_n_latch_en_pin = ACUInterfaces::N_LATCH_EN_PIN,
-                        .watchdog_kick_interval = ACUInterfaces::WATCHDOG_KICK_INTERVAL
-                    }
-                ) : _watchdog_params { params } {}
+    WatchdogInterface(WatchdogPinout_s pinout,
+                        uint32_t watchdog_kick_interval = watchdog_default_parameters::WATCHDOG_KICK_INTERVAL
+    ): _watchdog_parameters { 
+            pinout, 
+            watchdog_kick_interval} {}
     
     /**
      * @pre constructor called and instance created
@@ -55,7 +61,7 @@ public:
     void set_n_latch_en_high();
 
 private:
-    const WatchdogInterfaceParams_s _watchdog_params = {};
+    const WatchdogInterfaceParams_s _watchdog_parameters = {};
 
     // @brief timestamp of the last watchdog kick
     uint32_t _watchdog_time = 0;
