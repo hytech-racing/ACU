@@ -92,6 +92,7 @@ struct BMSData
 {
     std::array<ValidPacketData_s, num_chips> valid_read_packets;
     std::array<size_t, num_chips> consecutive_invalid_packet_counts;
+    float valid_packet_rate;
     size_t max_consecutive_invalid_packet_count;
     std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
     

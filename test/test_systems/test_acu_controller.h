@@ -46,10 +46,11 @@ TEST (ACUControllerTesting, charging_state) {
         3.7, // min cell v
         3.85, // max cell v
         430.00, // pack v
-        0.0, // avg v - don't care
         {3.7, 3.81, 3.7, 3.7, 3.81, 3.76, 3.7, 3.7, 3.84, 3.85, 3.75, 3.75} // individual cell voltage data
     };
-    data.charging_enabled = charging_enabled;
+
+    controller.enableCharging();
+    // data.charging_enabled = charging_enabled;
 
     auto status = controller.evaluate_accumulator(init_time, data);
 
@@ -83,7 +84,6 @@ TEST (ACUControllerTesting, faulted_state) {
         3.03, // min cell v
         4.21, // max cell v
         430.00, // pack v
-        0.0, // avg v - don't care
         {3.18, 3.2, 3.03, 3.21, 3.10, 3.12, 3.11, 3.12, 3.18, 3.19, 4.21, 3.06}, // individual cell voltage data
         70, // cell temp c
         50, // board temp c

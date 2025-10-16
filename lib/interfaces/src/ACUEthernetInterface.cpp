@@ -51,6 +51,7 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
 
 hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllDataType_s &shared_state)
 {
+    auto fw_version_hash = convert_version_to_char_arr(device_status_t::firmware_version);
     hytech_msgs_ACUAllData out = {};
     out.has_core_data = true;
     out.core_data = make_acu_core_data_msg(shared_state.core_data);
@@ -77,9 +78,9 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     out.SoH = -1;
     /* Firmware Version Hash Assignment */
     out.has_firmware_version_info = true;
-    out.firmware_version_info.project_is_dirty = shared_state.fw_version_info.project_is_dirty;
-    out.firmware_version_info.project_on_main_or_master = shared_state.fw_version_info.project_on_main_or_master;
-    std::copy(shared_state.fw_version_info.fw_version_hash.begin(), shared_state.fw_version_info.fw_version_hash.end(), out.firmware_version_info.git_hash);
+    out.firmware_version_info.project_is_dirty = device_status_t::project_is_dirty;
+    out.firmware_version_info.project_on_main_or_master = device_status_t::project_on_main_or_master;
+    std::copy(fw_version_hash.begin(), fw_version_hash.end(), out.firmware_version_info.git_hash);
     out.has_msg_versions = true;
     out.msg_versions.ht_can_version = HT_CAN_LIB_VERSION;
     std::copy(version, version + std::min(strlen(version), sizeof(out.msg_versions.ht_proto_version) - 1), out.msg_versions.ht_proto_version);    

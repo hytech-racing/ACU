@@ -24,6 +24,18 @@ namespace pin_default_params
 class WatchdogInterface
 {
 public:
+    struct WatchdogSnapshot {
+        volt max_measured_glv;
+        volt max_measured_pack_out_voltage;
+        volt max_measured_ts_out_voltage;
+
+        volt min_measured_glv;
+        volt min_measured_pack_out_voltage;
+        volt min_measured_ts_out_voltage;
+
+        volt min_shdn_out_voltage;
+    };
+
     /**
      * @param _teensy_ok_pin OUTPUT - needs to stay HIGH, the other input to Watchdog on ACU
      * @param wd_kick_pin OUTPUT - 100 Hz pulse from teensy, one of inputs to Watchdog hardware on ACU 
@@ -97,6 +109,9 @@ private:
     const float _glv_conv_factor = 0.1036F;
     const float _shutdown_voltage_digital_threshold = 12.0F;
 
+
+    // consolidated snapshot of current + tracked extrema
+    WatchdogSnapshot _snapshot;
 public: 
     /**
      * Get/update watchdog state
@@ -129,18 +144,22 @@ public:
     */
     bool read_shdn_out();
     volt read_shdn_voltage();
+    void reset_min_shdn_out_voltage();
 
     /**
      * @return the state of PRECHARGE -- HIGH indicates precharge relay is closed
      */
     bool read_precharge_out();
     volt read_precharge_voltage();
+    void reset_min_precharge_out_voltage();
 
     /**
      * @return voltage values of filtered TS OUT and PACK OUT
     */
     volt read_ts_out_filtered();
+    void reset_min_max_ts_out_filtered();
     volt read_pack_out_filtered();
+    void reset_min_max_pack_out_filtered();
 
     volt read_bspd_current();
 
@@ -148,6 +167,9 @@ public:
      * @return voltage value of GLV, nominal 24V
     */
     volt read_global_lv_value();
+    void reset_min_max_glv();
+
+    WatchdogSnapshot snapshot() const { return _snapshot;}
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;

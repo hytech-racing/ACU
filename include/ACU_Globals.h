@@ -13,7 +13,7 @@
 #include "FlexCAN_T4.h"
 
 // NOLINT
-using ACUAllDataInstance = etl::singleton<ACUAllDataType_s>;
-using ACUAllDataType_s = ACUAllData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>;
+// using ACUAllDataInstance = etl::singleton<ACUAllDataType_s>;
+// using ACUAllDataType_s = ACUAllData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>;
 
 #endif

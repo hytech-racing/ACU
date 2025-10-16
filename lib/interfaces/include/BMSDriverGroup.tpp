@@ -129,10 +129,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_generate_fault_dat
         chip_max_invalid_cmd_counts[chip] = *etl::max_element(temp.begin(), temp.end());      
         _bms_data.consecutive_invalid_packet_counts[chip] = chip_max_invalid_cmd_counts[chip];
     }
-    ACUAllDataInstance::instance().valid_packet_rate = static_cast<float>(static_cast<float>(num_valid_packets) / num_total_bms_packets);
+    _bms_data.valid_packet_rate = static_cast<float>(static_cast<float>(num_valid_packets) / num_total_bms_packets);
     _bms_data.max_consecutive_invalid_packet_count = *etl::max_element(chip_max_invalid_cmd_counts.begin(), chip_max_invalid_cmd_counts.end());
-    ACUAllDataInstance::instance().max_consecutive_invalid_packet_count = _bms_data.max_consecutive_invalid_packet_count;
-    ACUAllDataInstance::instance().consecutive_invalid_packet_counts = _bms_data.consecutive_invalid_packet_counts;
 }
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData

@@ -3,6 +3,52 @@
 using chip_type = LTC6811_Type_e;
 const auto start_time = std::chrono::high_resolution_clock::now();
 
+// Helper: assemble ACUAllDataType_s from BMS driver data and watchdog snapshot
+static ACUAllDataType_s make_acu_all_data_from(const BMSDriverGroup<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::BMSDriverData &bms,
+                                               const WatchdogInterface::WatchdogSnapshot &wd)
+{
+    ACUAllDataType_s out{};
+
+    // Copy per-cell data
+    out.cell_voltages = bms.voltages;
+    out.cell_temps = bms.cell_temperatures;
+    out.board_temps = bms.board_temperatures;
+
+    // Core data from BMS
+    out.core_data.avg_cell_voltage = bms.avg_cell_voltage;
+    out.core_data.max_cell_voltage = bms.max_cell_voltage;
+    out.core_data.min_cell_voltage = bms.min_cell_voltage;
+    out.core_data.pack_voltage = bms.total_voltage;
+    out.core_data.max_cell_temp = bms.max_cell_temp;
+    out.core_data.min_cell_temp = bms.min_cell_temp;
+    out.core_data.max_board_temp = bms.max_board_temp;
+
+    // IDs
+    out.max_cell_voltage_id = bms.max_cell_voltage_id;
+    out.min_cell_voltage_id = bms.min_cell_voltage_id;
+    out.max_cell_temp_id = bms.max_cell_temperature_cell_id;
+
+    // Faults and packet stats
+    out.max_consecutive_invalid_packet_count = bms.max_consecutive_invalid_packet_count;
+    out.consecutive_invalid_packet_counts = bms.consecutive_invalid_packet_counts;
+
+    // Watchdog-derived fields
+    out.measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
+    out.core_data.max_measured_glv = wd.max_measured_glv;
+    out.core_data.max_measured_pack_out_voltage = wd.max_measured_pack_out_voltage;
+    out.core_data.max_measured_ts_out_voltage = wd.max_measured_ts_out_voltage;
+    out.core_data.min_measured_glv = wd.min_measured_glv;
+    out.core_data.min_measured_pack_out_voltage = wd.min_measured_pack_out_voltage;
+    out.core_data.min_measured_ts_out_voltage = wd.min_measured_ts_out_voltage;
+    out.core_data.min_shdn_out_voltage = wd.min_shdn_out_voltage;
+
+    // SoC/SoH placeholders (leave unchanged here)
+    out.SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().SoC;
+    out.valid_packet_rate = bms.valid_packet_rate;
+
+    return out;
+}
+
 void initialize_all_interfaces()
 {
     SPI.begin();
@@ -17,12 +63,6 @@ void initialize_all_interfaces()
     /* Fault Latch Manager */
     FaultLatchManagerInstance::create();
     FaultLatchManagerInstance::instance().set_bms_fault_latched(true); // Start bms latch cleared
-
-    /* ACU Data Struct */
-    ACUAllDataInstance::create();
-    ACUAllDataInstance::instance().fw_version_info.fw_version_hash = convert_version_to_char_arr(device_status_t::firmware_version);
-    ACUAllDataInstance::instance().fw_version_info.project_on_main_or_master = device_status_t::project_on_main_or_master;
-    ACUAllDataInstance::instance().fw_version_info.project_is_dirty = device_status_t::project_is_dirty;
 
     /* BMS Driver */
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
@@ -57,22 +97,6 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 {
     auto data = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
     /* Store into ACUCoreDataInstance */
-    ACUAllDataInstance::instance().cell_voltages = data.voltages;
-    ACUAllDataInstance::instance().cell_temps = data.cell_temperatures;
-    ACUAllDataInstance::instance().board_temps = data.board_temperatures;
-    ACUAllDataInstance::instance().core_data.avg_cell_voltage = data.avg_cell_voltage;
-    ACUAllDataInstance::instance().core_data.max_cell_voltage = data.max_cell_voltage;
-    ACUAllDataInstance::instance().core_data.min_cell_voltage = data.min_cell_voltage;
-    ACUAllDataInstance::instance().core_data.pack_voltage = data.total_voltage;
-    ACUAllDataInstance::instance().core_data.max_cell_temp = data.max_cell_temp;
-    ACUAllDataInstance::instance().core_data.min_cell_temp = data.min_cell_temp;
-    ACUAllDataInstance::instance().core_data.max_board_temp = data.max_board_temp;
-
-    ACUAllDataInstance::instance().max_cell_voltage_id = data.max_cell_voltage_id;
-    ACUAllDataInstance::instance().min_cell_voltage_id = data.min_cell_voltage_id;
-    ACUAllDataInstance::instance().max_cell_temp_id = data.max_cell_temperature_cell_id;
-
-    // print_bms_data(data);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -84,20 +108,28 @@ HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros
 
 HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(ACUAllDataInstance::instance().core_data));
+    auto bms = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data();
+    auto wd_snapshot = WatchdogInstance::instance().snapshot();
+    auto data = make_acu_all_data_from(bms, wd_snapshot);
+    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(data.core_data));
     
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
+    // build a one-shot ACUAllData from current BMS + Watchdog snapshot
+    auto bms = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data();
+    auto wd_snapshot = WatchdogInstance::instance().snapshot();
+    auto send_data = make_acu_all_data_from(bms, wd_snapshot);
 
-    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
-    ACUAllDataInstance::instance().core_data.max_measured_glv = 0;
-    ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = 0;
-    ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage = 0;
-    ACUAllDataInstance::instance().core_data.min_shdn_out_voltage = 65535;
+    ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(send_data));
+
+    // reset local extrema after sending a report period
+    WatchdogInstance::instance().reset_min_max_glv();
+    WatchdogInstance::instance().reset_min_max_pack_out_filtered();
+    WatchdogInstance::instance().reset_min_max_ts_out_filtered();
+    WatchdogInstance::instance().reset_min_shdn_out_voltage();
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -119,7 +151,10 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 }
 
 HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>(ACUAllDataInstance::instance());
+    auto bms = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data();
+    auto wd_snapshot = WatchdogInstance::instance().snapshot();
+    auto data = make_acu_all_data_from(bms, wd_snapshot);
+    CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>(data);
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
@@ -148,16 +183,11 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
 }
 
 HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    /* Find the maximums of GLV, Pack out, and TS Out within every ethernet send period */
-    if (WatchdogInstance::instance().read_global_lv_value() > ACUAllDataInstance::instance().core_data.max_measured_glv) { ACUAllDataInstance::instance().core_data.max_measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
-    if (WatchdogInstance::instance().read_pack_out_filtered() > ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
-    if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
-    
-    if (WatchdogInstance::instance().read_global_lv_value() < ACUAllDataInstance::instance().core_data.min_measured_glv) { ACUAllDataInstance::instance().core_data.min_measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
-    if (WatchdogInstance::instance().read_pack_out_filtered() < ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
-    if (WatchdogInstance::instance().read_ts_out_filtered() < ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
-    if (WatchdogInstance::instance().read_shdn_voltage() < ACUAllDataInstance::instance().core_data.min_shdn_out_voltage) { ACUAllDataInstance::instance().core_data.min_shdn_out_voltage = WatchdogInstance::instance().read_shdn_voltage(); }
-    
+
+    WatchdogInstance::instance().read_global_lv_value();
+    WatchdogInstance::instance().read_pack_out_filtered();
+    WatchdogInstance::instance().read_ts_out_filtered();
+    WatchdogInstance::instance().read_shdn_voltage();
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -306,7 +336,6 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print(ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().SoC * 100, 3);
     Serial.println("%");
     Serial.print("Measured GLV: ");
-    Serial.print(ACUAllDataInstance::instance().core_data.max_measured_glv, 3);
     Serial.println("V");
     Serial.println();
 
