@@ -19,17 +19,9 @@ namespace ACUConstants
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
     constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
     constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
-    // constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 1000000; // Same as voltage fault count
-    // constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 1000; // At 15 Hz, we'll know if there is an error within 3 seconds of startup
-    // constexpr const time_ms MAX_TEMP_FAULT_DUR = 1000; 
-    // constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
-    // constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5; // nominal pack capacity in amp * hours
-    // constexpr const float PACK_MAX_VOLTAGE = 529.2; // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
-    // constexpr const float PACK_MIN_VOLTAGE = 378.0; // from data sheet^ but just assume 126 * 3.0V
     constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
     constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
-    // constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
 
     constexpr size_t NUM_CELLS = 126;
     constexpr size_t NUM_CELL_TEMPS = 48;
