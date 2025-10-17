@@ -20,7 +20,7 @@ namespace acu_controller_default_parameters
     constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5;  // nominal pack capacity in amp * hours
     constexpr const float PACK_MAX_VOLTAGE = 529.2;         // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
     constexpr const float PACK_MIN_VOLTAGE = 378.0;         // from data sheet^ but just assume 126 * 3.0V
-    constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
+    constexpr const float CELL_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
 }
 template <size_t num_cells>
 struct ACUControllerData_s
@@ -150,7 +150,7 @@ private:
     /**
      * @brief Internal resistance per cell (computed from pack resistance divided by number of cells)
      */
-    static constexpr float CELL_IR = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
+    static constexpr float CELL_IR = acu_controller_default_parameters::CELL_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
     /**
      * @brief ACU State Holder
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
