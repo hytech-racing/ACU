@@ -11,8 +11,17 @@ constexpr size_t num_cell_temps = 4;
 constexpr size_t num_board_temps = 1;
 bool charging_enabled;
 
+ACUControllerThresholds_s thresholds = {ACUConstants::OV_THRESH, 
+                                        ACUConstants::UV_THRESH, 
+                                        ACUConstants::CHARGING_OT_THRESH, 
+                                        ACUConstants::RUNNING_OT_THRESH, 
+                                        ACUConstants::MIN_PACK_TOTAL_VOLTAGE,
+                                        ACUConstants::VOLTAGE_DIFF_TO_INIT_CB,
+                                        ACUConstants::BALANCE_TEMP_LIMIT_C,
+                                        ACUConstants::BALANCE_ENABLE_TEMP_THRESH_C};
+
 TEST (ACUControllerTesting, initial_state) {
-    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create();
+    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create(thresholds);
     ACUController controller = ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::instance();
     charging_enabled = false;
     std::array<bool, num_cells> cb = {0};
@@ -32,7 +41,7 @@ TEST (ACUControllerTesting, initial_state) {
 }
 
 TEST (ACUControllerTesting, charging_state) {
-    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create();
+    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create(thresholds);
     ACUController controller = ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::instance();
 
     charging_enabled = true;
@@ -69,7 +78,7 @@ TEST (ACUControllerTesting, charging_state) {
 }
 
 TEST (ACUControllerTesting, faulted_state) {
-    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create();
+    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create(thresholds);
     ACUController controller = ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::instance();
 
     charging_enabled = false; // or true doesn't matter
@@ -109,7 +118,7 @@ TEST (ACUControllerTesting, faulted_state) {
 }
 
 TEST (ACUControllerTesting, ir_compensation_discharge) {
-    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create();
+    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create(thresholds);
     ACUController controller = ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::instance();
 
     charging_enabled = false;
@@ -157,7 +166,7 @@ TEST (ACUControllerTesting, ir_compensation_discharge) {
 }
 
 TEST (ACUControllerTesting, ir_compensation_charge) {
-    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create();
+    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create(thresholds);
     ACUController controller = ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::instance();
 
     charging_enabled = false; // Disable balancing to focus on IR compensation test
