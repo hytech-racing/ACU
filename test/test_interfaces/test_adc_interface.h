@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include <ArduinoFake.h>
+#include <ACU_Constants.h>
 #include "ADCInterface.h"
 
 using namespace fakeit;
