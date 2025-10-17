@@ -50,13 +50,13 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     const float discharge_current = -pack_current; // Positive during discharge, negative during charge
 
     // OV check with IR compensation (main concern during charging and recharge)
-    volt max_cell_voltage_to_check = input_state.max_cell_voltage;
+    volt internal_resistance_max_cell_voltage = input_state.max_cell_voltage;
     if (input_state.max_cell_voltage >= _acu_parameters.thresholds.cell_overvoltage_thresh_v)
     {
         // Only calculate IR compensation when approaching OV threshold
-        max_cell_voltage_to_check = input_state.max_cell_voltage + (CELL_IR * discharge_current);
+        internal_resistance_max_cell_voltage = input_state.max_cell_voltage + (CELL_IR * discharge_current);
     }
-    if (max_cell_voltage_to_check < _acu_parameters.thresholds.cell_overvoltage_thresh_v || has_invalid_packet)
+    if (internal_resistance_max_cell_voltage < _acu_parameters.thresholds.cell_overvoltage_thresh_v || has_invalid_packet)
     {
         _acu_state.last_time_ov_fault_not_present = current_millis;
     }
