@@ -75,8 +75,16 @@ public:
                     .teensy41_max_input_voltage = adc_default_parameters::TEENSY41_MAX_INPUT_VOLTAGE
                 }
         ): _adc_parameters { 
-                pinout, 
-                conversions, 
+                pinout,
+                [=]() mutable {
+                    conversions.shutdown_conv_factor        = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.shutdown_conv_factor;
+                    conversions.precharge_conv_factor       = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.precharge_conv_factor;
+                    conversions.pack_and_ts_out_conv_factor = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.pack_and_ts_out_conv_factor;
+                    conversions.shdn_out_conv_factor        = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.shdn_out_conv_factor;
+                    conversions.bspd_current_conv_factor    = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.bspd_current_conv_factor;
+                    conversions.glv_conv_factor             = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.glv_conv_factor;
+                    return conversions;
+                }(),
                 thresholds, 
                 configs, 
                 bit_resolution} {}
