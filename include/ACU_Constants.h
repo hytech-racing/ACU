@@ -12,7 +12,7 @@ using volt = float;
 using celsius = float;
 using time_ms = uint32_t;
 
-namespace ACUConstants
+namespace ACUSystems
 {
     constexpr const volt CELL_OVERVOLTAGE_THRESH = 4.2;   // Cell overvoltage threshold in Volts
     constexpr const volt CELL_UNDERVOLTAGE_THRESH = 3.05; // Cell undervoltage threshold in Volts
@@ -22,7 +22,10 @@ namespace ACUConstants
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02;  // differential with lowest cell voltage to enable cell balancing for a cell
     constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
     constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
+}
 
+namespace ACUConstants
+{
     constexpr size_t NUM_CELLS = 126;
     constexpr size_t NUM_CELL_TEMPS = 48;
     constexpr size_t NUM_CHIPS = 12;

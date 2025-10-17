@@ -11,14 +11,14 @@ constexpr size_t num_cell_temps = 4;
 constexpr size_t num_board_temps = 1;
 bool charging_enabled;
 
-ACUControllerThresholds_s thresholds = {ACUConstants::CELL_OVERVOLTAGE_THRESH,
-                                        ACUConstants::CELL_UNDERVOLTAGE_THRESH,
-                                        ACUConstants::CHARGING_OT_THRESH,
-                                        ACUConstants::RUNNING_OT_THRESH,
-                                        ACUConstants::MIN_PACK_TOTAL_VOLTAGE,
-                                        ACUConstants::VOLTAGE_DIFF_TO_INIT_CB,
-                                        ACUConstants::BALANCE_TEMP_LIMIT_C,
-                                        ACUConstants::BALANCE_ENABLE_TEMP_THRESH_C};
+ACUControllerThresholds_s thresholds = {ACUSystems::CELL_OVERVOLTAGE_THRESH,
+                                        ACUSystems::CELL_UNDERVOLTAGE_THRESH,
+                                        ACUSystems::CHARGING_OT_THRESH,
+                                        ACUSystems::RUNNING_OT_THRESH,
+                                        ACUSystems::MIN_PACK_TOTAL_VOLTAGE,
+                                        ACUSystems::VOLTAGE_DIFF_TO_INIT_CB,
+                                        ACUSystems::BALANCE_TEMP_LIMIT_C,
+                                        ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C};
 
 TEST(ACUControllerTesting, initial_state)
 {
