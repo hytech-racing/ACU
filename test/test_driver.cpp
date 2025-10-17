@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "test_systems/test_acu_controller.h"
