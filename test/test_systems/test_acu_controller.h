@@ -11,6 +11,8 @@ constexpr size_t num_cell_temps = 4;
 constexpr size_t num_board_temps = 1;
 bool charging_enabled;
 
+constexpr float ZERO_PACK_CURRENT = 0.0f; // No current flow (idle state)
+
 ACUControllerThresholds_s thresholds = {ACUSystems::CELL_OVERVOLTAGE_THRESH,
                                         ACUSystems::CELL_UNDERVOLTAGE_THRESH,
                                         ACUSystems::CHARGING_OT_THRESH,
@@ -28,7 +30,7 @@ TEST(ACUControllerTesting, initial_state)
     std::array<bool, num_cells> cb = {0};
     uint32_t start_time = 0;
 
-    auto status = controller.evaluate_accumulator(start_time, {0}, 0.0f);
+    auto status = controller.evaluate_accumulator(start_time, {0}, ZERO_PACK_CURRENT);
 
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cell_balancing_statuses, cb);
@@ -62,11 +64,11 @@ TEST(ACUControllerTesting, charging_state)
     };
     data.charging_enabled = charging_enabled;
 
-    auto status = controller.evaluate_accumulator(init_time, data, 0.0f);
+    auto status = controller.evaluate_accumulator(init_time, data, ZERO_PACK_CURRENT);
 
     ASSERT_NEAR(data.min_cell_voltage, 3.7, 0.0001);
 
-    status = controller.evaluate_accumulator(start_time, data, 0.0f);
+    status = controller.evaluate_accumulator(start_time, data, ZERO_PACK_CURRENT);
 
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cell_balancing_statuses, cb);
@@ -103,11 +105,11 @@ TEST(ACUControllerTesting, faulted_state)
 
     data.charging_enabled = charging_enabled;
 
-    auto status = controller.evaluate_accumulator(init_time, data, 0.0f);
+    auto status = controller.evaluate_accumulator(init_time, data, ZERO_PACK_CURRENT);
 
     ASSERT_NEAR(data.min_cell_voltage, 3.03, 0.0001);
 
-    status = controller.evaluate_accumulator(start_time, data, 0.0f);
+    status = controller.evaluate_accumulator(start_time, data, ZERO_PACK_CURRENT);
 
     ASSERT_EQ(status.has_fault, true);
     ASSERT_EQ(status.cell_balancing_statuses, cb);
