@@ -13,7 +13,9 @@ namespace ACUInterfaces {
     const size_t ANALOG_READ_RESOLUTION = 12;
     const size_t SERIAL_BAUDRATE = 115200;
 
-    /* ADC Interface */
+    constexpr const size_t TEENSY_OK_PIN = 3; // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
+    constexpr const size_t WD_KICK_PIN = 4;       // > Needs to flip at 100 Hz to keep BMS_OK high
+    constexpr const size_t N_LATCH_EN_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
     constexpr const size_t TS_OUT_FILTERED_PIN = 17;
     constexpr const size_t PACK_OUT_FILTERED_PIN = 18;
     constexpr const size_t IMD_OK_PIN = 25; // < READ from IMD hardware, go to FAULT state if HIGH
@@ -30,11 +32,6 @@ namespace ACUInterfaces {
     constexpr const float GLV_CONV_FACTOR = 0.1036F;
 
     constexpr const float BIT_RESOLUTION = 4095.0F;
-
-    /* Watchdog Interface */
-    constexpr const size_t TEENSY_OK_PIN = 3; // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
-    constexpr const size_t WD_KICK_PIN = 4;       // > Needs to flip at 100 Hz to keep BMS_OK high
-    constexpr const size_t N_LATCH_EN_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
 }
 
 namespace ACUConstants
