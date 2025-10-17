@@ -14,12 +14,12 @@ using time_ms = uint32_t;
 
 namespace ACUConstants
 {
-    constexpr const volt OV_THRESH = 4.2; // Volts
-    constexpr const volt UV_THRESH = 3.05; // Volts
-    constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0; // Volts
-    constexpr const celsius CHARGING_OT_THRESH = 60.0; // Celsius
-    constexpr const celsius RUNNING_OT_THRESH = 60.0; // Celsius
-    constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02; // differential with lowest cell voltage to enable cell balancing for a cell
+    constexpr const volt CELL_OVERVOLTAGE_THRESH = 4.2;   // Cell overvoltage threshold in Volts
+    constexpr const volt CELL_UNDERVOLTAGE_THRESH = 3.05; // Cell undervoltage threshold in Volts
+    constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0;  // Volts
+    constexpr const celsius CHARGING_OT_THRESH = 60.0;    // Celsius
+    constexpr const celsius RUNNING_OT_THRESH = 60.0;     // Celsius
+    constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02;  // differential with lowest cell voltage to enable cell balancing for a cell
     constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
     constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
 
@@ -38,7 +38,7 @@ namespace ACUConstants
     const size_t ANALOG_READ_RESOLUTION = 12;
     const size_t SERIAL_BAUDRATE = 115200;
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
-    const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
+    const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10; // 10 ms -- requies 100 Hz samp freq.
 
     /* Task Times */
     constexpr uint32_t TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
@@ -75,7 +75,7 @@ namespace ACUConstants
 
     constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
-    
+
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
     const uint32_t EM_CAN_baudrate = 500000;
