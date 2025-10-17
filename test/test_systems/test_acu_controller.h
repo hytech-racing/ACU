@@ -219,3 +219,91 @@ TEST(ACUControllerTesting, ir_compensation_charge)
     ASSERT_EQ(status.last_time_board_ot_fault_not_present, start_time);
     ASSERT_EQ(status.last_time_pack_uv_fault_not_present, start_time);
 }
+
+// Tests that OV faults require 1000ms persistence before triggering
+TEST(ACUControllerTesting, cell_overvoltage_fault_persistence)
+{
+    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create(thresholds);
+    ACUController controller = ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::instance();
+
+    charging_enabled = false;
+    std::array<bool, num_cells> cb = {0};
+    const uint32_t init_time = 1000;
+    const uint32_t before_fault_time = 1500; // 500ms after init - should NOT fault yet
+    const uint32_t after_fault_time = 2100;  // 1100ms after init - should fault (> 1000ms threshold)
+
+    controller.init(init_time, 430.0);
+
+    // Cell voltage JUST above OV threshold (4.21V > 4.2V), zero current
+    ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
+        3.70,                                                                     // min cell v - normal
+        4.21,                                                                     // max cell v - ABOVE OV threshold
+        500.00,                                                                   // pack v - normal
+        0.0,                                                                      // avg v
+        {3.70, 3.75, 3.72, 3.71, 3.80, 3.76, 3.74, 3.73, 3.78, 4.21, 3.77, 3.79}, // individual cell voltage data
+        40,                                                                       // cell temp c - normal
+        35,                                                                       // board temp c - normal
+    };
+    data.charging_enabled = charging_enabled;
+
+    // First evaluation at init_time - establishes OV condition
+    auto status = controller.evaluate_accumulator(init_time, data, ZERO_PACK_CURRENT);
+
+    // OV detected, timestamp NOT updated (still at init_time)
+    ASSERT_EQ(status.last_time_ov_fault_not_present, init_time);
+    ASSERT_EQ(status.has_fault, false); // Should NOT fault yet (duration = 0ms < 1000ms)
+
+    // Second evaluation at 500ms - still within threshold
+    status = controller.evaluate_accumulator(before_fault_time, data, ZERO_PACK_CURRENT);
+    ASSERT_EQ(status.last_time_ov_fault_not_present, init_time); // Still stuck at init_time
+    ASSERT_EQ(status.has_fault, false);                          // 500ms < 1000ms - NO fault yet
+
+    // Third evaluation at 1100ms - exceeds threshold
+    status = controller.evaluate_accumulator(after_fault_time, data, ZERO_PACK_CURRENT);
+    ASSERT_EQ(status.last_time_ov_fault_not_present, init_time); // Still stuck at init_time
+    ASSERT_EQ(status.has_fault, true);                           // 1100ms > 1000ms - FAULT!
+}
+
+// Tests that UV faults require 1000ms persistence before triggering
+TEST(ACUControllerTesting, cell_undervoltage_fault_persistence)
+{
+    ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::create(thresholds);
+    ACUController controller = ACUControllerInstance<num_cells, num_cell_temps, num_board_temps>::instance();
+
+    charging_enabled = false;
+    std::array<bool, num_cells> cb = {0};
+    const uint32_t init_time = 1000;
+    const uint32_t before_fault_time = 1500; // 500ms after init - should NOT fault yet
+    const uint32_t after_fault_time = 2100;  // 1100ms after init - should fault (> 1000ms threshold)
+
+    controller.init(init_time, 430.0);
+
+    // Cell voltage JUST below UV threshold (3.04V < 3.05V), zero current
+    ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
+        3.04,                                                                     // min cell v - BELOW UV threshold
+        4.10,                                                                     // max cell v - normal
+        380.00,                                                                   // pack v - normal
+        0.0,                                                                      // avg v
+        {3.70, 3.75, 3.04, 3.71, 3.80, 3.76, 3.74, 3.73, 3.78, 3.85, 3.77, 3.79}, // individual cell voltage data
+        40,                                                                       // cell temp c - normal
+        35,                                                                       // board temp c - normal
+    };
+    data.charging_enabled = charging_enabled;
+
+    // First evaluation at init_time - establishes UV condition
+    auto status = controller.evaluate_accumulator(init_time, data, ZERO_PACK_CURRENT);
+
+    // UV detected, timestamp NOT updated (still at init_time)
+    ASSERT_EQ(status.last_time_uv_fault_not_present, init_time);
+    ASSERT_EQ(status.has_fault, false); // Should NOT fault yet (duration = 0ms < 1000ms)
+
+    // Second evaluation at 500ms - still within threshold
+    status = controller.evaluate_accumulator(before_fault_time, data, ZERO_PACK_CURRENT);
+    ASSERT_EQ(status.last_time_uv_fault_not_present, init_time); // Still stuck at init_time
+    ASSERT_EQ(status.has_fault, false);                          // 500ms < 1000ms - NO fault yet
+
+    // Third evaluation at 1100ms - exceeds threshold
+    status = controller.evaluate_accumulator(after_fault_time, data, ZERO_PACK_CURRENT);
+    ASSERT_EQ(status.last_time_uv_fault_not_present, init_time); // Still stuck at init_time
+    ASSERT_EQ(status.has_fault, true);                           // 1100ms > 1000ms - FAULT!
+}
