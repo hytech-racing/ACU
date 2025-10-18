@@ -21,6 +21,7 @@ bool ADCInterface::read_imd_ok(uint32_t curr_millis) {
         }
         return true;
     }
+    //
     return static_cast<float>(analogRead(_adc_parameters.pinout.teensy_imd_ok_pin)) * (_adc_parameters.configs.teensy41_max_input_voltage / _adc_parameters.bit_resolution) > _adc_parameters.thresholds.teensy41_min_digital_read_voltage_thresh; // idk if this would actually work, like if a LOW is a threshold or smth
 }
 
