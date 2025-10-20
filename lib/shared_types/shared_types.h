@@ -1,9 +1,6 @@
 #ifndef SHAREDTYPES_H
 #define SHAREDTYPES_H
 
-#include <array>
-#include <cstdint>
-
 // Unit type aliases
 using volt = float;
 using celsius = float;
