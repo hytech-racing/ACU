@@ -9,12 +9,14 @@ void initialize_all_interfaces()
 {
     SPI.begin();
     SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
-    Serial.begin(ACUConstants::SERIAL_BAUDRATE);
-    analogReadResolution(ACUConstants::ANALOG_READ_RESOLUTION);
+    Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
+    analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
 
     /* Watchdog Interface */
-    WatchdogInstance::create();
-    WatchdogInstance::instance().init(sys_time::hal_millis());
+    WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
+                                    ACUInterfaces::WD_KICK_PIN,
+                                    ACUInterfaces::N_LATCH_EN_PIN});
+    WatchdogInstance::instance().init();
 
     /* ACU Data Struct */
     ACUDataInstance::create();
@@ -44,6 +46,23 @@ void initialize_all_interfaces()
 
     /* EM Interface */
     EMInterfaceInstance::create(sys_time::hal_millis());
+
+    /* ADC Interface */
+    ADCInterfaceInstance::create(ADCPinout_s {ACUInterfaces::IMD_OK_PIN,
+                                ACUInterfaces::PRECHARGE_PIN,
+                                ACUInterfaces::SHDN_OUT_PIN,
+                                ACUInterfaces::TS_OUT_FILTERED_PIN,
+                                ACUInterfaces::PACK_OUT_FILTERED_PIN,
+                                ACUInterfaces::BSPD_CURRENT_PIN,
+                                ACUInterfaces::SCALED_24V_PIN},
+                                ADCConversions_s {ACUInterfaces::SHUTDOWN_CONV_FACTOR,
+                                ACUInterfaces::PRECHARGE_CONV_FACTOR,
+                                ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
+                                ACUInterfaces::SHDN_OUT_CONV_FACTOR,
+                                ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
+                                ACUInterfaces::GLV_CONV_FACTOR},
+                                ACUInterfaces::BIT_RESOLUTION);
+    ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
@@ -134,7 +153,7 @@ HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sy
 
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
+    ACUAllDataInstance::instance().measured_bspd_current = ADCInterfaceInstance::instance().read_bspd_current();
     
     ACUAllDataInstance::instance().shutdown_has_gone_low = ACUAllDataInstance::instance().core_data.min_shdn_out_voltage < ACUConstants::VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD;
 
@@ -152,7 +171,7 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 
 HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), WatchdogInstance::instance().read_shdn_out());
+    CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), ADCInterfaceInstance::instance().read_shdn_out());
     ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -161,7 +180,7 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
     if (ACUStateMachineInstance::instance().get_state() != ACUState_e::FAULTED) {
         ACUDataInstance::instance().veh_bms_fault_latched = ACUDataInstance::instance().veh_imd_fault_latched = false;
     } 
-    if (!WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis())) {
+    if (!ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis())) {
         ACUDataInstance::instance().veh_imd_fault_latched = true;
     }
     if (!ACUDataInstance::instance().bms_ok) {
@@ -208,10 +227,10 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
 
 HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     /* Find the maximums of GLV, Pack out, and TS Out within every ethernet send period */
-    const float glv = WatchdogInstance::instance().read_global_lv_value(); // NOLINT
-    const float pack_out = WatchdogInstance::instance().read_pack_out_filtered(); // NOLINT
-    const float ts_out = WatchdogInstance::instance().read_ts_out_filtered(); // NOLINT
-    const float shdn_out = WatchdogInstance::instance().read_shdn_out_voltage(); // NOLINT
+    const float glv = ADCInterfaceInstance::instance().read_global_lv_value(); // NOLINT
+    const float pack_out = ADCInterfaceInstance::instance().read_pack_out_filtered(); // NOLINT
+    const float ts_out = ADCInterfaceInstance::instance().read_ts_out_filtered(); // NOLINT
+    const float shdn_out = ADCInterfaceInstance::instance().read_shdn_out_voltage(); // NOLINT
 
     if (glv > ACUAllDataInstance::instance().core_data.max_measured_glv) { ACUAllDataInstance::instance().core_data.max_measured_glv = glv; }
     if (pack_out > ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = pack_out; }
@@ -339,18 +358,18 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print("BMS is NOT OK\n");
     }
 
-    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()));
+    Serial.printf("IMD OK: %d\n", ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()));
 
-    Serial.printf("SHDN VOLTAGE: %d\t", WatchdogInstance::instance().read_shdn_voltage());
-    Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
+    Serial.printf("SHDN VOLTAGE: %d\t", ADCInterfaceInstance::instance().read_shdn_voltage());
+    Serial.printf("SHDN OUT: %d\n", ADCInterfaceInstance::instance().read_shdn_out());
 
-    Serial.printf("PRECHARGE VOLTAGE: %d\t", WatchdogInstance::instance().read_precharge_voltage());
-    Serial.printf("PRECHARGE OUT: %d\n", WatchdogInstance::instance().read_precharge_out());
+    Serial.printf("PRECHARGE VOLTAGE: %d\t", ADCInterfaceInstance::instance().read_precharge_voltage());
+    Serial.printf("PRECHARGE OUT: %d\n", ADCInterfaceInstance::instance().read_precharge_out());
 
     Serial.print("TS OUT Filtered: ");
-    Serial.println(WatchdogInstance::instance().read_ts_out_filtered(), 4);
+    Serial.println(ADCInterfaceInstance::instance().read_ts_out_filtered(), 4);
     Serial.print("PACK OUT Filtered: ");
-    Serial.println(WatchdogInstance::instance().read_pack_out_filtered(), 4);
+    Serial.println(ADCInterfaceInstance::instance().read_pack_out_filtered(), 4);
 
     Serial.println();
 
