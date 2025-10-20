@@ -4,7 +4,7 @@
 #include "WatchdogInterface.h"
 #include "CCUInterface.h"
 #include "EMInterface.h"
-
+#include "ADCInterface.h"
 const constexpr uint32_t bms_not_ok_hold_time_ms = 1000;
 
 bool initialize_all_systems()
@@ -29,9 +29,9 @@ bool initialize_all_systems()
                                                                         { return !ACUDataInstance::instance().bms_ok; });
 
     etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
-                                                                        { return !WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()); });
+                                                                        { return !ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()); });
 
-    etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_shdn_out>(WatchdogInstance::instance());
+    etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<ADCInterface, &ADCInterface::read_shdn_out>(ADCInterfaceInstance::instance());
 
     etl::delegate<void()> enable_cell_balancing = etl::delegate<void()>::create([]() -> void
                                                                                 { ACUDataInstance::instance().charging_enabled = true; });
