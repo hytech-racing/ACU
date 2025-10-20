@@ -1,11 +1,6 @@
 #ifndef SHAREDTYPES_H
 #define SHAREDTYPES_H
 
-// Unit type aliases
-using volt = float;
-using celsius = float;
-using time_ms = uint32_t;
-
 template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 struct ACUData_s {
     volt min_cell_voltage;
