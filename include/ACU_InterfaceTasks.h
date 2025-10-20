@@ -2,7 +2,6 @@
 #define ACU_INTERFACETASKS
 
 #include "ACU_Constants.h"
-#include "ACU_Globals.h"
 #include "shared_types.h"
 #include "SharedFirmwareTypes.h"
 

@@ -24,7 +24,7 @@ namespace pin_default_params
 class WatchdogInterface
 {
 public:
-    struct WatchdogSnapshot {
+    struct WatchdogData {
         volt max_measured_glv;
         volt max_measured_pack_out_voltage;
         volt max_measured_ts_out_voltage;
@@ -111,7 +111,7 @@ private:
 
 
     // consolidated snapshot of current + tracked extrema
-    WatchdogSnapshot _snapshot;
+    WatchdogData _watchdog_data;
 public: 
     /**
      * Get/update watchdog state
@@ -169,7 +169,7 @@ public:
     volt read_global_lv_value();
     void reset_min_max_glv();
 
-    WatchdogSnapshot snapshot() const { return _snapshot;}
+    WatchdogData getWatchDogData() const { return _watchdog_data;}
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;

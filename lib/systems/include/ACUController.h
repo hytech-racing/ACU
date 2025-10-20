@@ -131,7 +131,7 @@ public:
 
     ACUStatus get_status() const { return _acu_state; };
 
-       void enableCharging()
+    void enableCharging()
     {
         _acu_state.charging_enabled = true;
     }
@@ -181,7 +181,8 @@ private:
     */
     ACUStatus _acu_state = {};
 
-    static constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
+    constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
+
     /**
      * @brief ACU Controller Parameters holder
     */

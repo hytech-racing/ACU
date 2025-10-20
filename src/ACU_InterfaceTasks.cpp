@@ -3,12 +3,13 @@
 using chip_type = LTC6811_Type_e;
 const auto start_time = std::chrono::high_resolution_clock::now();
 
-// Helper: assemble ACUAllDataType_s from BMS driver data and watchdog snapshot
-static ACUAllDataType_s make_acu_all_data_from(const BMSDriverGroup<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::BMSDriverData &bms,
-                                               const WatchdogInterface::WatchdogSnapshot &wd)
+// Helper: assemble ACUAllDataType_s from BMS driver data and watchdog getWatchDogData
+static ACUAllDataType_s make_acu_all_data()
 {
     ACUAllDataType_s out{};
 
+    auto bms = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data();
+    
     // Copy per-cell data
     out.cell_voltages = bms.voltages;
     out.cell_temps = bms.cell_temperatures;
@@ -31,20 +32,22 @@ static ACUAllDataType_s make_acu_all_data_from(const BMSDriverGroup<ACUConstants
     // Faults and packet stats
     out.max_consecutive_invalid_packet_count = bms.max_consecutive_invalid_packet_count;
     out.consecutive_invalid_packet_counts = bms.consecutive_invalid_packet_counts;
+    out.valid_packet_rate = bms.valid_packet_rate;
 
+    auto watchdog = WatchdogInstance::instance().getWatchDogData();
+    
     // Watchdog-derived fields
     out.measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
-    out.core_data.max_measured_glv = wd.max_measured_glv;
-    out.core_data.max_measured_pack_out_voltage = wd.max_measured_pack_out_voltage;
-    out.core_data.max_measured_ts_out_voltage = wd.max_measured_ts_out_voltage;
-    out.core_data.min_measured_glv = wd.min_measured_glv;
-    out.core_data.min_measured_pack_out_voltage = wd.min_measured_pack_out_voltage;
-    out.core_data.min_measured_ts_out_voltage = wd.min_measured_ts_out_voltage;
-    out.core_data.min_shdn_out_voltage = wd.min_shdn_out_voltage;
+    out.core_data.max_measured_glv = watchdog.max_measured_glv;
+    out.core_data.max_measured_pack_out_voltage = watchdog.max_measured_pack_out_voltage;
+    out.core_data.max_measured_ts_out_voltage = watchdog.max_measured_ts_out_voltage;
+    out.core_data.min_measured_glv = watchdog.min_measured_glv;
+    out.core_data.min_measured_pack_out_voltage = watchdog.min_measured_pack_out_voltage;
+    out.core_data.min_measured_ts_out_voltage = watchdog.min_measured_ts_out_voltage;
+    out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage;
 
     // SoC/SoH placeholders (leave unchanged here)
     out.SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().SoC;
-    out.valid_packet_rate = bms.valid_packet_rate;
 
     return out;
 }
@@ -107,10 +110,8 @@ HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros
 }
 
 HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
-{
-    auto bms = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data();
-    auto wd_snapshot = WatchdogInstance::instance().snapshot();
-    auto data = make_acu_all_data_from(bms, wd_snapshot);
+{ 
+    auto data = make_acu_all_data();
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(data.core_data));
     
     return HT_TASK::TaskResponse::YIELD;
@@ -118,10 +119,8 @@ HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sy
 
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    // build a one-shot ACUAllData from current BMS + Watchdog snapshot
-    auto bms = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data();
-    auto wd_snapshot = WatchdogInstance::instance().snapshot();
-    auto send_data = make_acu_all_data_from(bms, wd_snapshot);
+    // build a one-shot ACUAllData from current BMS + Watchdog getWatchDogData
+    auto send_data = make_acu_all_data();
 
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(send_data));
 
@@ -151,9 +150,7 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 }
 
 HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    auto bms = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data();
-    auto wd_snapshot = WatchdogInstance::instance().snapshot();
-    auto data = make_acu_all_data_from(bms, wd_snapshot);
+    auto data = make_acu_all_data();
     CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>(data);
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();

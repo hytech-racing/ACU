@@ -7,7 +7,6 @@
 #include <array>
 #include <string>
 #include <optional>
-#include "shared_types.h"
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {}) : _pec15Table(_initialize_Pec_Table()),
@@ -104,8 +103,8 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_generate_fault_data()
 {
-    size_t num_total_bms_packets = ACUConstants::NUM_CHIPS * sizeof(BMSFaultCountData_s);
-    std::array<size_t, ACUConstants::NUM_CHIPS> chip_max_invalid_cmd_counts = {};
+    size_t num_total_bms_packets = num_chips * sizeof(BMSFaultCountData_s);
+    std::array<size_t, num_chips> chip_max_invalid_cmd_counts = {};
     std::array<size_t, sizeof(BMSFaultCountData_s)> temp = {};
     size_t num_valid_packets = 0;
     

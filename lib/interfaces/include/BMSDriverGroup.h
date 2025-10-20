@@ -180,27 +180,27 @@ public:
     BMSDriverData read_data();
 
     ACUDataDTO get_acu_data() const
-{
-    ACUDataDTO out{};
+    {
+        ACUDataDTO out{};
 
-    // Basic voltages
-    out.min_cell_voltage = _bms_data.min_cell_voltage;
-    out.max_cell_voltage = _bms_data.max_cell_voltage;
-    out.pack_voltage = _bms_data.total_voltage; 
+        // Basic voltages
+        out.min_cell_voltage = _bms_data.min_cell_voltage;
+        out.max_cell_voltage = _bms_data.max_cell_voltage;
+        out.pack_voltage = _bms_data.total_voltage; 
 
-    // Per-cell array (sizes must match)
-    out.voltages = _bms_data.voltages;
+        // Per-cell array (sizes must match)
+        out.voltages = _bms_data.voltages;
 
-    // Temps
-    out.max_cell_temp  = _bms_data.max_cell_temp;
-    out.min_cell_temp  = _bms_data.min_cell_temp;
-    out.max_board_temp = _bms_data.max_board_temp;
+        // Temps
+        out.max_cell_temp  = _bms_data.max_cell_temp;
+        out.min_cell_temp  = _bms_data.min_cell_temp;
+        out.max_board_temp = _bms_data.max_board_temp;
 
-    // Invalid-packet max (derive from fault counters you already maintain)
-    out.max_consecutive_invalid_packet_count = _bms_data.max_consecutive_invalid_packet_count;
+        // Invalid-packet max (derive from fault counters you already maintain)
+        out.max_consecutive_invalid_packet_count = _bms_data.max_consecutive_invalid_packet_count;
 
-    return out;
-}
+        return out;
+    }
 
     BMSDriverData get_data() const
     {

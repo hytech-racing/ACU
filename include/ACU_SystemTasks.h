@@ -2,7 +2,6 @@
 #define ACU_SYSTEMTASKS
 
 #include "ACU_Constants.h"
-#include "ACU_Globals.h"
 #include "shared_types.h"
 
 /* Local System Includes */

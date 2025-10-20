@@ -19,14 +19,10 @@ void WatchdogInterface::init(uint32_t init_millis) {
     _in_imd_startup_period = true; 
 
     // initialize snapshot extrema
-    _snapshot.max_measured_glv = std::numeric_limits<float>::lowest();
-    _snapshot.max_measured_pack_out_voltage = std::numeric_limits<float>::lowest();
-    _snapshot.max_measured_ts_out_voltage = std::numeric_limits<float>::lowest();
-
-    _snapshot.min_measured_glv = std::numeric_limits<float>::max();
-    _snapshot.min_measured_pack_out_voltage = std::numeric_limits<float>::max();
-    _snapshot.min_measured_ts_out_voltage = std::numeric_limits<float>::max();
-    _snapshot.min_shdn_out_voltage = std::numeric_limits<float>::max();
+    reset_min_max_ts_out_filtered();
+    reset_min_max_pack_out_filtered();
+    reset_min_max_glv();
+    reset_min_shdn_out_voltage();
 }
 
 bool WatchdogInterface::update_watchdog_state(uint32_t curr_millis) {
@@ -70,7 +66,7 @@ volt WatchdogInterface::read_shdn_voltage() {
     // 3.3 V for pin voltage cap. and 4095 for bit resolution
     volt data = static_cast<float>(analogRead(_teensy_shdn_out_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_shutdown_conv_factor); 
     // update local min/max for shutdown voltage
-    if (data < _snapshot.min_shdn_out_voltage) _snapshot.min_shdn_out_voltage = data;
+    if (data < _watchdog_data.min_shdn_out_voltage) _watchdog_data.min_shdn_out_voltage = data;
     return data;
 }
 
@@ -93,15 +89,15 @@ bool WatchdogInterface::read_precharge_out() {
 volt WatchdogInterface::read_ts_out_filtered() {
     // 3.3 V for pin voltage cap. and 4095 for bit resolution
     volt data = static_cast<float>(analogRead(_teensy_ts_out_filtered_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_pack_and_ts_out_conv_factor); 
-    if (data > _snapshot.max_measured_ts_out_voltage) _snapshot.max_measured_ts_out_voltage = data;
-    if (data < _snapshot.min_measured_ts_out_voltage) _snapshot.min_measured_ts_out_voltage = data;
+    if (data > _watchdog_data.max_measured_ts_out_voltage) _watchdog_data.max_measured_ts_out_voltage = data;
+    if (data < _watchdog_data.min_measured_ts_out_voltage) _watchdog_data.min_measured_ts_out_voltage = data;
     return data;
 }
 
 volt WatchdogInterface::read_pack_out_filtered() {
     volt data = static_cast<float>(analogRead(_teensy_pack_out_filtered_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_pack_and_ts_out_conv_factor);
-    if (data > _snapshot.max_measured_pack_out_voltage) _snapshot.max_measured_pack_out_voltage = data;
-    if (data < _snapshot.min_measured_pack_out_voltage) _snapshot.min_measured_pack_out_voltage = data;
+    if (data > _watchdog_data.max_measured_pack_out_voltage) _watchdog_data.max_measured_pack_out_voltage = data;
+    if (data < _watchdog_data.min_measured_pack_out_voltage) _watchdog_data.min_measured_pack_out_voltage = data;
     return data;
 }
 
@@ -113,27 +109,26 @@ volt WatchdogInterface::read_bspd_current() {
 
 volt WatchdogInterface::read_global_lv_value() {
     volt data = static_cast<float>(analogRead(_teensy_scaled_24V_pin)) * (_teensy41_max_input_voltage / _bit_resolution) / (_glv_conv_factor); // input before voltage divider (4.3k / (4.3k + 36k))
-    if (data > _snapshot.max_measured_glv) _snapshot.max_measured_glv = data;
-    if (data < _snapshot.min_measured_glv) _snapshot.min_measured_glv = data;
+    if (data > _watchdog_data.max_measured_glv) _watchdog_data.max_measured_glv = data;
+    if (data < _watchdog_data.min_measured_glv) _watchdog_data.min_measured_glv = data;
     return data;
 }
 
 void WatchdogInterface::reset_min_max_ts_out_filtered() {
-    _snapshot.max_measured_ts_out_voltage = std::numeric_limits<float>::lowest();
-    _snapshot.min_measured_ts_out_voltage = std::numeric_limits<float>::max();
+    _watchdog_data.max_measured_ts_out_voltage = std::numeric_limits<float>::lowest();
+    _watchdog_data.min_measured_ts_out_voltage = std::numeric_limits<float>::max();
 }
 
 void WatchdogInterface::reset_min_max_pack_out_filtered() {
-    _snapshot.max_measured_pack_out_voltage = std::numeric_limits<float>::lowest();
-    _snapshot.min_measured_pack_out_voltage = std::numeric_limits<float>::max();
-}
-
-void WatchdogInterface::reset_min_shdn_out_voltage() {
-    _snapshot.min_shdn_out_voltage = std::numeric_limits<float>::max();
+    _watchdog_data.max_measured_pack_out_voltage = std::numeric_limits<float>::lowest();
+    _watchdog_data.min_measured_pack_out_voltage = std::numeric_limits<float>::max();
 }
 
 void WatchdogInterface::reset_min_max_glv() {
-    _snapshot.max_measured_glv = std::numeric_limits<float>::lowest();
-    _snapshot.min_measured_glv = std::numeric_limits<float>::max();
+    _watchdog_data.max_measured_glv = std::numeric_limits<float>::lowest();
+    _watchdog_data.min_measured_glv = std::numeric_limits<float>::max();
 }
 
+void WatchdogInterface::reset_min_shdn_out_voltage() {
+    _watchdog_data.min_shdn_out_voltage = std::numeric_limits<float>::max();
+}
