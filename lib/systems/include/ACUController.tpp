@@ -54,7 +54,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     if (input_state.max_cell_voltage >= _acu_parameters.thresholds.cell_overvoltage_thresh_v)
     {
         // Only calculate IR compensation when approaching OV threshold
-        internal_resistance_max_cell_voltage = input_state.max_cell_voltage + (CELL_IR * discharge_current);
+        internal_resistance_max_cell_voltage = input_state.max_cell_voltage + (CELL_INTERNAL_RESISTANCE * discharge_current);
     }
     if (internal_resistance_max_cell_voltage < _acu_parameters.thresholds.cell_overvoltage_thresh_v || has_invalid_packet)
     {
@@ -66,7 +66,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     if (input_state.min_cell_voltage <= _acu_parameters.thresholds.cell_undervoltage_thresh_v)
     {
         // Only calculate IR compensation when approaching UV threshold
-        min_cell_voltage_to_check = input_state.min_cell_voltage + (CELL_IR * discharge_current);
+        min_cell_voltage_to_check = input_state.min_cell_voltage + (CELL_INTERNAL_RESISTANCE * discharge_current);
     }
     if (min_cell_voltage_to_check > _acu_parameters.thresholds.cell_undervoltage_thresh_v || has_invalid_packet)
     {

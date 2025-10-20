@@ -139,7 +139,7 @@ TEST(ACUControllerTesting, ir_compensation_discharge)
     // This triggers the IR compensation check: if (input_state.min_cell_voltage <= _parameters.cell_undervoltage_thresh_v)
     // min_cell_voltage = 3.05V (AT UV threshold of 3.05V)
     // Without IR comp: would fault immediately
-    // With IR comp: discharge_current = 100A, CELL_IR = 0.246/12 = 0.0205Ω
+    // With IR comp: discharge_current = 100A, CELL_INTERNAL_RESISTANCE = 0.246/12 = 0.0205Ω
     // Internal V = 3.05V + (0.0205Ω × 100A) = 3.05V + 2.05V = 5.10V (should NOT fault)
     ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
         3.05,                                                                    // min cell v - EXACTLY at UV threshold to trigger IR compensation
@@ -188,7 +188,7 @@ TEST(ACUControllerTesting, ir_compensation_charge)
     // This triggers the IR compensation check: if (input_state.max_cell_voltage >= _parameters.cell_overvoltage_thresh_v)
     // max_cell_voltage = 4.2V (EXACTLY at OV threshold of 4.2V)
     // Without IR comp: would fault immediately
-    // With IR comp: discharge_current = -10A, CELL_IR = 0.246/12 = 0.0205Ω
+    // With IR comp: discharge_current = -10A, CELL_INTERNAL_RESISTANCE = 0.246/12 = 0.0205Ω
     // Internal V = 4.2V + (0.0205Ω × -10A) = 4.2V - 0.205V = 3.995V (should NOT fault)
     ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
         4.10,                                                                     // min cell v - normal
