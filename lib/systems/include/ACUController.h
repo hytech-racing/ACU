@@ -8,7 +8,6 @@
 #include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
-#include "ACU_Constants.h"
 
 namespace acu_controller_default_parameters
 {
