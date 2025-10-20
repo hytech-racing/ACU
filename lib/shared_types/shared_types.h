@@ -1,6 +1,8 @@
 #ifndef SHAREDTYPES_H
 #define SHAREDTYPES_H
 
+#include "SharedFirmwareTypes.h"
+
 template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 struct ACUData_s {
     volt min_cell_voltage;
