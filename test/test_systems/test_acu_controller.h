@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 #include "ACUController.h"
+#include "ACU_Constants.h"
 #include "shared_types.h"
 
 constexpr size_t num_cells = 12;
