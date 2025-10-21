@@ -8,12 +8,15 @@
 #include <algorithm>
 #include <optional>
 
+// Static constexpr member definition
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(const std::array<int, num_chip_selects>& cs, const std::array<int, num_chips>& cs_per_chip, const std::array<int, num_chips>& addr, const BMSDriverGroupConfig_s& config) : _pec15Table(_initialize_Pec_Table()),
+constexpr BMSDriverGroupConfig_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_config;
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(const std::array<int, num_chip_selects>& cs, const std::array<int, num_chips>& cs_per_chip, const std::array<int, num_chips>& addr) : _pec15Table(_initialize_Pec_Table()),
                                                                                                                                                                                         _chip_select(cs),
                                                                                                                                                                                         _chip_select_per_chip(cs_per_chip),
-                                                                                                                                                                                        _address(addr),
-                                                                                                                                                                                        _config(config) {};
+                                                                                                                                                                                        _address(addr) {};
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
@@ -67,7 +70,7 @@ constexpr std::array<uint16_t, 256> BMSDriverGroup<num_chips, num_chip_selects, 
             if (remainder & 0x4000)
             {
                 remainder = ((remainder << 1));
-                remainder = (remainder ^ CRC15_POLY);
+                remainder = (remainder ^ _config.CRC15_POLY);
             }
             else
             {
@@ -467,10 +470,10 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration
     std::copy(cell_balance_statuses.begin(), cell_balance_statuses.end(), _cell_discharge_en.begin());
 
     std::array<uint8_t, 6> buffer_format; // This buffer processing can be seen in more detail on page 62 of the data sheet
-    buffer_format[0] = (gpios_enabled << 3) | (static_cast<int>(device_refup_mode) << 2) | static_cast<int>(adcopt);
-    buffer_format[1] = (under_voltage_threshold & 0x0FF);
-    buffer_format[2] = ((over_voltage_threshold & 0x00F) << 4) | ((under_voltage_threshold & 0xF00) >> 8);
-    buffer_format[3] = ((over_voltage_threshold & 0xFF0) >> 4);
+    buffer_format[0] = (_config.gpios_enabled << 3) | (static_cast<int>(_config.device_refup_mode) << 2) | static_cast<int>(_config.adcopt);
+    buffer_format[1] = (_config.under_voltage_threshold & 0x0FF);
+    buffer_format[2] = ((_config.over_voltage_threshold & 0x00F) << 4) | ((_config.under_voltage_threshold & 0xF00) >> 8);
+    buffer_format[3] = ((_config.over_voltage_threshold & 0xFF0) >> 4);
 
     _start_wakeup_protocol();
 
@@ -536,7 +539,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage_ADC_conversion()
 {
-    uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_CV_ADC_CONVERSION | (adc_mode_cv_conversion << 7) | (discharge_permitted << 4) | static_cast<uint8_t>(adc_conversion_cell_select_mode);
+    uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_CV_ADC_CONVERSION | (_config.adc_mode_cv_conversion << 7) | (_config.discharge_permitted << 4) | static_cast<uint8_t>(_config.adc_conversion_cell_select_mode);
     std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd & 0xFF;
@@ -553,7 +556,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_conversion()
 {
-    uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_GPIO_ADC_CONVERSION | (adc_mode_gpio_conversion << 7); // | static_cast<uint8_t>(adc_conversion_gpio_select_mode);
+    uint16_t adc_cmd = (uint16_t)CMD_CODES_e::START_GPIO_ADC_CONVERSION | (_config.adc_mode_gpio_conversion << 7); // | static_cast<uint8_t>(_config.adc_conversion_gpio_select_mode);
     std::array<uint8_t, 2> cmd;
     cmd[0] = (adc_cmd >> 8) & 0xFF;
     cmd[1] = adc_cmd & 0xFF;

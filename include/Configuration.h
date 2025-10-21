@@ -7,7 +7,10 @@
 
 /* CONSTANT Definitions */
 /**
- * These devices have 2 IDLE modes: 
+ * DEPRECATED: These global constants are being migrated to BMSDriverGroupConfig_s
+ * in BMSDriverGroup.h. Please use the class member _config instead.
+ *
+ * These devices have 2 IDLE modes:
  * REFUP - the references remain on meaning getting to the MEASURE state is almost instantaneous
  * STANDBY - the references are offline, so it takes longer to get to MEASURE state
  * For our applications we don't need the references to remain on, neither do we need the cell data
@@ -15,7 +18,7 @@
  * Because we want to use the STANDBY state, we will set DEVICE_REFUP_MODE to false / 0b0
  * If we ever want tot use the REFUP state, change this to true / 0b1
  * The following MACROS are for writing the configuration:
-*/ 
+*/
 const bool device_refup_mode = true;
 const bool adcopt = false;
 const uint16_t gpios_enabled = 0x1F; // There are 5 GPIOs, we are using all 5 so they are all given a 1

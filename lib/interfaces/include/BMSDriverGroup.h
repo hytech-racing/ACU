@@ -208,7 +208,7 @@ public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
-    BMSDriverGroup(const std::array<int, num_chip_selects>& cs, const std::array<int, num_chips>& cs_per_chip, const std::array<int, num_chips>& addr, const BMSDriverGroupConfig_s& config = {});
+    BMSDriverGroup(const std::array<int, num_chip_selects>& cs, const std::array<int, num_chips>& cs_per_chip, const std::array<int, num_chips>& addr);
     
 
 public:
@@ -428,7 +428,7 @@ private:
      */
     const std::array<int, num_chips> _address; // constant
 
-    const BMSDriverGroupConfig_s _config;
+    static constexpr BMSDriverGroupConfig_s _config = {};
 
     /**
      * Stores the balance statuses for all the chips
