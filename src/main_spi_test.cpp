@@ -49,30 +49,29 @@ struct ReadGroupStats {
 
 std::array<ReadGroupStats, 6> group_stats;
 uint32_t cycle_count = 0;
-uint32_t current_group_index = 0;
 bool cycle_complete = false;
 
-const char* get_group_name(uint32_t group_index) {
-    switch(group_index) {
-        case 0: return "GROUP_A (Cells 0-2)";
-        case 1: return "GROUP_B (Cells 3-5)";
-        case 2: return "GROUP_C (Cells 6-8)";
-        case 3: return "GROUP_D (Cells 9-11)";
-        case 4: return "AUX_A (GPIO 0-2)";
-        case 5: return "AUX_B (GPIO 3-4)";
-        default: return "UNKNOWN";
-    }
-}
-
 template <typename driver_data>
-void print_voltages(driver_data data, uint32_t read_duration_us)
+void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGroup_e current_group)
 {
     Serial.println("========================================");
     Serial.print("Read Group: ");
-    Serial.print(get_group_name(current_group_index));
+    Serial.print(BMSGroup.get_current_read_group_name());
     Serial.print(" | Duration: ");
     Serial.print(read_duration_us);
-    Serial.println("us");
+    Serial.print("us");
+
+    // Show validity summary for this group
+    size_t invalid_count = BMSGroup.count_invalid_packets();
+    if (invalid_count > 0) {
+        Serial.print(" | INVALID: ");
+        Serial.print(invalid_count);
+        Serial.print("/");
+        Serial.print(num_chips);
+    } else {
+        Serial.print(" | ALL VALID");
+    }
+    Serial.println();
 
     if (cycle_complete) {
         Serial.println("*** CYCLE COMPLETE ***");
@@ -184,26 +183,26 @@ void print_voltages(driver_data data, uint32_t read_duration_us)
 
         // Show validity for current group being read
         bool has_invalid = false;
-        switch(current_group_index) {
-            case 0:
+        switch(current_group) {
+            case CurrentReadGroup_e::CURRENT_GROUP_A:
                 if (!data.valid_read_packets[chip].valid_read_cells_1_to_3) {
                     Serial.print("INVALID_GROUP_A ");
                     has_invalid = true;
                 }
                 break;
-            case 1:
+            case CurrentReadGroup_e::CURRENT_GROUP_B:
                 if (!data.valid_read_packets[chip].valid_read_cells_4_to_6) {
                     Serial.print("INVALID_GROUP_B ");
                     has_invalid = true;
                 }
                 break;
-            case 2:
+            case CurrentReadGroup_e::CURRENT_GROUP_C:
                 if (!data.valid_read_packets[chip].valid_read_cells_7_to_9) {
                     Serial.print("INVALID_GROUP_C ");
                     has_invalid = true;
                 }
                 break;
-            case 3:
+            case CurrentReadGroup_e::CURRENT_GROUP_D:
                 if (!data.valid_read_packets[chip].valid_read_cells_10_to_12) {
                     Serial.print("INVALID_GROUP_D ");
                     has_invalid = true;
@@ -211,21 +210,23 @@ void print_voltages(driver_data data, uint32_t read_duration_us)
                     Serial.print("SKIPPED_9CELL ");
                 }
                 break;
-            case 4:
+            case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
                 if (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
                     Serial.print("INVALID_AUX_A ");
                     has_invalid = true;
                 }
                 break;
-            case 5:
+            case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
                 if (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
                     Serial.print("INVALID_AUX_B ");
                     has_invalid = true;
                 }
                 break;
+            default:
+                break;
         }
 
-        if (!has_invalid && !(current_group_index == 3 && chip % 2 == 1)) {
+        if (!has_invalid && !(current_group == CurrentReadGroup_e::CURRENT_GROUP_D && chip % 2 == 1)) {
             Serial.print("VALID");
         }
 
@@ -253,8 +254,17 @@ void print_performance_stats() {
     Serial.println("=== PERFORMANCE STATISTICS ===");
     Serial.println("========================================");
 
+    const char* group_names[] = {
+        "GROUP_A (Cells 0-2)",
+        "GROUP_B (Cells 3-5)",
+        "GROUP_C (Cells 6-8)",
+        "GROUP_D (Cells 9-11)",
+        "AUX_A (GPIO 0-2)",
+        "AUX_B (GPIO 3-4)"
+    };
+
     for (size_t i = 0; i < 6; i++) {
-        Serial.print(get_group_name(i));
+        Serial.print(group_names[i]);
         Serial.println(":");
         Serial.print("  Reads: ");
         Serial.print(group_stats[i].read_count);
@@ -312,8 +322,9 @@ void loop()
         // Reset timer
         timer = 0;
 
-        // Track which group we're about to read
-        uint32_t previous_group = current_group_index;
+        // Get the group that WILL BE read by this call
+        CurrentReadGroup_e group_before_read = BMSGroup.get_current_read_group();
+        uint32_t group_index = static_cast<uint32_t>(group_before_read);
 
         // Start timing the read
         read_timer = 0;
@@ -324,31 +335,39 @@ void loop()
         // Capture read duration
         uint32_t read_duration_us = read_timer;
 
-        // Update statistics for this group
-        group_stats[current_group_index].read_count++;
-        group_stats[current_group_index].total_duration_us += read_duration_us;
-        if (read_duration_us < group_stats[current_group_index].min_duration_us) {
-            group_stats[current_group_index].min_duration_us = read_duration_us;
+        // Update statistics for the group that was just read
+        group_stats[group_index].read_count++;
+        group_stats[group_index].total_duration_us += read_duration_us;
+        if (read_duration_us < group_stats[group_index].min_duration_us) {
+            group_stats[group_index].min_duration_us = read_duration_us;
         }
-        if (read_duration_us > group_stats[current_group_index].max_duration_us) {
-            group_stats[current_group_index].max_duration_us = read_duration_us;
+        if (read_duration_us > group_stats[group_index].max_duration_us) {
+            group_stats[group_index].max_duration_us = read_duration_us;
         }
 
-        // Detect cycle completion (we just read AUX_B and will wrap to GROUP_A next)
-        cycle_complete = (current_group_index == 5);
+        // Detect cycle completion: we just read AUX_B and driver advanced back to GROUP_A
+        cycle_complete = (group_before_read == CurrentReadGroup_e::CURRENT_GROUP_AUX_B);
         if (cycle_complete) {
             cycle_count++;
         }
 
         // Print detailed output
-        print_voltages(bms_data, read_duration_us);
+        print_voltages(bms_data, read_duration_us, group_before_read);
 
         // Print performance stats every 10 complete cycles
         if (cycle_complete && (cycle_count % 10 == 0)) {
             print_performance_stats();
         }
 
-        // Advance to next group for next iteration
-        current_group_index = (current_group_index + 1) % 6;
+        // Verify state machine advanced correctly
+        CurrentReadGroup_e expected_next = advance_read_group(group_before_read);
+        CurrentReadGroup_e actual_next = BMSGroup.get_current_read_group();
+        if (expected_next != actual_next) {
+            Serial.println("*** ERROR: State machine did not advance correctly! ***");
+            Serial.print("Expected: ");
+            Serial.print(static_cast<int>(expected_next));
+            Serial.print(" Actual: ");
+            Serial.println(static_cast<int>(actual_next));
+        }
     }
 }

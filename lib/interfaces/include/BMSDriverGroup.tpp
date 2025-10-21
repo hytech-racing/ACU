@@ -699,3 +699,96 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_specific_pac
         return group_D_invalid;
     }
 }
+
+/* -------------------- OBSERVABILITY FUNCTIONS -------------------- */
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+const char* BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_current_read_group_name() const noexcept
+{
+    switch (_current_read_group) {
+        case CurrentReadGroup_e::CURRENT_GROUP_A:
+            return "GROUP_A";
+        case CurrentReadGroup_e::CURRENT_GROUP_B:
+            return "GROUP_B";
+        case CurrentReadGroup_e::CURRENT_GROUP_C:
+            return "GROUP_C";
+        case CurrentReadGroup_e::CURRENT_GROUP_D:
+            return "GROUP_D";
+        case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
+            return "AUX_A";
+        case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
+            return "AUX_B";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::last_read_all_valid() const noexcept
+{
+    // Check validity for the specific group that was just read (current state before advancing)
+    for (size_t chip = 0; chip < num_chips; chip++) {
+        const auto& validity = _bms_data.valid_read_packets[chip];
+
+        switch (_current_read_group) {
+            case CurrentReadGroup_e::CURRENT_GROUP_A:
+                if (!validity.valid_read_cells_1_to_3) return false;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_B:
+                if (!validity.valid_read_cells_4_to_6) return false;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_C:
+                if (!validity.valid_read_cells_7_to_9) return false;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_D:
+                // Skip 9-cell chips (odd indices)
+                if (chip % 2 == 0 && !validity.valid_read_cells_10_to_12) return false;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
+                if (!validity.valid_read_gpios_1_to_3) return false;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
+                if (!validity.valid_read_gpios_4_to_6) return false;
+                break;
+            default:
+                return false;
+        }
+    }
+    return true;
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+size_t BMSDriverGroup<num_chips, num_chip_selects, chip_type>::count_invalid_packets() const noexcept
+{
+    size_t invalid_count = 0;
+
+    // Count invalidity for the specific group that was just read
+    for (size_t chip = 0; chip < num_chips; chip++) {
+        const auto& validity = _bms_data.valid_read_packets[chip];
+
+        switch (_current_read_group) {
+            case CurrentReadGroup_e::CURRENT_GROUP_A:
+                if (!validity.valid_read_cells_1_to_3) invalid_count++;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_B:
+                if (!validity.valid_read_cells_4_to_6) invalid_count++;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_C:
+                if (!validity.valid_read_cells_7_to_9) invalid_count++;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_D:
+                // Skip 9-cell chips (odd indices) when counting
+                if (chip % 2 == 0 && !validity.valid_read_cells_10_to_12) invalid_count++;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
+                if (!validity.valid_read_gpios_1_to_3) invalid_count++;
+                break;
+            case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
+                if (!validity.valid_read_gpios_4_to_6) invalid_count++;
+                break;
+            default:
+                break;
+        }
+    }
+    return invalid_count;
+}
