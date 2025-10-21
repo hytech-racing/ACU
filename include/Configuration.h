@@ -34,8 +34,4 @@ const uint16_t over_voltage_threshold = 2625;   // 4.2V  // Maximum voltage valu
 const uint16_t gpio_enable = 0x1F;
 const uint16_t CRC15_POLY = 0x4599;             // Used for calculating the PEC table for LTC6811
 
-// unused because ht_sched task period accounts for adc conversion times
-const float cv_adc_conversion_time_ms = 1.2f;
-const float gpio_adc_conversion_time_ms = 1.2f;
-
 #endif
