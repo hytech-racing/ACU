@@ -114,7 +114,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     ValidPacketData_s clean_valid_packet_data;                  // should be all reset to true
     _bms_data.valid_read_packets.fill(clean_valid_packet_data); // reset
     constexpr size_t data_size = 8 * (num_chips / num_chip_selects);
-    size_t battery_cell_count = 0;
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         write_configuration(_config.dcto_read, _cell_discharge_en);
@@ -223,7 +222,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             }
 
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
-                _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
+                _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, start_cell_index);
             } else {
                 _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, start_gpio_index);
             }
@@ -326,12 +325,17 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_addre
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData& bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
-                                                                            size_t chip_index, size_t &battery_cell_count, uint8_t start_cell_index)
+                                                                            size_t chip_index, uint8_t start_cell_index)
 {
     // remove validity check. if invalid - won't get to here
     // remove 9 cell check, same reason
 
     std::array<uint8_t, 2> data_in_cell_voltage;
+
+    // Calculate the global cell index offset for this chip
+    // Chips alternate: even indices have 12 cells, odd indices have 9 cells
+    // Global cell offset = (chip_index / 2) * 21 + (chip_index % 2) * 12
+    size_t chip_global_offset = (chip_index / 2) * 21 + (chip_index % 2) * 12;
 
     for (int cell_Index = start_cell_index; cell_Index < start_cell_index+3; cell_Index++)
     {
@@ -342,10 +346,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
 
         float voltage_converted = voltage_in / 10000.0;
-        bms_data.voltages[battery_cell_count] = voltage_converted;
-        _store_voltage_data(bms_data, max_min_ref, voltage_converted, battery_cell_count);
 
-        battery_cell_count++;
+        // Calculate the correct global voltage array index
+        size_t global_cell_index = chip_global_offset + cell_Index;
+        bms_data.voltages[global_cell_index] = voltage_converted;
+        _store_voltage_data(bms_data, max_min_ref, voltage_converted, global_cell_index);
     }
     std::copy_n(data_in_cv_group.begin(), 6, bms_data.voltages_by_chip[chip_index].begin() + start_cell_index * 2);
 }
