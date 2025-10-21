@@ -166,7 +166,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             size_t chip_index = chip + (cs * (num_chips / num_chip_selects));
 
             // relevant for cell voltage reading
-            int cell_count = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
+            int cells_per_chip = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
 
             uint8_t start_cell_index = 0;
             uint8_t start_gpio_index = 0;
@@ -217,7 +217,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             }
 
             // don't do calculation for cells that don't exist. not putting this above so that package is declared as valid
-            if (_current_read_group == CurrentReadGroup_e::CURRENT_GROUP_D && cell_count == 9) {
+            if (_current_read_group == CurrentReadGroup_e::CURRENT_GROUP_D && cells_per_chip == 9) {
                 continue;
             }
 
@@ -401,13 +401,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t chip_num)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t chip_index)
 {
     // there is 8 cell temperatures per chip, and 2 board temperatures per board, so 4+1 per chip
     if (gpio_Index < 4) // These are all thermistors [0,1,2,3].
     {
         // Calculate the cell temperature index: 4 thermistors per chip
-        size_t cell_temp_index = chip_num * 4 + gpio_Index;
+        size_t cell_temp_index = chip_index * 4 + gpio_Index;
 
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
         bms_data.cell_temperatures[cell_temp_index] = 1 / ((1 / 298.15) + (1 / 3984.0) * std::log(thermistor_resistance / 10000.0)) - 272.15; // calculation for thermistor temperature in C
@@ -427,13 +427,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
     {
         constexpr float mcp_9701_temperature_coefficient = 0.0195f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
-        bms_data.board_temperatures[chip_num] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient; // 2 per board = 1 per chip
-        // bms_data.board_temperatures[(chip_num +2)/2] = 0;
+        bms_data.board_temperatures[chip_index] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient; // 2 per board = 1 per chip
+        // bms_data.board_temperatures[(chip_index +2)/2] = 0;
         if (gpio_in > max_min_reference.max_board_temp_voltage)
         {
             max_min_reference.max_board_temp_voltage = gpio_in;
 
-            bms_data.max_board_temperature_segment_id = chip_num; // Because each segment only has 1 humidity and 1 board temp sensor
+            bms_data.max_board_temperature_segment_id = chip_index; // Because each segment only has 1 humidity and 1 board temp sensor
         }
     }
 }
@@ -444,18 +444,18 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses)
 {
     std::array<uint16_t, num_chips> cb;
-    size_t cell = 0;
+    size_t global_cell_index = 0;
     for (size_t chip = 0; chip < num_chips; chip++)
     {
         uint16_t chip_cb = 0;
-        size_t cell_count = (chip % 2 == 0) ? 12 : 9;
-        for (size_t cell_i = 0; cell_i < cell_count; cell_i++)
+        size_t cells_per_chip = (chip % 2 == 0) ? 12 : 9;
+        for (size_t cell_i = 0; cell_i < cells_per_chip; cell_i++)
         {
-            if (cell_balance_statuses[cell])
+            if (cell_balance_statuses[global_cell_index])
             {
                 chip_cb = (0b1 << cell_i) | chip_cb;
             }
-            cell++;
+            global_cell_index++;
         }
         cb[chip] = chip_cb;
     }

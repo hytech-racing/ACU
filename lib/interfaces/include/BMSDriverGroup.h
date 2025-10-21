@@ -298,7 +298,7 @@ private:
      */
     BMSDriverData _read_data_through_address();
 
-    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t chip_num);
+    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t chip_index);
 
     void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, float voltage_in, size_t cell_index);
 
