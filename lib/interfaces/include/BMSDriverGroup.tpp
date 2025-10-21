@@ -1,5 +1,4 @@
 /* Library Includes */
-#include "Configuration.h"
 #include "BMSDriverGroup.h"
 #include "LTCSPIInterface.h"
 #include <array>
