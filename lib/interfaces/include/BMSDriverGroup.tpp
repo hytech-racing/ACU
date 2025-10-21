@@ -354,7 +354,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
 
-        float voltage_converted = voltage_in / 10000.0;
+        float voltage_converted = voltage_in * _config.cv_adc_lsb_voltage;
 
         // Calculate the correct global voltage array index
         size_t global_cell_index = chip_global_offset + cell_Index;

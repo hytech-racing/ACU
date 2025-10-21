@@ -130,6 +130,7 @@ struct BMSDriverGroupConfig_s
     const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
     const float cv_adc_conversion_time_us = 13;
     const float gpio_adc_conversion_time_us = 3.1;
+    const float cv_adc_lsb_voltage = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
 };
 
 /**
