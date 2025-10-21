@@ -24,7 +24,7 @@ elapsedMicros read_timer = 0;
 using chip_type = LTC6811_Type_e;
 
 const size_t sample_period_ms = 3; // 300 Hz - reads one group per call
-const uint8_t spi_baudrate = 115200;
+const uint32_t spi_baudrate = 115200;
 const uint8_t num_cells_per_board = 21;
 
 // Initialize chip_select, chip_select_per_chip, and address
@@ -34,8 +34,8 @@ const std::array<int, num_chip_selects> cs = {10};
 const std::array<int, num_chips> cs_per_chip = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
 const std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
-// Instantiate BMS Driver Group
-const BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
+// Instantiate BMS Driver Group (non-const so we can call non-const methods)
+BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
 std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
 
@@ -310,7 +310,7 @@ void setup()
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init();
+    WatchdogInstance::instance().init(sys_time::hal_millis());
 }
 
 void loop()
