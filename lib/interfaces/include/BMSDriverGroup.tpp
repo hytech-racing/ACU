@@ -359,9 +359,9 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
         // Calculate the correct global voltage array index
         size_t global_cell_index = chip_global_offset + cell_Index;
         bms_data.voltages[global_cell_index] = voltage_converted;
+        bms_data.voltages_by_chip[chip_index][cell_Index] = voltage_converted;
         _store_voltage_data(bms_data, max_min_ref, voltage_converted, global_cell_index);
     }
-    std::copy_n(data_in_cv_group.begin(), 6, bms_data.voltages_by_chip[chip_index].begin() + start_cell_index * 2);
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
