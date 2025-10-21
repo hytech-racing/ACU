@@ -390,6 +390,12 @@ private:
     BMSDriverData _bms_data;
 
     /**
+     * Tracks min/max/sum values across all 6 read groups within a single timestamp cycle.
+     * Reset only at the start of each new cycle (when _current_read_group == CURRENT_GROUP_A).
+     */
+    ReferenceMaxMin _max_min_reference;
+
+    /**
      * Pointer to the PEC table we will use to calculate new PEC tables
      */
     // uint16_t _pec15Table[256];

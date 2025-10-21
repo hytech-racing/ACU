@@ -110,7 +110,12 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broadcast()
 {
-    ReferenceMaxMin max_min_reference;
+    // Reset max_min_reference only at the start of a new timestamp cycle (GROUP_A)
+    if (_current_read_group == CurrentReadGroup_e::CURRENT_GROUP_A)
+    {
+        _max_min_reference = ReferenceMaxMin{}; // Reset to default values
+    }
+
     ValidPacketData_s clean_valid_packet_data;                  // should be all reset to true
     _bms_data.valid_read_packets.fill(clean_valid_packet_data); // reset
     constexpr size_t data_size = 8 * (num_chips / num_chip_selects);
@@ -222,39 +227,43 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             }
 
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
-                _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, start_cell_index);
+                _load_cell_voltages(_bms_data, _max_min_reference, spi_response, chip_index, start_cell_index);
             } else {
-                _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, start_gpio_index);
+                _load_auxillaries(_bms_data, _max_min_reference, spi_response, chip_index, start_gpio_index);
             }
         }
     }
 
-    _bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
-    _bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
-    _bms_data.total_voltage = _sum_cell_voltages();
+    // Only updating after last group read ensures values reflect the complete pack state from a single timestamp
+    if (_current_read_group == CurrentReadGroup_e::CURRENT_GROUP_AUX_B)
+    {
+        _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
+        _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
+        _bms_data.total_voltage = _sum_cell_voltages();
 
-    // Calculate valid cell thermistor count from validity flags
-    size_t valid_cell_thermistor_count = 0;
-    for (size_t chip = 0; chip < num_chips; chip++) {
-        // Each valid GPIO group contains thermistors:
-        // - Groups 1-3 (CURRENT_GROUP_AUX_A): 3 cell thermistors (GPIOs 0,1,2)
-        // - Groups 4-6 (CURRENT_GROUP_AUX_B): 1 cell thermistor (GPIO 3) + board temp
-        if (_bms_data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
-            valid_cell_thermistor_count += 3;  // GPIOs 0, 1, 2 are all cell thermistors
+        // Calculate valid cell thermistor count from validity flags
+        size_t valid_cell_thermistor_count = 0;
+        for (size_t chip = 0; chip < num_chips; chip++) {
+            // Each valid GPIO group contains thermistors:
+            // - Groups 1-3 (CURRENT_GROUP_AUX_A): 3 cell thermistors (GPIOs 0,1,2)
+            // - Groups 4-6 (CURRENT_GROUP_AUX_B): 1 cell thermistor (GPIO 3) + board temp
+            if (_bms_data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
+                valid_cell_thermistor_count += 3;  // GPIOs 0, 1, 2 are all cell thermistors
+            }
+            if (_bms_data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
+                valid_cell_thermistor_count += 1;  // Only GPIO 3 is a cell thermistor (GPIO 4 is board temp)
+            }
         }
-        if (_bms_data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
-            valid_cell_thermistor_count += 1;  // Only GPIO 3 is a cell thermistor (GPIO 4 is board temp)
+
+        // Avoid divide by zero - skip calculation if no cell thermistors were read
+        if (valid_cell_thermistor_count > 0) {
+            _bms_data.average_cell_temperature = _max_min_reference.total_thermistor_temps / valid_cell_thermistor_count;
         }
-    }
 
-    // Avoid divide by zero - skip calculation if no cell thermistors were read
-    if (valid_cell_thermistor_count > 0) {
-        _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / valid_cell_thermistor_count;
+        _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
+        _bms_data.min_cell_temp = _bms_data.cell_temperatures[_bms_data.min_cell_temperature_cell_id];
+        _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
     }
-
-    _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
-    _bms_data.min_cell_temp = _bms_data.cell_temperatures[_bms_data.min_cell_temperature_cell_id];
-    _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
 
     _current_read_group = advance_read_group(_current_read_group);
     return _bms_data;
