@@ -16,7 +16,7 @@
 struct VCRCANInterfaceData_s
 {
     bool imd_ok;
-    bool shdn_out_ok;
+    bool latch_ok;
     bool bms_ok;
     unsigned long last_time_msg_sent;
 };
@@ -30,11 +30,11 @@ public:
     {
         _curr_data.last_time_msg_sent = init_millis;
         _curr_data.imd_ok = true;
-        _curr_data.shdn_out_ok = true;
+        _curr_data.latch_ok = true;
         _curr_data.bms_ok = true;
     };
 
-    void set_monitoring_data(bool imd_ok, bool bms_ok);
+    void set_monitoring_data(bool imd_ok, bool bms_ok, bool latch_ok);
 
     VCRCANInterfaceData_s get_latest_data(unsigned long curr_millis);
 

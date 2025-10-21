@@ -20,6 +20,8 @@ struct ACUData_s {
     uint32_t last_bms_not_ok_eval;
     bool veh_imd_fault_latched;
     bool veh_bms_fault_latched;
+    bool veh_shdn_out_latched; // requires shdn_out voltage to be above 10 V for 10 ms
+    uint32_t last_valid_shdn_out_ms; // last time when shdn_out was > 10V
     bool bms_ok; // False when one of the three shutdown conditions is met
 };
 

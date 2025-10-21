@@ -1,5 +1,6 @@
 #include "ACU_InterfaceTasks.h"
 
+
 using chip_type = LTC6811_Type_e;
 const auto start_time = std::chrono::high_resolution_clock::now();
 const size_t num_total_bms_packets = ACUConstants::NUM_CHIPS * sizeof(BMSFaultCountData_s);
@@ -18,6 +19,7 @@ void initialize_all_interfaces()
     /* ACU Data Struct */
     ACUDataInstance::create();
     ACUDataInstance::instance().bms_ok = true;
+    ACUDataInstance::instance().veh_shdn_out_latched = true;
     ACUAllDataInstance::create();
     ACUAllDataInstance::instance().fw_version_info.fw_version_hash = convert_version_to_char_arr(device_status_t::firmware_version);
     ACUAllDataInstance::instance().fw_version_info.project_on_main_or_master = device_status_t::project_on_main_or_master;
@@ -133,11 +135,16 @@ HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sy
 HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUAllDataInstance::instance().measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
+    
+    ACUAllDataInstance::instance().shutdown_has_gone_low = ACUAllDataInstance::instance().core_data.min_shdn_out_voltage < ACUConstants::VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD;
 
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(ACUAllDataInstance::instance()));
     ACUAllDataInstance::instance().core_data.max_measured_glv = 0;
     ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = 0;
     ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage = 0;
+    ACUAllDataInstance::instance().core_data.min_measured_glv = 65535;
+    ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage = 65535;
+    ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage = 65535;
     ACUAllDataInstance::instance().core_data.min_shdn_out_voltage = 65535;
 
     return HT_TASK::TaskResponse::YIELD;
@@ -160,8 +167,13 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
     if (!ACUDataInstance::instance().bms_ok) {
         ACUDataInstance::instance().veh_bms_fault_latched = true;
     }
-    VCRInterfaceInstance::instance().set_monitoring_data(!ACUDataInstance::instance().veh_imd_fault_latched, !ACUDataInstance::instance().veh_bms_fault_latched);
+
+    VCRInterfaceInstance::instance().set_monitoring_data(!ACUDataInstance::instance().veh_imd_fault_latched, !ACUDataInstance::instance().veh_bms_fault_latched, ACUDataInstance::instance().veh_shdn_out_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
+    
+    // Reset shdn out latch state
+    ACUDataInstance::instance().veh_shdn_out_latched = true;
+
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -196,15 +208,30 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
 
 HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     /* Find the maximums of GLV, Pack out, and TS Out within every ethernet send period */
-    if (WatchdogInstance::instance().read_global_lv_value() > ACUAllDataInstance::instance().core_data.max_measured_glv) { ACUAllDataInstance::instance().core_data.max_measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
-    if (WatchdogInstance::instance().read_pack_out_filtered() > ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
-    if (WatchdogInstance::instance().read_ts_out_filtered() > ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
+    const float glv = WatchdogInstance::instance().read_global_lv_value(); // NOLINT
+    const float pack_out = WatchdogInstance::instance().read_pack_out_filtered(); // NOLINT
+    const float ts_out = WatchdogInstance::instance().read_ts_out_filtered(); // NOLINT
+    const float shdn_out = WatchdogInstance::instance().read_shdn_out_voltage(); // NOLINT
+
+    if (glv > ACUAllDataInstance::instance().core_data.max_measured_glv) { ACUAllDataInstance::instance().core_data.max_measured_glv = glv; }
+    if (pack_out > ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_pack_out_voltage = pack_out; }
+    if (ts_out > ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.max_measured_ts_out_voltage = ts_out; }
     
-    if (WatchdogInstance::instance().read_global_lv_value() < ACUAllDataInstance::instance().core_data.min_measured_glv) { ACUAllDataInstance::instance().core_data.min_measured_glv = WatchdogInstance::instance().read_global_lv_value(); }
-    if (WatchdogInstance::instance().read_pack_out_filtered() < ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage = WatchdogInstance::instance().read_pack_out_filtered(); }
-    if (WatchdogInstance::instance().read_ts_out_filtered() < ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage = WatchdogInstance::instance().read_ts_out_filtered(); }
-    if (WatchdogInstance::instance().read_shdn_voltage() < ACUAllDataInstance::instance().core_data.min_shdn_out_voltage) { ACUAllDataInstance::instance().core_data.min_shdn_out_voltage = WatchdogInstance::instance().read_shdn_voltage(); }
-    
+    if (glv < ACUAllDataInstance::instance().core_data.min_measured_glv) { ACUAllDataInstance::instance().core_data.min_measured_glv = glv; }
+    if (pack_out < ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_pack_out_voltage = pack_out; }
+    if (ts_out < ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage) { ACUAllDataInstance::instance().core_data.min_measured_ts_out_voltage = ts_out; }
+    if (shdn_out < ACUAllDataInstance::instance().core_data.min_shdn_out_voltage) { ACUAllDataInstance::instance().core_data.min_shdn_out_voltage = shdn_out; }
+
+    // SHDN OUT UNDERVOLTAGE EVAL
+    if (ACUAllDataInstance::instance().core_data.min_shdn_out_voltage > ACUConstants::VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD)
+    {
+        ACUDataInstance::instance().last_valid_shdn_out_ms = sys_time::hal_millis();
+    }
+    if ((sys_time::hal_millis() - ACUDataInstance::instance().last_valid_shdn_out_ms) > ACUConstants::MIN_ALLOWED_INVALID_SHDN_OUT_MS) 
+    {
+        ACUDataInstance::instance().veh_shdn_out_latched = false;
+    }
+        
     return HT_TASK::TaskResponse::YIELD;
 }
 
