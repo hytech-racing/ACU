@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <stdio.h>
-#include "Configuration.h"
 #include "LTCSPIInterface.h"
 #include <cstdint>
 #include "etl/optional.h"
