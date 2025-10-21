@@ -294,7 +294,7 @@ private:
      */
     BMSDriverData _read_data_through_address();
 
-    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
+    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t chip_num);
 
     void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, float voltage_in, size_t &cell_count);
 
@@ -323,7 +323,7 @@ private:
                                       size_t chip_index, size_t &battery_cell_count, uint8_t start_cell_index);
 
     void _load_auxillaries(BMSDriverData& bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
-                                    size_t chip_index, size_t &gpio_count, uint8_t start_gpio_index);
+                                    size_t chip_index, uint8_t start_gpio_index);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
 

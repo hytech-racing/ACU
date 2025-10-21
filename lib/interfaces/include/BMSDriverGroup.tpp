@@ -115,7 +115,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.valid_read_packets.fill(clean_valid_packet_data); // reset
     constexpr size_t data_size = 8 * (num_chips / num_chip_selects);
     size_t battery_cell_count = 0;
-    size_t gpio_count = 0;
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         write_configuration(_config.dcto_read, _cell_discharge_en);
@@ -226,7 +225,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             if (_current_read_group <= CurrentReadGroup_e::CURRENT_GROUP_D) {
                 _load_cell_voltages(_bms_data, max_min_reference, spi_response, chip_index, battery_cell_count, start_cell_index);
             } else {
-                _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, gpio_count, start_gpio_index);
+                _load_auxillaries(_bms_data, max_min_reference, spi_response, chip_index, start_gpio_index);
             }
         }
     }
@@ -234,10 +233,24 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
     _bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _sum_cell_voltages();
-    
-    // Avoid divide by zero - skip calculation if no GPIOs were read
-    if (gpio_count > 0) {
-        _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
+
+    // Calculate valid cell thermistor count from validity flags
+    size_t valid_cell_thermistor_count = 0;
+    for (size_t chip = 0; chip < num_chips; chip++) {
+        // Each valid GPIO group contains thermistors:
+        // - Groups 1-3 (CURRENT_GROUP_AUX_A): 3 cell thermistors (GPIOs 0,1,2)
+        // - Groups 4-6 (CURRENT_GROUP_AUX_B): 1 cell thermistor (GPIO 3) + board temp
+        if (_bms_data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
+            valid_cell_thermistor_count += 3;  // GPIOs 0, 1, 2 are all cell thermistors
+        }
+        if (_bms_data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
+            valid_cell_thermistor_count += 1;  // Only GPIO 3 is a cell thermistor (GPIO 4 is board temp)
+        }
+    }
+
+    // Avoid divide by zero - skip calculation if no cell thermistors were read
+    if (valid_cell_thermistor_count > 0) {
+        _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / valid_cell_thermistor_count;
     }
 
     _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
@@ -340,23 +353,18 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData& bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
-                                                                            size_t chip_index, size_t &gpio_count, uint8_t start_gpio_index)
+                                                                            size_t chip_index, uint8_t start_gpio_index)
 {
     // invalid packets handled beforehand
 
-    for (int gpio_Index = start_gpio_index; gpio_Index < start_gpio_index + 3 && gpio_Index != 5; gpio_Index++) // There are only five Auxillary ports
+    for (int gpio_Index = start_gpio_index; gpio_Index < start_gpio_index + 3 && gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
     {
 
         std::array<uint8_t, 2> data_in_gpio_voltage;
         std::copy_n(data_in_gpio_group.begin() + (gpio_Index - start_gpio_index) * 2, 2, data_in_gpio_voltage.begin());
 
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
-        _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, gpio_count, chip_index);
-        if (gpio_Index < 4) {
-            gpio_count++; // we are using gpio count for calculation of average cell temperature,
-            // however on each chip we have 4 cell temps + 1 board temp, which doesn't need to go into calc
-            // so we're ignoring counter increment for board temp
-        }
+        _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, chip_index);
     }
 }
 
@@ -377,23 +385,26 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t chip_num)
 {
     // there is 8 cell temperatures per chip, and 2 board temperatures per board, so 4+1 per chip
-    if (gpio_Index < 4) // These are all thermistors [0,1,2,3]. 
+    if (gpio_Index < 4) // These are all thermistors [0,1,2,3].
     {
+        // Calculate the cell temperature index: 4 thermistors per chip
+        size_t cell_temp_index = chip_num * 4 + gpio_Index;
+
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
-        bms_data.cell_temperatures[gpio_count] = 1 / ((1 / 298.15) + (1 / 3984.0) * std::log(thermistor_resistance / 10000.0)) - 272.15; // calculation for thermistor temperature in C
-        max_min_reference.total_thermistor_temps += bms_data.cell_temperatures[gpio_count];
+        bms_data.cell_temperatures[cell_temp_index] = 1 / ((1 / 298.15) + (1 / 3984.0) * std::log(thermistor_resistance / 10000.0)) - 272.15; // calculation for thermistor temperature in C
+        max_min_reference.total_thermistor_temps += bms_data.cell_temperatures[cell_temp_index];
         if (gpio_in > max_min_reference.max_cell_temp_voltage)
         {
             max_min_reference.max_cell_temp_voltage = gpio_in;
-            bms_data.max_cell_temperature_cell_id = gpio_count;
+            bms_data.max_cell_temperature_cell_id = cell_temp_index;
         }
         if (gpio_in < max_min_reference.min_cell_temp_voltage)
         {
             max_min_reference.min_cell_temp_voltage = gpio_in;
-            bms_data.min_cell_temperature_cell_id = gpio_count;
+            bms_data.min_cell_temperature_cell_id = cell_temp_index;
         }
     }
     else // this is apparently the case for temperature sensor for the BOARD, not the cells. There is 2 per segment
