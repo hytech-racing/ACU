@@ -280,15 +280,19 @@ private:
      *
      * This implementation has major bugs and is NOT used in production (it wont compile anyway):
      *
-     * BUG #1 (Line 284): Function signature mismatch
+     * BUG #1 (Line 318 in .tpp): Function signature mismatch
      *   - Calls: _load_cell_voltages(..., data_in_cell_voltages_1_to_12, chip, battery_cell_count)
-     *   - Expects: _load_cell_voltages(..., std::array<uint8_t, 6>, chip_index, battery_cell_count, start_cell_index)
-     *   - Problem: Passing 24-byte array where 6-byte array expected, missing start_cell_index parameter
+     *   - Expects: _load_cell_voltages(..., std::array<uint8_t, 6>, chip_index, start_cell_index)
+     *   - Problem: Passing 24-byte array where 6-byte array expected, wrong parameters
      *
-     * BUG #2 (Line 285): Wrong function called
+     * BUG #2 (Line 319 in .tpp): Wrong function called
      *   - Calls: _load_auxillaries() which depends on _current_read_group state
      *   - Should call: _load_auxillaries_address_mode() instead
      *   - Problem: State variable not updated in address mode, causes incorrect GPIO indexing
+     *
+     * BUG #3: Stale variable names
+     *   - Variables battery_cell_count and gpio_count (lines 286-287) are misleading
+     *   - In broadcast mode, global cell indices are calculated geometrically per-chip, not accumulated
      *
      * PRODUCTION: All production code uses LTC6811_1 (broadcast mode) exclusively.
      * See ACU_InterfaceTasks.cpp lines 27-28.
@@ -297,7 +301,7 @@ private:
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, uint16_t gpio_in, size_t gpio_Index, size_t chip_num);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, float voltage_in, size_t &cell_count);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, float voltage_in, size_t cell_index);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
