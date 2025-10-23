@@ -88,7 +88,7 @@ struct BMSFaultCountData_s {
 };
 
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
-struct BMSData
+struct BMSData_s
 {
     std::array<ValidPacketData_s, num_chips> valid_read_packets;
     std::array<size_t, num_chips> consecutive_invalid_packet_counts;
@@ -116,7 +116,7 @@ struct BMSData
     celsius average_cell_temperature;
 };
 
-struct ReferenceMaxMin
+struct ReferenceMaxMin_s
 {
     volt total_voltage = 0;
     volt max_cell_voltage = 0;
@@ -152,8 +152,13 @@ class BMSDriverGroup
 {
 public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
-    using ACUDataDTO = ACUData_s<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>;
-    using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
+
+    //NEEDS TO BE CHECKED
+    constexpr static size_t num_cell_temps = (num_chips * 4);
+    constexpr static size_t num_board_temps = num_chips;
+
+    using ACUData_t = ACUData_s<num_cells, num_cell_temps, num_board_temps>;
+    using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
 
@@ -179,33 +184,15 @@ public:
     // void read_thermistor_and_humidity();
     BMSDriverData read_data();
 
-    ACUDataDTO get_acu_data() const
-    {
-        ACUDataDTO out{};
+    /**
+     * Getter function to retrieve the ACUData structure
+     */
+    ACUData_t get_acu_data();
 
-        // Basic voltages
-        out.min_cell_voltage = _bms_data.min_cell_voltage;
-        out.max_cell_voltage = _bms_data.max_cell_voltage;
-        out.pack_voltage = _bms_data.total_voltage; 
-
-        // Per-cell array (sizes must match)
-        out.voltages = _bms_data.voltages;
-
-        // Temps
-        out.max_cell_temp  = _bms_data.max_cell_temp;
-        out.min_cell_temp  = _bms_data.min_cell_temp;
-        out.max_board_temp = _bms_data.max_board_temp;
-
-        // Invalid-packet max (derive from fault counters you already maintain)
-        out.max_consecutive_invalid_packet_count = _bms_data.max_consecutive_invalid_packet_count;
-
-        return out;
-    }
-
-    BMSDriverData get_data() const
-    {
-        return _bms_data;
-    }
+    /**
+     * Getter function to retrieve the BMSDriverData structure
+     */
+    BMSDriverData get_data();
 
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
@@ -247,9 +234,9 @@ private:
 
     BMSDriverData _read_data_through_address();
 
-    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
+    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
@@ -283,10 +270,10 @@ private:
                                                                                      const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_1_to_3,
                                                                                      const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &aux_4_to_6);
 
-    BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
+    BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
                                       size_t chip_index, size_t &battery_cell_count);
 
-    BMSDriverData _load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
+    BMSDriverData _load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
                                     size_t chip_index, size_t &gpio_count);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */

@@ -82,6 +82,38 @@ constexpr std::array<uint16_t, 256> BMSDriverGroup<num_chips, num_chip_selects, 
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::ACUData_t
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_acu_data()
+    {
+        ACUData_t out{};
+
+        // Basic voltages
+        out.min_cell_voltage = _bms_data.min_cell_voltage;
+        out.max_cell_voltage = _bms_data.max_cell_voltage;
+        out.pack_voltage = _bms_data.total_voltage; 
+
+        // Per-cell array (sizes must match)
+        out.voltages = _bms_data.voltages;
+
+        // Temps
+        out.max_cell_temp  = _bms_data.max_cell_temp;
+        out.min_cell_temp  = _bms_data.min_cell_temp;
+        out.max_board_temp = _bms_data.max_board_temp;
+
+        // Invalid-packet max (derive from fault counters you already maintain)
+        out.max_consecutive_invalid_packet_count = _bms_data.max_consecutive_invalid_packet_count;
+
+        return out;
+    }
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_data()
+{
+    return _bms_data;
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
@@ -135,7 +167,7 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broadcast()
 {
-    ReferenceMaxMin max_min_reference;
+    ReferenceMaxMin_s max_min_reference;
     ValidPacketData_s clean_valid_packet_data;                  // should be all reset to true
     _bms_data.valid_read_packets.fill(clean_valid_packet_data); // reset
     constexpr size_t data_size = 8 * (num_chips / num_chip_selects);
@@ -218,7 +250,7 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_address()
 {
-    ReferenceMaxMin max_min_reference;
+    ReferenceMaxMin_s max_min_reference;
     ValidPacketData_s clean_valid_packet_data;                  // should be all reset to true
     _bms_data.valid_read_packets.fill(clean_valid_packet_data); // reset
     std::array<uint8_t, 24> data_in_cell_voltages_1_to_12;
@@ -272,7 +304,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_addre
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 24> &data_in_cv_1_to_12,
                                                                             size_t chip_index, size_t &battery_cell_count)
 {
     int cell_count = (chip_index % 2 == 0) ? 12 : 9; // Even indexed ICs have 12 cells, odd have 9
@@ -309,7 +341,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSD
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 10> &data_in_gpio_1_to_5,
                                                                           size_t chip_index, size_t &gpio_count)
 {
     ValidPacketData_s packet_data = bms_data.valid_read_packets[chip_index];
@@ -340,7 +372,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDri
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, std::array<volt, 12> &chip_voltages_in, const float &voltage_in, size_t &cell_count)
 {
     max_min_reference.total_voltage += voltage_in;
     if (voltage_in <= max_min_reference.min_cell_voltage)
@@ -356,7 +388,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num)
 {
     if (gpio_Index < 4) // These are all thermistors [0,1,2,3]
     {
