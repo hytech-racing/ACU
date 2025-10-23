@@ -169,7 +169,7 @@ public:
     volt read_global_lv_value();
     void reset_min_max_glv();
 
-    WatchdogData getWatchDogData() const { return _watchdog_data;}
+    WatchdogData get_watchdog_data();
 };
 
 using WatchdogInstance = etl::singleton<WatchdogInterface>;

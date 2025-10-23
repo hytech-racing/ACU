@@ -132,3 +132,8 @@ void WatchdogInterface::reset_min_max_glv() {
 void WatchdogInterface::reset_min_shdn_out_voltage() {
     _watchdog_data.min_shdn_out_voltage = std::numeric_limits<float>::max();
 }
+
+
+WatchdogInterface::WatchdogData WatchdogInterface::get_watchdog_data() {
+    return _watchdog_data;
+}

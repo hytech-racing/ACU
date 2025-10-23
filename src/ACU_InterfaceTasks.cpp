@@ -34,7 +34,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.consecutive_invalid_packet_counts = bms.consecutive_invalid_packet_counts;
     out.valid_packet_rate = bms.valid_packet_rate;
 
-    auto watchdog = WatchdogInstance::instance().getWatchDogData();
+    auto watchdog = WatchdogInstance::instance().get_watchdog_data();
     
     // Watchdog-derived fields
     out.measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
