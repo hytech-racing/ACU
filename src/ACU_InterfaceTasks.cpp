@@ -44,8 +44,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.min_measured_glv = watchdog.min_measured_glv;
     out.core_data.min_measured_pack_out_voltage = watchdog.min_measured_pack_out_voltage;
     out.core_data.min_measured_ts_out_voltage = watchdog.min_measured_ts_out_voltage;
-    out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage;
-
+    out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage; 
     // SoC/SoH placeholders (leave unchanged here)
     out.SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().SoC;
 

@@ -157,7 +157,7 @@ public:
     constexpr static size_t num_cell_temps = (num_chips * 4);
     constexpr static size_t num_board_temps = num_chips;
 
-    using ACUData_t = ACUData_s<num_cells, num_cell_temps, num_board_temps>;
+    using ACUData_t = BMSCoreData_s<num_cells, num_cell_temps, num_board_temps>;
     using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});

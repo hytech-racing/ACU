@@ -67,7 +67,7 @@ struct ACUControllerParameters {
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 class ACUController
 {
-    using ACUData = etl::singleton<ACUData_s<num_cells, num_celltemps, num_boardtemps>>;
+    using ACUData = etl::singleton<BMSCoreData_s<num_cells, num_celltemps, num_boardtemps>>;
     using ACUStatus = ACUControllerData_s<num_cells>;
     
 public:
@@ -122,7 +122,7 @@ public:
      * @pre voltage data has been recorded
      * @post updates configuration bytes and sends configuration command
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current);
 
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
@@ -142,7 +142,7 @@ public:
 private:
     /**
      * Calculate Cell Balancing values
-     * @pre cell charging is enabled
+     * @pre cell charging is enabledc
      * @post _acu_state.cell_balance_statuses will have the new values
      */
     std::array<bool, num_cells> _calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage);

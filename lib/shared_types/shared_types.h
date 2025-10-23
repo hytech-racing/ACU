@@ -4,7 +4,7 @@
 #include "SharedFirmwareTypes.h"
 
 template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
-struct ACUData_s {
+struct BMSCoreData_s {
     volt min_cell_voltage;
     volt max_cell_voltage;
     volt pack_voltage;
@@ -15,7 +15,5 @@ struct ACUData_s {
     size_t max_consecutive_invalid_packet_count;
     bool charging_enabled;
 };
-
-
 
 #endif

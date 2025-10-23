@@ -15,7 +15,7 @@ void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms syste
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 typename ACUController<num_cells, num_celltemps, num_boardtemps>::ACUStatus
-ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state)
+ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current)
 {   
     // _acu_state.charging_enabled = input_state.charging_enabled;
     
@@ -23,7 +23,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     if (input_state.max_consecutive_invalid_packet_count != 0) { // meaning that at least one of the packets is invalid
         has_invalid_packet = true;
     }
-
+    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp);
     // Cell balancing calculations
     if (_acu_state.charging_enabled)
     {
@@ -60,6 +60,8 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
 
     // Determine if bms is ok
     _acu_state.bms_ok = _check_bms_ok(current_millis);
+
+
     return _acu_state;
 }
 

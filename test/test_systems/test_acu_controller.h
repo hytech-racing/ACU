@@ -42,7 +42,7 @@ TEST (ACUControllerTesting, charging_state) {
     
     controller.init(init_time, 430.0);
 
-    ACUData_s<num_cells, num_cell_temps, num_board_temps> data= {
+    BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data= {
         3.7, // min cell v
         3.85, // max cell v
         430.00, // pack v
@@ -80,7 +80,7 @@ TEST (ACUControllerTesting, faulted_state) {
     
     controller.init(init_time, 430.0);
 
-    ACUData_s<num_cells, num_cell_temps, num_board_temps> data= {
+    BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data= {
         3.03, // min cell v
         4.21, // max cell v
         430.00, // pack v
