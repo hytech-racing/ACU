@@ -38,8 +38,8 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 ::HT_TASK::Task idle_sample_task(HT_TASK::DUMMY_FUNCTION, idle_sample_interfaces, ACUConstants::IDLE_SAMPLE_PRIORITY, ACUConstants::IDLE_SAMPLE_PERIOD_US);
 ::HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 
-FlexCAN_Type<CAN3> ACUCANInterfaceImpl::CCU_CAN;
-FlexCAN_Type<CAN2> ACUCANInterfaceImpl::EM_CAN;
+FlexCAN_t<CAN3> ACUCANInterfaceImpl::CCU_CAN;
+FlexCAN_t<CAN2> ACUCANInterfaceImpl::EM_CAN;
 
 void setup()
 {
