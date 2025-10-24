@@ -196,7 +196,7 @@ enum CurrentReadGroup_e
 [[nodiscard]] constexpr CurrentReadGroup_e advance_read_group(CurrentReadGroup_e current) noexcept
 {
     return static_cast<CurrentReadGroup_e>(
-        (static_cast<int>(current) + 1) % static_cast<int>(CurrentReadGroup_e::NUM_CURRENT_GROUPS)
+        (static_cast<int>(current) + 1) % static_cast<int>(CurrentReadGroup_e::NUM_GROUPS)
     );
 }
 
@@ -263,7 +263,7 @@ public:
      * @note Useful for detecting cycle boundaries and synchronization points
      */
     [[nodiscard]] bool is_cycle_start() const noexcept {
-        return _current_read_group == CurrentReadGroup_e::CURRENT_GROUP_A;
+        return _current_read_group == CurrentReadGroup_e::CV_GROUP_A;
     }
 
     /**
@@ -370,7 +370,7 @@ private:
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_Index, uint8_t chip_index);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const float &voltage_in, uint8_t cell_Index);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, float voltage_in, uint8_t cell_Index);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
@@ -393,11 +393,11 @@ private:
 
     void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
 
-    BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
-                                      size_t chip_index, uint8_t start_cell_index);
+    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+                                      uint8_t chip_index, uint8_t start_cell_index);
 
-    BMSDriverData _load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
-                                    size_t chip_index, uint8_t start_gpio_index);
+    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
+                                    uint8_t chip_index, uint8_t start_gpio_index);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
 
