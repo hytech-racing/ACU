@@ -12,6 +12,7 @@
 #include "WatchdogMetrics.h"
 #include "ACUEthernetInterface.h"
 #include "ACUCANInterfaceImpl.h"
+#include "ADCInterface.h"
 #include "FaultLatchManager.h"
 /* For Debugging */
 #include "ACUStateMachine.h"
@@ -57,6 +58,7 @@ void initialize_all_interfaces();
 ::HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
+
 
 template <typename bms_data>
 void print_bms_data(bms_data data);

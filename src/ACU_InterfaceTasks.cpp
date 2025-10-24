@@ -53,12 +53,14 @@ void initialize_all_interfaces()
 {
     SPI.begin();
     SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
-    Serial.begin(ACUConstants::SERIAL_BAUDRATE);
-    analogReadResolution(ACUConstants::ANALOG_READ_RESOLUTION);
+    Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
+    analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
 
     /* Watchdog Interface */
-    WatchdogInstance::create();
-    WatchdogInstance::instance().init(millis());
+    WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
+                                    ACUInterfaces::WD_KICK_PIN,
+                                    ACUInterfaces::N_LATCH_EN_PIN});
+    WatchdogInstance::instance().init();
 
     /* Fault Latch Manager */
     FaultLatchManagerInstance::create();
@@ -84,6 +86,23 @@ void initialize_all_interfaces()
 
     /* EM Interface */
     EMInterfaceInstance::create(millis());
+
+    /* ADC Interface */
+    ADCInterfaceInstance::create(ADCPinout_s {ACUInterfaces::IMD_OK_PIN,
+                                ACUInterfaces::PRECHARGE_PIN,
+                                ACUInterfaces::SHDN_OUT_PIN,
+                                ACUInterfaces::TS_OUT_FILTERED_PIN,
+                                ACUInterfaces::PACK_OUT_FILTERED_PIN,
+                                ACUInterfaces::BSPD_CURRENT_PIN,
+                                ACUInterfaces::SCALED_24V_PIN},
+                                ADCConversions_s {ACUInterfaces::SHUTDOWN_CONV_FACTOR,
+                                ACUInterfaces::PRECHARGE_CONV_FACTOR,
+                                ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
+                                ACUInterfaces::SHDN_OUT_CONV_FACTOR,
+                                ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
+                                ACUInterfaces::GLV_CONV_FACTOR},
+                                ACUInterfaces::BIT_RESOLUTION);
+    ADCInterfaceInstance::instance().init(millis());
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
@@ -132,17 +151,21 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 
 HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    CCUInterfaceInstance::instance().set_system_latch_state(millis(), WatchdogInstance::instance().read_shdn_out());
+    CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), ADCInterfaceInstance::instance().read_shdn_out());
     ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     FaultLatchManagerInstance::instance().clear_if_not_faulted(ACUStateMachineInstance::instance().get_state() == ACUState_e::FAULTED);
-    FaultLatchManagerInstance::instance().update(ACUController_t::instance().get_status().bms_ok, WatchdogInstance::instance().read_imd_ok(millis()));
+    FaultLatchManagerInstance::instance().update(ACUController_t::instance().get_status().bms_ok, ADCInterfaceInstance::instance().read_imd_ok(millis()));
 
     VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
+    
+    // Reset shdn out latch state
+    ACUDataInstance::instance().veh_shdn_out_latched = true;
+
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -178,10 +201,10 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
 
 HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     WatchdogMetricsInstance::instance().update_metrics(
-        WatchdogInstance::instance().read_global_lv_value(),
-        WatchdogInstance::instance().read_pack_out_filtered(),
-        WatchdogInstance::instance().read_ts_out_filtered(),
-        WatchdogInstance::instance().read_shdn_voltage());
+        ADCInterfaceInstance::instance().read_global_lv_value(),
+        ADCInterfaceInstance::instance().read_pack_out_filtered(),
+        ADCInterfaceInstance::instance().read_ts_out_filtered(),
+        ADCInterfaceInstance::instance().read_shdn_voltage());
     return HT_TASK::TaskResponse::YIELD;
 }
 /* Print Functions */
@@ -288,18 +311,18 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print("BMS is NOT OK\n");
     }
 
-    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok(millis()));
+    Serial.printf("IMD OK: %d\n", ADCInterfaceInstance::instance().read_imd_ok(millis()));
 
-    Serial.printf("SHDN VOLTAGE: %d\t", WatchdogInstance::instance().read_shdn_voltage());
-    Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
+    Serial.printf("SHDN VOLTAGE: %d\t", ADCInterfaceInstance::instance().read_shdn_voltage());
+    Serial.printf("SHDN OUT: %d\n", ADCInterfaceInstance::instance().read_shdn_out());
 
-    Serial.printf("PRECHARGE VOLTAGE: %d\t", WatchdogInstance::instance().read_precharge_voltage());
-    Serial.printf("PRECHARGE OUT: %d\n", WatchdogInstance::instance().read_precharge_out());
+    Serial.printf("PRECHARGE VOLTAGE: %d\t", ADCInterfaceInstance::instance().read_precharge_voltage());
+    Serial.printf("PRECHARGE OUT: %d\n", ADCInterfaceInstance::instance().read_precharge_out());
 
     Serial.print("TS OUT Filtered: ");
-    Serial.println(WatchdogInstance::instance().read_ts_out_filtered(), 4);
+    Serial.println(ADCInterfaceInstance::instance().read_ts_out_filtered(), 4);
     Serial.print("PACK OUT Filtered: ");
-    Serial.println(WatchdogInstance::instance().read_pack_out_filtered(), 4);
+    Serial.println(ADCInterfaceInstance::instance().read_pack_out_filtered(), 4);
 
     Serial.println();
 

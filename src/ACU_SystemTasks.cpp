@@ -3,7 +3,14 @@
 bool initialize_all_systems()
 {
     // Initialize the ACU Controller
-    ACUControllerInstance_t::create();
+    ACUControllerInstance_t::create(ACUControllerThresholds_s{ACUSystems::CELL_OVERVOLTAGE_THRESH,
+                                                                ACUSystems::CELL_UNDERVOLTAGE_THRESH,
+                                                                ACUSystems::CHARGING_OT_THRESH,
+                                                                ACUSystems::RUNNING_OT_THRESH,
+                                                                ACUSystems::MIN_PACK_TOTAL_VOLTAGE,
+                                                                ACUSystems::VOLTAGE_DIFF_TO_INIT_CB,
+                                                                ACUSystems::BALANCE_TEMP_LIMIT_C,
+                                                                ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C});
     ACUControllerInstance_t::instance().init(millis(), BMSDriverInstance_t::instance().get_bms_data().total_voltage);
     /* State Machine Initialization */
 
@@ -15,9 +22,9 @@ bool initialize_all_systems()
                                                                         { return !ACUControllerInstance_t::instance().get_status().bms_ok; });
 
     etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
-                                                                        { return !WatchdogInstance::instance().read_imd_ok(millis()); });
+                                                                        { return !ADCInterfaceInstance::instance().read_imd_ok(millis()); });
 
-    etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<WatchdogInterface, &WatchdogInterface::read_shdn_out>(WatchdogInstance::instance());
+    etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<ADCInterface, &ADCInterface::read_shdn_out>(ADCInterfaceInstance::instance());
 
     etl::delegate<void()> enable_cell_balancing = etl::delegate<void()>::create([]() -> void
                                                                                 { ACUControllerInstance_t::instance().enableCharging(); });
@@ -40,7 +47,7 @@ bool initialize_all_systems()
                                     disable_cell_balancing,
                                     disable_watchdog,
                                     reinitialize_watchdog,
-                                    reset_latch, 
+                                    reset_latch,
                                     disable_n_latch_en,
                                     millis());
 
@@ -57,9 +64,9 @@ HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const
     return HT_TASK::TaskResponse::YIELD;
 }
 
-HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo) {
+HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+{
     ACUStateMachineInstance::instance().tick_state_machine(millis());
 
     return HT_TASK::TaskResponse::YIELD;
 }
-
