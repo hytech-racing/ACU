@@ -134,13 +134,13 @@ struct BMSDriverGroupConfig_s
 
 enum CurrentReadGroup_e
 {
-    CURRENT_GROUP_A = 0,
-    CURRENT_GROUP_B,
-    CURRENT_GROUP_C,
-    CURRENT_GROUP_D,
-    CURRENT_GROUP_AUX_A,
-    CURRENT_GROUP_AUX_B,
-    NUM_CURRENT_GROUPS
+    CV_GROUP_A = 0,
+    CV_GROUP_B,
+    CV_GROUP_C,
+    CV_GROUP_D,
+    AUX_GROUP_A,
+    AUX_GROUP_B,
+    NUM_GROUPS
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -191,7 +191,7 @@ public:
 
 private:
 
-    CurrentReadGroup_e _current_read_group = CurrentReadGroup_e::CURRENT_GROUP_A;
+    CurrentReadGroup_e _current_read_group = CurrentReadGroup_e::CV_GROUP_A;
     // std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
     // std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
 
@@ -219,9 +219,9 @@ private:
 
     BMSDriverData _read_data_through_address();
 
-    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, size_t gpio_Index, size_t &gpio_count, size_t chip_num);
+    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_Index, uint8_t chip_index);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const float &voltage_in, size_t &cell_count);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const float &voltage_in, uint8_t cell_Index);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
@@ -245,10 +245,10 @@ private:
     void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
 
     BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
-                                      size_t chip_index, size_t &battery_cell_count, uint8_t start_cell_index);
+                                      size_t chip_index, uint8_t start_cell_index);
 
     BMSDriverData _load_auxillaries(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
-                                    size_t chip_index, size_t &gpio_count);
+                                    size_t chip_index, uint8_t start_gpio_index);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
 
