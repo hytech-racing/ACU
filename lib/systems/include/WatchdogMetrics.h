@@ -16,7 +16,7 @@ class WatchdogMetrics {
 
             volt min_shdn_out_voltage;
 
-            float last_valid_shdn_out_ms;
+            unsigned long last_valid_shdn_out_ms;
         };
 
 
