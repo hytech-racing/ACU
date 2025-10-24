@@ -78,23 +78,13 @@ struct ValidPacketData_s
     bool all_invalid_reads = true;
 };
 
-struct BMSFaultCountData_s {
-    uint8_t invalid_cell_1_to_3_count;
-    uint8_t invalid_cell_4_to_6_count;
-    uint8_t invalid_cell_7_to_9_count;
-    uint8_t invalid_cell_10_to_12_count;
-    uint8_t invalid_gpio_1_to_3_count;
-    uint8_t invalid_gpio_4_to_6_count;
-};
+
 
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData_s
 {
     std::array<ValidPacketData_s, num_chips> valid_read_packets;
-    std::array<size_t, num_chips> consecutive_invalid_packet_counts;
-    float valid_packet_rate;
-    size_t max_consecutive_invalid_packet_count;
-    std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
+
     
     std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages_by_chip;
     std::array<volt, num_cells> voltages;
@@ -209,7 +199,7 @@ public:
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
 private:
-    void _generate_fault_data();
+   
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data

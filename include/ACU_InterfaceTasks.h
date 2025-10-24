@@ -7,6 +7,7 @@
 
 /* Interface Library Includes */
 #include "BMSDriverGroup.h"
+#include "BMSFaultDataManager.h"
 #include "WatchdogInterface.h"
 #include "WatchdogMetrics.h"
 #include "SystemTimeInterface.h"

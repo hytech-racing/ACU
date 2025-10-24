@@ -18,7 +18,7 @@ TEST (ACUControllerTesting, initial_state) {
     std::array<bool, num_cells> cb = {0};
     uint32_t start_time = 0;
 
-    auto status = controller.evaluate_accumulator(start_time, {0});
+    auto status = controller.evaluate_accumulator(start_time, {0}, 0); //EM current needs to be given a value
 
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cell_balancing_statuses, cb); 
@@ -52,11 +52,11 @@ TEST (ACUControllerTesting, charging_state) {
     controller.enableCharging();
     // data.charging_enabled = charging_enabled;
 
-    auto status = controller.evaluate_accumulator(init_time, data);
+    auto status = controller.evaluate_accumulator(init_time, data, 0); //EM current needs to be given a value
 
     ASSERT_NEAR(data.min_cell_voltage, 3.7, 0.0001);
 
-    status = controller.evaluate_accumulator(start_time, data);
+    status = controller.evaluate_accumulator(start_time, data, 0); //EM current needs to be given a value
 
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cell_balancing_statuses, cb); 
@@ -91,11 +91,11 @@ TEST (ACUControllerTesting, faulted_state) {
 
     data.charging_enabled = charging_enabled;
 
-    auto status = controller.evaluate_accumulator(init_time, data);
+    auto status = controller.evaluate_accumulator(init_time, data, 0); //EM current needs to be given a value 
 
     ASSERT_NEAR(data.min_cell_voltage, 3.03, 0.0001);
 
-    status = controller.evaluate_accumulator(start_time, data);
+    status = controller.evaluate_accumulator(start_time, data, 0); //EM current needs to be given a value
 
     ASSERT_EQ(status.has_fault, true);
     ASSERT_EQ(status.cell_balancing_statuses, cb); 

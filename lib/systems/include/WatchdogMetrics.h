@@ -1,7 +1,5 @@
 #ifndef WATCHDOG_METRICS_H
 #define WATCHDOG_METRICS_H
-
-#include <Arduino.h>
 #include "SharedFirmwareTypes.h"
 #include "etl/singleton.h"
 
@@ -27,8 +25,8 @@ class WatchdogMetrics {
         WatchdogMetricsData get_watchdog_metrics();
 
     private:
-        static const float MAX_RESET_VALUE = -50000;
-        static const float MIN_RESET_VALUE = 50000;
+        static constexpr float MAX_RESET_VALUE = -50000;
+        static constexpr float MIN_RESET_VALUE = 50000;
         WatchdogMetricsData _watchdog_metrics_data;
 };
 
