@@ -8,6 +8,7 @@
 /* Interface Library Includes */
 #include "BMSDriverGroup.h"
 #include "WatchdogInterface.h"
+#include "WatchdogMetrics.h"
 #include "SystemTimeInterface.h"
 #include "ACUEthernetInterface.h"
 #include "ACUCANInterfaceImpl.h"

@@ -2,13 +2,13 @@
 
 using chip_type = LTC6811_Type_e;
 const auto start_time = std::chrono::high_resolution_clock::now();
-
+using BMSDriver_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
 // Helper: assemble ACUAllDataType_s from BMS driver data and watchdog getWatchDogData
 static ACUAllDataType_s make_acu_all_data()
 {
     ACUAllDataType_s out{};
 
-    auto bms = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data();
+    auto bms = BMSDriver_t::instance().get_data();
     
     // Copy per-cell data
     out.cell_voltages = bms.voltages;
@@ -34,8 +34,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.consecutive_invalid_packet_counts = bms.consecutive_invalid_packet_counts;
     out.valid_packet_rate = bms.valid_packet_rate;
 
-    auto watchdog = WatchdogInstance::instance().get_watchdog_data();
-    
+    auto watchdog = WatchdogMetricsInstance::instance().get_watchdog_metrics();
     // Watchdog-derived fields
     out.measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
     out.core_data.max_measured_glv = watchdog.max_measured_glv;
@@ -67,10 +66,10 @@ void initialize_all_interfaces()
     FaultLatchManagerInstance::instance().set_bms_fault_latched(true); // Start bms latch cleared
 
     /* BMS Driver */
-    BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
-    BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();
+    BMSDriver_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
+    BMSDriver_t::instance().init();
     /* Get Initial Pack Voltage for SoC and SoH Approximations */
-    auto data = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
+    auto data = BMSDriver_t::instance().read_data();
 
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
@@ -97,14 +96,14 @@ HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT
 
 HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    auto data = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().read_data();
+    auto data = BMSDriver_t::instance().read_data();
     /* Store into ACUCoreDataInstance */
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().write_configuration(dcto_write, ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().cell_balancing_statuses);
+    BMSDriver_t::instance().write_configuration(dcto_write, ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().cell_balancing_statuses);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -124,10 +123,7 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(send_data));
 
     // reset local extrema after sending a report period
-    WatchdogInstance::instance().reset_min_max_glv();
-    WatchdogInstance::instance().reset_min_max_pack_out_filtered();
-    WatchdogInstance::instance().reset_min_max_ts_out_filtered();
-    WatchdogInstance::instance().reset_min_shdn_out_voltage();
+    WatchdogMetricsInstance::instance().reset_metrics();
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -180,10 +176,11 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
 
 HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
 
-    WatchdogInstance::instance().read_global_lv_value();
-    WatchdogInstance::instance().read_pack_out_filtered();
-    WatchdogInstance::instance().read_ts_out_filtered();
-    WatchdogInstance::instance().read_shdn_voltage();
+    volt global_lv_value = WatchdogInstance::instance().read_global_lv_value();
+    volt pack_out_filtered = WatchdogInstance::instance().read_pack_out_filtered();
+    volt ts_out_filtered = WatchdogInstance::instance().read_ts_out_filtered();
+    volt shdn_voltage = WatchdogInstance::instance().read_shdn_voltage();
+    WatchdogMetricsInstance::instance().update_metrics(global_lv_value, pack_out_filtered, ts_out_filtered, shdn_voltage);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -255,7 +252,7 @@ void print_bms_data(bms_data data)
         temp_index++;
     }
     Serial.print("Number of Global Faults: ");
-    Serial.println(BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data().max_consecutive_invalid_packet_count);
+    Serial.println(BMSDriver_t::instance().get_data().max_consecutive_invalid_packet_count);
     Serial.println("Number of Consecutive Faults Per Chip: ");
     for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
         Serial.print("CHIP ");
@@ -307,19 +304,19 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println();
 
     Serial.print("Pack Voltage: ");
-    Serial.println(BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data().total_voltage, 4);
+    Serial.println(BMSDriver_t::instance().get_data().total_voltage, 4);
 
     Serial.print("Minimum Cell Voltage: ");
-    Serial.println(BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data().min_cell_voltage, 4);
+    Serial.println(BMSDriver_t::instance().get_data().min_cell_voltage, 4);
 
     Serial.print("Maximum Cell Voltage: ");
-    Serial.println(BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data().max_cell_voltage, 4);
+    Serial.println(BMSDriver_t::instance().get_data().max_cell_voltage, 4);
 
     Serial.print("Maximum Board Temp: ");
-    Serial.println(BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data().max_board_temp, 4);
+    Serial.println(BMSDriver_t::instance().get_data().max_board_temp, 4);
 
     Serial.print("Maximum Cell Temp: ");
-    Serial.println(BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data().max_cell_temp, 4);
+    Serial.println(BMSDriver_t::instance().get_data().max_cell_temp, 4);
 
     Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().cell_balancing_statuses);
 
@@ -336,7 +333,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println();
 
     Serial.print("Number of Global Faults: ");
-    Serial.println(BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().get_data().max_consecutive_invalid_packet_count);
+    Serial.println(BMSDriver_t::instance().get_data().max_consecutive_invalid_packet_count);
     // Serial.println("Number of Consecutive Faults Per Chip: ");
     // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
     //     Serial.print("CHIP ");
