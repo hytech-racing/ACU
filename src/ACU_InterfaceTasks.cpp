@@ -1,9 +1,7 @@
 #include "ACU_InterfaceTasks.h"
 
-using chip_type = LTC6811_Type_e;
 const auto start_time = std::chrono::high_resolution_clock::now();
-using BMSDriver_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
-using BMSFaultDataManager_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
+
 // Helper: assemble ACUAllDataType_s from BMS driver data and watchdog getWatchDogData
 static ACUAllDataType_s make_acu_all_data()
 {
@@ -46,7 +44,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.min_measured_ts_out_voltage = watchdog.min_measured_ts_out_voltage;
     out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage; 
     // SoC/SoH placeholders (leave unchanged here)
-    out.SoC = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().SoC;
+    out.SoC = ACUController_t::instance().get_status().SoC;
 
     return out;
 }
@@ -107,7 +105,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    BMSDriver_t::instance().write_configuration(dcto_write, ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().cell_balancing_statuses);
+    BMSDriver_t::instance().write_configuration(dcto_write, ACUController_t::instance().get_status().cell_balancing_statuses);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -141,7 +139,7 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     FaultLatchManagerInstance::instance().clear_if_not_faulted(ACUStateMachineInstance::instance().get_state() == ACUState_e::FAULTED);
-    FaultLatchManagerInstance::instance().update(ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().bms_ok, WatchdogInstance::instance().read_imd_ok(millis()));
+    FaultLatchManagerInstance::instance().update(ACUController_t::instance().get_status().bms_ok, WatchdogInstance::instance().read_imd_ok(millis()));
 
     VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
@@ -281,7 +279,7 @@ void print_bms_data(bms_data data)
 
 HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    if (ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().bms_ok)
+    if (ACUController_t::instance().get_status().bms_ok)
     {
         Serial.print("BMS is OK\n");
     }
@@ -320,7 +318,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("Maximum Cell Temp: ");
     Serial.println(BMSDriver_t::instance().get_bms_data().max_cell_temp, 4);
 
-    Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().cell_balancing_statuses);
+    Serial.printf("Cell Balance Statuses: %d\n", ACUController_t::instance().get_status().cell_balancing_statuses);
 
     Serial.print("ACU State: ");
     Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
@@ -328,7 +326,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("CCU Charging Requested? : ");
     Serial.println(CCUInterfaceInstance::instance().get_latest_data(millis()).charging_requested);
     Serial.print("State of Charge: ");
-    Serial.print(ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().SoC * 100, 3);
+    Serial.print(ACUController_t::instance().get_status().SoC * 100, 3);
     Serial.println("%");
     Serial.print("Measured GLV: ");
     Serial.println("V");
