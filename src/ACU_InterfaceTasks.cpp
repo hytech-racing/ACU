@@ -179,12 +179,11 @@ HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_T
 }
 
 HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-
-    volt global_lv_value = WatchdogInstance::instance().read_global_lv_value();
-    volt pack_out_filtered = WatchdogInstance::instance().read_pack_out_filtered();
-    volt ts_out_filtered = WatchdogInstance::instance().read_ts_out_filtered();
-    volt shdn_voltage = WatchdogInstance::instance().read_shdn_voltage();
-    WatchdogMetricsInstance::instance().update_metrics(global_lv_value, pack_out_filtered, ts_out_filtered, shdn_voltage);
+    WatchdogMetricsInstance::instance().update_metrics(
+        WatchdogInstance::instance().read_global_lv_value(),
+        WatchdogInstance::instance().read_pack_out_filtered(),
+        WatchdogInstance::instance().read_ts_out_filtered(),
+        WatchdogInstance::instance().read_shdn_voltage());
     return HT_TASK::TaskResponse::YIELD;
 }
 
