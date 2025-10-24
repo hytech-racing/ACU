@@ -186,7 +186,6 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
         WatchdogInstance::instance().read_shdn_voltage());
     return HT_TASK::TaskResponse::YIELD;
 }
-
 /* Print Functions */
 template <typename bms_data>
 void print_bms_data(bms_data data)
