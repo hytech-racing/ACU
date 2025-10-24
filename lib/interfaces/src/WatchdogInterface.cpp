@@ -1,5 +1,4 @@
 #include "WatchdogInterface.h"
-#include <limits>
 
 void WatchdogInterface::init(uint32_t init_millis) {
     // Pin Configuration

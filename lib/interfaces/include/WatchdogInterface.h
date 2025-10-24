@@ -24,7 +24,6 @@ namespace pin_default_params
 class WatchdogInterface
 {
 public:
-
     /**
      * @param _teensy_ok_pin OUTPUT - needs to stay HIGH, the other input to Watchdog on ACU
      * @param wd_kick_pin OUTPUT - 100 Hz pulse from teensy, one of inputs to Watchdog hardware on ACU 

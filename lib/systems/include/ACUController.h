@@ -142,7 +142,7 @@ public:
 private:
     /**
      * Calculate Cell Balancing values
-     * @pre cell charging is enabledc
+     * @pre cell charging is enabled
      * @post _acu_state.cell_balance_statuses will have the new values
      */
     std::array<bool, num_cells> _calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage);
