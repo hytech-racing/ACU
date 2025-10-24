@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <stdio.h>
-#include "Configuration.h"
 #include "LTCSPIInterface.h"
 #include <cstdint>
 #include "etl/optional.h"
@@ -18,8 +17,8 @@
 
 enum class LTC6811_Type_e
 {
-    LTC6811_1 = 0,
-    LTC6811_2
+    LTC6811_1 = 0,  ///< Broadcast mode (used in production)
+    LTC6811_2       ///< Address mode (reference only)
 };
 
 // Command Codes
@@ -130,8 +129,54 @@ struct BMSDriverGroupConfig_s
     const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
     const float cv_adc_conversion_time_us = 13;
     const float gpio_adc_conversion_time_us = 3.1;
+    const float cv_adc_lsb_voltage = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
 };
 
+/**
+ * CurrentReadGroup_e - State machine for incremental BMS register group reading
+ *
+ * This enum defines the 6-state read cycle used to distribute voltage and GPIO readings
+ * across multiple read_data() calls. Instead of reading all registers at once (which takes
+ * significant time), each call reads ONE register group, cycling through all 6 groups.
+ *
+ * STATE MACHINE CYCLE:
+ *
+ *   Call 1 → CURRENT_GROUP_A     → Read cells 0-2   (CV Group A)
+ *   Call 2 → CURRENT_GROUP_B     → Read cells 3-5   (CV Group B)
+ *   Call 3 → CURRENT_GROUP_C     → Read cells 6-8   (CV Group C)
+ *   Call 4 → CURRENT_GROUP_D     → Read cells 9-11  (CV Group D)  [9-cell chips: skip]
+ *   Call 5 → CURRENT_GROUP_AUX_A → Read GPIO 0-2    (Aux Group A: thermistors 0-2)
+ *   Call 6 → CURRENT_GROUP_AUX_B → Read GPIO 3-5    (Aux Group B: thermistors 3-4, board temp)
+ *   [GOTO Call 1]
+ *
+ * HARDWARE MAPPING:
+ * - Each LTC6811 chip has 12 cell voltage registers divided into 4 groups (A-D)
+ * - Each group contains 3 consecutive cell readings (6 bytes = 3 × 16-bit values)
+ * - GPIO registers are divided into 2 groups (AUX_A, AUX_B)
+ * - GPIO 0-3: Cell thermistors (temperature sensors)
+ * - GPIO 4: Board temperature sensor (MCP9701)
+ * - GPIO 5: Not used (padding in AUX_B)
+ *
+ * TIMING & FREQUENCY:
+ * - Original (main): Read all 6 groups at 50 Hz (20ms period)
+ * - Optimized (this branch): Read 1 group per call at 300 Hz (3ms period)
+ * - Effective sampling rate per cell: 300 Hz / 6 groups = 50 Hz (same as before)
+ *
+ * CHIP ARCHITECTURE NOTES:
+ * - System has 12 ICs total in pairs: 6 × (12-cell + 9-cell) = 126 cells total
+ * - Even-indexed chips (0, 2, 4, 6, 8, 10): 12 cells each
+ * - Odd-indexed chips  (1, 3, 5, 7, 9, 11): 9 cells each
+ * - For 9-cell chips, GROUP_D read is skipped (no cells 10-12)
+ *
+ * VALIDATION:
+ * Each group read has its own validity flag in ValidPacketData_s:
+ *   - CURRENT_GROUP_A     → valid_read_cells_1_to_3
+ *   - CURRENT_GROUP_B     → valid_read_cells_4_to_6
+ *   - CURRENT_GROUP_C     → valid_read_cells_7_to_9
+ *   - CURRENT_GROUP_D     → valid_read_cells_10_to_12
+ *   - CURRENT_GROUP_AUX_A → valid_read_gpios_1_to_3
+ *   - CURRENT_GROUP_AUX_B → valid_read_gpios_4_to_6
+ */
 enum CurrentReadGroup_e
 {
     CV_GROUP_A = 0,
@@ -143,6 +188,18 @@ enum CurrentReadGroup_e
     NUM_GROUPS
 };
 
+/**
+ * @brief Advances to the next read group in the 6-state cycle (A → B → C → D → AUX_A → AUX_B → A)
+ * @param current The current read group state
+ * @return The next read group, wrapping from CURRENT_GROUP_AUX_B back to CURRENT_GROUP_A
+ */
+[[nodiscard]] constexpr CurrentReadGroup_e advance_read_group(CurrentReadGroup_e current) noexcept
+{
+    return static_cast<CurrentReadGroup_e>(
+        (static_cast<int>(current) + 1) % static_cast<int>(CurrentReadGroup_e::NUM_CURRENT_GROUPS)
+    );
+}
+
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 class BMSDriverGroup
 {
@@ -150,7 +207,7 @@ public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
-    BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
+    BMSDriverGroup(const std::array<int, num_chip_selects>& cs, const std::array<int, num_chips>& cs_per_chip, const std::array<int, num_chips>& addr);
     
 
 public:
@@ -189,6 +246,76 @@ public:
      */
     void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
 
+    /* -------------------- OBSERVABILITY FUNCTIONS -------------------- */
+
+    /**
+     * @brief Get the current read group state in the 6-state cycle
+     * @return Current read group (CURRENT_GROUP_A through CURRENT_GROUP_AUX_B)
+     * @note Useful for verifying state machine advancement and cycle tracking
+     */
+    [[nodiscard]] CurrentReadGroup_e get_current_read_group() const noexcept {
+        return _current_read_group;
+    }
+
+    /**
+     * @brief Check if the next read_data() call will start a new cycle
+     * @return true if next call reads GROUP_A (starts new ADC conversion cycle)
+     * @note Useful for detecting cycle boundaries and synchronization points
+     */
+    [[nodiscard]] bool is_cycle_start() const noexcept {
+        return _current_read_group == CurrentReadGroup_e::CURRENT_GROUP_A;
+    }
+
+    /**
+     * @brief Get human-readable name of current read group
+     * @return String name (e.g., "GROUP_A", "AUX_B")
+     * @note Useful for logging and debugging
+     */
+    [[nodiscard]] const char* get_current_read_group_name() const noexcept;
+
+    /**
+     * @brief Get validity status for all chips from last read
+     * @return Const reference to validity data array (no copy overhead)
+     * @note Each chip has 6 validity flags (cells 1-3, 4-6, 7-9, 10-12, GPIO 1-3, 4-6)
+     * @note Useful for fault detection and EMI resilience monitoring
+     */
+    [[nodiscard]] const std::array<ValidPacketData_s, num_chips>& get_validity_data() const noexcept {
+        return _bms_data.valid_read_packets;
+    }
+
+    /**
+     * @brief Check if all packets were valid in last read_data() call
+     * @return true if all chips returned valid PEC for the last group read
+     * @note Useful for quick fault checks without iterating through all chips
+     */
+    [[nodiscard]] bool last_read_all_valid() const noexcept;
+
+    /**
+     * @brief Count total invalid packets across all chips from last read
+     * @return Number of chips that had invalid PEC in last group read (0 to num_chips)
+     * @note Only counts invalidity for the specific group that was just read
+     */
+    [[nodiscard]] size_t count_invalid_packets() const noexcept;
+
+    /**
+     * @brief Get current cell discharge enable statuses
+     * @return Const reference to discharge enable array (one uint16_t per chip)
+     * @note Each bit represents one cell's balance enable status
+     * @note Useful for verifying write_configuration() worked correctly
+     */
+    [[nodiscard]] const std::array<uint16_t, num_chips>& get_cell_discharge_enable() const noexcept {
+        return _cell_discharge_en;
+    }
+
+    /**
+     * @brief Get configuration parameters (read-only)
+     * @return Const reference to driver config struct
+     * @note Useful for verifying hardware settings match expectations
+     */
+    [[nodiscard]] static constexpr const BMSDriverGroupConfig_s& get_config() noexcept {
+        return _config;
+    }
+
 private:
 
     CurrentReadGroup_e _current_read_group = CurrentReadGroup_e::CV_GROUP_A;
@@ -217,6 +344,28 @@ private:
 
     BMSDriverData _read_data_through_broadcast();
 
+    /**
+     * REFERENCE ONLY: LTC6811-2 ADDRESS MODE IS BROKEN AND UNUSED
+     *
+     * This implementation has major bugs and is NOT used in production (it wont compile anyway):
+     *
+     * BUG #1 (Line 318 in .tpp): Function signature mismatch
+     *   - Calls: _load_cell_voltages(..., data_in_cell_voltages_1_to_12, chip, battery_cell_count)
+     *   - Expects: _load_cell_voltages(..., std::array<uint8_t, 6>, chip_index, start_cell_index)
+     *   - Problem: Passing 24-byte array where 6-byte array expected, wrong parameters
+     *
+     * BUG #2 (Line 319 in .tpp): Wrong function called
+     *   - Calls: _load_auxillaries() which depends on _current_read_group state
+     *   - Should call: _load_auxillaries_address_mode() instead
+     *   - Problem: State variable not updated in address mode, causes incorrect GPIO indexing
+     *
+     * BUG #3: Stale variable names
+     *   - Variables battery_cell_count and gpio_count (lines 286-287) are misleading
+     *   - In broadcast mode, global cell indices are calculated geometrically per-chip, not accumulated
+     *
+     * PRODUCTION: All production code uses LTC6811_1 (broadcast mode) exclusively.
+     * See ACU_InterfaceTasks.cpp lines 27-28.
+     */
     BMSDriverData _read_data_through_address();
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_Index, uint8_t chip_index);
@@ -225,7 +374,7 @@ private:
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
-    void _write_config_through_address(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
+    void _write_config_through_address(uint8_t dcto_mode, const std::array<uint8_t, 6>& buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
     /**
      * Writes command to start cell voltage ADC converion
@@ -242,7 +391,7 @@ private:
 
     void _start_ADC_conversion_through_broadcast(const std::array<uint8_t, 2> &cmd_code);
 
-    void _start_ADC_conversion_through_address(std::array<uint8_t, 2> cmd_code);
+    void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
 
     BMSDriverData _load_cell_voltages(BMSDriverData bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
                                       size_t chip_index, uint8_t start_cell_index);
@@ -282,7 +431,7 @@ private:
      * @param length length of data
      * @return unsigned 16 bit PEC, array of uint8_t of length 2
      */
-    std::array<uint8_t, 2> _calculate_specific_PEC(uint8_t *data, int length);
+    std::array<uint8_t, 2> _calculate_specific_PEC(const uint8_t *data, int length);
 
     /**
      * Generates a formmatted 2 byte array for the Command bytes
@@ -313,6 +462,12 @@ private:
 
     /* MEMBER VARIABLES */
     BMSDriverData _bms_data;
+
+    /**
+     * Tracks min/max/sum values across all 6 read groups within a single timestamp cycle.
+     * Reset only at the start of each new cycle (when _current_read_group == CURRENT_GROUP_A).
+     */
+    ReferenceMaxMin _max_min_reference;
 
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
@@ -346,7 +501,7 @@ private:
      */
     const std::array<int, num_chips> _address; // constant
 
-    const BMSDriverGroupConfig_s _config;
+    static constexpr BMSDriverGroupConfig_s _config = {};
 
     /**
      * Stores the balance statuses for all the chips
