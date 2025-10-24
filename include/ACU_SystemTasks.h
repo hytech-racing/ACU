@@ -7,7 +7,6 @@
 /* Local System Includes */
 #include "ACUController.h"
 #include "ACUStateMachine.h"
-#include "SystemTimeInterface.h"
 
 #include <ht_task.hpp>
 

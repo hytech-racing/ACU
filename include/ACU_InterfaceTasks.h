@@ -10,7 +10,6 @@
 #include "BMSFaultDataManager.h"
 #include "WatchdogInterface.h"
 #include "WatchdogMetrics.h"
-#include "SystemTimeInterface.h"
 #include "ACUEthernetInterface.h"
 #include "ACUCANInterfaceImpl.h"
 #include "FaultLatchManager.h"

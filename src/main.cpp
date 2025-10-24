@@ -7,7 +7,6 @@
 #include <Arduino.h>
 #include "BMSDriverGroup.h"
 #include "WatchdogInterface.h"
-#include "SystemTimeInterface.h"
 #include "ACUCANInterfaceImpl.h"
 
 /* System Includes */
