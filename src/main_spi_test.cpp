@@ -124,7 +124,7 @@ void setup()
 void loop()
 {
 
-    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
+    WatchdogInstance::instance().update_watchdog_state(millis()); // verified 
 
     if (timer > sample_period_ms) // Need an actual schedular
     {   

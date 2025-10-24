@@ -60,7 +60,7 @@ void initialize_all_interfaces()
 
     /* Watchdog Interface */
     WatchdogInstance::create();
-    WatchdogInstance::instance().init(sys_time::hal_millis());
+    WatchdogInstance::instance().init(millis());
 
     /* Fault Latch Manager */
     FaultLatchManagerInstance::create();
@@ -79,13 +79,13 @@ void initialize_all_interfaces()
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
 
     /* CCU Interface */
-    CCUInterfaceInstance::create(sys_time::hal_millis(), 1000);
+    CCUInterfaceInstance::create(millis(), 1000);
 
     /* VCR Interface */
-    VCRInterfaceInstance::create(sys_time::hal_millis());
+    VCRInterfaceInstance::create(millis());
 
     /* EM Interface */
-    EMInterfaceInstance::create(sys_time::hal_millis());
+    EMInterfaceInstance::create(millis());
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
@@ -93,7 +93,7 @@ void initialize_all_interfaces()
 
 HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis());
+    WatchdogInstance::instance().update_watchdog_state(millis());
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -134,14 +134,14 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 
 HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), WatchdogInstance::instance().read_shdn_out());
+    CCUInterfaceInstance::instance().set_system_latch_state(millis(), WatchdogInstance::instance().read_shdn_out());
     ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     FaultLatchManagerInstance::instance().clear_if_not_faulted(ACUStateMachineInstance::instance().get_state() == ACUState_e::FAULTED);
-    FaultLatchManagerInstance::instance().update(ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().bms_ok, WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()));
+    FaultLatchManagerInstance::instance().update(ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().bms_ok, WatchdogInstance::instance().read_imd_ok(millis()));
 
     VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
@@ -173,8 +173,8 @@ HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMic
 
 HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
-    process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
-    process_ring_buffer(ACUCANInterfaceImpl::em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
+    process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), millis(), main_can_recv); 
+    process_ring_buffer(ACUCANInterfaceImpl::em_can_rx_buffer, CANInterfacesInstance::instance(), millis(), main_can_recv); 
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -290,7 +290,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print("BMS is NOT OK\n");
     }
 
-    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok(sys_time::hal_millis()));
+    Serial.printf("IMD OK: %d\n", WatchdogInstance::instance().read_imd_ok(millis()));
 
     Serial.printf("SHDN VOLTAGE: %d\t", WatchdogInstance::instance().read_shdn_voltage());
     Serial.printf("SHDN OUT: %d\n", WatchdogInstance::instance().read_shdn_out());
@@ -326,7 +326,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
 
     Serial.print("CCU Charging Requested? : ");
-    Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
+    Serial.println(CCUInterfaceInstance::instance().get_latest_data(millis()).charging_requested);
     Serial.print("State of Charge: ");
     Serial.print(ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().SoC * 100, 3);
     Serial.println("%");
