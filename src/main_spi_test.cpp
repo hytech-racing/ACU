@@ -122,22 +122,18 @@ void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGrou
 
     Serial.println();
 
-    size_t chip_index = 1;
-    for(auto chip_voltages : data.voltages_by_chip)
+    for(int i=0; i< 21 * num_chips / 2; i++) 
     {
-        Serial.print("Chip ");
-        Serial.println(chip_index);
-        for(auto voltage : chip_voltages)
-        {
-            if(voltage)
-            {
-                Serial.print((*voltage), 4);
-                Serial.print("V\t");
-            }
+        if(i%21==0){
+            Serial.println();
+            Serial.print("Chip ");
+            Serial.println(i/21);
         }
-        chip_index++;
-        Serial.println();
+        Serial.print(data.voltages[i]);
+        Serial.print("\t");
     }
+    Serial.println();
+    Serial.println();
 
     int cti = 0;
     for(auto temp : data.cell_temperatures)
@@ -184,25 +180,25 @@ void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGrou
         // Show validity for current group being read
         bool has_invalid = false;
         switch(current_group) {
-            case CurrentReadGroup_e::CURRENT_GROUP_A:
+            case CurrentReadGroup_e::CV_GROUP_A:
                 if (!data.valid_read_packets[chip].valid_read_cells_1_to_3) {
                     Serial.print("INVALID_GROUP_A ");
                     has_invalid = true;
                 }
                 break;
-            case CurrentReadGroup_e::CURRENT_GROUP_B:
+            case CurrentReadGroup_e::CV_GROUP_B:
                 if (!data.valid_read_packets[chip].valid_read_cells_4_to_6) {
                     Serial.print("INVALID_GROUP_B ");
                     has_invalid = true;
                 }
                 break;
-            case CurrentReadGroup_e::CURRENT_GROUP_C:
+            case CurrentReadGroup_e::CV_GROUP_C:
                 if (!data.valid_read_packets[chip].valid_read_cells_7_to_9) {
                     Serial.print("INVALID_GROUP_C ");
                     has_invalid = true;
                 }
                 break;
-            case CurrentReadGroup_e::CURRENT_GROUP_D:
+            case CurrentReadGroup_e::CV_GROUP_D:
                 if (!data.valid_read_packets[chip].valid_read_cells_10_to_12) {
                     Serial.print("INVALID_GROUP_D ");
                     has_invalid = true;
@@ -210,13 +206,13 @@ void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGrou
                     Serial.print("SKIPPED_9CELL ");
                 }
                 break;
-            case CurrentReadGroup_e::CURRENT_GROUP_AUX_A:
+            case CurrentReadGroup_e::AUX_GROUP_A:
                 if (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
                     Serial.print("INVALID_AUX_A ");
                     has_invalid = true;
                 }
                 break;
-            case CurrentReadGroup_e::CURRENT_GROUP_AUX_B:
+            case CurrentReadGroup_e::AUX_GROUP_B:
                 if (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
                     Serial.print("INVALID_AUX_B ");
                     has_invalid = true;
@@ -226,7 +222,7 @@ void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGrou
                 break;
         }
 
-        if (!has_invalid && !(current_group == CurrentReadGroup_e::CURRENT_GROUP_D && chip % 2 == 1)) {
+        if (!has_invalid && !(current_group == CurrentReadGroup_e::CV_GROUP_D && chip % 2 == 1)) {
             Serial.print("VALID");
         }
 
@@ -346,7 +342,7 @@ void loop()
         }
 
         // Detect cycle completion: we just read AUX_B and driver advanced back to GROUP_A
-        cycle_complete = (group_before_read == CurrentReadGroup_e::CURRENT_GROUP_AUX_B);
+        cycle_complete = (group_before_read == CurrentReadGroup_e::AUX_GROUP_B);
         if (cycle_complete) {
             cycle_count++;
         }

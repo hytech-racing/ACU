@@ -80,8 +80,6 @@ template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData
 {
     std::array<ValidPacketData_s, num_chips> valid_read_packets;
-
-    std::array<std::array<etl::optional<volt>, 12>, num_chips> voltages_by_chip;
     std::array<volt, num_cells> voltages;
     std::array<celsius, 4 * num_chips> cell_temperatures;
     std::array<celsius, num_board_thermistors> board_temperatures;
@@ -93,7 +91,7 @@ struct BMSData
     size_t min_cell_voltage_id;              // 0 - 125
     size_t max_cell_voltage_id;              // 0 - 125
     size_t max_board_temperature_segment_id; // 0 - 11
-    size_t max_humidity_segment_id;          // DNP
+    // size_t max_humidity_segment_id;          // DNP
     size_t max_cell_temperature_cell_id;     // 0 - 47
     size_t min_cell_temperature_cell_id;     // 0 - 47
     volt total_voltage;
@@ -105,9 +103,9 @@ struct ReferenceMaxMin
     volt total_voltage = 0;
     volt max_cell_voltage = 0;
     volt min_cell_voltage = 65535;
-    celsius min_cell_temp_voltage = 65535;
-    celsius max_cell_temp_voltage = 0;
-    celsius max_board_temp_voltage = 0;
+    celsius min_cell_temp = 65535;
+    celsius max_cell_temp = 0;
+    celsius max_board_temp = 0;
     celsius total_thermistor_temps = 0;
 };
 
@@ -370,7 +368,7 @@ private:
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_Index, uint8_t chip_index);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, float voltage_in, uint8_t cell_Index);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, volt voltage_in, uint8_t cell_Index);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
@@ -411,12 +409,6 @@ private:
      * @return bool of whether valid read packets are all 1
      */
     bool _check_if_all_valid(size_t chip_index);
-
-
-    /**
-     * @return sum of all cell voltages
-     */
-    volt _sum_cell_voltages();
 
     /**
      * @return bool whether the specific packet group (ex: cell voltages group B) should be updated, specifically if it's invalid
