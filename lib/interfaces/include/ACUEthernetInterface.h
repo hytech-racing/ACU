@@ -17,20 +17,26 @@
 using namespace qindesign::network;
 
 namespace acu_ethernet_params {
-  constexpr const uint8_t num_cells = 126;
-  constexpr const uint8_t num_celltemps = 48;
-  constexpr const uint8_t num_chips = 12;
+  constexpr const uint8_t NUM_CELLS = 126;
+  constexpr const uint8_t NUM_CELLTEMPS = 48;
+  constexpr const uint8_t NUM_CHIPS = 12;
+};
+
+struct ACUParams_s {
+  uint8_t num_cells;
+  uint8_t num_celltemps;
+  uint8_t num_chips;
 };
 
 class ACUEthernetInterface
 {
 public:
-  ACUEthernetInterface(uint8_t num_cells = acu_ethernet_params::num_cells, 
-                        uint8_t num_celltemps = acu_ethernet_params::num_celltemps,
-                        uint8_t num_chips = acu_ethernet_params::num_chips) :
-                        _num_cells(num_cells),
-                        _num_celltemps(num_celltemps),
-                        _num_chips(num_chips) {};
+  ACUEthernetInterface(ACUParams_s params = {
+                            .num_cells = acu_ethernet_params::NUM_CELLS,
+                            .num_celltemps = acu_ethernet_params::NUM_CELLTEMPS,
+                            .num_chips = acu_ethernet_params::NUM_CHIPS,
+                        }
+                    ) : _acu_params{params} {};
 
   void init_ethernet_device();
 
@@ -61,9 +67,7 @@ private:
   EthernetUDP _vcr_data_recv_socket;
   EthernetUDP _db_data_recv_socket;
 
-  const uint8_t _num_cells = 0;
-  const uint8_t _num_celltemps = 0;
-  const uint8_t _num_chips = 0;
+  const ACUParams_s _acu_params = {};
 };
 
 using ACUEthernetInterfaceInstance = etl::singleton<ACUEthernetInterface>;

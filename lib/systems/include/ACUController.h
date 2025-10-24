@@ -97,7 +97,11 @@ public:
                       .max_allowed_voltage_fault_dur = acu_controller_default_parameters::MAX_VOLTAGE_FAULT_DUR,
                       .max_allowed_temp_fault_dur = acu_controller_default_parameters::MAX_TEMP_FAULT_DUR,
                       .max_allowed_invalid_packet_fault_dur = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_DUR},
-                  ACUControllerPackSpecs_s pack_specs = {.pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH, .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE, .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE}) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
+                  ACUControllerPackSpecs_s pack_specs = {
+                    .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
+                    .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
+                    .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE}
+                ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults

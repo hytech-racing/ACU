@@ -13,6 +13,7 @@
 #include "CCUInterface.h"
 #include "EMInterface.h"
 #include "BMSDriverGroup.h"
+#include "ADCInterface.h"
 
 #include <ht_task.hpp>
 

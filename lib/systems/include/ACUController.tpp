@@ -48,7 +48,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
 
     // Update voltage fault time stamps with IR compensation
     // Internal_V = Read_V + (IR × discharge_current), where discharge_current is positive during discharge
-    const float discharge_current = -pack_current; // Positive during discharge, negative during charge
+    const float discharge_current = -em_current; // Positive during discharge, negative during charge
 
     // OV check with IR compensation (main concern during charging and recharge)
     volt internal_resistance_max_cell_voltage = input_state.max_cell_voltage;

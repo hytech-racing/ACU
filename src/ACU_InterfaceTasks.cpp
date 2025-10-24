@@ -35,7 +35,7 @@ static ACUAllDataType_s make_acu_all_data()
 
     auto watchdog = WatchdogMetricsInstance::instance().get_watchdog_metrics();
     // Watchdog-derived fields
-    out.measured_bspd_current = WatchdogInstance::instance().read_bspd_current();
+    out.measured_bspd_current = ADCInterfaceInstance::instance().read_bspd_current();
     out.core_data.max_measured_glv = watchdog.max_measured_glv;
     out.core_data.max_measured_pack_out_voltage = watchdog.max_measured_pack_out_voltage;
     out.core_data.max_measured_ts_out_voltage = watchdog.max_measured_ts_out_voltage;
@@ -79,7 +79,7 @@ void initialize_all_interfaces()
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
 
     /* CCU Interface */
-    CCUInterfaceInstance::create(millis(), 1000);
+    CCUInterfaceInstance::create(millis());
 
     /* VCR Interface */
     VCRInterfaceInstance::create(millis());
@@ -151,7 +151,7 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 
 HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), ADCInterfaceInstance::instance().read_shdn_out());
+    CCUInterfaceInstance::instance().set_system_latch_state(millis(), ADCInterfaceInstance::instance().read_shdn_out());
     ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -160,11 +160,13 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
     FaultLatchManagerInstance::instance().clear_if_not_faulted(ACUStateMachineInstance::instance().get_state() == ACUState_e::FAULTED);
     FaultLatchManagerInstance::instance().update(ACUController_t::instance().get_status().bms_ok, ADCInterfaceInstance::instance().read_imd_ok(millis()));
 
-    VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched);
+    //TODO: Where should I get veh_shdn_out_latched from?
+    // VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
     
+    //TODO: Put this in fault manager
     // Reset shdn out latch state
-    ACUDataInstance::instance().veh_shdn_out_latched = true;
+    // ACUDataInstance::instance().veh_shdn_out_latched = true;
 
     return HT_TASK::TaskResponse::YIELD;
 }

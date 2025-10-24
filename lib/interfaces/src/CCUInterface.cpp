@@ -9,7 +9,7 @@ void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned
     if (ccu_msg.charger_enabled == false || (_curr_data.charging_requested && ccu_msg.charger_enabled)) {
         _curr_data.last_time_charging_requested = curr_millis;
     } 
-    _curr_data.is_connected_to_CCU = (curr_millis - _curr_data.prev_ccu_msg_recv_ms) < _min_charging_enable_threshold;
+    _curr_data.is_connected_to_CCU = (curr_millis - _curr_data.prev_ccu_msg_recv_ms) < _ccu_params._min_charging_enable_threshold;
     _curr_data.prev_ccu_msg_recv_ms = curr_millis;
 }
 
@@ -47,9 +47,9 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
         _curr_data.detailed_voltages_group_id = (_curr_data.detailed_voltages_group_id == 2) ? 0 : _curr_data.detailed_voltages_group_id+1;
     }
     if (_curr_data.detailed_voltages_group_id == 0) {
-        _curr_data.detailed_voltages_ic_id = (_curr_data.detailed_voltages_ic_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.detailed_voltages_ic_id+1;
+        _curr_data.detailed_voltages_ic_id = (_curr_data.detailed_voltages_ic_id == (ccu_interface_defaults::NUM_CHIPS - 1)) ? 0 : _curr_data.detailed_voltages_ic_id+1;
     }
-    _curr_data.detailed_voltages_cell_id = (_curr_data.detailed_voltages_cell_id == NUM_CELLS - 3) ? 0 : _curr_data.detailed_voltages_cell_id+3;
+    _curr_data.detailed_voltages_cell_id = (_curr_data.detailed_voltages_cell_id == ccu_interface_defaults::NUM_CELLS - 3) ? 0 : _curr_data.detailed_voltages_cell_id+3;
     
     CAN_util::enqueue_msg(&detailed_msg, &Pack_BMS_DETAILED_VOLTAGES_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 } 
@@ -64,9 +64,9 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     
     _curr_data.detailed_temps_group_id = (_curr_data.detailed_temps_group_id == 1) ? 0 : _curr_data.detailed_temps_group_id+1;
     if (_curr_data.detailed_temps_group_id == 0) {
-        _curr_data.detailed_temps_ic_id = (_curr_data.detailed_temps_ic_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.detailed_temps_ic_id+1;
+        _curr_data.detailed_temps_ic_id = (_curr_data.detailed_temps_ic_id == (ccu_interface_defaults::NUM_CHIPS - 1)) ? 0 : _curr_data.detailed_temps_ic_id+1;
     }
-    _curr_data.detailed_temps_cell_id = (_curr_data.detailed_temps_cell_id == (NUM_CELLTEMPS - 3)) ? 0 : _curr_data.detailed_temps_cell_id+3;
+    _curr_data.detailed_temps_cell_id = (_curr_data.detailed_temps_cell_id == (ccu_interface_defaults::NUM_CELLTEMPS - 3)) ? 0 : _curr_data.detailed_temps_cell_id+3;
     CAN_util::enqueue_msg(&detailed_msg, &Pack_BMS_DETAILED_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
     BMS_ONBOARD_TEMPS_t board_temp_msg = {};
@@ -78,12 +78,12 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     BMS_ONBOARD_DETAILED_TEMPS_t detailed_board_temp_msg = {};
     detailed_board_temp_msg.ic_id = _curr_data.detailed_temps_board_id;
     detailed_board_temp_msg.temp_0_ro = HYTECH_temp_0_ro_toS(_acu_all_data.board_temps[_curr_data.detailed_temps_board_id]);
-    _curr_data.detailed_temps_board_id = (_curr_data.detailed_temps_board_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.detailed_temps_board_id+1;
+    _curr_data.detailed_temps_board_id = (_curr_data.detailed_temps_board_id == (ccu_interface_defaults::NUM_CHIPS - 1)) ? 0 : _curr_data.detailed_temps_board_id+1;
     CAN_util::enqueue_msg(&detailed_board_temp_msg, &Pack_BMS_ONBOARD_DETAILED_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 } 
 
 void CCUInterface::set_system_latch_state(unsigned long curr_millis, bool is_latched) {
-    _curr_data.charging_requested = is_latched && ((curr_millis - _curr_data.last_time_charging_requested) < _min_charging_enable_threshold);
+    _curr_data.charging_requested = is_latched && ((curr_millis - _curr_data.last_time_charging_requested) < _ccu_params._min_charging_enable_threshold);
 }  
 
 CCUCANInterfaceData_s CCUInterface::get_latest_data(unsigned long curr_millis) {
