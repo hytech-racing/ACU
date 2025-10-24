@@ -8,7 +8,7 @@ static ACUAllDataType_s make_acu_all_data()
 {
     ACUAllDataType_s out{};
 
-    auto bms = BMSDriver_t::instance().get_data();
+    auto bms = BMSDriver_t::instance().get_bms_data();
     
     // Copy per-cell data
     out.cell_voltages = bms.voltages;
@@ -252,7 +252,7 @@ void print_bms_data(bms_data data)
         temp_index++;
     }
     Serial.print("Number of Global Faults: ");
-    Serial.println(BMSDriver_t::instance().get_data().max_consecutive_invalid_packet_count);
+    Serial.println(BMSDriver_t::instance().get_bms_data().max_consecutive_invalid_packet_count);
     Serial.println("Number of Consecutive Faults Per Chip: ");
     for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
         Serial.print("CHIP ");
@@ -304,19 +304,19 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println();
 
     Serial.print("Pack Voltage: ");
-    Serial.println(BMSDriver_t::instance().get_data().total_voltage, 4);
+    Serial.println(BMSDriver_t::instance().get_bms_data().total_voltage, 4);
 
     Serial.print("Minimum Cell Voltage: ");
-    Serial.println(BMSDriver_t::instance().get_data().min_cell_voltage, 4);
+    Serial.println(BMSDriver_t::instance().get_bms_data().min_cell_voltage, 4);
 
     Serial.print("Maximum Cell Voltage: ");
-    Serial.println(BMSDriver_t::instance().get_data().max_cell_voltage, 4);
+    Serial.println(BMSDriver_t::instance().get_bms_data().max_cell_voltage, 4);
 
     Serial.print("Maximum Board Temp: ");
-    Serial.println(BMSDriver_t::instance().get_data().max_board_temp, 4);
+    Serial.println(BMSDriver_t::instance().get_bms_data().max_board_temp, 4);
 
     Serial.print("Maximum Cell Temp: ");
-    Serial.println(BMSDriver_t::instance().get_data().max_cell_temp, 4);
+    Serial.println(BMSDriver_t::instance().get_bms_data().max_cell_temp, 4);
 
     Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>::instance().get_status().cell_balancing_statuses);
 
@@ -333,7 +333,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println();
 
     Serial.print("Number of Global Faults: ");
-    Serial.println(BMSDriver_t::instance().get_data().max_consecutive_invalid_packet_count);
+    Serial.println(BMSDriver_t::instance().get_bms_data().max_consecutive_invalid_packet_count);
     // Serial.println("Number of Consecutive Faults Per Chip: ");
     // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
     //     Serial.print("CHIP ");

@@ -82,10 +82,10 @@ constexpr std::array<uint16_t, 256> BMSDriverGroup<num_chips, num_chip_selects, 
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::ACUData_t
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_acu_data()
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSCoreData_t
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_core_data()
     {
-        ACUData_t out{};
+        BMSCoreData_t out{};
 
         // Basic voltages
         out.min_cell_voltage = _bms_data.min_cell_voltage;
@@ -108,7 +108,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_acu_data()
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_data()
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_data()
 {
     return _bms_data;
 }

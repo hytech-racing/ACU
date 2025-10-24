@@ -157,7 +157,7 @@ public:
     constexpr static size_t num_cell_temps = (num_chips * 4);
     constexpr static size_t num_board_temps = num_chips;
 
-    using ACUData_t = BMSCoreData_s<num_cells, num_cell_temps, num_board_temps>;
+    using BMSCoreData_t = BMSCoreData_s<num_cells, num_cell_temps, num_board_temps>;
     using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(std::array<int, num_chip_selects> cs, std::array<int, num_chips> cs_per_chip, std::array<int, num_chips> addr, const BMSDriverGroupConfig_s config = {});
@@ -187,12 +187,12 @@ public:
     /**
      * Getter function to retrieve the ACUData structure
      */
-    ACUData_t get_acu_data();
+    BMSCoreData_t get_bms_core_data();
 
     /**
      * Getter function to retrieve the BMSDriverData structure
      */
-    BMSDriverData get_data();
+    BMSDriverData get_bms_data();
 
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
