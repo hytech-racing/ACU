@@ -305,8 +305,10 @@ void setup()
     ACUDataInstance::create();
 
     /* Watchdog Interface */
-    WatchdogInstance::create();
-    WatchdogInstance::instance().init(sys_time::hal_millis());
+    WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
+                                    ACUInterfaces::WD_KICK_PIN,
+                                    ACUInterfaces::N_LATCH_EN_PIN});
+    WatchdogInstance::instance().init();
 }
 
 void loop()
