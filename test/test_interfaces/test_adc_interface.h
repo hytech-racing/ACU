@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include <ArduinoFake.h>
 #include <ACU_Constants.h>
+#include "../../lib/interfaces/include/ADCInterface.h"
 #include "../../lib/interfaces/src/ADCInterface.cpp"
 // #include "ADCInterface.h"
 
