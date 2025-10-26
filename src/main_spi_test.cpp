@@ -119,7 +119,12 @@ void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGrou
     Serial.print("°C (ID: ");
     Serial.print(data.min_cell_temperature_cell_id);
     Serial.println(")");
-
+    Serial.print("Max Bord Temp: ");
+    Serial.print(data.max_board_temp, 2);
+    Serial.print("°C (ID: ");
+    Serial.print(data.max_board_temperature_segment_id);
+    Serial.println(")");
+    
     Serial.println();
 
     for(int i=0; i< 21 * num_chips / 2; i++) 
@@ -162,87 +167,87 @@ void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGrou
     Serial.println();
     Serial.println();
 
-    // Validity tracking - show which groups were read this call
-    Serial.println("--- Validity Status (Current Read) ---");
-    for (size_t chip = 0; chip < num_chips; chip++)
-    {
-        chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
-        chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
-        chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
-        chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count+1 : 0;
-        chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count+1 : 0;
-        chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count+1 : 0;
+    // // Validity tracking - show which groups were read this call
+    // Serial.println("--- Validity Status (Current Read) ---");
+    // for (size_t chip = 0; chip < num_chips; chip++)
+    // {
+    //     chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
+    //     chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
+    //     chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
+    //     chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count+1 : 0;
+    //     chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count+1 : 0;
+    //     chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count+1 : 0;
 
-        Serial.print("Chip ");
-        Serial.print(chip);
-        Serial.print(": ");
+    //     Serial.print("Chip ");
+    //     Serial.print(chip);
+    //     Serial.print(": ");
 
-        // Show validity for current group being read
-        bool has_invalid = false;
-        switch(current_group) {
-            case CurrentReadGroup_e::CV_GROUP_A:
-                if (!data.valid_read_packets[chip].valid_read_cells_1_to_3) {
-                    Serial.print("INVALID_GROUP_A ");
-                    has_invalid = true;
-                }
-                break;
-            case CurrentReadGroup_e::CV_GROUP_B:
-                if (!data.valid_read_packets[chip].valid_read_cells_4_to_6) {
-                    Serial.print("INVALID_GROUP_B ");
-                    has_invalid = true;
-                }
-                break;
-            case CurrentReadGroup_e::CV_GROUP_C:
-                if (!data.valid_read_packets[chip].valid_read_cells_7_to_9) {
-                    Serial.print("INVALID_GROUP_C ");
-                    has_invalid = true;
-                }
-                break;
-            case CurrentReadGroup_e::CV_GROUP_D:
-                if (!data.valid_read_packets[chip].valid_read_cells_10_to_12) {
-                    Serial.print("INVALID_GROUP_D ");
-                    has_invalid = true;
-                } else if (chip % 2 == 1) {
-                    Serial.print("SKIPPED_9CELL ");
-                }
-                break;
-            case CurrentReadGroup_e::AUX_GROUP_A:
-                if (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
-                    Serial.print("INVALID_AUX_A ");
-                    has_invalid = true;
-                }
-                break;
-            case CurrentReadGroup_e::AUX_GROUP_B:
-                if (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
-                    Serial.print("INVALID_AUX_B ");
-                    has_invalid = true;
-                }
-                break;
-            default:
-                break;
-        }
+    //     // Show validity for current group being read
+    //     bool has_invalid = false;
+    //     switch(current_group) {
+    //         case CurrentReadGroup_e::CV_GROUP_A:
+    //             if (!data.valid_read_packets[chip].valid_read_cells_1_to_3) {
+    //                 Serial.print("INVALID_GROUP_A ");
+    //                 has_invalid = true;
+    //             }
+    //             break;
+    //         case CurrentReadGroup_e::CV_GROUP_B:
+    //             if (!data.valid_read_packets[chip].valid_read_cells_4_to_6) {
+    //                 Serial.print("INVALID_GROUP_B ");
+    //                 has_invalid = true;
+    //             }
+    //             break;
+    //         case CurrentReadGroup_e::CV_GROUP_C:
+    //             if (!data.valid_read_packets[chip].valid_read_cells_7_to_9) {
+    //                 Serial.print("INVALID_GROUP_C ");
+    //                 has_invalid = true;
+    //             }
+    //             break;
+    //         case CurrentReadGroup_e::CV_GROUP_D:
+    //             if (!data.valid_read_packets[chip].valid_read_cells_10_to_12) {
+    //                 Serial.print("INVALID_GROUP_D ");
+    //                 has_invalid = true;
+    //             } else if (chip % 2 == 1) {
+    //                 Serial.print("SKIPPED_9CELL ");
+    //             }
+    //             break;
+    //         case CurrentReadGroup_e::AUX_GROUP_A:
+    //             if (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
+    //                 Serial.print("INVALID_AUX_A ");
+    //                 has_invalid = true;
+    //             }
+    //             break;
+    //         case CurrentReadGroup_e::AUX_GROUP_B:
+    //             if (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
+    //                 Serial.print("INVALID_AUX_B ");
+    //                 has_invalid = true;
+    //             }
+    //             break;
+    //         default:
+    //             break;
+    //     }
 
-        if (!has_invalid && !(current_group == CurrentReadGroup_e::CV_GROUP_D && chip % 2 == 1)) {
-            Serial.print("VALID");
-        }
+    //     if (!has_invalid && !(current_group == CurrentReadGroup_e::CV_GROUP_D && chip % 2 == 1)) {
+    //         Serial.print("VALID");
+    //     }
 
-        Serial.print(" | Consecutive Invalids: c13:");
-        Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count);
-        Serial.print(" c46:");
-        Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count);
-        Serial.print(" c79:");
-        Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count);
-        Serial.print(" c1012:");
-        Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count);
-        Serial.print(" g13:");
-        Serial.print(chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count);
-        Serial.print(" g46:");
-        Serial.print(chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count);
-        Serial.println();
-    }
+    //     Serial.print(" | Consecutive Invalids: c13:");
+    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count);
+    //     Serial.print(" c46:");
+    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count);
+    //     Serial.print(" c79:");
+    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count);
+    //     Serial.print(" c1012:");
+    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count);
+    //     Serial.print(" g13:");
+    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count);
+    //     Serial.print(" g46:");
+    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count);
+    //     Serial.println();
+    // }
 
-    Serial.println();
-    Serial.println();
+    // Serial.println();
+    // Serial.println();
 }
 
 void print_performance_stats() {

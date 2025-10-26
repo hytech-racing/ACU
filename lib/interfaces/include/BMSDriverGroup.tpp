@@ -233,24 +233,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _max_min_reference.total_voltage;
 
-    // // Calculate valid cell thermistor count from validity flags
-    // if(_current_read_group == CurrentReadGroup_e::AUX_GROUP_A) {
-    //     _valid_cell_thermistor_count -= 3;
-    //     if (_bms_data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
-    //         _valid_cell_thermistor_count += 3;
-    //     }
-    // }
-    // if(_current_read_group == CurrentReadGroup_e::AUX_GROUP_B) {
-    //     _valid_cell_thermistor_count -= 1;
-    //     if (_bms_data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
-    //         _valid_cell_thermistor_count += 1;
-    //     }
-    // }
-
-    // Avoid divide by zero - skip calculation if no cell thermistors were read
-    // if (_valid_cell_thermistor_count > 0) {
-        _bms_data.average_cell_temperature = _max_min_reference.total_thermistor_temps / (4 * num_chips);
-    // }
+    _bms_data.average_cell_temperature = _max_min_reference.total_thermistor_temps / (4 * num_chips);
 
     _bms_data.max_cell_temp = _max_min_reference.max_cell_temp;
     _bms_data.min_cell_temp = _max_min_reference.min_cell_temp;
@@ -391,14 +374,14 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         bms_data.cell_temperatures[cell_temp_index] = 1 / ((1 / 298.15) + (1 / 3984.0) * std::log(thermistor_resistance / 10000.0)) - 272.15; // calculation for thermistor temperature in C
         max_min_reference.total_thermistor_temps += bms_data.cell_temperatures[cell_temp_index];
 
-        if (gpio_in > max_min_reference.max_cell_temp)
+        if (bms_data.cell_temperatures[cell_temp_index] > max_min_reference.max_cell_temp)
         {
-            max_min_reference.max_cell_temp = gpio_in;
+            max_min_reference.max_cell_temp = bms_data.cell_temperatures[cell_temp_index];
             bms_data.max_cell_temperature_cell_id = cell_temp_index;
         }
-        if (gpio_in < max_min_reference.min_cell_temp)
+        if (bms_data.cell_temperatures[cell_temp_index] < max_min_reference.min_cell_temp)
         {
-            max_min_reference.min_cell_temp = gpio_in;
+            max_min_reference.min_cell_temp = bms_data.cell_temperatures[cell_temp_index];
             bms_data.min_cell_temperature_cell_id = cell_temp_index;
         }
     }
@@ -407,9 +390,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         constexpr float mcp_9701_temperature_coefficient = 0.0195f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
         bms_data.board_temperatures[chip_index] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient; // 2 per board = 1 per chip
-        if (gpio_in > max_min_reference.max_board_temp)
+        if (bms_data.board_temperatures[chip_index] > max_min_reference.max_board_temp)
         {
-            max_min_reference.max_board_temp = gpio_in;
+            max_min_reference.max_board_temp = bms_data.board_temperatures[chip_index];
 
             bms_data.max_board_temperature_segment_id = chip_index; // Because each segment only has 1 humidity and 1 board temp sensor
         }
