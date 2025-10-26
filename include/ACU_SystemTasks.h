@@ -14,7 +14,7 @@
 #include "EMInterface.h"
 #include "BMSDriverGroup.h"
 #include "ADCInterface.h"
-
+#include "SystemTimeInterface.h"
 #include <ht_task.hpp>
 
 using chip_type = LTC6811_Type_e;

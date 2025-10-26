@@ -1,6 +1,7 @@
 /* ACU Dependent */
 #include "ACU_Constants.h"
 #include "ACU_Globals.h"
+#include "SystemTimeInterface.h"
 #include "ACU_InterfaceTasks.h"
 #include "ACU_SystemTasks.h"
 
@@ -123,7 +124,7 @@ void setup()
 void loop()
 {
 
-    WatchdogInstance::instance().update_watchdog_state(millis()); // verified 
+    WatchdogInstance::instance().update_watchdog_state(sys_time::hal_millis()); // verified 
 
     if (timer > sample_period_ms) // Need an actual schedular
     {   

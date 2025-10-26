@@ -11,18 +11,18 @@ bool initialize_all_systems()
                                                                 ACUSystems::VOLTAGE_DIFF_TO_INIT_CB,
                                                                 ACUSystems::BALANCE_TEMP_LIMIT_C,
                                                                 ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C});
-    ACUControllerInstance_t::instance().init(millis(), BMSDriverInstance_t::instance().get_bms_data().total_voltage);
+    ACUControllerInstance_t::instance().init(sys_time::hal_millis(), BMSDriverInstance_t::instance().get_bms_data().total_voltage);
     /* State Machine Initialization */
 
     /* Delegate Function Definitions */
     etl::delegate<bool()> charge_state_request = etl::delegate<bool()>::create([]() -> bool
-                                                                            { return CCUInterfaceInstance::instance().get_latest_data(millis()).charging_requested; });
+                                                                            { return CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested; });
 
     etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool
                                                                         { return !ACUControllerInstance_t::instance().get_status().bms_ok; });
 
     etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
-                                                                        { return !ADCInterfaceInstance::instance().read_imd_ok(millis()); });
+                                                                        { return !ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()); });
 
     etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<ADCInterface, &ADCInterface::read_shdn_out>(ADCInterfaceInstance::instance());
 
@@ -49,7 +49,7 @@ bool initialize_all_systems()
                                     reinitialize_watchdog,
                                     reset_latch,
                                     disable_n_latch_en,
-                                    millis());
+                                    sys_time::hal_millis());
 
     return true;
 }
@@ -57,16 +57,16 @@ bool initialize_all_systems()
 HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUControllerInstance_t::instance().evaluate_accumulator(
-        millis(), 
+        sys_time::hal_millis(), 
         BMSDriverInstance_t::instance().get_bms_core_data(), 
-        EMInterfaceInstance::instance().get_latest_data(millis()).em_current
+        EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_current
     );
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUStateMachineInstance::instance().tick_state_machine(millis());
+    ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
     return HT_TASK::TaskResponse::YIELD;
 }

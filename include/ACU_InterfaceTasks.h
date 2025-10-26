@@ -14,6 +14,7 @@
 #include "ACUCANInterfaceImpl.h"
 #include "ADCInterface.h"
 #include "FaultLatchManager.h"
+#include "SystemTimeInterface.h"
 /* For Debugging */
 #include "ACUStateMachine.h"
 
