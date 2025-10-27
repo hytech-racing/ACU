@@ -28,6 +28,8 @@ const uint32_t spi_baudrate = 115200;
 const uint8_t num_cells_per_board = 21;
 
 // Initialize chip_select, chip_select_per_chip, and address
+const constexpr int num_cells_per_chip = 21;
+const constexpr int num_groups = 6;
 const constexpr int num_chips = 12; 
 const constexpr int num_chip_selects = 1;
 const std::array<int, num_chip_selects> cs = {10};
@@ -47,7 +49,7 @@ struct ReadGroupStats {
     uint32_t max_duration_us = 0;
 };
 
-std::array<ReadGroupStats, 6> group_stats;
+std::array<ReadGroupStats, num_groups> group_stats;
 uint32_t cycle_count = 0;
 bool cycle_complete = false;
 
@@ -127,12 +129,12 @@ void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGrou
     
     Serial.println();
 
-    for(int i=0; i< 21 * num_chips / 2; i++) 
+    for(int i=0; i< num_cells_per_chip * num_chips / 2; i++) 
     {
-        if(i%21==0){
+        if(i%num_cells_per_chip==0){
             Serial.println();
             Serial.print("Chip ");
-            Serial.println(i/21);
+            Serial.println(i/num_cells_per_chip);
         }
         Serial.print(data.voltages[i]);
         Serial.print("\t");
@@ -264,8 +266,8 @@ void print_performance_stats() {
         "AUX_B (GPIO 3-4)"
     };
 
-    for (size_t i = 0; i < 6; i++) {
-        Serial.print(group_names[i]);
+    for (size_t i = 0; i < num_groups; i++) {
+        Serial.print(group_names[i]); //NOLINK
         Serial.println(":");
         Serial.print("  Reads: ");
         Serial.print(group_stats[i].read_count);
@@ -280,7 +282,7 @@ void print_performance_stats() {
             Serial.print(group_stats[i].max_duration_us);
             Serial.println("us");
 
-            if (group_stats[i].max_duration_us > 3000) {
+            if (group_stats[i].max_duration_us > 3000) { //NOLINT
                 Serial.println("  *** WARNING: Max duration exceeds 3ms budget! ***");
             }
         } else {
@@ -292,7 +294,7 @@ void print_performance_stats() {
     Serial.print("Total Cycles Completed: ");
     Serial.println(cycle_count);
     Serial.print("Expected Frequency per Cell: ");
-    Serial.print(300.0 / 6.0, 1);
+    Serial.print(300.0 / num_groups, 1); //NOLINT
     Serial.println(" Hz");
     Serial.println("========================================");
     Serial.println();
@@ -358,7 +360,7 @@ void loop()
         print_voltages(bms_data, read_duration_us, group_before_read);
 
         // Print performance stats every 10 complete cycles
-        if (cycle_complete && (cycle_count % 10 == 0)) {
+        if (cycle_complete && (cycle_count % 10 == 0)) { //NOLINT
             print_performance_stats();
         }
 
