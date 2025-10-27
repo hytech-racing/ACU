@@ -633,7 +633,7 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_valid_pac
 /* -------------------- OBSERVABILITY FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-const char* BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_current_read_group_name() const noexcept
+const char* BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_current_read_group_name()
 {
     switch (_current_read_group) {
         case CurrentReadGroup_e::CV_GROUP_A:
@@ -654,7 +654,7 @@ const char* BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_current_
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::last_read_all_valid() const noexcept
+bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::last_read_all_valid()
 {
     // Check validity for the specific group that was just read (current state before advancing)
     for (size_t chip = 0; chip < num_chips; chip++) {
@@ -688,7 +688,7 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::last_read_all_valid
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-size_t BMSDriverGroup<num_chips, num_chip_selects, chip_type>::count_invalid_packets() const noexcept
+size_t BMSDriverGroup<num_chips, num_chip_selects, chip_type>::count_invalid_packets()
 {
     size_t invalid_count = 0;
 

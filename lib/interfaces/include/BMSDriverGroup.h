@@ -190,7 +190,7 @@ enum CurrentReadGroup_e
  * @param current The current read group state
  * @return The next read group, wrapping from CURRENT_GROUP_AUX_B back to CURRENT_GROUP_A
  */
-[[nodiscard]] constexpr CurrentReadGroup_e advance_read_group(CurrentReadGroup_e current) noexcept
+ constexpr CurrentReadGroup_e advance_read_group(CurrentReadGroup_e current)
 {
     return static_cast<CurrentReadGroup_e>(
         (static_cast<int>(current) + 1) % static_cast<int>(CurrentReadGroup_e::NUM_GROUPS)
@@ -250,7 +250,7 @@ public:
      * @return Current read group (CURRENT_GROUP_A through CURRENT_GROUP_AUX_B)
      * @note Useful for verifying state machine advancement and cycle tracking
      */
-    [[nodiscard]] CurrentReadGroup_e get_current_read_group() const noexcept {
+    CurrentReadGroup_e get_current_read_group() {
         return _current_read_group;
     }
 
@@ -259,7 +259,7 @@ public:
      * @return true if next call reads GROUP_A (starts new ADC conversion cycle)
      * @note Useful for detecting cycle boundaries and synchronization points
      */
-    [[nodiscard]] bool is_cycle_start() const noexcept {
+    bool is_cycle_start() {
         return _current_read_group == CurrentReadGroup_e::CV_GROUP_A;
     }
 
@@ -268,7 +268,7 @@ public:
      * @return String name (e.g., "GROUP_A", "AUX_B")
      * @note Useful for logging and debugging
      */
-    [[nodiscard]] const char* get_current_read_group_name() const noexcept;
+    const char* get_current_read_group_name();
 
     /**
      * @brief Get validity status for all chips from last read
@@ -276,7 +276,7 @@ public:
      * @note Each chip has 6 validity flags (cells 1-3, 4-6, 7-9, 10-12, GPIO 1-3, 4-6)
      * @note Useful for fault detection and EMI resilience monitoring
      */
-    [[nodiscard]] const std::array<ValidPacketData_s, num_chips>& get_validity_data() const noexcept {
+    const std::array<ValidPacketData_s, num_chips>& get_validity_data() {
         return _bms_data.valid_read_packets;
     }
 
@@ -285,14 +285,14 @@ public:
      * @return true if all chips returned valid PEC for the last group read
      * @note Useful for quick fault checks without iterating through all chips
      */
-    [[nodiscard]] bool last_read_all_valid() const noexcept;
+    bool last_read_all_valid();
 
     /**
      * @brief Count total invalid packets across all chips from last read
      * @return Number of chips that had invalid PEC in last group read (0 to num_chips)
      * @note Only counts invalidity for the specific group that was just read
      */
-    [[nodiscard]] size_t count_invalid_packets() const noexcept;
+    size_t count_invalid_packets();
 
     /**
      * @brief Get current cell discharge enable statuses
@@ -300,7 +300,7 @@ public:
      * @note Each bit represents one cell's balance enable status
      * @note Useful for verifying write_configuration() worked correctly
      */
-    [[nodiscard]] const std::array<uint16_t, num_chips>& get_cell_discharge_enable() const noexcept {
+    const std::array<uint16_t, num_chips>& get_cell_discharge_enable() {
         return _cell_discharge_en;
     }
 
@@ -309,7 +309,7 @@ public:
      * @return Const reference to driver config struct
      * @note Useful for verifying hardware settings match expectations
      */
-    [[nodiscard]] static constexpr const BMSDriverGroupConfig_s& get_config() noexcept {
+    static constexpr const BMSDriverGroupConfig_s& get_config() {
         return _config;
     }
 
