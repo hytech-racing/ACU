@@ -331,13 +331,13 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData& bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
                                                                             uint8_t chip_index, uint8_t start_gpio_index)
 {
-    for (int gpio_Index = start_gpio_index; gpio_Index < start_gpio_index + 3 && gpio_Index < 5; gpio_Index++) // There are only five Auxillary ports
+    for (int gpio_index = start_gpio_index; gpio_index < start_gpio_index + 3 && gpio_index < 5; gpio_index++) // There are only five Auxillary ports
     {
         std::array<uint8_t, 2> data_in_gpio_voltage;
-        std::copy_n(data_in_gpio_group.begin() + (gpio_Index - start_gpio_index) * 2, 2, data_in_gpio_voltage.begin());
+        std::copy_n(data_in_gpio_group.begin() + (gpio_index - start_gpio_index) * 2, 2, data_in_gpio_voltage.begin());
         
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
-        _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_Index, chip_index);
+        _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_index, chip_index);
     }
 }
 
@@ -361,13 +361,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_Index, uint8_t chip_index)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_index, uint8_t chip_index)
 {
     // there is 8 cell temperatures per chip, and 2 board temperatures per board, so 4+1 per chip
-    if (gpio_Index < 4) // These are all thermistors [0,1,2,3].
+    if (gpio_index < 4) // These are all thermistors [0,1,2,3].
     {
         // Calculate the cell temperature index: 4 thermistors per chip
-        uint8_t cell_temp_index = chip_index * 4 + gpio_Index;
+        uint8_t cell_temp_index = chip_index * 4 + gpio_index;
 
         max_min_reference.total_thermistor_temps -= bms_data.cell_temperatures[cell_temp_index];
         float thermistor_resistance = (2740 / (gpio_in / 50000.0)) - 2740;
@@ -389,7 +389,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
     {
         constexpr float mcp_9701_temperature_coefficient = 0.0195f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
-        bms_data.board_temperatures[chip_index] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient; // 2 per board = 1 per chip
+        bms_data.board_temperatures[chip_index] = ((gpio_in / 10000.0f) - mcp_9701_output_v_at_0c) / mcp_9701_temperature_coefficient; // 2 per board = 1 per chip, calculation for bord temps
         if (bms_data.board_temperatures[chip_index] > max_min_reference.max_board_temp)
         {
             max_min_reference.max_board_temp = bms_data.board_temperatures[chip_index];
@@ -459,7 +459,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         size_t j = 0;
-        for (size_t i = num_chips; i-- > 0;)              // This needs to be flipped because when writing a command, primary device holds the last bytes
+        for (int i = num_chips - 1; i >= 0; i--)              // This needs to be flipped because when writing a command, primary device holds the last bytes
         {                                                     // Find chips with the same CS
             if (_chip_select_per_chip[i] == _chip_select[cs]) // This could be an optimization:  && j < (num_chips + 1) / 2)
             {
@@ -628,26 +628,6 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_valid_pac
     std::array<uint8_t, 2> calculated_pec = _calculate_specific_PEC(sample_packet.data(), 6);
 
     return calculated_pec[0] == sample_pec[0] && calculated_pec[1] == sample_pec[1];
-}
-
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_all_valid(size_t chip_index)
-{
-    ValidPacketData_s data = _bms_data.valid_read_packets[chip_index];
-    return data.valid_read_cells_1_to_3 && data.valid_read_cells_4_to_6 && data.valid_read_cells_7_to_9 && data.valid_read_cells_10_to_12 && data.valid_read_gpios_1_to_3 && data.valid_read_gpios_4_to_6;
-}
-
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_specific_packet_group_is_invalid(size_t index, bool group_A_invalid, bool group_B_invalid, bool group_C_invalid, bool group_D_invalid) {
-    if (index < 3) {
-        return group_A_invalid;
-    } else if (index < 6) {
-        return group_B_invalid;
-    } else if (index < 9) {
-        return group_C_invalid;
-    } else { // index < 12
-        return group_D_invalid;
-    }
 }
 
 /* -------------------- OBSERVABILITY FUNCTIONS -------------------- */

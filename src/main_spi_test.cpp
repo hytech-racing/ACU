@@ -267,7 +267,7 @@ void print_performance_stats() {
     };
 
     for (size_t i = 0; i < num_groups; i++) {
-        Serial.print(group_names[i]); //NOLINK
+        Serial.print(group_names[i]); //NOLINT
         Serial.println(":");
         Serial.print("  Reads: ");
         Serial.print(group_stats[i].read_count);

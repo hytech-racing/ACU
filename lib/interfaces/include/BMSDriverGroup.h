@@ -91,7 +91,6 @@ struct BMSData
     size_t min_cell_voltage_id;              // 0 - 125
     size_t max_cell_voltage_id;              // 0 - 125
     size_t max_board_temperature_segment_id; // 0 - 11
-    // size_t max_humidity_segment_id;          // DNP
     size_t max_cell_temperature_cell_id;     // 0 - 47
     size_t min_cell_temperature_cell_id;     // 0 - 47
     volt total_voltage;
@@ -102,8 +101,8 @@ struct ReferenceMaxMin
 {
     volt total_voltage = 0;
     volt max_cell_voltage = 0;
-    volt min_cell_voltage = 65535;
-    celsius min_cell_temp = 65535;
+    volt min_cell_voltage = 10;
+    celsius min_cell_temp = 80;
     celsius max_cell_temp = 0;
     celsius max_board_temp = 0;
     celsius total_thermistor_temps = 0;
@@ -317,8 +316,6 @@ public:
 private:
 
     CurrentReadGroup_e _current_read_group = CurrentReadGroup_e::CV_GROUP_A;
-    // std::array<std::array<uint8_t, 24 * (num_chips / num_chip_selects)>, num_chip_selects> cell_voltages_1_12_buffer;
-    // std::array<std::array<uint8_t, 10 * (num_chips / num_chip_selects)>, num_chips> auxillary_1_5_buffer;
 
     /**
      * PEC:
@@ -366,9 +363,9 @@ private:
      */
     BMSDriverData _read_data_through_address();
 
-    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_Index, uint8_t chip_index);
+    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_index, uint8_t chip_index);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, volt voltage_in, uint8_t cell_Index);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, volt voltage_in, uint8_t cell_index);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
@@ -404,16 +401,6 @@ private:
      * @return bool of whether the PEC correctly reflects the buffer being given. If no, then we know that EMI (likely) is causing invalid reads
      */
     bool _check_if_valid_packet(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator);
-
-    /**
-     * @return bool of whether valid read packets are all 1
-     */
-    bool _check_if_all_valid(size_t chip_index);
-
-    /**
-     * @return bool whether the specific packet group (ex: cell voltages group B) should be updated, specifically if it's invalid
-     */
-    bool _check_specific_packet_group_is_invalid(size_t index, bool group_A_invalid, bool group_B_invalid, bool group_C_invalid, bool group_D_invalid);
 
     /**
      * Generates a Packet Error Code
