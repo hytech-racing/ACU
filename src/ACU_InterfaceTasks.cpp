@@ -26,7 +26,6 @@ void initialize_all_interfaces()
     ACUAllDataInstance::instance().fw_version_info.fw_version_hash = convert_version_to_char_arr(device_status_t::firmware_version);
     ACUAllDataInstance::instance().fw_version_info.project_on_main_or_master = device_status_t::project_on_main_or_master;
     ACUAllDataInstance::instance().fw_version_info.project_is_dirty = device_status_t::project_is_dirty;
-
     /* BMS Driver */
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
     BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>::instance().init();

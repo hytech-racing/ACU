@@ -10,7 +10,7 @@
 #include "WatchdogInterface.h"
 #include "SystemTimeInterface.h"
 #include "ACUCANInterfaceImpl.h"
-
+#include "CurrentSensorInterface.h"
 /* System Includes */
 #include "ACUController.h"
 #include "ACUStateMachine.h"
@@ -18,6 +18,7 @@
 /* Schedular Dependencies */
 #include "ht_sched.hpp"
 #include "ht_task.hpp"
+
 
 
 /* Scheduler setup */
@@ -41,7 +42,23 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
 FlexCAN_Type<CAN3> ACUCANInterfaceImpl::CCU_CAN;
 FlexCAN_Type<CAN2> ACUCANInterfaceImpl::EM_CAN;
+// void setup(){
+//     SPI.begin();
+//     SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
+//     Serial.begin(ACUConstants::SERIAL_BAUDRATE);
+//     analogReadResolution(ACUConstants::ANALOG_READ_RESOLUTION);
 
+//     CurrentSensorInstance::create();
+//     CurrentSensorInstance::instance().init(CurrentSensorConfig{});
+
+
+// }
+// void loop(){
+//     float current = CurrentSensorInstance::instance().read_current();
+//     Serial.print("Current Reading: ");
+//     Serial.print(current);
+//     Serial.println(" ");
+// }
 void setup()
 {
     /* Interface and System initialization */
