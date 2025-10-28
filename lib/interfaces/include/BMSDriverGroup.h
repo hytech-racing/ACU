@@ -2,10 +2,10 @@
 #define BMSDriverGroup_H
 
 #include "LTCSPIInterface.h"
+
 #include <Arduino.h>
 #include <SPI.h>
 #include <stdio.h>
-#include "LTCSPIInterface.h"
 #include <cstdint>
 #include "etl/optional.h"
 #include <numeric>
