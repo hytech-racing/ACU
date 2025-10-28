@@ -1,6 +1,5 @@
 /* Interface Includes */
 #include "LTCSPIInterface.h"
-#include "Configuration.h"
 #include <Arduino.h>
 
 template <size_t data_size>

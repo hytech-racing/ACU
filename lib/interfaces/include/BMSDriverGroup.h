@@ -241,7 +241,7 @@ public:
     /**
      * Alternative header for configuration function call
      */
-    void write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses);
+    void write_configuration(const std::array<bool, num_cells> &cell_balance_statuses);
 
     /* -------------------- OBSERVABILITY FUNCTIONS -------------------- */
 

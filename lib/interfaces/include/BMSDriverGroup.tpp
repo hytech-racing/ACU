@@ -402,7 +402,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
 /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration(uint8_t dcto_mode, const std::array<bool, num_cells> &cell_balance_statuses)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration(const std::array<bool, num_cells> &cell_balance_statuses)
 {
     std::array<uint16_t, num_chips> cb;
     size_t global_cell_index = 0;
@@ -421,7 +421,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration
         cb[chip] = chip_cb;
     }
 
-    write_configuration(dcto_mode, cb);
+    write_configuration(_config.dcto_write, cb);
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
