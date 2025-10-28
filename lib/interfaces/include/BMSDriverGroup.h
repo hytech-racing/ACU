@@ -124,8 +124,8 @@ struct BMSDriverGroupConfig_s
     const uint16_t over_voltage_threshold = 2625;  // 4.2V  // Maximum voltage value following datasheet formula: Comparison Voltage = VOV • 16 • 100μV
     const uint16_t gpio_enable = 0x1F;
     const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
-    const float cv_adc_conversion_time_us = 13;
-    const float gpio_adc_conversion_time_us = 3.1;
+    const float cv_adc_conversion_time_ms = 1.2;
+    const float gpio_adc_conversion_time_ms = 1.2;
     const float cv_adc_lsb_voltage = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
 };
 
@@ -190,7 +190,7 @@ enum CurrentReadGroup_e
  * @param current The current read group state
  * @return The next read group, wrapping from CURRENT_GROUP_AUX_B back to CURRENT_GROUP_A
  */
- constexpr CurrentReadGroup_e advance_read_group(CurrentReadGroup_e current)
+constexpr CurrentReadGroup_e advance_read_group(CurrentReadGroup_e current)
 {
     return static_cast<CurrentReadGroup_e>(
         (static_cast<int>(current) + 1) % static_cast<int>(CurrentReadGroup_e::NUM_GROUPS)
