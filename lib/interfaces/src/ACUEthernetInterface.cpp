@@ -57,10 +57,10 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
 
     out.cell_voltages_count = _num_cells;
     std::copy(shared_state.cell_voltages.data(), shared_state.cell_voltages.data() + _num_cells, out.cell_voltages);
-    
+
     out.cell_temperatures_count = _num_celltemps;
     std::copy(shared_state.cell_temps.data(), shared_state.cell_temps.data() + _num_celltemps, out.cell_temperatures);
-    
+
     out.invalid_packet_chip_counts_count = _num_chips;
     std::copy(shared_state.consecutive_invalid_packet_counts.data(), shared_state.consecutive_invalid_packet_counts.data() + _num_chips, out.invalid_packet_chip_counts);
 

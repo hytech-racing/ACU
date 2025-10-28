@@ -3,7 +3,6 @@
 
 /* Interface Includes */
 #include <SPI.h>
-#include "Configuration.h"
 #include <stddef.h>
 #include <array>
 
