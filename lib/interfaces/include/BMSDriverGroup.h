@@ -66,6 +66,27 @@ enum class ADC_MODE_e : uint8_t
     FILTERED = 0x3
 };
 
+namespace bms_driver_defaults
+{
+    constexpr const bool DEVICE_REFUP_MODE = true;
+    constexpr const bool ADCOPT = false;
+    constexpr const uint16_t GPIOS_ENABLED = 0x1F; // 5 GPIOs, all used
+    constexpr const bool DCTO_READ = true;
+    constexpr const bool DCTO_WRITE = false;
+    constexpr const int ADC_CONVERSION_CELL_SELECT_MODE = 0;
+    constexpr const int ADC_CONVERSION_GPIO_SELECT_MODE = 0;
+    constexpr const uint8_t DISCHARGE_PERMITTED = 0x0;
+    constexpr const uint8_t ADC_MODE_CV_CONVERSION = 0x1;
+    constexpr const uint8_t ADC_MODE_GPIO_CONVERSION = 0x1;
+    constexpr const uint16_t UNDER_VOLTAGE_THRESHOLD = 1874; // 3.0V (datasheet formula) Comparison Voltage = (VUV + 1) • 16 • 100μV
+    constexpr const uint16_t OVER_VOLTAGE_THRESHOLD = 2625;  // 4.2V (datasheet formula) Comparison Voltage = VOV • 16 • 100μV
+    constexpr const uint16_t GPIO_ENABLE = 0x1F;
+    constexpr const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
+    constexpr const float CV_ADC_CONVERSION_TIME_MS = 1.2f;
+    constexpr const float GPIO_ADC_CONVERSION_TIME_MS = 1.2f;
+    constexpr const float CV_ADC_LSB_VOLTAGE = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
+}
+
 struct ValidPacketData_s
 {
     bool valid_read_cells_1_to_3 = true;
@@ -110,23 +131,23 @@ struct ReferenceMaxMin
 
 struct BMSDriverGroupConfig_s
 {
-    const bool device_refup_mode = true;
-    const bool adcopt = false;
-    const uint16_t gpios_enabled = 0x1F; // There are 5 GPIOs, we are using all 5 so they are all given a 1
-    const bool dcto_read = 0x1;
-    const bool dcto_write = 0x0;
-    const int adc_conversion_cell_select_mode = 0;
-    const int adc_conversion_gpio_select_mode = 0;
-    const uint8_t discharge_permitted = 0x0;
-    const uint8_t adc_mode_cv_conversion = 0x1;
-    const uint8_t adc_mode_gpio_conversion = 0x1;
-    const uint16_t under_voltage_threshold = 1874; // 3.0V  // Minimum voltage value following datasheet formula: Comparison Voltage = (VUV + 1) • 16 • 100μV
-    const uint16_t over_voltage_threshold = 2625;  // 4.2V  // Maximum voltage value following datasheet formula: Comparison Voltage = VOV • 16 • 100μV
-    const uint16_t gpio_enable = 0x1F;
-    const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
-    const float cv_adc_conversion_time_ms = 1.2;
-    const float gpio_adc_conversion_time_ms = 1.2;
-    const float cv_adc_lsb_voltage = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
+    bool device_refup_mode;
+    bool adcopt;
+    uint16_t gpios_enabled;
+    bool dcto_read;
+    bool dcto_write;
+    int adc_conversion_cell_select_mode;
+    int adc_conversion_gpio_select_mode;
+    uint8_t discharge_permitted;
+    uint8_t adc_mode_cv_conversion;
+    uint8_t adc_mode_gpio_conversion;
+    uint16_t under_voltage_threshold;
+    uint16_t over_voltage_threshold;
+    uint16_t gpio_enable;
+    uint16_t CRC15_POLY;
+    float cv_adc_conversion_time_ms;
+    float gpio_adc_conversion_time_ms;
+    float cv_adc_lsb_voltage;
 };
 
 /**
@@ -204,7 +225,30 @@ public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
 
-    BMSDriverGroup(const std::array<int, num_chip_selects>& cs, const std::array<int, num_chips>& cs_per_chip, const std::array<int, num_chips>& addr);
+    BMSDriverGroup(
+        const std::array<int, num_chip_selects>& cs,
+        const std::array<int, num_chips>& cs_per_chip,
+        const std::array<int, num_chips>& addr,
+        BMSDriverGroupConfig_s config = {
+            .device_refup_mode = bms_driver_defaults::DEVICE_REFUP_MODE,
+            .adcopt = bms_driver_defaults::ADCOPT,
+            .gpios_enabled = bms_driver_defaults::GPIOS_ENABLED,
+            .dcto_read = bms_driver_defaults::DCTO_READ,
+            .dcto_write = bms_driver_defaults::DCTO_WRITE,
+            .adc_conversion_cell_select_mode = bms_driver_defaults::ADC_CONVERSION_CELL_SELECT_MODE,
+            .adc_conversion_gpio_select_mode = bms_driver_defaults::ADC_CONVERSION_GPIO_SELECT_MODE,
+            .discharge_permitted = bms_driver_defaults::DISCHARGE_PERMITTED,
+            .adc_mode_cv_conversion = bms_driver_defaults::ADC_MODE_CV_CONVERSION,
+            .adc_mode_gpio_conversion = bms_driver_defaults::ADC_MODE_GPIO_CONVERSION,
+            .under_voltage_threshold = bms_driver_defaults::UNDER_VOLTAGE_THRESHOLD,
+            .over_voltage_threshold = bms_driver_defaults::OVER_VOLTAGE_THRESHOLD,
+            .gpio_enable = bms_driver_defaults::GPIO_ENABLE,
+            .CRC15_POLY = bms_driver_defaults::CRC15_POLY,
+            .cv_adc_conversion_time_ms = bms_driver_defaults::CV_ADC_CONVERSION_TIME_MS,
+            .gpio_adc_conversion_time_ms = bms_driver_defaults::GPIO_ADC_CONVERSION_TIME_MS,
+            .cv_adc_lsb_voltage = bms_driver_defaults::CV_ADC_LSB_VOLTAGE
+        }
+    );
     
 
 public:
@@ -309,7 +353,7 @@ public:
      * @return Const reference to driver config struct
      * @note Useful for verifying hardware settings match expectations
      */
-    static constexpr const BMSDriverGroupConfig_s& get_config() {
+    const BMSDriverGroupConfig_s& get_config() {
         return _config;
     }
 
@@ -480,7 +524,7 @@ private:
      */
     const std::array<int, num_chips> _address; // constant
 
-    static constexpr BMSDriverGroupConfig_s _config = {};
+    const BMSDriverGroupConfig_s _config;
 
     /**
      * Stores the balance statuses for all the chips
