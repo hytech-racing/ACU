@@ -124,7 +124,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    BMSDriver_t::instance().write_configuration(dcto_write, ACUController_t::instance().get_status().cell_balancing_statuses);
+    BMSDriver_t::instance().write_configuration(ACUController_t::instance().get_status().cell_balancing_statuses);
     return HT_TASK::TaskResponse::YIELD;
 }
 
