@@ -31,11 +31,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(const std
                                                                             .cv_adc_lsb_voltage = bms_driver_defaults::CV_ADC_LSB_VOLTAGE
                                                                         
                                                                         }
-                                                                ) : _pec15Table(_initialize_Pec_Table()),
-                                                                    _chip_select(cs),
+                                                                ) : _chip_select(cs),
                                                                     _chip_select_per_chip(cs_per_chip),
                                                                     _address(addr),
-                                                                    _config(default_params) {}
+                                                                    _config(default_params),
+                                                                    _pec15Table(_initialize_Pec_Table()) {}
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()

@@ -492,13 +492,7 @@ private:
      * Reset only at the start of each new cycle (when _current_read_group == CURRENT_GROUP_A).
      */
     ReferenceMaxMin_s _max_min_reference;
-
-    /**
-     * Pointer to the PEC table we will use to calculate new PEC tables
-     */
-    // uint16_t _pec15Table[256];
-    const std::array<uint16_t, 256> _pec15Table;
-
+    
     /**
      * We will need this for both models of the IC
      * This determines where we get our signals from on the Arduino
@@ -506,7 +500,7 @@ private:
      * NOTE: needs to be initialized
      */
     const std::array<int, num_chip_selects> _chip_select;
-
+    
     /**
      * We will need this for both models of the IC
      * This determines where we get our signals from on the Arduino
@@ -514,7 +508,7 @@ private:
      * NOTE: needs to be initialized
      */
     const std::array<int, num_chips> _chip_select_per_chip;
-
+    
     /**
      * We will only end up using the address if this is a LTC6811-2
      * NOTE: But if we are, we need to call a setup function to instatiate each with the correct addresses
@@ -524,13 +518,19 @@ private:
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
      */
     const std::array<int, num_chips> _address; // constant
-
+    
     /**
      * REPLACING SEPARATE CONFIGURATION FILE
      * NOTE: THIS SHOULD BE TREATED AS THE INTERFACE'S DEFAULT PARAMTERS    
-    */
+     */
     const BMSDriverGroupConfig_s _config;
-
+    
+    /**
+     * Pointer to the PEC table we will use to calculate new PEC tables
+     */
+    // uint16_t _pec15Table[256];
+    const std::array<uint16_t, 256> _pec15Table; //must be below _config to be initialized after it
+    
     /**
      * Stores the balance statuses for all the chips
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
