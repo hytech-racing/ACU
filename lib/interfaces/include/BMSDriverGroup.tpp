@@ -10,13 +10,11 @@
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(const std::array<int, num_chip_selects>& cs,
                                                                         const std::array<int, num_chips>& cs_per_chip,
-                                                                        const std::array<int, num_chips>& addr,
-                                                                        BMSDriverGroupConfig_s config
+                                                                        const std::array<int, num_chips>& addr
                                                                 ) : _pec15Table(_initialize_Pec_Table()),
                                                                     _chip_select(cs),
                                                                     _chip_select_per_chip(cs_per_chip),
-                                                                    _address(addr),
-                                                                    _config(config) {}
+                                                                    _address(addr) {}
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()

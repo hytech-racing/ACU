@@ -237,26 +237,7 @@ public:
     BMSDriverGroup(
         const std::array<int, num_chip_selects>& cs,
         const std::array<int, num_chips>& cs_per_chip,
-        const std::array<int, num_chips>& addr,
-        BMSDriverGroupConfig_s config = {
-            .device_refup_mode = bms_driver_defaults::DEVICE_REFUP_MODE,
-            .adcopt = bms_driver_defaults::ADCOPT,
-            .gpios_enabled = bms_driver_defaults::GPIOS_ENABLED,
-            .dcto_read = bms_driver_defaults::DCTO_READ,
-            .dcto_write = bms_driver_defaults::DCTO_WRITE,
-            .adc_conversion_cell_select_mode = bms_driver_defaults::ADC_CONVERSION_CELL_SELECT_MODE,
-            .adc_conversion_gpio_select_mode = bms_driver_defaults::ADC_CONVERSION_GPIO_SELECT_MODE,
-            .discharge_permitted = bms_driver_defaults::DISCHARGE_PERMITTED,
-            .adc_mode_cv_conversion = bms_driver_defaults::ADC_MODE_CV_CONVERSION,
-            .adc_mode_gpio_conversion = bms_driver_defaults::ADC_MODE_GPIO_CONVERSION,
-            .under_voltage_threshold = bms_driver_defaults::UNDER_VOLTAGE_THRESHOLD,
-            .over_voltage_threshold = bms_driver_defaults::OVER_VOLTAGE_THRESHOLD,
-            .gpio_enable = bms_driver_defaults::GPIO_ENABLE,
-            .CRC15_POLY = bms_driver_defaults::CRC15_POLY,
-            .cv_adc_conversion_time_ms = bms_driver_defaults::CV_ADC_CONVERSION_TIME_MS,
-            .gpio_adc_conversion_time_ms = bms_driver_defaults::GPIO_ADC_CONVERSION_TIME_MS,
-            .cv_adc_lsb_voltage = bms_driver_defaults::CV_ADC_LSB_VOLTAGE
-        }
+        const std::array<int, num_chips>& addr
     );
     
 
@@ -543,7 +524,25 @@ private:
      */
     const std::array<int, num_chips> _address; // constant
 
-    const BMSDriverGroupConfig_s _config;
+    static const BMSDriverGroupConfig_s _config = {
+            .device_refup_mode = bms_driver_defaults::DEVICE_REFUP_MODE,
+            .adcopt = bms_driver_defaults::ADCOPT,
+            .gpios_enabled = bms_driver_defaults::GPIOS_ENABLED,
+            .dcto_read = bms_driver_defaults::DCTO_READ,
+            .dcto_write = bms_driver_defaults::DCTO_WRITE,
+            .adc_conversion_cell_select_mode = bms_driver_defaults::ADC_CONVERSION_CELL_SELECT_MODE,
+            .adc_conversion_gpio_select_mode = bms_driver_defaults::ADC_CONVERSION_GPIO_SELECT_MODE,
+            .discharge_permitted = bms_driver_defaults::DISCHARGE_PERMITTED,
+            .adc_mode_cv_conversion = bms_driver_defaults::ADC_MODE_CV_CONVERSION,
+            .adc_mode_gpio_conversion = bms_driver_defaults::ADC_MODE_GPIO_CONVERSION,
+            .under_voltage_threshold = bms_driver_defaults::UNDER_VOLTAGE_THRESHOLD,
+            .over_voltage_threshold = bms_driver_defaults::OVER_VOLTAGE_THRESHOLD,
+            .gpio_enable = bms_driver_defaults::GPIO_ENABLE,
+            .CRC15_POLY = bms_driver_defaults::CRC15_POLY,
+            .cv_adc_conversion_time_ms = bms_driver_defaults::CV_ADC_CONVERSION_TIME_MS,
+            .gpio_adc_conversion_time_ms = bms_driver_defaults::GPIO_ADC_CONVERSION_TIME_MS,
+            .cv_adc_lsb_voltage = bms_driver_defaults::CV_ADC_LSB_VOLTAGE
+    };
 
     /**
      * Stores the balance statuses for all the chips
