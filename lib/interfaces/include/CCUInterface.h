@@ -16,7 +16,11 @@
 constexpr const size_t NUM_CELLS = 126;
 constexpr const size_t NUM_CELLTEMPS = 48;
 constexpr const size_t NUM_CHIPS = 12;
-
+enum ChargingCommand_e
+{
+    CHARGE = 2,
+    DISCHARGE = 1
+};
 struct CCUCANInterfaceData_s
 {
     unsigned long last_time_charging_requested;

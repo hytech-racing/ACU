@@ -16,9 +16,9 @@ void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned
 void CCUInterface::handle_enqueue_acu_status_CAN_message() {
     BMS_STATUS_t msg = {};
     if (_curr_data.charging_requested) {
-        msg.state = 2; // charging
+        msg.state = ChargingCommand_e::CHARGE;
     } else {
-        msg.state = 1; // discharging
+        msg.state = ChargingCommand_e::DISCHARGE;
     }
 
     CAN_util::enqueue_msg(&msg, &Pack_BMS_STATUS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
