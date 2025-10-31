@@ -116,9 +116,11 @@ struct BMSData_s
     size_t min_cell_temperature_cell_id;     // 0 - 47
     volt total_voltage;
     volt avg_cell_voltage;
+    volt avg_cell_voltage;
     celsius average_cell_temperature;
 };
 
+struct ReferenceMaxMin_s
 struct ReferenceMaxMin_s
 {
     volt total_voltage = 0;
@@ -225,6 +227,13 @@ class BMSDriverGroup
 public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
 
+    constexpr static size_t num_cell_temps = (num_chips * 4);
+    constexpr static size_t num_board_temps = num_chips;
+
+    using BMSCoreData_t = BMSCoreData_s<num_cells, num_cell_temps, num_board_temps>;
+    using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
+
+    //NEEDS TO BE CHECKED
     constexpr static size_t num_cell_temps = (num_chips * 4);
     constexpr static size_t num_board_temps = num_chips;
 
@@ -431,8 +440,10 @@ private:
     void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
 
     void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
                                       uint8_t chip_index, uint8_t start_cell_index);
 
+    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
     void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
                                     uint8_t chip_index, uint8_t start_gpio_index);
 

@@ -22,6 +22,10 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
 {   
     // _acu_state.charging_enabled = input_state.charging_enabled;
     
+ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current)
+{   
+    // _acu_state.charging_enabled = input_state.charging_enabled;
+    
     bool has_invalid_packet = false;
     if (input_state.max_consecutive_invalid_packet_count != 0)
     { // meaning that at least one of the packets is invalid
