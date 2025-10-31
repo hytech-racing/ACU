@@ -118,6 +118,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 {
     auto data = BMSDriver_t::instance().read_data();
     BMSFaultDataManager_t::instance().update_from_valid_packets(data.valid_read_packets);
+
     /* Store into ACUCoreDataInstance */
     return HT_TASK::TaskResponse::YIELD;
 }
