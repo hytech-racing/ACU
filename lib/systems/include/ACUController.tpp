@@ -15,8 +15,13 @@ void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms syste
 }
 
 
+
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 typename ACUController<num_cells, num_celltemps, num_boardtemps>::ACUStatus
+ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current)
+{   
+    // _acu_state.charging_enabled = input_state.charging_enabled;
+    
 ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current)
 {   
     // _acu_state.charging_enabled = input_state.charging_enabled;

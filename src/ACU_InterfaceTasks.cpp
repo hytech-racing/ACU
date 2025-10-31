@@ -78,6 +78,7 @@ void initialize_all_interfaces()
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
         
+        
     /* CCU Interface */
     CCUInterfaceInstance::create(sys_time::hal_millis());
 
