@@ -97,8 +97,10 @@ struct ValidPacketData_s
     bool valid_read_gpios_4_to_6 = true;
 };
 
+
+
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
-struct BMSData
+struct BMSData_s
 {
     std::array<ValidPacketData_s, num_chips> valid_read_packets;
     std::array<volt, num_cells> voltages;
@@ -115,10 +117,11 @@ struct BMSData
     size_t max_cell_temperature_cell_id;     // 0 - 47
     size_t min_cell_temperature_cell_id;     // 0 - 47
     volt total_voltage;
+    volt avg_cell_voltage;
     celsius average_cell_temperature;
 };
 
-struct ReferenceMaxMin
+struct ReferenceMaxMin_s
 {
     volt total_voltage = 0;
     volt max_cell_voltage = 0;
@@ -223,31 +226,18 @@ class BMSDriverGroup
 {
 public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
-    using BMSDriverData = BMSData<num_chips, num_cells, num_chips>;
+
+    //NEEDS TO BE CHECKED
+    constexpr static size_t num_cell_temps = (num_chips * 4);
+    constexpr static size_t num_board_temps = num_chips;
+
+    using BMSCoreData_t = BMSCoreData_s<num_cells, num_cell_temps, num_board_temps>;
+    using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(
         const std::array<int, num_chip_selects>& cs,
         const std::array<int, num_chips>& cs_per_chip,
-        const std::array<int, num_chips>& addr,
-        BMSDriverGroupConfig_s config = {
-            .device_refup_mode = bms_driver_defaults::DEVICE_REFUP_MODE,
-            .adcopt = bms_driver_defaults::ADCOPT,
-            .gpios_enabled = bms_driver_defaults::GPIOS_ENABLED,
-            .dcto_read = bms_driver_defaults::DCTO_READ,
-            .dcto_write = bms_driver_defaults::DCTO_WRITE,
-            .adc_conversion_cell_select_mode = bms_driver_defaults::ADC_CONVERSION_CELL_SELECT_MODE,
-            .adc_conversion_gpio_select_mode = bms_driver_defaults::ADC_CONVERSION_GPIO_SELECT_MODE,
-            .discharge_permitted = bms_driver_defaults::DISCHARGE_PERMITTED,
-            .adc_mode_cv_conversion = bms_driver_defaults::ADC_MODE_CV_CONVERSION,
-            .adc_mode_gpio_conversion = bms_driver_defaults::ADC_MODE_GPIO_CONVERSION,
-            .under_voltage_threshold = bms_driver_defaults::UNDER_VOLTAGE_THRESHOLD,
-            .over_voltage_threshold = bms_driver_defaults::OVER_VOLTAGE_THRESHOLD,
-            .gpio_enable = bms_driver_defaults::GPIO_ENABLE,
-            .CRC15_POLY = bms_driver_defaults::CRC15_POLY,
-            .cv_adc_conversion_time_ms = bms_driver_defaults::CV_ADC_CONVERSION_TIME_MS,
-            .gpio_adc_conversion_time_ms = bms_driver_defaults::GPIO_ADC_CONVERSION_TIME_MS,
-            .cv_adc_lsb_voltage = bms_driver_defaults::CV_ADC_LSB_VOLTAGE
-        }
+        const std::array<int, num_chips>& addr
     );
     
 
@@ -272,6 +262,16 @@ public:
      */
     // void read_thermistor_and_humidity();
     BMSDriverData read_data();
+
+    /**
+     * Getter function to retrieve the ACUData structure
+     */
+    BMSCoreData_t get_bms_core_data();
+
+    /**
+     * Getter function to retrieve the BMSDriverData structure
+     */
+    BMSDriverData get_bms_data();
 
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
@@ -407,9 +407,9 @@ private:
      */
     BMSDriverData _read_data_through_address();
 
-    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_index, uint8_t chip_index);
+    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_index, uint8_t chip_index);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, volt voltage_in, uint8_t cell_index);
+    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, volt voltage_in, uint8_t cell_index);
 
     void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
 
@@ -432,10 +432,10 @@ private:
 
     void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
 
-    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
                                       uint8_t chip_index, uint8_t start_cell_index);
 
-    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
+    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
                                     uint8_t chip_index, uint8_t start_gpio_index);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
@@ -490,7 +490,7 @@ private:
      * Tracks min/max/sum values across all 6 read groups within a single timestamp cycle.
      * Reset only at the start of each new cycle (when _current_read_group == CURRENT_GROUP_A).
      */
-    ReferenceMaxMin _max_min_reference;
+    ReferenceMaxMin_s _max_min_reference;
 
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
@@ -524,7 +524,25 @@ private:
      */
     const std::array<int, num_chips> _address; // constant
 
-    const BMSDriverGroupConfig_s _config;
+    static const BMSDriverGroupConfig_s _config = {
+            .device_refup_mode = bms_driver_defaults::DEVICE_REFUP_MODE,
+            .adcopt = bms_driver_defaults::ADCOPT,
+            .gpios_enabled = bms_driver_defaults::GPIOS_ENABLED,
+            .dcto_read = bms_driver_defaults::DCTO_READ,
+            .dcto_write = bms_driver_defaults::DCTO_WRITE,
+            .adc_conversion_cell_select_mode = bms_driver_defaults::ADC_CONVERSION_CELL_SELECT_MODE,
+            .adc_conversion_gpio_select_mode = bms_driver_defaults::ADC_CONVERSION_GPIO_SELECT_MODE,
+            .discharge_permitted = bms_driver_defaults::DISCHARGE_PERMITTED,
+            .adc_mode_cv_conversion = bms_driver_defaults::ADC_MODE_CV_CONVERSION,
+            .adc_mode_gpio_conversion = bms_driver_defaults::ADC_MODE_GPIO_CONVERSION,
+            .under_voltage_threshold = bms_driver_defaults::UNDER_VOLTAGE_THRESHOLD,
+            .over_voltage_threshold = bms_driver_defaults::OVER_VOLTAGE_THRESHOLD,
+            .gpio_enable = bms_driver_defaults::GPIO_ENABLE,
+            .CRC15_POLY = bms_driver_defaults::CRC15_POLY,
+            .cv_adc_conversion_time_ms = bms_driver_defaults::CV_ADC_CONVERSION_TIME_MS,
+            .gpio_adc_conversion_time_ms = bms_driver_defaults::GPIO_ADC_CONVERSION_TIME_MS,
+            .cv_adc_lsb_voltage = bms_driver_defaults::CV_ADC_LSB_VOLTAGE
+    };
 
     /**
      * Stores the balance statuses for all the chips
