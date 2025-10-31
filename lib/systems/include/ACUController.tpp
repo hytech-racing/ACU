@@ -138,7 +138,7 @@ bool ACUController<num_cells, num_celltemps, num_boardtemps>::_check_bms_ok(time
    if (_acu_state.has_fault) {
         _acu_state.bms_ok = !_acu_state.has_fault;
         _acu_state.last_bms_not_ok_eval = current_millis;
-    } else if (_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) {
+    } else if (!_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) {
         _acu_state.bms_ok = true;
     }
     return _acu_state.bms_ok;
