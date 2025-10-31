@@ -16,10 +16,13 @@
 constexpr const size_t NUM_CELLS = 126;
 constexpr const size_t NUM_CELLTEMPS = 48;
 constexpr const size_t NUM_CHIPS = 12;
+constexpr const size_t CELLS_PER_GROUP = 3;
+constexpr const size_t GROUPS_PER_IC_EVEN = 4;
+constexpr const size_t GROUPS_PER_IC_ODD = 3;
 enum ChargingCommand_e
 {
-    CHARGE = 2,
-    DISCHARGE = 1
+    CHARGE = 0,
+    IDLE = 1,
 };
 struct CCUCANInterfaceData_s
 {
@@ -27,13 +30,13 @@ struct CCUCANInterfaceData_s
     unsigned long prev_ccu_msg_recv_ms;
     bool charging_requested;
     bool is_connected_to_CCU;
-    size_t detailed_voltages_ic_id;
-    size_t detailed_voltages_group_id;
-    size_t detailed_voltages_cell_id;
-    size_t detailed_temps_ic_id;
-    size_t detailed_temps_group_id;
-    size_t detailed_temps_cell_id;
-    size_t detailed_temps_board_id;
+    size_t current_voltage_group_chip_id;
+    size_t current_voltage_cell_group_id;
+    size_t current_voltage_cell_id;
+    size_t current_temp_group_chip_id;
+    size_t current_temp_group_id;
+    size_t current_temp_cell_id;
+    size_t current_temp_board_id;
 };
 
 class CCUInterface
@@ -47,13 +50,13 @@ public:
         _curr_data.prev_ccu_msg_recv_ms = 0;
         _curr_data.charging_requested = false;
         _curr_data.is_connected_to_CCU = false;
-        _curr_data.detailed_voltages_group_id = 0;
-        _curr_data.detailed_voltages_ic_id = 0;
-        _curr_data.detailed_voltages_cell_id = 0;
-        _curr_data.detailed_temps_group_id = 0;
-        _curr_data.detailed_temps_ic_id = 0;
-        _curr_data.detailed_temps_cell_id = 0;
-        _curr_data.detailed_temps_board_id = 0;
+        _curr_data.current_voltage_cell_group_id = 0;
+        _curr_data.current_voltage_group_chip_id = 0;
+        _curr_data.current_voltage_cell_id = 0;
+        _curr_data.current_temp_group_id = 0;
+        _curr_data.current_temp_group_chip_id = 0;
+        _curr_data.current_temp_cell_id = 0;
+        _curr_data.current_temp_board_id = 0;
     };
 
     bool is_charging_requested() { return _curr_data.charging_requested; }
