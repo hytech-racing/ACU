@@ -280,6 +280,7 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
     _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _max_min_reference.total_voltage;
+    _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_cells;
 
     _bms_data.average_cell_temperature = _max_min_reference.total_thermistor_temps / (4 * num_chips);
 
