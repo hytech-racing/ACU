@@ -89,13 +89,13 @@ namespace bms_driver_defaults
 
 namespace ref_max_min_defaults
 {
-    volt TOTAL_VOLTAGE = 0;
-    volt MAX_CELL_VOLTAGE = 0;
-    volt MIN_CELL_VOLTAGE = 10;
-    celsius MIN_CELL_TEMP = 80;
-    celsius MAX_CELL_TEMP = 0;
-    celsius MAX_BOARD_TEMP = 0;
-    celsius TOTAL_THERMISTOR_TEMPS = 0;
+    constexpr const volt TOTAL_VOLTAGE = 0;
+    constexpr const volt MAX_CELL_VOLTAGE = 0;
+    constexpr const volt MIN_CELL_VOLTAGE = 10;
+    constexpr const celsius MIN_CELL_TEMP = 80;
+    constexpr const celsius MAX_CELL_TEMP = 0;
+    constexpr const celsius MAX_BOARD_TEMP = 0;
+    constexpr const celsius TOTAL_THERMISTOR_TEMPS = 0;
 };
 
 struct ValidPacketData_s
@@ -246,8 +246,7 @@ public:
         const std::array<int, num_chip_selects>& cs,
         const std::array<int, num_chips>& cs_per_chip,
         const std::array<int, num_chips>& addr,
-        const BMSDriverGroupConfig_s default_params,
-        const ReferenceMaxMin_s default_ref_max_min
+        const BMSDriverGroupConfig_s default_params
     );
     
 

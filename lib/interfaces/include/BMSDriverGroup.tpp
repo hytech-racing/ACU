@@ -29,21 +29,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(const std
                                                                             .cv_adc_conversion_time_ms = bms_driver_defaults::CV_ADC_CONVERSION_TIME_MS,
                                                                             .gpio_adc_conversion_time_ms = bms_driver_defaults::GPIO_ADC_CONVERSION_TIME_MS,
                                                                             .cv_adc_lsb_voltage = bms_driver_defaults::CV_ADC_LSB_VOLTAGE
-                                                                        },
-                                                                        const ReferenceMaxMin_s default_ref_max_min = {
-                                                                            .total_voltage = ref_max_min_defaults::TOTAL_VOLTAGE,
-                                                                            .max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE,
-                                                                            .min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE,
-                                                                            .min_cell_temp = ref_max_min_defaults::MIN_CELL_TEMP,
-                                                                            .max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP,
-                                                                            .max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP,
-                                                                            .total_thermistor_temps = ref_max_min_defaults::TOTAL_THERMISTOR_TEMPS
                                                                         }
                                                                 ) : _chip_select(cs),
                                                                     _chip_select_per_chip(cs_per_chip),
                                                                     _address(addr),
                                                                     _config(default_params),
-                                                                    _max_min_reference(default_ref_max_min),
                                                                     _pec15Table(_initialize_Pec_Table()) {}
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -62,6 +52,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
     _bms_data.board_temperatures.fill(0);
     _bms_data.valid_read_packets.fill(ValidPacketData_s{});
     _bms_data.total_voltage = 0;
+    _max_min_reference = {
+                            .total_voltage = ref_max_min_defaults::TOTAL_VOLTAGE,
+                            .max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE,
+                            .min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE,
+                            .min_cell_temp = ref_max_min_defaults::MIN_CELL_TEMP,
+                            .max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP,
+                            .max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP,
+                            .total_thermistor_temps = ref_max_min_defaults::TOTAL_THERMISTOR_TEMPS
+                        };
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
