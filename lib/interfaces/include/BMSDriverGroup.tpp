@@ -59,7 +59,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
                             .min_cell_temp = ref_max_min_defaults::MIN_CELL_TEMP,
                             .max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP,
                             .max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP,
-                            .total_thermistor_temps = ref_max_min_defaults::TOTAL_THERMISTOR_TEMPS
                         };
 }
 
@@ -452,7 +451,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
             bms_data.min_cell_temperature_cell_id = cell_temp_index;
         }
     }
-    else // this is apparently the case for temperature sensor for the BOARD, not the cells. There is 2 per segment
+    else // this is the case for temperature sensor for the BOARD, not the cells. There is 1 per chip
     {
         constexpr float mcp_9701_temperature_coefficient = 0.0195f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
@@ -461,7 +460,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         {
             max_min_reference.max_board_temp = bms_data.board_temperatures[chip_index];
 
-            bms_data.max_board_temperature_segment_id = chip_index; // Because each segment only has 1 humidity and 1 board temp sensor
+            bms_data.max_board_temperature_segment_id = chip_index; // Because each chip has 1 board temp sensor
         }
     }
 }
