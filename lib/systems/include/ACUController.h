@@ -20,7 +20,22 @@ namespace acu_controller_default_parameters
     constexpr const float PACK_MAX_VOLTAGE = 529.2;         // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
     constexpr const float PACK_MIN_VOLTAGE = 378.0;         // from data sheet^ but just assume 126 * 3.0V
     constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
+    constexpr const size_t OCV_SOC_TABLE_SIZE = 20;
+    constexpr const std::array<volt, OCV_SOC_TABLE_SIZE> OCV_POINTS = {
+        3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9
+    };
+    constexpr const std::array<float, OCV_SOC_TABLE_SIZE> SOC_POINTS = {
+        0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9
+    };
 }
+
+template <size_t table_size>
+struct OCVSOCLookupTable_s
+{
+    std::array<volt, table_size> ocv_points;
+    std::array<float, table_size> soc_points;
+};
+
 template <size_t num_cells>
 struct ACUControllerData_s
 {
@@ -65,6 +80,7 @@ struct ACUControllerPackSpecs_s
     float pack_nominal_capacity = 0;
     float pack_max_voltage = 0;
     float pack_min_voltage = 0;
+    OCVSOCLookupTable_s<acu_controller_default_parameters::OCV_SOC_TABLE_SIZE> ocv_soc_lookup_table = {};
 };
 
 struct ACUControllerParameters_s
@@ -100,7 +116,11 @@ public:
                   ACUControllerPackSpecs_s pack_specs = {
                     .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
                     .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
-                    .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE}
+                    .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE,
+                    .ocv_soc_lookup_table = {
+                        .ocv_points = acu_controller_default_parameters::OCV_POINTS,
+                        .soc_points = acu_controller_default_parameters::SOC_POINTS
+                    }}
                 ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
 
     /**
