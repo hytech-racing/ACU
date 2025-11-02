@@ -24,10 +24,11 @@ namespace ccu_interface_defaults{
     constexpr const size_t NUM_CELLS = 126;
     constexpr const size_t NUM_CELLTEMPS = 48;
     constexpr const size_t NUM_CHIPS = 12;
-    constexpr const size_t CELLS_PER_GROUP = 3;
+    constexpr const size_t VOLTAGE_CELLS_PER_GROUP = 3;
     constexpr const size_t VOLTAGE_CELL_GROUPS_PER_IC_EVEN = 4;
     constexpr const size_t VOLTAGE_CELL_GROUPS_PER_IC_ODD = 3;
     constexpr const size_t TEMP_CELL_GROUPS_PER_IC = 2;
+    constexpr const size_t TEMP_CELLS_PER_GROUP = 2;
 };
 struct CCUInterfaceParams_s {
     unsigned long min_charging_enable_threshold;
@@ -37,7 +38,8 @@ struct CCUInterfaceParams_s {
     size_t voltage_cell_groups_per_ic_even;
     size_t voltage_cell_groups_per_ic_odd;
     size_t temp_cell_groups_per_ic;
-    size_t cells_per_group;
+    size_t voltage_cells_per_group;
+    size_t temp_cells_per_group;
 };
 struct CCUCANInterfaceData_s
 {
@@ -68,7 +70,8 @@ public:
                     .voltage_cell_groups_per_ic_even = ccu_interface_defaults::VOLTAGE_CELL_GROUPS_PER_IC_EVEN,
                     .voltage_cell_groups_per_ic_odd = ccu_interface_defaults::VOLTAGE_CELL_GROUPS_PER_IC_ODD,
                     .temp_cell_groups_per_ic = ccu_interface_defaults::TEMP_CELL_GROUPS_PER_IC,
-                    .cells_per_group = ccu_interface_defaults::CELLS_PER_GROUP
+                    .voltage_cells_per_group = ccu_interface_defaults::VOLTAGE_CELLS_PER_GROUP,
+                    .temp_cells_per_group = ccu_interface_defaults::TEMP_CELLS_PER_GROUP
                 }
             ) : _ccu_params{params}
     {

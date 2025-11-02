@@ -47,7 +47,7 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
         voltage_cell_group_cycle_loop_completed = increment_and_loop_id(_curr_data.current_voltage_cell_group_id, _ccu_params.voltage_cell_groups_per_ic_odd);
     }
     if (voltage_cell_group_cycle_loop_completed) increment_and_loop_id(_curr_data.current_voltage_group_chip_id, _ccu_params.num_chips);
-    increment_and_loop_id(_curr_data.current_voltage_cell_id, _ccu_params.num_cells, _ccu_params.cells_per_group);
+    increment_and_loop_id(_curr_data.current_voltage_cell_id, _ccu_params.num_cells, _ccu_params.voltage_cells_per_group);
     CAN_util::enqueue_msg(&msg, &Pack_BMS_CELL_VOLTAGES_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 } 
 
@@ -55,14 +55,13 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     BMS_CHIP_TEMPS_t chip_temps_msg = {};
     chip_temps_msg.chip_id = static_cast<uint8_t>(_curr_data.current_temp_group_chip_id);
     chip_temps_msg.thermistor_group_id = static_cast<uint8_t>(_curr_data.current_temp_group_id);
-    chip_temps_msg.thermistor_group_temp_0_ro = HYTECH_thermistor_group_temp_0_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id]); 
-    chip_temps_msg.thermistor_group_temp_1_ro = HYTECH_thermistor_group_temp_1_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id+1]); 
-    chip_temps_msg.thermistor_group_temp_2_ro = HYTECH_thermistor_group_temp_2_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id+2]); 
+    chip_temps_msg.thermistor_cell_group_temp_0_ro = HYTECH_thermistor_cell_group_temp_0_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id]); 
+    chip_temps_msg.thermistor_cell_group_temp_1_ro = HYTECH_thermistor_cell_group_temp_1_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id+1]); 
     
     bool temp_cell_group_cycle_loop_completed;
     temp_cell_group_cycle_loop_completed = increment_and_loop_id(_curr_data.current_temp_group_id, _ccu_params.temp_cell_groups_per_ic);
     if (temp_cell_group_cycle_loop_completed) increment_and_loop_id(_curr_data.current_temp_group_chip_id, _ccu_params.num_chips);
-    increment_and_loop_id(_curr_data.current_temp_cell_id, _ccu_params.num_celltemps, _ccu_params.cells_per_group);
+    increment_and_loop_id(_curr_data.current_temp_cell_id, _ccu_params.num_celltemps, _ccu_params.temp_cells_per_group);
     CAN_util::enqueue_msg(&chip_temps_msg, &Pack_BMS_CHIP_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
     BMS_ONBOARD_TEMPS_t board_temp_msg = {};
