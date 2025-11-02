@@ -13,20 +13,31 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 
+
+enum ChargingCommand_e
+{
+    CHARGE = 0,
+    IDLE = 1,
+};
 namespace ccu_interface_defaults{
     constexpr const uint16_t MIN_CHARGING_ENABLE_THRESHOLD_MS = 1000;
     constexpr const size_t NUM_CELLS = 126;
     constexpr const size_t NUM_CELLTEMPS = 48;
     constexpr const size_t NUM_CHIPS = 12;
+    constexpr const size_t CELLS_PER_GROUP = 3;
+    constexpr const size_t VOLTAGE_CELL_GROUPS_PER_IC_EVEN = 4;
+    constexpr const size_t VOLTAGE_CELL_GROUPS_PER_IC_ODD = 3;
+    constexpr const size_t TEMP_CELL_GROUPS_PER_IC = 2;
 };
-constexpr const size_t CELLS_PER_GROUP = 3;
-constexpr const size_t VOLTAGE_CELL_GROUPS_PER_IC_EVEN = 4;
-constexpr const size_t VOLTAGE_CELL_GROUPS_PER_IC_ODD = 3;
-constexpr const size_t TEMP_CELL_GROUPS_PER_IC = 2;
-enum ChargingCommand_e
-{
-    CHARGE = 0,
-    IDLE = 1,
+struct CCUInterfaceParams_s {
+    unsigned long min_charging_enable_threshold;
+    size_t num_cells;
+    size_t num_celltemps;
+    size_t num_chips;
+    size_t voltage_cell_groups_per_ic_even;
+    size_t voltage_cell_groups_per_ic_odd;
+    size_t temp_cell_groups_per_ic;
+    size_t cells_per_group;
 };
 struct CCUCANInterfaceData_s
 {
@@ -43,20 +54,6 @@ struct CCUCANInterfaceData_s
     size_t current_temp_board_id;
 };
 
-struct CCUInterfaceParams_s {
-    unsigned long min_charging_enable_threshold;
-    size_t num_cells;
-    size_t num_celltemps;
-    size_t num_chips;
-};
-
-struct CCUInterfaceParams_s {
-    unsigned long min_charging_enable_threshold;
-    size_t num_cells;
-    size_t num_celltemps;
-    size_t num_chips;
-};
-
 class CCUInterface
 {
 public:
@@ -67,7 +64,11 @@ public:
                     .min_charging_enable_threshold = ccu_interface_defaults::MIN_CHARGING_ENABLE_THRESHOLD_MS,
                     .num_cells = ccu_interface_defaults::NUM_CELLS,
                     .num_celltemps = ccu_interface_defaults::NUM_CELLTEMPS,
-                    .num_chips = ccu_interface_defaults::NUM_CHIPS
+                    .num_chips = ccu_interface_defaults::NUM_CHIPS,
+                    .voltage_cell_groups_per_ic_even = ccu_interface_defaults::VOLTAGE_CELL_GROUPS_PER_IC_EVEN,
+                    .voltage_cell_groups_per_ic_odd = ccu_interface_defaults::VOLTAGE_CELL_GROUPS_PER_IC_ODD,
+                    .temp_cell_groups_per_ic = ccu_interface_defaults::TEMP_CELL_GROUPS_PER_IC,
+                    .cells_per_group = ccu_interface_defaults::CELLS_PER_GROUP
                 }
             ) : _ccu_params{params}
     {
