@@ -34,6 +34,8 @@ struct ACUControllerData_s
     time_ms prev_em_time_stamp;
     float SoC;
     bool has_fault;
+    bool bms_ok;
+    uint32_t last_bms_not_ok_eval;
     bool charging_enabled;
     bool balancing_enabled;
     std::array<bool, num_cells> cell_balancing_statuses;
@@ -75,7 +77,7 @@ struct ACUControllerParameters_s
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 class ACUController
 {
-    using ACUData = etl::singleton<ACUData_s<num_cells, num_celltemps, num_boardtemps>>;
+    using ACUData = etl::singleton<BMSCoreData_s<num_cells, num_celltemps, num_boardtemps>>;
     using ACUStatus = ACUControllerData_s<num_cells>;
 
 public:
@@ -95,7 +97,11 @@ public:
                       .max_allowed_voltage_fault_dur = acu_controller_default_parameters::MAX_VOLTAGE_FAULT_DUR,
                       .max_allowed_temp_fault_dur = acu_controller_default_parameters::MAX_TEMP_FAULT_DUR,
                       .max_allowed_invalid_packet_fault_dur = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_DUR},
-                  ACUControllerPackSpecs_s pack_specs = {.pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH, .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE, .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE}) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
+                  ACUControllerPackSpecs_s pack_specs = {
+                    .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
+                    .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
+                    .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE}
+                ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
@@ -107,13 +113,23 @@ public:
      * @post updates configuration bytes and sends configuration command
      * @param pack_current current flowing from the pack in amps (negative during discharge, positive during charge)
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, const ACUData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float pack_current);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current);
 
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
      */
     float get_state_of_charge(float em_current, uint32_t delta_time_ms);
 
+    ACUStatus get_status() const { return _acu_state; };
+
+    void enableCharging()
+    {
+        _acu_state.charging_enabled = true;
+    }
+    void disableCharging()
+    {
+        _acu_state.charging_enabled = false;
+    }
 private:
     /**
      * Calculate Cell Balancing values
@@ -128,6 +144,10 @@ private:
      */
     bool _check_faults(time_ms current_millis);
 
+    /**
+     * @brief Update the BMS status (bms_ok) based on the time since the last fault not present
+     */
+    bool _check_bms_ok(time_ms current_millis);
     /**
      * @pre voltage data has been gathered
      * @return boolean, true if there exists at least 1 voltage fault
@@ -156,6 +176,8 @@ private:
      * state is packaged this way so that we can feed it directly into the message interface as a struct
      */
     ACUStatus _acu_state = {};
+
+    static constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
 
     /**
      * @brief ACU Controller Parameters holder

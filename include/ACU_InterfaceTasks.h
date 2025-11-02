@@ -2,23 +2,29 @@
 #define ACU_INTERFACETASKS
 
 #include "ACU_Constants.h"
-#include "ACU_Globals.h"
 #include "shared_types.h"
 #include "SharedFirmwareTypes.h"
 
 /* Interface Library Includes */
 #include "BMSDriverGroup.h"
+#include "BMSFaultDataManager.h"
 #include "WatchdogInterface.h"
-#include "SystemTimeInterface.h"
+#include "WatchdogMetrics.h"
 #include "ACUEthernetInterface.h"
 #include "ACUCANInterfaceImpl.h"
 #include "ADCInterface.h"
-
+#include "FaultLatchManager.h"
+#include "SystemTimeInterface.h"
 /* For Debugging */
 #include "ACUStateMachine.h"
 
 #include <ht_task.hpp>
 #include <chrono>
+
+using chip_type = LTC6811_Type_e;
+using BMSDriver_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
+using BMSFaultDataManager_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
+using ACUController_t = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>;
 
 /**
  * Init Functions - to be called in setup
