@@ -17,8 +17,9 @@ constexpr const size_t NUM_CELLS = 126;
 constexpr const size_t NUM_CELLTEMPS = 48;
 constexpr const size_t NUM_CHIPS = 12;
 constexpr const size_t CELLS_PER_GROUP = 3;
-constexpr const size_t GROUPS_PER_IC_EVEN = 4;
-constexpr const size_t GROUPS_PER_IC_ODD = 3;
+constexpr const size_t VOLTAGE_CELL_GROUPS_PER_IC_EVEN = 4;
+constexpr const size_t VOLTAGE_CELL_GROUPS_PER_IC_ODD = 3;
+constexpr const size_t TEMP_CELL_GROUPS_PER_IC = 2;
 enum ChargingCommand_e
 {
     CHARGE = 0,
@@ -103,6 +104,18 @@ private:
     ACUAllData_s<NUM_CELLS, NUM_CELLTEMPS, NUM_CHIPS> _acu_all_data;
 
     unsigned long _min_charging_enable_threshold;
+
+    bool increment_and_loop_id(size_t id, size_t max_id, size_t increment = 1)
+    {
+        if (id == max_id - increment) {
+            id = 0;
+            return true;
+        }
+        else {
+            id += increment;
+            return false;
+        }
+    }
 };
 
 using CCUInterfaceInstance = etl::singleton<CCUInterface>;

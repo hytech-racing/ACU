@@ -40,17 +40,14 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
     msg.cell_group_voltage_0_ro = HYTECH_cell_group_voltage_0_ro_toS(_acu_all_data.cell_voltages[_curr_data.current_voltage_cell_id]); 
     msg.cell_group_voltage_1_ro = HYTECH_cell_group_voltage_1_ro_toS(_acu_all_data.cell_voltages[_curr_data.current_voltage_cell_id+1]); 
     msg.cell_group_voltage_2_ro = HYTECH_cell_group_voltage_2_ro_toS(_acu_all_data.cell_voltages[_curr_data.current_voltage_cell_id+2]); 
-
+    bool voltage_cell_group_cycle_loop_completed;
     if (_curr_data.current_voltage_group_chip_id % 2 == 0) {
-        _curr_data.current_voltage_cell_group_id = (_curr_data.current_voltage_cell_group_id == GROUPS_PER_IC_EVEN - 1) ? 0 : _curr_data.current_voltage_cell_group_id+1;
+        voltage_cell_group_cycle_loop_completed = increment_and_loop_id(_curr_data.current_voltage_cell_group_id, VOLTAGE_CELL_GROUPS_PER_IC_EVEN);
     } else {
-        _curr_data.current_voltage_cell_group_id = (_curr_data.current_voltage_cell_group_id == GROUPS_PER_IC_ODD - 1) ? 0 : _curr_data.current_voltage_cell_group_id+1;
+        voltage_cell_group_cycle_loop_completed = increment_and_loop_id(_curr_data.current_voltage_cell_group_id, VOLTAGE_CELL_GROUPS_PER_IC_ODD);
     }
-    if (_curr_data.current_voltage_cell_group_id == 0) {
-        _curr_data.current_voltage_group_chip_id = (_curr_data.current_voltage_group_chip_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.current_voltage_group_chip_id+1;
-    }
-    _curr_data.current_voltage_cell_id= (_curr_data.current_voltage_cell_id == NUM_CELLS - CELLS_PER_GROUP) ? 0 : _curr_data.current_voltage_cell_id+CELLS_PER_GROUP;
-    
+    if (voltage_cell_group_cycle_loop_completed) increment_and_loop_id(_curr_data.current_voltage_group_chip_id, NUM_CHIPS);
+    increment_and_loop_id(_curr_data.current_voltage_cell_id, NUM_CELLS, CELLS_PER_GROUP);
     CAN_util::enqueue_msg(&msg, &Pack_BMS_CELL_VOLTAGES_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 } 
 
@@ -62,11 +59,10 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     chip_temps_msg.thermistor_group_temp_1_ro = HYTECH_thermistor_group_temp_1_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id+1]); 
     chip_temps_msg.thermistor_group_temp_2_ro = HYTECH_thermistor_group_temp_2_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id+2]); 
     
-    _curr_data.current_temp_group_id = (_curr_data.current_temp_group_id == 1) ? 0 : _curr_data.current_temp_group_id+1;
-    if (_curr_data.current_temp_group_id == 0) {
-        _curr_data.current_temp_group_chip_id = (_curr_data.current_temp_group_chip_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.current_temp_group_chip_id+1;
-    }
-    _curr_data.current_temp_cell_id = (_curr_data.current_temp_cell_id == (NUM_CELLTEMPS - CELLS_PER_GROUP)) ? 0 : _curr_data.current_temp_cell_id+CELLS_PER_GROUP;
+    bool temp_cell_group_cycle_loop_completed;
+    temp_cell_group_cycle_loop_completed = increment_and_loop_id(_curr_data.current_temp_group_id, TEMP_CELL_GROUPS_PER_IC);
+    if (temp_cell_group_cycle_loop_completed) increment_and_loop_id(_curr_data.current_temp_group_chip_id, NUM_CHIPS);
+    increment_and_loop_id(_curr_data.current_temp_cell_id, NUM_CELLTEMPS, CELLS_PER_GROUP);
     CAN_util::enqueue_msg(&chip_temps_msg, &Pack_BMS_CHIP_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
     BMS_ONBOARD_TEMPS_t board_temp_msg = {};
@@ -78,7 +74,7 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     BMS_ONBOARD_CURRENT_TEMP_t current_board_temp_msg = {};
     current_board_temp_msg.chip_id = _curr_data.current_temp_board_id;
     current_board_temp_msg.temp_0_ro = HYTECH_temp_0_ro_toS(_acu_all_data.board_temps[_curr_data.current_temp_board_id]);
-    _curr_data.current_temp_board_id = (_curr_data.current_temp_board_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.current_temp_board_id+1;
+    increment_and_loop_id(_curr_data.current_temp_board_id, NUM_CHIPS);
     CAN_util::enqueue_msg(&current_board_temp_msg, &Pack_BMS_ONBOARD_CURRENT_TEMP_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 } 
 
