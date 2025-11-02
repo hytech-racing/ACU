@@ -94,6 +94,7 @@ namespace ref_max_min_defaults
     constexpr const volt MIN_CELL_VOLTAGE = 10;
     constexpr const celsius MIN_CELL_TEMP = 80;
     constexpr const celsius MAX_CELL_TEMP = 0;
+    constexpr const celsius MAX_BOARD_TEMP = 0;
 };
 
 struct ValidPacketData_s
