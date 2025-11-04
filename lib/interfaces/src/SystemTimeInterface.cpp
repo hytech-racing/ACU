@@ -13,4 +13,14 @@ namespace sys_time
     {
         return micros();
     }
+
+    unsigned long micros_to_millis(unsigned long micros)
+    {
+        return micros / 1000;
+    }
+
+    unsigned long millis_to_micros(unsigned long millis)
+    {
+        return millis * 1000;
+    }
 }
