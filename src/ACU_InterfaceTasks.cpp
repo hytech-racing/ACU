@@ -44,7 +44,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.min_measured_ts_out_voltage = watchdog.min_measured_ts_out_voltage;
     out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage; 
     // SoC/SoH placeholders (leave unchanged here)
-    out.SoC = ACUControllerInstance_t::instance().get_status().SoC;
+    out.SoC = ACUControllerInstance::instance().get_status().SoC;
 
     return out;
 }
@@ -55,7 +55,6 @@ void initialize_all_interfaces()
     SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
     Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
     analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
-
     /* Watchdog Interface */
     WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
                                     ACUInterfaces::WD_KICK_PIN,
@@ -127,7 +126,11 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    BMSDriverInstance_t::instance().write_configuration(ACUControllerInstance_t::instance().get_status().cell_balancing_statuses);
+    
+    auto data = BMSDriverInstance_t::instance().get_bms_data();
+    static std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses;
+    ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), data.voltages.data(), ACUConstants::NUM_CELLS, data.min_cell_voltage);
+    BMSDriverInstance_t::instance().write_configuration(cell_balancing_statuses);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -160,7 +163,7 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     FaultLatchManagerInstance::instance().clear_if_not_faulted(ACUStateMachineInstance::instance().get_state() == ACUState_e::FAULTED);
-    FaultLatchManagerInstance::instance().update_imd_and_bms_latches(ACUControllerInstance_t::instance().get_status().bms_ok, ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()));
+    FaultLatchManagerInstance::instance().update_imd_and_bms_latches(ACUControllerInstance::instance().get_status().bms_ok, ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()));
 
     //TODO: Where should I get veh_shdn_out_latched from?
     VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched, FaultLatchManagerInstance::instance().get_latches().shdn_out_latched);
@@ -175,7 +178,7 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 
 HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
-    CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message(ACUControllerInstance_t::instance().get_status().charging_enabled);
+    CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message(ACUControllerInstance::instance().get_status().charging_enabled);
     CCUInterfaceInstance::instance().handle_enqueue_acu_voltage_statistics_CAN_message(
         bms_data.max_cell_voltage,
         bms_data.min_cell_voltage,
@@ -194,7 +197,7 @@ HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, 
 HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
     if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
-        CCUInterfaceInstance::instance().handle_enqueue_acu_cell_voltages_CAN_message(bms_data.voltages.data(), ACUConstants::CELLS_PER_CHIP.data(), ACUConstants::NUM_CHIPS);
+        CCUInterfaceInstance::instance().handle_enqueue_acu_cell_voltages_CAN_message(bms_data.voltages.data(), ACUConstants::VOLTAGE_CELLS_PER_CHIP.data(), ACUConstants::NUM_CHIPS);
     }
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -319,7 +322,7 @@ void print_bms_data(bms_data data)
 
 HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    if (ACUControllerInstance_t::instance().get_status().bms_ok)
+    if (ACUControllerInstance::instance().get_status().bms_ok)
     {
         Serial.print("BMS is OK\n");
     }
@@ -358,7 +361,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("Maximum Cell Temp: ");
     Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
 
-    Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance_t::instance().get_status().cell_balancing_statuses);
+    // Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance::instance().calculate_cell_balance_statuses());
 
     Serial.print("ACU State: ");
     Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
@@ -366,7 +369,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("CCU Charging Requested? : ");
     Serial.println(CCUInterfaceInstance::instance().is_charging_with_balancing_requested(sys_time::hal_millis()) ? "YES" : "NO");
     Serial.print("State of Charge: ");
-    Serial.print(ACUControllerInstance_t::instance().get_status().SoC * 100, 3);
+    Serial.print(ACUControllerInstance::instance().get_status().SoC * 100, 3);
     Serial.println("%");
     Serial.print("Measured GLV: ");
     Serial.println("V");

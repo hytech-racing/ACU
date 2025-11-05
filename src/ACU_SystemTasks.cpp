@@ -3,7 +3,8 @@
 bool initialize_all_systems()
 {
     // Initialize the ACU Controller
-    ACUControllerInstance_t::create(ACUControllerThresholds_s{ACUSystems::CELL_OVERVOLTAGE_THRESH,
+    ACUControllerInstance::create(ACUControllerThresholds_s{  ACUSystems::MIN_DISCHARGE_VOLTAGE_THRESH,
+                                                                ACUSystems::CELL_OVERVOLTAGE_THRESH,
                                                                 ACUSystems::CELL_UNDERVOLTAGE_THRESH,
                                                                 ACUSystems::CHARGING_OT_THRESH,
                                                                 ACUSystems::RUNNING_OT_THRESH,
@@ -11,7 +12,7 @@ bool initialize_all_systems()
                                                                 ACUSystems::VOLTAGE_DIFF_TO_INIT_CB,
                                                                 ACUSystems::BALANCE_TEMP_LIMIT_C,
                                                                 ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C});
-    ACUControllerInstance_t::instance().init(sys_time::hal_millis(), BMSDriverInstance_t::instance().get_bms_data().total_voltage);
+    ACUControllerInstance::instance().init(sys_time::hal_millis(), BMSDriverInstance_t::instance().get_bms_data().total_voltage);
     /* State Machine Initialization */
 
     /* Delegate Function Definitions */
@@ -19,7 +20,7 @@ bool initialize_all_systems()
                                                                             { return CCUInterfaceInstance::instance().is_charging_with_balancing_requested(sys_time::hal_millis()); });
 
     etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool
-                                                                        { return !ACUControllerInstance_t::instance().get_status().bms_ok; });
+                                                                        { return !ACUControllerInstance::instance().get_status().bms_ok; });
 
     etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
                                                                         { return !ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()); });
@@ -27,10 +28,10 @@ bool initialize_all_systems()
     etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<ADCInterface, &ADCInterface::read_shdn_out>(ADCInterfaceInstance::instance());
 
     etl::delegate<void()> enable_cell_balancing = etl::delegate<void()>::create([]() -> void
-                                                                                { ACUControllerInstance_t::instance().enableCharging(); });
+                                                                                { ACUControllerInstance::instance().enableCharging(); });
 
     etl::delegate<void()> disable_cell_balancing = etl::delegate<void()>::create([]() -> void
-                                                                                { ACUControllerInstance_t::instance().disableCharging(); });
+                                                                                { ACUControllerInstance::instance().disableCharging(); });
     etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
 
     etl::delegate<void()> reinitialize_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_high>(WatchdogInstance::instance());
@@ -56,10 +57,12 @@ bool initialize_all_systems()
 
 HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    ACUControllerInstance_t::instance().evaluate_accumulator(
+    ACUControllerInstance::instance().evaluate_accumulator(
         sys_time::hal_millis(), 
         BMSDriverInstance_t::instance().get_bms_core_data(), 
-        EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_current
+        BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count,
+        EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_current,
+        ACUConstants::NUM_CELLS
     );
     return HT_TASK::TaskResponse::YIELD;
 }
