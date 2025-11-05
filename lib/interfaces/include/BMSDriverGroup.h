@@ -295,12 +295,6 @@ public:
 
 private:
 
-    static constexpr size_t DATA_SIZE_BYTES = 6;
-    static constexpr size_t PEC_SIZE_BYTES = 2;
-    static constexpr size_t TOTAL_PACKET_SIZE_BYTES = DATA_SIZE_BYTES + PEC_SIZE_BYTES;
-
-    ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
-
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data
@@ -372,10 +366,11 @@ private:
 
     void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
 
-    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+    template<size_t voltage_value_size>
+    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, voltage_value_size> &data_in_cell_voltage,
                                       uint8_t chip_index, uint8_t start_cell_index);
-
-    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
+    template<size_t temp_value_size>
+    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, temp_value_size> &data_in_temp,
                                     uint8_t chip_index, uint8_t start_gpio_index);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
@@ -384,7 +379,7 @@ private:
      * @brief When the inverters are idle, comms get funky from EMI. This function allows us to determine if the acu reads valid packets
      * @return bool of whether the PEC correctly reflects the buffer being given. If no, then we know that EMI (likely) is causing invalid reads
      */
-    bool _check_if_valid_packet(const std::array<uint8_t, TOTAL_PACKET_SIZE_BYTES * (num_chips / num_chip_selects)> &data, size_t param_iterator);
+    bool _check_if_valid_packet(const std::array<uint8_t, _total_packet_size_bytes * (num_chips / num_chip_selects)> &data, size_t param_iterator);
 
     /**
      * Generates a Packet Error Code
@@ -414,6 +409,18 @@ private:
     uint8_t _get_cmd_address(int address) { return 0x80 | (address << 3); }
 
 private:
+    static constexpr size_t _data_size_bytes = 6;
+    static constexpr size_t _pec_size_bytes = 2;
+    static constexpr size_t _total_packet_size_bytes = _data_size_bytes + _pec_size_bytes;
+    static constexpr std::array<CMD_CODES_e, ReadGroup_e::NUM_GROUPS> _read_group_to_cmd = {
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D,
+        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A,
+        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B
+    };
+    ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
 
     /**
      * initializes PEC table
