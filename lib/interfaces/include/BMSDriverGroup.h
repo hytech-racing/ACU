@@ -88,20 +88,12 @@ namespace bms_driver_defaults
     constexpr const int SIZE_OF_PACKET_VALUE_BYTES = 2; // each cell voltage or gpio reading is 2 bytes
 }
 
-struct ValidPacketData_s
-{
-    bool valid_read_cells_1_to_3 = true;
-    bool valid_read_cells_4_to_6 = true;
-    bool valid_read_cells_7_to_9 = true;
-    bool valid_read_cells_10_to_12 = true;
-    bool valid_read_gpios_1_to_3 = true;
-    bool valid_read_gpios_4_to_6 = true;
-};
+
 
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData_s
 {
-    std::array<ValidPacketData_s, num_chips> valid_read_packets;
+    std::array<std::array<bool, ReadGroup_e::NUM_GROUPS>, num_chips> valid_read_packets;
     std::array<volt, num_cells> voltages;
     std::array<celsius, 4 * num_chips> cell_temperatures;
     std::array<celsius, num_board_thermistors> board_temperatures;
@@ -264,7 +256,7 @@ public:
      * @note Each chip has 6 validity flags (cells 1-3, 4-6, 7-9, 10-12, GPIO 1-3, 4-6)
      * @note Useful for fault detection and EMI resilience monitoring
      */
-    const std::array<ValidPacketData_s, num_chips>& get_validity_data() {
+    const std::array<std::array<bool, ReadGroup_e::NUM_GROUPS>, num_chips>& get_validity_data() {
         return _bms_data.valid_read_packets;
     }
 

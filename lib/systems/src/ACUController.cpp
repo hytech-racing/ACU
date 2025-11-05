@@ -123,8 +123,9 @@ void ACUController::calculate_cell_balance_statuses(bool* output, const volt* vo
 
 
 float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms)
-{
-    float delta_ah = (em_current) * ((float)(delta_time_ms) / HOUR_TO_MS_FACTOR);  // amp hours
+{    
+
+    float delta_ah = (em_current) * ((float)(delta_time_ms) / _hours_to_ms_factor);  // amp hours
     _acu_state.SoC += delta_ah / _acu_parameters.pack_specs.pack_nominal_capacity; // should be -= but EM inverted
     if (_acu_state.SoC < 0.0)
         _acu_state.SoC = 0;

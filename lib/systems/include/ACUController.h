@@ -138,7 +138,6 @@ public:
     }
 private:
 
-
     /**
      * @pre data has been gathered
      * @return boolean, true if there exists any fault
@@ -176,6 +175,9 @@ private:
     ACUControllerData_s _acu_state = {};
 
     static constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
+
+    static constexpr float _hours_to_ms_factor = 3600000.0f; // hours to milliseconds
+
 
     /**
      * @brief ACU Controller Parameters holder

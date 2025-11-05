@@ -52,7 +52,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
     _bms_data.voltages.fill(0);
     _bms_data.cell_temperatures.fill(0);
     _bms_data.board_temperatures.fill(0);
-    _bms_data.valid_read_packets.fill(ValidPacketData_s{});
+    _bms_data.valid_read_packets.fill({false});
     _bms_data.total_voltage = 0;
 }
 
@@ -221,32 +221,32 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             switch(_current_read_group) {
                 case ReadGroup_e::CV_GROUP_A:
                     current_group_valid = _check_if_valid_packet(spi_data, TOTAL_PACKET_SIZE_BYTES * chip);
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = current_group_valid;
+                    _bms_data.valid_read_packets[chip_index][static_cast<size_t>(ReadGroup_e::CV_GROUP_A)] = current_group_valid;
                     start_index = 0;
                     break;
                 case ReadGroup_e::CV_GROUP_B:
                     current_group_valid = _check_if_valid_packet(spi_data, TOTAL_PACKET_SIZE_BYTES * chip);
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = current_group_valid;
+                    _bms_data.valid_read_packets[chip_index][static_cast<size_t>(ReadGroup_e::CV_GROUP_B)] = current_group_valid;
                     start_index = 3;
                     break;
                 case ReadGroup_e::CV_GROUP_C:
                     current_group_valid = _check_if_valid_packet(spi_data, TOTAL_PACKET_SIZE_BYTES * chip);
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = current_group_valid;
+                    _bms_data.valid_read_packets[chip_index][static_cast<size_t>(ReadGroup_e::CV_GROUP_C)] = current_group_valid;
                     start_index = 6;
                     break;
                 case ReadGroup_e::CV_GROUP_D:
                     current_group_valid = _check_if_valid_packet(spi_data, TOTAL_PACKET_SIZE_BYTES * chip);
-                    _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = current_group_valid;
+                    _bms_data.valid_read_packets[chip_index][static_cast<size_t>(ReadGroup_e::CV_GROUP_D)] = current_group_valid;
                     start_index = 9;
                     break;
                 case ReadGroup_e::AUX_GROUP_A:
                     current_group_valid = _check_if_valid_packet(spi_data, TOTAL_PACKET_SIZE_BYTES * chip);
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = current_group_valid;
+                    _bms_data.valid_read_packets[chip_index][static_cast<size_t>(ReadGroup_e::AUX_GROUP_A)] = current_group_valid;
                     start_index = 0;
                     break;
                 case ReadGroup_e::AUX_GROUP_B:
                     current_group_valid = _check_if_valid_packet(spi_data, TOTAL_PACKET_SIZE_BYTES * chip);
-                    _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = current_group_valid;
+                    _bms_data.valid_read_packets[chip_index][static_cast<size_t>(ReadGroup_e::AUX_GROUP_B)] = current_group_valid;
                     start_index = 3;
                     break;
                 default:
@@ -294,7 +294,7 @@ typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_address()
 {
     ReferenceMaxMin_s max_min_reference;
-    ValidPacketData_s clean_valid_packet_data;                  // should be all reset to true
+    std::array<bool, ReadGroup_e::NUM_GROUPS> clean_valid_packet_data = {true};                  // should be all reset to true
     _bms_data.valid_read_packets.fill(clean_valid_packet_data); // reset
     std::array<uint8_t, 24> data_in_cell_voltages_1_to_12;
     std::array<uint8_t, 10> data_in_auxillaries_1_to_5;
@@ -708,23 +708,23 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::last_read_all_valid
 
         switch (_current_read_group) {
             case ReadGroup_e::CV_GROUP_A:
-                if (!validity.valid_read_cells_1_to_3) return false;
+                if (!validity[ReadGroup_e::CV_GROUP_A]) return false;
                 break;
             case ReadGroup_e::CV_GROUP_B:
-                if (!validity.valid_read_cells_4_to_6) return false;
+                if (!validity[ReadGroup_e::CV_GROUP_B]) return false;
                 break;
             case ReadGroup_e::CV_GROUP_C:
-                if (!validity.valid_read_cells_7_to_9) return false;
+                if (!validity[ReadGroup_e::CV_GROUP_C]) return false;
                 break;
             case ReadGroup_e::CV_GROUP_D:
                 // Skip 9-cell chips (odd indices)
-                if (chip % 2 == 0 && !validity.valid_read_cells_10_to_12) return false;
+                if (chip % 2 == 0 && !validity[ReadGroup_e::CV_GROUP_D]) return false;
                 break;
             case ReadGroup_e::AUX_GROUP_A:
-                if (!validity.valid_read_gpios_1_to_3) return false;
+                if (!validity[ReadGroup_e::AUX_GROUP_A]) return false;
                 break;
             case ReadGroup_e::AUX_GROUP_B:
-                if (!validity.valid_read_gpios_4_to_6) return false;
+                if (!validity[ReadGroup_e::AUX_GROUP_B]) return false;
                 break;
             default:
                 return false;
@@ -744,23 +744,23 @@ size_t BMSDriverGroup<num_chips, num_chip_selects, chip_type>::count_invalid_pac
 
         switch (_current_read_group) {
             case ReadGroup_e::CV_GROUP_A:
-                if (!validity.valid_read_cells_1_to_3) invalid_count++;
+                if (!validity[ReadGroup_e::CV_GROUP_A]) invalid_count++;
                 break;
             case ReadGroup_e::CV_GROUP_B:
-                if (!validity.valid_read_cells_4_to_6) invalid_count++;
+                if (!validity[ReadGroup_e::CV_GROUP_B]) invalid_count++;
                 break;
             case ReadGroup_e::CV_GROUP_C:
-                if (!validity.valid_read_cells_7_to_9) invalid_count++;
+                if (!validity[ReadGroup_e::CV_GROUP_C]) invalid_count++;
                 break;
             case ReadGroup_e::CV_GROUP_D:
                 // Skip 9-cell chips (odd indices) when counting
-                if (chip % 2 == 0 && !validity.valid_read_cells_10_to_12) invalid_count++;
+                if (chip % 2 == 0 && !validity[ReadGroup_e::CV_GROUP_D]) invalid_count++;
                 break;
             case ReadGroup_e::AUX_GROUP_A:
-                if (!validity.valid_read_gpios_1_to_3) invalid_count++;
+                if (!validity[ReadGroup_e::AUX_GROUP_A]) invalid_count++;
                 break;
             case ReadGroup_e::AUX_GROUP_B:
-                if (!validity.valid_read_gpios_4_to_6) invalid_count++;
+                if (!validity[ReadGroup_e::AUX_GROUP_B]) invalid_count++;
                 break;
             default:
                 break;
