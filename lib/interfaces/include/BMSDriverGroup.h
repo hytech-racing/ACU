@@ -85,6 +85,7 @@ namespace bms_driver_defaults
     constexpr const float CV_ADC_CONVERSION_TIME_MS = 1.2f;
     constexpr const float GPIO_ADC_CONVERSION_TIME_MS = 1.2f;
     constexpr const float CV_ADC_LSB_VOLTAGE = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
+    constexpr const int SIZE_OF_PACKET_VALUE_BYTES = 2; // each cell voltage or gpio reading is 2 bytes
 }
 
 struct ValidPacketData_s
@@ -149,6 +150,7 @@ struct BMSDriverGroupConfig_s
     float cv_adc_conversion_time_ms;
     float gpio_adc_conversion_time_ms;
     float cv_adc_lsb_voltage;
+    float size_of_packet_value_bytes;
 };
 
 
@@ -301,6 +303,10 @@ public:
 
 private:
 
+    static constexpr size_t DATA_SIZE_BYTES = 6;
+    static constexpr size_t PEC_SIZE_BYTES = 2;
+    static constexpr size_t TOTAL_PACKET_SIZE_BYTES = DATA_SIZE_BYTES + PEC_SIZE_BYTES;
+
     ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
 
     /**
@@ -386,7 +392,7 @@ private:
      * @brief When the inverters are idle, comms get funky from EMI. This function allows us to determine if the acu reads valid packets
      * @return bool of whether the PEC correctly reflects the buffer being given. If no, then we know that EMI (likely) is causing invalid reads
      */
-    bool _check_if_valid_packet(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator);
+    bool _check_if_valid_packet(const std::array<uint8_t, TOTAL_PACKET_SIZE_BYTES * (num_chips / num_chip_selects)> &data, size_t param_iterator);
 
     /**
      * Generates a Packet Error Code

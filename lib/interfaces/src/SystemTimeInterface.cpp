@@ -16,7 +16,7 @@ namespace sys_time
 
     unsigned long micros_to_millis(unsigned long micros)
     {
-        return micros * MICROS_TO_MILLIS_FACTOR;
+        return micros / MILLIS_TO_MICROS_FACTOR;
     }
 
     unsigned long millis_to_micros(unsigned long millis)

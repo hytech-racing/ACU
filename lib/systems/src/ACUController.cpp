@@ -10,7 +10,7 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.last_time_pack_uv_fault_not_present = system_start_time;
     _acu_state.last_time_invalid_packet_present = system_start_time;
     _acu_state.prev_bms_time_stamp = system_start_time;
-    _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0 : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
+    _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
     _acu_state.balancing_enabled = false;
 }
 
@@ -56,7 +56,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     if (input_state.max_cell_voltage >= _acu_parameters.thresholds.cell_overvoltage_thresh_v)
     {
         // Only calculate IR compensation when approaching OV threshold
-        internal_resistance_max_cell_voltage = input_state.max_cell_voltage + (_acu_parameters.pack_specs.pack_internal_resistance / num_of_voltage_cells * discharge_current);
+        internal_resistance_max_cell_voltage = input_state.max_cell_voltage + (_acu_parameters.pack_specs.pack_internal_resistance / static_cast<float>(num_of_voltage_cells) * discharge_current);
     }
     if (internal_resistance_max_cell_voltage < _acu_parameters.thresholds.cell_overvoltage_thresh_v || has_invalid_packet)
     {
@@ -68,7 +68,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     if (input_state.min_cell_voltage <= _acu_parameters.thresholds.cell_undervoltage_thresh_v)
     {
         // Only calculate IR compensation when approaching UV threshold
-        min_cell_voltage_to_check = input_state.min_cell_voltage + (_acu_parameters.pack_specs.pack_internal_resistance / num_of_voltage_cells * discharge_current);
+        min_cell_voltage_to_check = input_state.min_cell_voltage + (_acu_parameters.pack_specs.pack_internal_resistance / static_cast<float>(num_of_voltage_cells) * discharge_current);
     }
     if (min_cell_voltage_to_check > _acu_parameters.thresholds.cell_undervoltage_thresh_v || has_invalid_packet)
     {
@@ -124,7 +124,7 @@ void ACUController::calculate_cell_balance_statuses(bool* output, const volt* vo
 
 float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms)
 {
-    float delta_ah = (em_current) * ((float)(delta_time_ms / 1000.0f) / 3600.0f);  // amp hours
+    float delta_ah = (em_current) * ((float)(delta_time_ms) / HOUR_TO_MS_FACTOR);  // amp hours
     _acu_state.SoC += delta_ah / _acu_parameters.pack_specs.pack_nominal_capacity; // should be -= but EM inverted
     if (_acu_state.SoC < 0.0)
         _acu_state.SoC = 0;
