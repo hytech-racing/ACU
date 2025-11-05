@@ -52,7 +52,6 @@ struct CCUCANInterfaceData_s
     size_t current_temp_board_id;
 };
 
-template <size_t num_cells, size_t num_celltemps, size_t num_chips>
 class CCUInterface
 {
 public:
@@ -94,10 +93,10 @@ public:
     void handle_enqueue_acu_status_CAN_message(bool charging_enabled);
 
     void handle_enqueue_acu_voltage_statistics_CAN_message(float max_cell_voltage, float min_cell_voltage, float pack_voltage, float avg_cell_voltage);
-    void handle_enqueue_acu_cell_voltages_CAN_message(const std::array<volt, num_cells>& cell_voltages);
-    
-    void handle_enqueue_acu_temp_statistics_CAN_message(celsius max_board_temp, celsius max_cell_temp, celsius min_cell_temp, const std::array<celsius, num_chips>& board_temp);
-    void handle_enqueue_acu_cell_temps_CAN_message(const std::array<celsius, num_celltemps>& cell_temps);
+    void handle_enqueue_acu_cell_voltages_CAN_message(const volt* cell_voltages, const size_t* voltage_cells_per_chip, const size_t num_of_chips);
+    void handle_enqueue_acu_temp_statistics_CAN_message(celsius max_board_temp, celsius max_cell_temp, celsius min_cell_temp);
+    void handle_enqueue_acu_cell_temps_CAN_message(const celsius* cell_temps, const size_t* temp_cells_per_chip, const size_t num_of_chips);
+    void handle_enqueue_acu_cell_board_temps_CAN_message(const celsius* board_temps, const size_t num_of_boards);
 
     CCUCANInterfaceData_s get_latest_data();
 
@@ -120,9 +119,6 @@ private:
 
 };
 
-template<size_t num_cells, size_t num_celltemps, size_t num_chips>
-using CCUInterfaceInstance = etl::singleton<CCUInterface<num_cells, num_celltemps, num_chips>>;
-
-#include "CCUInterface.tpp"
+using CCUInterfaceInstance = etl::singleton<CCUInterface>;
 
 #endif // CCU_INTERFACE_H

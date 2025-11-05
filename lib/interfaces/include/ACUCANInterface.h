@@ -24,18 +24,16 @@
 template <CAN_DEV_TABLE CAN_DEV> using FlexCAN_t = FlexCAN_T4<CAN_DEV, RX_SIZE_256, TX_SIZE_16>;
 
 /* CANInterfaces struct - holds references to all CAN-connected interfaces */
-template <size_t num_cells, size_t num_celltemps, size_t num_chips>
 struct CANInterfaces_s {
-    explicit CANInterfaces_s(CCUInterface<num_cells, num_celltemps, num_chips> &ccu_int, EMInterface &em_int) :
+    explicit CANInterfaces_s(CCUInterface &ccu_int, EMInterface &em_int) :
         ccu_interface(ccu_int),
         em_interface(em_int) {}
     
-    CCUInterface<num_cells, num_celltemps, num_chips> & ccu_interface;
+    CCUInterface& ccu_interface;
     EMInterface & em_interface;
 };
 
-template <size_t num_cells, size_t num_celltemps, size_t num_chips>
-using CANInterfacesInstance = etl::singleton<CANInterfaces_s<num_cells, num_celltemps, num_chips>>;
+using CANInterfacesInstance = etl::singleton<CANInterfaces_s>;
 
 /* ACUCANInterface namespace - Main CAN interface handler functions */
 namespace ACUCANInterface {
@@ -48,15 +46,12 @@ namespace ACUCANInterface {
     void on_em_can_receive(const CAN_message_t &msg);
 
     // Main CAN message handler (templated free function)
-    template <size_t num_cells, size_t num_celltemps, size_t num_chips>
-    void acu_CAN_recv(CANInterfaces_s<num_cells, num_celltemps, num_chips> &interfaces,
+    void acu_CAN_recv(CANInterfaces_s &interfaces,
                       const CAN_message_t &msg,
                       unsigned long millis);
 
     // Send all queued CAN messages
     void send_all_CAN_msgs(CANTXBuffer_t &buffer, FlexCAN_T4_Base *can_interface);
 }
-
-#include "ACUCANInterface.tpp"
 
 #endif

@@ -80,7 +80,7 @@ void initialize_all_interfaces()
         
         
     /* CCU Interface */
-    CCUInterfaceInstance_t::create(sys_time::hal_millis());
+    CCUInterfaceInstance::create(sys_time::hal_millis());
 
     /* VCR Interface */
     VCRInterfaceInstance::create(sys_time::hal_millis());
@@ -106,7 +106,7 @@ void initialize_all_interfaces()
     ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 
     /* CAN Interfaces Construct */
-    CANInterfacesInstance_t::create(CCUInterfaceInstance_t::instance(), EMInterfaceInstance::instance());
+    CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
 }
 
 HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
@@ -175,18 +175,17 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 
 HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
-    CCUInterfaceInstance_t::instance().handle_enqueue_acu_status_CAN_message(ACUControllerInstance_t::instance().get_status().charging_enabled);
-    CCUInterfaceInstance_t::instance().handle_enqueue_acu_voltage_statistics_CAN_message(
+    CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message(ACUControllerInstance_t::instance().get_status().charging_enabled);
+    CCUInterfaceInstance::instance().handle_enqueue_acu_voltage_statistics_CAN_message(
         bms_data.max_cell_voltage,
         bms_data.min_cell_voltage,
         bms_data.total_voltage,
         bms_data.avg_cell_voltage 
     );
-    CCUInterfaceInstance_t::instance().handle_enqueue_acu_temp_statistics_CAN_message(
+    CCUInterfaceInstance::instance().handle_enqueue_acu_temp_statistics_CAN_message(
         bms_data.max_board_temp,
         bms_data.max_cell_temp,
-        bms_data.min_cell_temp,
-        bms_data.board_temperatures
+        bms_data.min_cell_temp
     );
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -194,24 +193,24 @@ HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, 
 
 HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
-    if (CCUInterfaceInstance_t::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
-        CCUInterfaceInstance_t::instance().handle_enqueue_acu_cell_voltages_CAN_message(bms_data.voltages);
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
+        CCUInterfaceInstance::instance().handle_enqueue_acu_cell_voltages_CAN_message(bms_data.voltages.data(), ACUConstants::CELLS_PER_CHIP.data(), ACUConstants::NUM_CHIPS);
     }
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
-    if (CCUInterfaceInstance_t::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
-        CCUInterfaceInstance_t::instance().handle_enqueue_acu_cell_temps_CAN_message(bms_data.cell_temperatures);
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
+        CCUInterfaceInstance::instance().handle_enqueue_acu_cell_temps_CAN_message(bms_data.cell_temperatures.data(), ACUConstants::TEMP_CELLS_PER_CHIP.data(), ACUConstants::NUM_CHIPS);
     }
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    etl::delegate<void(CANInterfaces_t &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces_t &, const CAN_message_t &, unsigned long)>::create<ACUCANInterface::acu_CAN_recv>();
-    process_ring_buffer(ACUCANBuffers::ccu_can_rx_buffer, CANInterfacesInstance_t::instance(), sys_time::hal_millis(), main_can_recv);
-    process_ring_buffer(ACUCANBuffers::em_can_rx_buffer, CANInterfacesInstance_t::instance(), sys_time::hal_millis(), main_can_recv);
+    etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)>::create<ACUCANInterface::acu_CAN_recv>();
+    process_ring_buffer(ACUCANBuffers::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv);
+    process_ring_buffer(ACUCANBuffers::em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -365,7 +364,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
 
     Serial.print("CCU Charging Requested? : ");
-    Serial.println(CCUInterfaceInstance_t::instance().is_charging_with_balancing_requested(sys_time::hal_millis()) ? "YES" : "NO");
+    Serial.println(CCUInterfaceInstance::instance().is_charging_with_balancing_requested(sys_time::hal_millis()) ? "YES" : "NO");
     Serial.print("State of Charge: ");
     Serial.print(ACUControllerInstance_t::instance().get_status().SoC * 100, 3);
     Serial.println("%");
