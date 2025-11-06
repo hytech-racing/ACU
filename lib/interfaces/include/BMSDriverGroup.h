@@ -85,7 +85,7 @@ namespace bms_driver_defaults
     constexpr const float CV_ADC_CONVERSION_TIME_MS = 1.2f;
     constexpr const float GPIO_ADC_CONVERSION_TIME_MS = 1.2f;
     constexpr const float CV_ADC_LSB_VOLTAGE = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
-    constexpr const int SIZE_OF_PACKET_VALUE_BYTES = 2; // each cell voltage or gpio reading is 2 bytes
+    constexpr const size_t SIZE_OF_PACKET_VALUE_BYTES = 2;
 }
 
 
@@ -142,7 +142,6 @@ struct BMSDriverGroupConfig_s
     float cv_adc_conversion_time_ms;
     float gpio_adc_conversion_time_ms;
     float cv_adc_lsb_voltage;
-    float size_of_packet_value_bytes;
 };
 
 
@@ -158,7 +157,7 @@ constexpr ReadGroup_e advance_read_group(ReadGroup_e current)
     );
 }
 
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
 class BMSDriverGroup
 {
 public:
@@ -294,6 +293,18 @@ public:
     }
 
 private:
+    static constexpr size_t _data_size_bytes = 6;
+    static constexpr size_t _pec_size_bytes = 2;
+    static constexpr size_t _total_packet_size_bytes = _data_size_bytes + _pec_size_bytes;
+    static constexpr std::array<CMD_CODES_e, ReadGroup_e::NUM_GROUPS> _read_group_to_cmd = {
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D,
+        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A,
+        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B
+    };
+    ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
 
     /**
      * PEC:
@@ -366,11 +377,9 @@ private:
 
     void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
 
-    template<size_t voltage_value_size>
-    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, voltage_value_size> &data_in_cell_voltage,
+    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, size_of_packet_value_bytes> &data_in_cell_voltage,
                                       uint8_t chip_index, uint8_t start_cell_index);
-    template<size_t temp_value_size>
-    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, temp_value_size> &data_in_temp,
+    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, size_of_packet_value_bytes> &data_in_temp,
                                     uint8_t chip_index, uint8_t start_gpio_index);
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
@@ -409,18 +418,6 @@ private:
     uint8_t _get_cmd_address(int address) { return 0x80 | (address << 3); }
 
 private:
-    static constexpr size_t _data_size_bytes = 6;
-    static constexpr size_t _pec_size_bytes = 2;
-    static constexpr size_t _total_packet_size_bytes = _data_size_bytes + _pec_size_bytes;
-    static constexpr std::array<CMD_CODES_e, ReadGroup_e::NUM_GROUPS> _read_group_to_cmd = {
-        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A,
-        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B,
-        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C,
-        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D,
-        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A,
-        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B
-    };
-    ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
 
     /**
      * initializes PEC table
@@ -486,7 +483,7 @@ private:
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-using BMSDriverInstance = etl::singleton<BMSDriverGroup<num_chips, num_chip_selects, chip_type>>;
+using BMSDriverInstance = etl::singleton<BMSDriverGroup<num_chips, num_chip_selects, chip_type, bms_driver_defaults::SIZE_OF_PACKET_VALUE_BYTES>>;
 
 #include <BMSDriverGroup.tpp>
 
