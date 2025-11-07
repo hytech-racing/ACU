@@ -90,13 +90,13 @@ namespace bms_driver_defaults
 
 
 
-template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
+template <size_t num_chips, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps>
 struct BMSData_s
 {
     std::array<std::array<bool, ReadGroup_e::NUM_GROUPS>, num_chips> valid_read_packets;
-    std::array<volt, num_cells> voltages;
-    std::array<celsius, 4 * num_chips> cell_temperatures;
-    std::array<celsius, num_board_thermistors> board_temperatures;
+    std::array<volt, num_voltage_cells> voltages;
+    std::array<celsius, num_temp_cells> cell_temperatures;
+    std::array<celsius, num_board_temps> board_temperatures;
     volt min_cell_voltage;
     volt max_cell_voltage;
     celsius max_cell_temp;
@@ -157,21 +157,34 @@ constexpr ReadGroup_e advance_read_group(ReadGroup_e current)
     );
 }
 
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
+template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
 class BMSDriverGroup
 {
 public:
-    constexpr static size_t num_cells = (num_chips / 2) * 21;
+    // constexpr static size_t num_cells = (num_chips / 2) * 21;
 
-    constexpr static size_t num_cell_temps = (num_chips * 4);
-    constexpr static size_t num_board_temps = num_chips;
+    // constexpr static size_t num_cell_temps = (num_chips * 4);
+    // constexpr static size_t num_board_temps = num_chips;
 
-    using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
+    static constexpr size_t _packet_data_size_bytes = 6;
+    static constexpr size_t _packet_pec_size_bytes = 2;
+    static constexpr size_t _num_values_per_packet = _packet_data_size_bytes / size_of_packet_value_bytes;
+    static constexpr size_t _total_packet_size_bytes = _packet_data_size_bytes + _packet_pec_size_bytes;
+    static constexpr std::array<CMD_CODES_e, ReadGroup_e::NUM_GROUPS> _read_group_to_cmd = {
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C,
+        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D,
+        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A,
+        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B
+    };
+    using ChipSelectConfig_t = ChipSelectConfig<num_chip_selects, num_chips_per_chip_select, _num_values_per_packet>;
+    using ChipSelect_t = ChipSelect<num_chips_per_chip_select, _num_values_per_packet>;
+    using Chip_t = Chip<_num_values_per_packet>;
+    using BMSDriverData_t = BMSData_s<num_chip_selects * num_chips_per_chip_select, num_voltage_cells, num_temp_cells, num_board_temps>;
 
     BMSDriverGroup(
-        const std::array<int, num_chip_selects>& cs,
-        const std::array<int, num_chips>& cs_per_chip,
-        const std::array<int, num_chips>& addr,
+        const ChipSelectConfig_t& chip_select_config,
         const BMSDriverGroupConfig_s default_params
     );
     
@@ -196,7 +209,7 @@ public:
      * AND record the maximum value and locations
      */
     // void read_thermistor_and_humidity();
-    BMSDriverData read_data();
+    BMSDriverData_t read_data();
 
     /**
      * Getter function to retrieve the ACUData structure
@@ -206,7 +219,7 @@ public:
     /**
      * Getter function to retrieve the BMSDriverData structure
      */
-    BMSDriverData get_bms_data();
+    BMSDriverData_t get_bms_data();
 
     /* -------------------- WRITING DATA FUNCTIONS -------------------- */
 
@@ -215,12 +228,12 @@ public:
      * @pre needs access to undervoltage, overvoltage, configuration MACROS, and discharge data
      * @post sends packaged data over SPI
      */
-    void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
+    void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chip_selects * num_chips_per_chip_select> &cell_balance_statuses);
 
     /**
      * Alternative header for configuration function call
      */
-    void write_configuration(const std::array<bool, num_cells> &cell_balance_statuses);
+    void write_configuration(const bool* cell_balance_statuses, size_t cell_balance_statuses_size);
 
     /* -------------------- OBSERVABILITY FUNCTIONS -------------------- */
 
@@ -255,7 +268,7 @@ public:
      * @note Each chip has 6 validity flags (cells 1-3, 4-6, 7-9, 10-12, GPIO 1-3, 4-6)
      * @note Useful for fault detection and EMI resilience monitoring
      */
-    const std::array<std::array<bool, ReadGroup_e::NUM_GROUPS>, num_chips>& get_validity_data() {
+    const std::array<std::array<bool, ReadGroup_e::NUM_GROUPS>, num_chip_selects * num_chips_per_chip_select>& get_validity_data() {
         return _bms_data.valid_read_packets;
     }
 
@@ -279,8 +292,8 @@ public:
      * @note Each bit represents one cell's balance enable status
      * @note Useful for verifying write_configuration() worked correctly
      */
-    const std::array<uint16_t, num_chips>& get_cell_discharge_enable() {
-        return _cell_discharge_en;
+    const std::array<uint16_t, num_chip_selects * num_chips_per_chip_select>& get_cell_discharge_enable() {
+        return _cell_discharge_en;  
     }
 
     /**
@@ -293,17 +306,6 @@ public:
     }
 
 private:
-    static constexpr size_t _data_size_bytes = 6;
-    static constexpr size_t _pec_size_bytes = 2;
-    static constexpr size_t _total_packet_size_bytes = _data_size_bytes + _pec_size_bytes;
-    static constexpr std::array<CMD_CODES_e, ReadGroup_e::NUM_GROUPS> _read_group_to_cmd = {
-        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A,
-        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B,
-        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C,
-        CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D,
-        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A,
-        CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B
-    };
     ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
 
     /**
@@ -324,9 +326,9 @@ private:
      */
     void _start_wakeup_protocol();
 
-    void _start_wakeup_protocol(size_t cs);
+    void _start_wakeup_protocol(size_t chip_select_pin);
 
-    BMSDriverData _read_data_through_broadcast();
+    BMSDriverData_t _read_data_through_broadcast();
 
     /**
      * REFERENCE ONLY: LTC6811-2 ADDRESS MODE IS BROKEN AND UNUSED
@@ -350,15 +352,15 @@ private:
      * PRODUCTION: All production code uses LTC6811_1 (broadcast mode) exclusively.
      * See ACU_InterfaceTasks.cpp lines 27-28.
      */
-    BMSDriverData _read_data_through_address();
+    BMSDriverData_t _read_data_through_address();
 
-    void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_index, uint8_t chip_index);
+    void _store_cell_temperature_data(BMSDriverData_t &bms_data, ReferenceMaxMin_s &max_min_reference, const uint16_t &temp_in, uint8_t cell_temp_index);
+    void _store_board_temperature_data(BMSDriverData_t &bms_data, ReferenceMaxMin_s &max_min_reference, const uint16_t &temp_in, uint8_t board_index);
+    void _store_voltage_data(BMSDriverData_t &bms_data, ReferenceMaxMin_s &max_min_reference, volt voltage_in, uint8_t cell_index);
 
-    void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, volt voltage_in, uint8_t cell_index);
+    void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chip_selects * num_chips_per_chip_select> &cell_balance_statuses);
 
-    void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
-
-    void _write_config_through_address(uint8_t dcto_mode, const std::array<uint8_t, 6>& buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
+    // void _write_config_through_address(uint8_t dcto_mode, const std::array<uint8_t, 6>& buffer_format, const std::array<uint16_t, num_chip_selects * num_chips_per_chip_select> &cell_balance_statuses);
 
     /**
      * Writes command to start cell voltage ADC converion
@@ -375,20 +377,18 @@ private:
 
     void _start_ADC_conversion_through_broadcast(const std::array<uint8_t, 2> &cmd_code);
 
-    void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
+    // void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
 
-    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, size_of_packet_value_bytes> &data_in_cell_voltage,
-                                      uint8_t chip_index, uint8_t start_cell_index);
-    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, size_of_packet_value_bytes> &data_in_temp,
-                                    uint8_t chip_index, uint8_t start_gpio_index);
-
+    void _load_cell_voltages(BMSDriverData_t &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, size_of_packet_value_bytes> &data_in_cell_voltage, uint8_t cell_index);
+    void _load_cell_temps(BMSDriverData_t &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, size_of_packet_value_bytes> &data_in_temp, uint8_t cell_index);
+    void _load_board_temps(BMSDriverData_t &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, size_of_packet_value_bytes> &data_in_temp, uint8_t board_index);
     /* -------------------- GETTER FUNCTIONS -------------------- */
 
     /**
      * @brief When the inverters are idle, comms get funky from EMI. This function allows us to determine if the acu reads valid packets
      * @return bool of whether the PEC correctly reflects the buffer being given. If no, then we know that EMI (likely) is causing invalid reads
      */
-    bool _check_if_valid_packet(const std::array<uint8_t, _total_packet_size_bytes * (num_chips / num_chip_selects)> &data, size_t param_iterator);
+    bool _check_if_valid_packet(const std::array<uint8_t, _total_packet_size_bytes * num_chips_per_chip_select> &data, size_t param_iterator);
 
     /**
      * Generates a Packet Error Code
@@ -404,13 +404,13 @@ private:
      * Generates a formmatted 2 byte array for the Command bytes
      * @return unsigned 8 bit array of length 2
      */
-    std::array<uint8_t, 2> _generate_formatted_CMD(CMD_CODES_e command, int ic_index);
+    std::array<uint8_t, 2> _generate_formatted_CMD(CMD_CODES_e command, size_t chip_addr);
 
     /**
      * Generates Command and PEC as one byte array of length 4: CMD0, CMD1, PEC0, PEC1
      * @return unsigned 8 bit, length 4
      */
-    std::array<uint8_t, 4> _generate_CMD_PEC(CMD_CODES_e command, int ic_index);
+    std::array<uint8_t, 4> _generate_CMD_PEC(CMD_CODES_e command, size_t chip_addr);
 
     /**
      * @return usable command address for LTC6811_2
@@ -428,7 +428,7 @@ private:
     constexpr std::array<uint16_t, 256> _initialize_Pec_Table();
 
     /* MEMBER VARIABLES */
-    BMSDriverData _bms_data;
+    BMSDriverData_t _bms_data;
 
     /**
      * Tracks min/max/sum values across all 6 read groups within a single timestamp cycle.
@@ -442,25 +442,9 @@ private:
      * It can only be 9 or 10
      * NOTE: needs to be initialized
      */
-    const std::array<int, num_chip_selects> _chip_select;
+    const ChipSelectConfig_t _chip_select_config;
     
-    /**
-     * We will need this for both models of the IC
-     * This determines where we get our signals from on the Arduino
-     * It can only be 9 or 10
-     * NOTE: needs to be initialized
-     */
-    const std::array<int, num_chips> _chip_select_per_chip;
-    
-    /**
-     * We will only end up using the address if this is a LTC6811-2
-     * NOTE: But if we are, we need to call a setup function to instatiate each with the correct addresses
-     * EX) BMS Segments 1, 4, and 5 are on chip select 9
-     * BMS Segments 2, 3, and 6 are on chip select 10
-     * Those segments correspond to 2 ICs each, so the instance with chip_select 9
-     * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
-     */
-    const std::array<int, num_chips> _address; // constant
+
     
     /**
      * REPLACING SEPARATE CONFIGURATION FILE
@@ -479,11 +463,11 @@ private:
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
      * out of the 16 bits
      */
-    std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const  
+    std::array<uint16_t, num_chip_selects * num_chips_per_chip_select> _cell_discharge_en = {}; // not const  
 };
 
-template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-using BMSDriverInstance = etl::singleton<BMSDriverGroup<num_chips, num_chip_selects, chip_type, bms_driver_defaults::SIZE_OF_PACKET_VALUE_BYTES>>;
+template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type>
+using BMSDriverInstance = etl::singleton<BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, bms_driver_defaults::SIZE_OF_PACKET_VALUE_BYTES>>;
 
 #include <BMSDriverGroup.tpp>
 

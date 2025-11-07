@@ -55,27 +55,24 @@ namespace ACUInterfaces {
 namespace ACUConstants
 {  
     constexpr size_t NUM_CELLS = 126;
-    constexpr size_t NUM_CHIPS = 12;
+    constexpr size_t NUM_CHIPS_PER_SELECT = 6;
     constexpr size_t NUM_CHIP_SELECTS = 2;
     constexpr size_t NUM_CHIPS_PER_CS = 6;
     constexpr size_t DATA_PER_CHIP_GROUP = 3;
 
-    constexpr std::array<size_t, NUM_CHIPS> TEMP_CELLS_PER_CHIP = {
-        4, 4, 4, 4, 4, 4,
-        4, 4, 4, 4, 4, 4
+    constexpr std::array<size_t, NUM_CHIP_SELECTS * NUM_CHIPS_PER_SELECT> VOLTAGE_CELLS_PER_CHIP = {
+        12, 9, 12, 9, 12, 9, 12, 9, 12, 9, 12, 9
     };
-    constexpr std::array<size_t, NUM_CHIPS> VOLTAGE_CELLS_PER_CHIP = {
-        12, 9, 12, 9, 12, 9,
-        12, 9, 12, 9, 12, 9
+    constexpr std::array<size_t, NUM_CHIP_SELECTS * NUM_CHIPS_PER_SELECT> TEMP_CELLS_PER_CHIP = {
+        4,4,4,4,4,4,4,4,4,4,4,4
     };
-    constexpr ChipSelectConfig<NUM_CHIP_SELECTS, NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP> BMS_CHIP_SELECTS = ChipSelectConfig<NUM_CHIP_SELECTS, NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>{
+    constexpr ChipSelectConfig<NUM_CHIP_SELECTS, NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP> BMS_CHIP_SELECTS = ChipSelectConfig<NUM_CHIP_SELECTS, NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>(
         std::array{
-            ChipSelect<NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>{
+            ChipSelect<NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>(
                 9,
                 std::array{
-                    Chips<DATA_PER_CHIP_GROUP>{0, 
-                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                            {3, 3, 3, 3, 3, 2},
+                    Chip<DATA_PER_CHIP_GROUP>{0, 
+                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
                             std::array{
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
@@ -84,11 +81,10 @@ namespace ACUConstants
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                             }
-                        }
+                        )
                     },
-                    Chips<DATA_PER_CHIP_GROUP>{1, 
-                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                            {3, 3, 3, 0, 3, 2},
+                    Chip<DATA_PER_CHIP_GROUP>{1, 
+                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
                             std::array{
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
@@ -97,12 +93,11 @@ namespace ACUConstants
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                             }
-                        }
+                        )
                     },
-                    Chips<DATA_PER_CHIP_GROUP>{2, 
-                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                            {3, 3, 3, 3, 3, 2},
-                            std::array{
+                    Chip<DATA_PER_CHIP_GROUP>{2, 
+                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
+                                                       std::array{
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // C
@@ -110,11 +105,10 @@ namespace ACUConstants
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                             }
-                        }
+                        )
                     },
-                    Chips<DATA_PER_CHIP_GROUP>{3, 
-                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                            {3, 3, 3, 0, 3, 2},
+                    Chip<DATA_PER_CHIP_GROUP>{3, 
+                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
                             std::array{
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
@@ -123,12 +117,11 @@ namespace ACUConstants
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                             }
-                        }
+                        )
                     },
-                    Chips<DATA_PER_CHIP_GROUP>{4, 
-                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                            {3, 3, 3, 3, 3, 2},
-                            std::array{
+                    Chip<DATA_PER_CHIP_GROUP>{4, 
+                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
+                                                       std::array{
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // C
@@ -136,11 +129,10 @@ namespace ACUConstants
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                             }
-                        }
+                        )
                     },
-                    Chips<DATA_PER_CHIP_GROUP>{5, 
-                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                            {3, 3, 3, 0, 3, 2},
+                    Chip<DATA_PER_CHIP_GROUP>{5, 
+                        ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
                             std::array{
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                                 std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
@@ -149,17 +141,16 @@ namespace ACUConstants
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                                 std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                             }
-                        }
+                        )
                     },
                 }
-            },
-            ChipSelect<NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>{
+            ),
+            ChipSelect<NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>(
                 10,
                 std::array{
-                Chips<DATA_PER_CHIP_GROUP>{6, 
-                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                        {3, 3, 3, 3, 3, 2},
-                        std::array{
+                Chip<DATA_PER_CHIP_GROUP>{6, 
+                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
+                                               std::array{
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // C
@@ -167,11 +158,10 @@ namespace ACUConstants
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                         }
-                    }
+                    )
                 },
-                Chips<DATA_PER_CHIP_GROUP>{7, 
-                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                        {3, 3, 3, 0, 3, 2},
+                Chip<DATA_PER_CHIP_GROUP>{7, 
+                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
                         std::array{
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
@@ -180,12 +170,11 @@ namespace ACUConstants
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                         }
-                    }
+                    )
                 },
-                Chips<DATA_PER_CHIP_GROUP>{8, 
-                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                        {3, 3, 3, 3, 3, 2},
-                        std::array{
+                Chip<DATA_PER_CHIP_GROUP>{8, 
+                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
+                                               std::array{
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // C
@@ -193,11 +182,10 @@ namespace ACUConstants
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                         }
-                    }
+                    )
                 },
-                Chips<DATA_PER_CHIP_GROUP>{9, 
-                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                        {3, 3, 3, 0, 3, 2},
+                Chip<DATA_PER_CHIP_GROUP>{9, 
+                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
                         std::array{
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
@@ -206,12 +194,11 @@ namespace ACUConstants
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                         }
-                    }
+                    )
                 },
-                Chips<DATA_PER_CHIP_GROUP>{10, 
-                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                        {3, 3, 3, 3, 3, 2},
-                        std::array{
+                Chip<DATA_PER_CHIP_GROUP>{10, 
+                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
+                                               std::array{
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // C
@@ -219,11 +206,10 @@ namespace ACUConstants
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                         }
-                    }
+                    )
                 },
-                Chips<DATA_PER_CHIP_GROUP>{11, 
-                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>{
-                        {3, 3, 3, 0, 3, 2},
+                Chip<DATA_PER_CHIP_GROUP>{11, 
+                    ReadGroupResultMap<DATA_PER_CHIP_GROUP>(
                         std::array{
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // A
                             std::array{ ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE, ReadDataResultType_e::CELL_VOLTAGE }, // B
@@ -232,20 +218,19 @@ namespace ACUConstants
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::CELL_TEMPERATURE }, // AUX_A
                             std::array{ ReadDataResultType_e::CELL_TEMPERATURE, ReadDataResultType_e::BOARD_TEMPERATURE, ReadDataResultType_e::NO_DATA } // AUX_B
                         }
-                    }
+                    )
                 },
             }
+            )
         }
-        }
-    };
+    );
 
+    constexpr size_t NUM_VOLTAGE_CELLS = BMS_CHIP_SELECTS.get_num_cell_voltages();
+    constexpr size_t NUM_TEMP_CELLS = BMS_CHIP_SELECTS.get_num_cell_temps();
+    constexpr size_t NUM_BOARD_TEMPS = BMS_CHIP_SELECTS.get_num_board_temps();
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
     
-    // Initialize chip_select, chip_select_per_chip, and address
-    constexpr std::array<int, NUM_CHIP_SELECTS> CS = {9, 10};
-    constexpr std::array<int, NUM_CHIPS> CS_PER_CHIP = {9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10};
-    constexpr std::array<int, NUM_CHIPS> ADDR = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // only for addressable bms chips
 
     /* Task Times */
     constexpr uint32_t TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz

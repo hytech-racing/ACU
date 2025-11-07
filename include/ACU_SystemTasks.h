@@ -19,8 +19,9 @@
 #include <ht_task.hpp>
 
 using chip_type = LTC6811_Type_e;
-using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
-using BMSFaultDataManagerInstance_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
+using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS_PER_SELECT, ACUConstants::NUM_CHIP_SELECTS, ACUConstants::NUM_VOLTAGE_CELLS, ACUConstants::NUM_TEMP_CELLS, ACUConstants::NUM_BOARD_TEMPS, chip_type::LTC6811_1>;
+using BMSFaultDataManagerInstance_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS_PER_SELECT * ACUConstants::NUM_CHIP_SELECTS>;
+
 bool initialize_all_systems();
 
 /* Delegate Functions */
