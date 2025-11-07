@@ -54,21 +54,14 @@ namespace ACUInterfaces {
 
 namespace ACUConstants
 {  
-    constexpr size_t NUM_CELLS = 126;
-    constexpr size_t NUM_CHIPS_PER_SELECT = 6;
+    constexpr size_t NUM_CHIPS_PER_CHIP_SELECT = 6;
     constexpr size_t NUM_CHIP_SELECTS = 2;
-    constexpr size_t NUM_CHIPS_PER_CS = 6;
     constexpr size_t DATA_PER_CHIP_GROUP = 3;
 
-    constexpr std::array<size_t, NUM_CHIP_SELECTS * NUM_CHIPS_PER_SELECT> VOLTAGE_CELLS_PER_CHIP = {
-        12, 9, 12, 9, 12, 9, 12, 9, 12, 9, 12, 9
-    };
-    constexpr std::array<size_t, NUM_CHIP_SELECTS * NUM_CHIPS_PER_SELECT> TEMP_CELLS_PER_CHIP = {
-        4,4,4,4,4,4,4,4,4,4,4,4
-    };
-    constexpr ChipSelectConfig<NUM_CHIP_SELECTS, NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP> BMS_CHIP_SELECTS = ChipSelectConfig<NUM_CHIP_SELECTS, NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>(
+
+    constexpr ChipSelectConfig<NUM_CHIP_SELECTS, NUM_CHIPS_PER_CHIP_SELECT, DATA_PER_CHIP_GROUP> BMS_CHIP_SELECTS = ChipSelectConfig<NUM_CHIP_SELECTS, NUM_CHIPS_PER_CHIP_SELECT, DATA_PER_CHIP_GROUP>(
         std::array{
-            ChipSelect<NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>(
+            ChipSelect<NUM_CHIPS_PER_CHIP_SELECT, DATA_PER_CHIP_GROUP>(
                 9,
                 std::array{
                     Chip<DATA_PER_CHIP_GROUP>{0, 
@@ -145,7 +138,7 @@ namespace ACUConstants
                     },
                 }
             ),
-            ChipSelect<NUM_CHIPS_PER_CS, DATA_PER_CHIP_GROUP>(
+            ChipSelect<NUM_CHIPS_PER_CHIP_SELECT, DATA_PER_CHIP_GROUP>(
                 10,
                 std::array{
                 Chip<DATA_PER_CHIP_GROUP>{6, 
@@ -228,6 +221,29 @@ namespace ACUConstants
     constexpr size_t NUM_VOLTAGE_CELLS = BMS_CHIP_SELECTS.get_num_cell_voltages();
     constexpr size_t NUM_TEMP_CELLS = BMS_CHIP_SELECTS.get_num_cell_temps();
     constexpr size_t NUM_BOARD_TEMPS = BMS_CHIP_SELECTS.get_num_board_temps();
+
+    constexpr std::array<size_t, NUM_CHIP_SELECTS * NUM_CHIPS_PER_CHIP_SELECT> VOLTAGE_CELLS_PER_CHIP = [](){
+        std::array<size_t, NUM_CHIP_SELECTS * NUM_CHIPS_PER_CHIP_SELECT> arr{};
+        size_t i = 0;
+        for (size_t chip_select_index = 0; chip_select_index < NUM_CHIP_SELECTS; chip_select_index ++){
+            for (size_t chip_select = 0; chip_select < NUM_CHIPS_PER_CHIP_SELECT; chip_select ++){
+                arr[i] = BMS_CHIP_SELECTS.chip_selects[chip_select_index].chips[chip_select].read_map.get_num_cell_voltages();
+                i++;
+            }
+        }
+        return arr;
+    }();
+    constexpr std::array<size_t, NUM_CHIP_SELECTS * NUM_CHIPS_PER_CHIP_SELECT> TEMP_CELLS_PER_CHIP = [](){
+        std::array<size_t, NUM_CHIP_SELECTS * NUM_CHIPS_PER_CHIP_SELECT> arr{};
+        size_t i = 0;
+        for (size_t chip_select_index = 0; chip_select_index < NUM_CHIP_SELECTS; chip_select_index ++){
+            for (size_t chip_select = 0; chip_select < NUM_CHIPS_PER_CHIP_SELECT; chip_select ++){
+                arr[i] = BMS_CHIP_SELECTS.chip_selects[chip_select_index].chips[chip_select].read_map.get_num_cell_temps();
+                i++;
+            }
+        }
+        return arr;
+    }();
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
     
