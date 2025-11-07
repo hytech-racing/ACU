@@ -165,10 +165,6 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
     //TODO: Where should I get veh_shdn_out_latched from?
     VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched, FaultLatchManagerInstance::instance().get_latches().shdn_out_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
-    
-    //TODO: Put this in fault manager
-    // Reset shdn out latch state
-    // ACUDataInstance::instance().veh_shdn_out_latched = true;
 
     return HT_TASK::TaskResponse::YIELD;
 }
