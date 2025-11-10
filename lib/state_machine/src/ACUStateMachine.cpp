@@ -16,7 +16,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
         }
         case ACUState_e::ACTIVE: 
         {
-            if (_charge_state_requested()) {
+            if (_charge_state_requested() && _received_valid_shdn_out()) {
                 _set_state(ACUState_e::CHARGING, current_millis);
                 break;
             }

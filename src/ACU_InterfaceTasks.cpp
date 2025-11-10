@@ -193,7 +193,7 @@ HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, 
 
 HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
-    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::hal_millis())) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_cell_voltages_CAN_message(bms_data.voltages.data(), ACUConstants::CELLS_PER_CHIP.data(), ACUConstants::NUM_CHIPS);
     }
     return HT_TASK::TaskResponse::YIELD;
@@ -201,8 +201,16 @@ HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sys
 
 HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
-    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::hal_millis())) {
         CCUInterfaceInstance::instance().handle_enqueue_acu_cell_temps_CAN_message(bms_data.cell_temperatures.data(), ACUConstants::TEMP_CELLS_PER_CHIP.data(), ACUConstants::NUM_CHIPS);
+    }
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse enqueue_ACU_all_boards_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
+    auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::hal_millis())) {
+        CCUInterfaceInstance::instance().handle_enqueue_acu_board_temps_CAN_message(bms_data.board_temperatures.data(), ACUConstants::NUM_BOARD_TEMPS);
     }
     return HT_TASK::TaskResponse::YIELD;
 }

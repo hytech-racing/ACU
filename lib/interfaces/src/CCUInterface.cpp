@@ -100,11 +100,11 @@ void CCUInterface::handle_enqueue_acu_temp_statistics_CAN_message(
     CAN_util::enqueue_msg(&board_temp_msg, &Pack_BMS_ONBOARD_TEMPS_hytech, ACUCANBuffers::ccu_can_tx_buffer);
 }
 
-void CCUInterface::handle_enqueue_acu_cell_board_temps_CAN_message(
+void CCUInterface::handle_enqueue_acu_board_temps_CAN_message(
     const celsius* board_temps,
     const size_t num_of_boards
 ) {
-        BMS_ONBOARD_CURRENT_TEMP_t current_board_temp_msg = {};
+    BMS_ONBOARD_CURRENT_TEMP_t current_board_temp_msg = {};
     current_board_temp_msg.chip_id = _curr_data.current_temp_board_id;
     current_board_temp_msg.temp_0_ro = HYTECH_temp_0_ro_toS(board_temps[_curr_data.current_temp_board_id]);
     _increment_and_loop_id(_curr_data.current_temp_board_id, num_of_boards);

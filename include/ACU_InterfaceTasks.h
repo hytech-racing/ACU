@@ -53,6 +53,8 @@ void initialize_all_interfaces();
 
 ::HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
+::HT_TASK::TaskResponse enqueue_ACU_all_boards_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
 ::HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
