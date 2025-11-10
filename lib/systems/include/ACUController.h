@@ -20,13 +20,6 @@ namespace acu_controller_default_parameters
     constexpr const float PACK_MAX_VOLTAGE = 529.2;         // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
     constexpr const float PACK_MIN_VOLTAGE = 378.0;         // from data sheet^ but just assume 126 * 3.0V
     constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
-    constexpr const size_t OCV_SOC_TABLE_SIZE = 20;
-    constexpr const std::array<volt, OCV_SOC_TABLE_SIZE> OCV_POINTS = {
-        3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9
-    };
-    constexpr const std::array<float, OCV_SOC_TABLE_SIZE> SOC_POINTS = {
-        0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9
-    };
 }
 
 template <size_t table_size>
@@ -80,7 +73,6 @@ struct ACUControllerPackSpecs_s
     float pack_nominal_capacity = 0;
     float pack_max_voltage = 0;
     float pack_min_voltage = 0;
-    OCVSOCLookupTable_s<acu_controller_default_parameters::OCV_SOC_TABLE_SIZE> ocv_soc_lookup_table = {};
 };
 
 struct ACUControllerParameters_s
@@ -117,10 +109,7 @@ public:
                     .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
                     .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
                     .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE,
-                    .ocv_soc_lookup_table = {
-                        .ocv_points = acu_controller_default_parameters::OCV_POINTS,
-                        .soc_points = acu_controller_default_parameters::SOC_POINTS
-                    }}
+                    }
                 ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
 
     /**
@@ -203,6 +192,17 @@ private:
      * @brief ACU Controller Parameters holder
      */
     const ACUControllerParameters_s _acu_parameters = {};
+
+    /**
+     * @brief OCV-SOC Lookup Table from MCU on HT-08: voltage values corresponding to SOC from 0% to 100% 
+     * 
+     */
+    static constexpr float VOLTAGE_LOOKUP_TABLE[101] = {3.972, 3.945, 3.918, 3.891, 3.885, 3.874, 3.864, 3.858, 3.847, 3.836, 3.82, 3.815, 3.815, 3.798, 3.788,
+        3.782, 3.771, 3.755, 3.744, 3.744, 3.733, 3.728, 3.723, 3.712, 3.701, 3.695, 3.69, 3.679, 3.679, 3.668, 3.663, 3.657, 3.647,
+        3.647, 3.636, 3.625, 3.625, 3.625, 3.614, 3.609, 3.603, 3.603, 3.592, 3.592, 3.592, 3.581, 3.581, 3.571, 3.571, 3.571, 3.56,
+        3.56, 3.56, 3.549, 3.549, 3.549, 3.549, 3.538, 3.538, 3.551, 3.546, 3.535, 3.535, 3.535, 3.53, 3.524, 3.524, 3.524, 3.513,
+        3.513, 3.513, 3.503, 3.503, 3.492, 3.492, 3.492, 3.487, 3.481, 3.481, 3.476, 3.471, 3.46, 3.46, 3.449, 3.444, 3.428, 3.428,
+        3.417, 3.401, 3.39, 3.379, 3.363, 3.331, 3.299, 3.267, 3.213, 3.149, 3.041, 3, 3, 0};
 };
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
