@@ -16,7 +16,8 @@
 constexpr const size_t NUM_CELLS = 126;
 constexpr const size_t NUM_CELLTEMPS = 48;
 constexpr const size_t NUM_CHIPS = 12;
-constexpr const size_t CELLS_PER_GROUP = 3;
+constexpr const size_t VOLTAGE_CELLS_PER_GROUP = 3;
+constexpr const size_t TEMP_CELLS_PER_GROUP = 2;
 constexpr const size_t GROUPS_PER_IC_EVEN = 4;
 constexpr const size_t GROUPS_PER_IC_ODD = 3;
 enum ChargingCommand_e

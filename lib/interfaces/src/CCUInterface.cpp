@@ -49,7 +49,7 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
     if (_curr_data.current_voltage_cell_group_id == 0) {
         _curr_data.current_voltage_group_chip_id = (_curr_data.current_voltage_group_chip_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.current_voltage_group_chip_id+1;
     }
-    _curr_data.current_voltage_cell_id= (_curr_data.current_voltage_cell_id == NUM_CELLS - CELLS_PER_GROUP) ? 0 : _curr_data.current_voltage_cell_id+CELLS_PER_GROUP;
+    _curr_data.current_voltage_cell_id= (_curr_data.current_voltage_cell_id == NUM_CELLS - VOLTAGE_CELLS_PER_GROUP) ? 0 : _curr_data.current_voltage_cell_id+VOLTAGE_CELLS_PER_GROUP;
     
     CAN_util::enqueue_msg(&msg, &Pack_BMS_CELL_VOLTAGES_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 } 
@@ -58,15 +58,14 @@ void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     BMS_CHIP_TEMPS_t chip_temps_msg = {};
     chip_temps_msg.chip_id = static_cast<uint8_t>(_curr_data.current_temp_group_chip_id);
     chip_temps_msg.thermistor_group_id = static_cast<uint8_t>(_curr_data.current_temp_group_id);
-    chip_temps_msg.thermistor_group_temp_0_ro = HYTECH_thermistor_group_temp_0_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id]); 
-    chip_temps_msg.thermistor_group_temp_1_ro = HYTECH_thermistor_group_temp_1_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id+1]); 
-    chip_temps_msg.thermistor_group_temp_2_ro = HYTECH_thermistor_group_temp_2_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id+2]); 
-    
+    chip_temps_msg.thermistor_cell_group_temp_0_ro = HYTECH_thermistor_cell_group_temp_0_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id]); 
+    chip_temps_msg.thermistor_cell_group_temp_1_ro = HYTECH_thermistor_cell_group_temp_1_ro_toS(_acu_all_data.cell_temps[_curr_data.current_temp_cell_id+1]);
+
     _curr_data.current_temp_group_id = (_curr_data.current_temp_group_id == 1) ? 0 : _curr_data.current_temp_group_id+1;
     if (_curr_data.current_temp_group_id == 0) {
         _curr_data.current_temp_group_chip_id = (_curr_data.current_temp_group_chip_id == (NUM_CHIPS - 1)) ? 0 : _curr_data.current_temp_group_chip_id+1;
     }
-    _curr_data.current_temp_cell_id = (_curr_data.current_temp_cell_id == (NUM_CELLTEMPS - CELLS_PER_GROUP)) ? 0 : _curr_data.current_temp_cell_id+CELLS_PER_GROUP;
+    _curr_data.current_temp_cell_id = (_curr_data.current_temp_cell_id == (NUM_CELLTEMPS - TEMP_CELLS_PER_GROUP)) ? 0 : _curr_data.current_temp_cell_id+TEMP_CELLS_PER_GROUP;
     CAN_util::enqueue_msg(&chip_temps_msg, &Pack_BMS_CHIP_TEMPS_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
     BMS_ONBOARD_TEMPS_t board_temp_msg = {};
