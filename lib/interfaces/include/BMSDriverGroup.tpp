@@ -109,18 +109,14 @@ constexpr std::array<uint16_t, 256> BMSDriverGroup<num_chips, num_chip_selects, 
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSCoreData_t
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_core_data()
+BMSCoreData_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_core_data()
     {
-        BMSCoreData_t out{};
+        BMSCoreData_s out{};
 
         // Basic voltages
         out.min_cell_voltage = _bms_data.min_cell_voltage;
         out.max_cell_voltage = _bms_data.max_cell_voltage;
         out.pack_voltage = _bms_data.total_voltage; 
-
-        // Per-cell array (sizes must match)
-        out.voltages = _bms_data.voltages;
 
         // Temps
         out.max_cell_temp  = _bms_data.max_cell_temp;

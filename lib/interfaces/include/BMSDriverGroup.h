@@ -228,7 +228,6 @@ public:
     constexpr static size_t num_cell_temps = (num_chips * 4);
     constexpr static size_t num_board_temps = num_chips;
 
-    using BMSCoreData_t = BMSCoreData_s<num_cells, num_cell_temps, num_board_temps>;
     using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(
@@ -264,7 +263,7 @@ public:
     /**
      * Getter function to retrieve the ACUData structure
      */
-    BMSCoreData_t get_bms_core_data();
+    BMSCoreData_s get_bms_core_data();
 
     /**
      * Getter function to retrieve the BMSDriverData structure
