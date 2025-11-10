@@ -9,12 +9,12 @@ void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned
     _curr_data.prev_ccu_msg_recv_ms = curr_millis;
 }
 
-void CCUInterface::handle_enqueue_acu_status_CAN_message(bool charging_enabled) {
+void CCUInterface::handle_enqueue_acu_status_CAN_message(bool shdn_out_voltage_high) {
     BMS_STATUS_t msg = {};
-    if (charging_enabled) {
-        msg.charging_state = ACUChargingState_e::CHARGING;
+    if (shdn_out_voltage_high) {
+        msg.shdn_out_voltage_state = ACUSHDNOutVoltageState_e::VOLTAGE_HIGH;
     } else {
-        msg.charging_state = ACUChargingState_e::NOT_CHARGING;
+        msg.shdn_out_voltage_state = ACUSHDNOutVoltageState_e::VOLTAGE_LOW;
     }
 
     CAN_util::enqueue_msg(&msg, &Pack_BMS_STATUS_hytech, ACUCANBuffers::ccu_can_tx_buffer);

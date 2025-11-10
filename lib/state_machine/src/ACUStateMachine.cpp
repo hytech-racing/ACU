@@ -2,10 +2,10 @@
 
 void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
     switch(_current_state) {
-        case ACUState_e::STARTUP: 
+        case ACUState_e::SHDN_OUT_VOLTAGE_LOW: 
         {   
             if (_received_valid_shdn_out()) {
-                _set_state(ACUState_e::ACTIVE, current_millis);
+                _set_state(ACUState_e::SHDN_OUT_VOLTAGE_HIGH, current_millis);
                 break;
             }
             if ((current_millis - _last_state_changed_time > 2000) && (_has_bms_fault() || _has_imd_fault())) {
@@ -14,10 +14,10 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
             }
             break;
         }
-        case ACUState_e::ACTIVE: 
+        case ACUState_e::SHDN_OUT_VOLTAGE_HIGH: 
         {
-            if (_charge_state_requested() && _received_valid_shdn_out()) {
-                _set_state(ACUState_e::CHARGING, current_millis);
+            if (_balancing_requested() && _received_valid_shdn_out()) {
+                _set_state(ACUState_e::REQUEST_CELL_BALANCING, current_millis);
                 break;
             }
             if (_has_bms_fault() || _has_imd_fault()) {
@@ -26,10 +26,10 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
             }
             break;
         }
-        case ACUState_e::CHARGING: 
+        case ACUState_e::REQUEST_CELL_BALANCING: 
         {   
-            if (!_charge_state_requested()) {
-                _set_state(ACUState_e::ACTIVE, current_millis);
+            if (!_balancing_requested()) {
+                _set_state(ACUState_e::SHDN_OUT_VOLTAGE_HIGH, current_millis);
                 break;
             }
             if (_has_bms_fault() || _has_imd_fault()) {
@@ -37,7 +37,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
                 break;
             }
             if (!_received_valid_shdn_out()) {
-                _set_state(ACUState_e::STARTUP, current_millis);
+                _set_state(ACUState_e::SHDN_OUT_VOLTAGE_LOW, current_millis);
                 break;
             }
             break;
@@ -49,7 +49,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
             }
 
             if (_received_valid_shdn_out() && !(_has_bms_fault() || _has_imd_fault())) {
-                _set_state(ACUState_e::STARTUP, current_millis);
+                _set_state(ACUState_e::SHDN_OUT_VOLTAGE_LOW, current_millis);
                 break;
             }
             break;
@@ -71,7 +71,7 @@ void ACUStateMachine::_set_state(ACUState_e new_state, unsigned long curr_millis
 void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis)
 {
     switch(prev_state) {
-        case ACUState_e::CHARGING: 
+        case ACUState_e::REQUEST_CELL_BALANCING: 
         {
             _disable_cell_balancing();
             break;
@@ -82,8 +82,8 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
             _reinitialize_watchdog();
             break;
         }
-        case ACUState_e::STARTUP:
-        case ACUState_e::ACTIVE:
+        case ACUState_e::SHDN_OUT_VOLTAGE_LOW:
+        case ACUState_e::SHDN_OUT_VOLTAGE_HIGH:
         default:
             break;
     }
@@ -92,14 +92,14 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
 void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long curr_millis)
 {
     switch(new_state) {
-        case ACUState_e::STARTUP: 
+        case ACUState_e::SHDN_OUT_VOLTAGE_LOW: 
         {
             _reinitialize_watchdog();
             break;
         }
-        case ACUState_e::CHARGING: 
+        case ACUState_e::REQUEST_CELL_BALANCING: 
         {   
-            _enable_cell_balancing();
+            _request_cell_balancing();
             break;
         }
         case ACUState_e::FAULTED: 
@@ -109,7 +109,7 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
             _last_state_changed_time = curr_millis;
             break;
         }
-        case ACUState_e::ACTIVE:
+        case ACUState_e::SHDN_OUT_VOLTAGE_HIGH:
         default:
             break;
     }

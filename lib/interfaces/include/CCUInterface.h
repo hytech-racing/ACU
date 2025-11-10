@@ -14,10 +14,10 @@
 #include "shared_types.h"
 #include "ACUCANBuffers.h"  // NEW: Include shared buffer declarations
 
-enum ACUChargingState_e
+enum ACUSHDNOutVoltageState_e
 {
-    CHARGING = 1,
-    NOT_CHARGING = 0,
+    VOLTAGE_LOW = 0,
+    VOLTAGE_HIGH = 1,
 };
 namespace ccu_interface_defaults{
     constexpr const uint16_t MIN_CHARGING_ENABLE_THRESHOLD_MS = 1000;
@@ -90,7 +90,7 @@ public:
 
     void receive_CCU_status_message(const CAN_message_t &msg, unsigned long curr_millis);
 
-    void handle_enqueue_acu_status_CAN_message(bool charging_enabled);
+    void handle_enqueue_acu_status_CAN_message(bool shdn_out_voltage_high);
 
     void handle_enqueue_acu_voltage_statistics_CAN_message(float max_cell_voltage, float min_cell_voltage, float pack_voltage, float avg_cell_voltage);
     void handle_enqueue_acu_cell_voltages_CAN_message(const volt* cell_voltages, const size_t* voltage_cells_per_chip, const size_t num_of_chips);

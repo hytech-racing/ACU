@@ -175,7 +175,7 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 
 HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
-    CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message(ACUControllerInstance_t::instance().get_status().charging_enabled);
+    CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message(ADCInterfaceInstance::instance().read_shdn_out());
     CCUInterfaceInstance::instance().handle_enqueue_acu_voltage_statistics_CAN_message(
         bms_data.max_cell_voltage,
         bms_data.min_cell_voltage,

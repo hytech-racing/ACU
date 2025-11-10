@@ -10,9 +10,9 @@
 
 enum class ACUState_e
 {
-    STARTUP = 0, 
-    ACTIVE = 1, 
-    CHARGING = 2, 
+    SHDN_OUT_VOLTAGE_LOW = 0, 
+    SHDN_OUT_VOLTAGE_HIGH = 1, 
+    REQUEST_CELL_BALANCING = 2, 
     FAULTED = 3, 
 };
 
@@ -20,11 +20,11 @@ class ACUStateMachine
 {
 public:
     ACUStateMachine(
-        etl::delegate<bool()> charge_state_requested,
+        etl::delegate<bool()> balancing_requested,
         etl::delegate<bool()> has_bms_fault,
         etl::delegate<bool()> has_imd_fault,
         etl::delegate<bool()> received_valid_shdn_out,
-        etl::delegate<void()> enable_cell_balancing,
+        etl::delegate<void()> request_cell_balancing,
         etl::delegate<void()> disable_cell_balancing,
         etl::delegate<void()> disable_watchdog,
         etl::delegate<void()> reinitialize_watchdog,
@@ -32,18 +32,18 @@ public:
         etl::delegate<void()> disable_n_latch_en,
         uint32_t curr_millis
     ) :
-    _charge_state_requested(charge_state_requested),
+    _balancing_requested(balancing_requested),
     _has_bms_fault(has_bms_fault),
     _has_imd_fault(has_imd_fault),
     _received_valid_shdn_out(received_valid_shdn_out),
-    _enable_cell_balancing(enable_cell_balancing),
+    _request_cell_balancing(request_cell_balancing),
     _disable_cell_balancing(disable_cell_balancing),
     _disable_watchdog(disable_watchdog),
     _reinitialize_watchdog(reinitialize_watchdog),
     _set_n_latch_en_high(reset_latch),
     _set_n_latch_en_low(disable_n_latch_en)
     {
-        _current_state = ACUState_e::STARTUP;
+        _current_state = ACUState_e::SHDN_OUT_VOLTAGE_LOW;
         _last_state_changed_time = curr_millis;
     };
 
@@ -74,12 +74,12 @@ private:
     unsigned long _last_state_changed_time; // time of last state change
 
     // Lamdas for state machine abstraction, functions defined in main
-    etl::delegate<bool()> _charge_state_requested; 
+    etl::delegate<bool()> _balancing_requested; 
     etl::delegate<bool()> _has_bms_fault;
     etl::delegate<bool()> _has_imd_fault;
     etl::delegate<bool()> _received_valid_shdn_out;
     /// @brief setters
-    etl::delegate<void()> _enable_cell_balancing;
+    etl::delegate<void()> _request_cell_balancing;
     etl::delegate<void()> _disable_cell_balancing;
     etl::delegate<void()> _disable_watchdog;
     etl::delegate<void()> _reinitialize_watchdog;
