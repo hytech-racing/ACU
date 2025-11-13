@@ -7,8 +7,8 @@ static ACUAllDataType_s make_acu_all_data()
 {
     ACUAllDataType_s out{};
 
-    auto bms = BMSDriver_t::instance().get_bms_data();
-    auto fault_data = BMSFaultDataManager_t::instance().get_fault_data();
+    auto bms = BMSDriverInstance_t::instance().get_bms_data();
+    auto fault_data = BMSFaultDataManagerInstance_t::instance().get_fault_data();
     // Copy per-cell data
     out.cell_voltages = bms.voltages;
     out.cell_temps = bms.cell_temperatures;
@@ -44,7 +44,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.min_measured_ts_out_voltage = watchdog.min_measured_ts_out_voltage;
     out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage; 
     // SoC/SoH placeholders (leave unchanged here)
-    out.SoC = ACUController_t::instance().get_status().SoC;
+    out.SoC = ACUControllerInstance::instance().get_status().SoC;
 
     return out;
 }
@@ -55,7 +55,6 @@ void initialize_all_interfaces()
     SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
     Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
     analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
-
     /* Watchdog Interface */
     WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
                                     ACUInterfaces::WD_KICK_PIN,
@@ -67,13 +66,13 @@ void initialize_all_interfaces()
     FaultLatchManagerInstance::instance().set_shdn_out_latched(true); // Start shdn out latch cleared
 
     /* BMS Driver */
-    BMSDriver_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
-    BMSDriver_t::instance().init();
+    BMSDriverInstance_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
+    BMSDriverInstance_t::instance().init();
     /* Get Initial Pack Voltage for SoC and SoH Approximations */
-    auto data = BMSDriver_t::instance().read_data();
+    auto data = BMSDriverInstance_t::instance().read_data();
 
-    BMSFaultDataManager_t::create();
-    BMSFaultDataManager_t::instance().update_from_valid_packets(data.valid_read_packets);
+    BMSFaultDataManagerInstance_t::create();
+    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
@@ -117,8 +116,9 @@ HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT
 
 HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    auto data = BMSDriver_t::instance().read_data();
-    BMSFaultDataManager_t::instance().update_from_valid_packets(data.valid_read_packets);
+    auto data = BMSDriverInstance_t::instance().read_data();
+    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
+
     // print_bms_data(data);
     
     return HT_TASK::TaskResponse::YIELD;
@@ -126,7 +126,11 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    BMSDriver_t::instance().write_configuration(ACUController_t::instance().get_status().cell_balancing_statuses);
+    
+    auto data = BMSDriverInstance_t::instance().get_bms_data();
+    static std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses;
+    ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), data.voltages.data(), ACUConstants::NUM_CELLS, data.min_cell_voltage);
+    BMSDriverInstance_t::instance().write_configuration(cell_balancing_statuses);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -153,14 +157,13 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 
 HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), ADCInterfaceInstance::instance().read_shdn_out());
-    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
+    ACUCANInterface::send_all_CAN_msgs(ACUCANBuffers::ccu_can_tx_buffer, &ACUCANInterface::CCU_CAN);
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     FaultLatchManagerInstance::instance().clear_if_not_faulted(ACUStateMachineInstance::instance().get_state() == ACUState_e::FAULTED);
-    FaultLatchManagerInstance::instance().update_imd_and_bms_latches(ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()), ACUController_t::instance().get_status().bms_ok);
+    FaultLatchManagerInstance::instance().update_imd_and_bms_latches(ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()), ACUControllerInstance::instance().get_status().bms_ok);
 
     //TODO: Where should I get veh_shdn_out_latched from?
     VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched, FaultLatchManagerInstance::instance().get_latches().shdn_out_latched);
@@ -170,32 +173,43 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 }
 
 HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    auto data = make_acu_all_data();
-    CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>(data);
-    CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
-    CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
+    auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
+    CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message(ACUControllerInstance::instance().get_status().charging_enabled);
+    CCUInterfaceInstance::instance().handle_enqueue_acu_voltage_statistics_CAN_message(
+        bms_data.max_cell_voltage,
+        bms_data.min_cell_voltage,
+        bms_data.total_voltage,
+        bms_data.avg_cell_voltage 
+    );
+    CCUInterfaceInstance::instance().handle_enqueue_acu_temp_statistics_CAN_message(
+        bms_data.max_board_temp,
+        bms_data.max_cell_temp,
+        bms_data.min_cell_temp
+    );
     return HT_TASK::TaskResponse::YIELD;
 }
 
 
 HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    if (CCUInterfaceInstance::instance().is_connected_to_CCU()) {
-        CCUInterfaceInstance::instance().handle_enqueue_acu_voltages_CAN_message();
+    auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
+        CCUInterfaceInstance::instance().handle_enqueue_acu_cell_voltages_CAN_message(bms_data.voltages.data(), ACUConstants::VOLTAGE_CELLS_PER_CHIP.data(), ACUConstants::NUM_CHIPS);
     }
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    if (CCUInterfaceInstance::instance().is_connected_to_CCU()) {
-        CCUInterfaceInstance::instance().handle_enqueue_acu_temps_CAN_message();
+    auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
+    if (CCUInterfaceInstance::instance().is_connected_to_CCU(sys_time::micros_to_millis(sysMicros))) {
+        CCUInterfaceInstance::instance().handle_enqueue_acu_cell_temps_CAN_message(bms_data.cell_temperatures.data(), ACUConstants::TEMP_CELLS_PER_CHIP.data(), ACUConstants::NUM_CHIPS);
     }
     return HT_TASK::TaskResponse::YIELD;
 }
 
 HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
-    process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
-    process_ring_buffer(ACUCANInterfaceImpl::em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
+    etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)>::create<ACUCANInterface::acu_CAN_recv>();
+    process_ring_buffer(ACUCANBuffers::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv);
+    process_ring_buffer(ACUCANBuffers::em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -277,7 +291,7 @@ void print_bms_data(bms_data data)
         temp_index++;
     }
     Serial.print("Number of Global Faults: ");
-    Serial.println(BMSFaultDataManager_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
+    Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
     Serial.println("Number of Consecutive Faults Per Chip: ");
     for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
         Serial.print("CHIP ");
@@ -304,7 +318,7 @@ void print_bms_data(bms_data data)
 
 HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    if (ACUController_t::instance().get_status().bms_ok)
+    if (ACUControllerInstance::instance().get_status().bms_ok)
     {
         Serial.print("BMS is OK\n");
     }
@@ -329,36 +343,36 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println();
 
     Serial.print("Pack Voltage: ");
-    Serial.println(BMSDriver_t::instance().get_bms_data().total_voltage, 4);
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().total_voltage, 4);
 
     Serial.print("Minimum Cell Voltage: ");
-    Serial.println(BMSDriver_t::instance().get_bms_data().min_cell_voltage, 4);
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);
 
     Serial.print("Maximum Cell Voltage: ");
-    Serial.println(BMSDriver_t::instance().get_bms_data().max_cell_voltage, 4);
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_voltage, 4);
 
     Serial.print("Maximum Board Temp: ");
-    Serial.println(BMSDriver_t::instance().get_bms_data().max_board_temp, 4);
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_board_temp, 4);
 
     Serial.print("Maximum Cell Temp: ");
-    Serial.println(BMSDriver_t::instance().get_bms_data().max_cell_temp, 4);
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
 
-    Serial.printf("Cell Balance Statuses: %d\n", ACUController_t::instance().get_status().cell_balancing_statuses);
+    // Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance::instance().calculate_cell_balance_statuses());
 
     Serial.print("ACU State: ");
     Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
 
     Serial.print("CCU Charging Requested? : ");
-    Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
+    Serial.println(CCUInterfaceInstance::instance().is_charging_with_balancing_requested(sys_time::hal_millis()) ? "YES" : "NO");
     Serial.print("State of Charge: ");
-    Serial.print(ACUController_t::instance().get_status().SoC * 100, 3);
+    Serial.print(ACUControllerInstance::instance().get_status().SoC * 100, 3);
     Serial.println("%");
     Serial.print("Measured GLV: ");
     Serial.println("V");
     Serial.println();
 
     Serial.print("Number of Global Faults: ");
-    Serial.println(BMSFaultDataManager_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
+    Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
     // Serial.println("Number of Consecutive Faults Per Chip: ");
     // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
     //     Serial.print("CHIP ");
