@@ -87,6 +87,16 @@ namespace bms_driver_defaults
     constexpr const float CV_ADC_LSB_VOLTAGE = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
 }
 
+namespace ref_max_min_defaults
+{
+    constexpr const volt TOTAL_VOLTAGE = 0;
+    constexpr const volt MAX_CELL_VOLTAGE = 0;
+    constexpr const volt MIN_CELL_VOLTAGE = 10;
+    constexpr const celsius MIN_CELL_TEMP = 80;
+    constexpr const celsius MAX_CELL_TEMP = 0;
+    constexpr const celsius MAX_BOARD_TEMP = 0;
+};
+
 struct ValidPacketData_s
 {
     bool valid_read_cells_1_to_3 = true;
@@ -121,13 +131,13 @@ struct BMSData_s
 
 struct ReferenceMaxMin_s
 {
-    volt total_voltage = 0;
-    volt max_cell_voltage = 0;
-    volt min_cell_voltage = 10;
-    celsius min_cell_temp = 80;
-    celsius max_cell_temp = 0;
-    celsius max_board_temp = 0;
-    celsius total_thermistor_temps = 0;
+    volt total_voltage;
+    volt max_cell_voltage;
+    volt min_cell_voltage;
+    celsius min_cell_temp;
+    celsius max_cell_temp;
+    celsius max_board_temp;
+    celsius total_thermistor_temps;
 };
 
 struct BMSDriverGroupConfig_s

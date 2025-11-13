@@ -121,7 +121,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
 
     // print_bms_data(data);
-    /* Store into ACUCoreDataInstance */
+    
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -160,15 +160,11 @@ HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, c
 
 HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     FaultLatchManagerInstance::instance().clear_if_not_faulted(ACUStateMachineInstance::instance().get_state() == ACUState_e::FAULTED);
-    FaultLatchManagerInstance::instance().update_imd_and_bms_latches(ACUControllerInstance_t::instance().get_status().bms_ok, ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()));
+    FaultLatchManagerInstance::instance().update_imd_and_bms_latches(ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()), ACUController_t::instance().get_status().bms_ok);
 
     //TODO: Where should I get veh_shdn_out_latched from?
     VCRInterfaceInstance::instance().set_monitoring_data(!FaultLatchManagerInstance::instance().get_latches().imd_fault_latched, !FaultLatchManagerInstance::instance().get_latches().bms_fault_latched, FaultLatchManagerInstance::instance().get_latches().shdn_out_latched);
     VCRInterfaceInstance::instance().handle_enqueue_acu_ok_CAN_message();
-    
-    //TODO: Put this in fault manager
-    // Reset shdn out latch state
-    // ACUDataInstance::instance().veh_shdn_out_latched = true;
 
     return HT_TASK::TaskResponse::YIELD;
 }
