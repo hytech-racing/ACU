@@ -35,7 +35,7 @@ TEST(ACUControllerTesting, initial_state)
 
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cell_balancing_statuses, cb);
-    ASSERT_EQ(status.charging_enabled, false);
+    ASSERT_EQ(status.cell_balancing_requested, false);
 
     ASSERT_EQ(status.last_time_ov_fault_not_present, 0);
     ASSERT_EQ(status.last_time_uv_fault_not_present, 0);
@@ -74,7 +74,7 @@ TEST(ACUControllerTesting, charging_state)
 
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cell_balancing_statuses, cb);
-    ASSERT_EQ(status.charging_enabled, true);
+    ASSERT_EQ(status.cell_balancing_requested, true);
 
     ASSERT_EQ(status.last_time_ov_fault_not_present, start_time);
     ASSERT_EQ(status.last_time_uv_fault_not_present, start_time);
@@ -114,7 +114,7 @@ TEST(ACUControllerTesting, faulted_state)
 
     ASSERT_EQ(status.has_fault, true);
     ASSERT_EQ(status.cell_balancing_statuses, cb);
-    ASSERT_EQ(status.charging_enabled, false);
+    ASSERT_EQ(status.cell_balancing_enabled, false);
 
     ASSERT_EQ(status.last_time_ov_fault_not_present, init_time); // because they're past thresh...
     ASSERT_EQ(status.last_time_uv_fault_not_present, init_time);
@@ -161,7 +161,7 @@ TEST(ACUControllerTesting, ir_compensation_discharge)
     // Should NOT fault - IR compensation should prevent false UV fault during high discharge
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cell_balancing_statuses, cb);
-    ASSERT_EQ(status.charging_enabled, false);
+    ASSERT_EQ(status.cell_balancing_requested, false);
 
     // All timestamps should be updated (no faults)
     ASSERT_EQ(status.last_time_ov_fault_not_present, start_time);
@@ -209,7 +209,7 @@ TEST(ACUControllerTesting, ir_compensation_charge)
     // Should NOT fault - IR compensation should prevent false OV fault during charging
     ASSERT_EQ(status.has_fault, false);
     ASSERT_EQ(status.cell_balancing_statuses, cb);
-    ASSERT_EQ(status.charging_enabled, false);
+    ASSERT_EQ(status.cell_balancing_requested, false);
 
     // All timestamps should be updated (no faults)
     ASSERT_EQ(status.last_time_ov_fault_not_present, start_time); // Key assertion: OV not faulted due to IR comp

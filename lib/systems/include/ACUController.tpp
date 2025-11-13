@@ -11,7 +11,7 @@ void ACUController<num_cells, num_celltemps, num_boardtemps>::init(time_ms syste
     _acu_state.last_time_invalid_packet_present = system_start_time;
     _acu_state.prev_bms_time_stamp = system_start_time;
     _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0 : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
-    _acu_state.balancing_enabled = false;
+    _acu_state.cell_balancing_enabled = false;
 }
 
 
@@ -29,21 +29,21 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     }
     _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp);
     // Cell balancing calculations
-    bool previously_balancing = _acu_state.balancing_enabled;
+    bool previously_balancing = _acu_state.cell_balancing_enabled;
 
     bool balance_enableable = ((previously_balancing && (input_state.max_board_temp < _acu_parameters.thresholds.balance_temp_limit_c)) ||
                                (!previously_balancing && (input_state.max_board_temp < _acu_parameters.thresholds.balance_enable_temp_c)));
 
-    bool allow_balancing = ((balance_enableable && _acu_state.charging_enabled));
+    bool allow_balancing = ((balance_enableable && _acu_state.cell_balancing_requested));
 
     if (allow_balancing)
     {
-        _acu_state.balancing_enabled = true;
+        _acu_state.cell_balancing_enabled = true;
         _acu_state.cell_balancing_statuses = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
     }
     else
     { // Fill with zeros, no balancing
-        _acu_state.balancing_enabled = false;
+        _acu_state.cell_balancing_enabled = false;
         _acu_state.cell_balancing_statuses.fill(0);
     }
 
@@ -79,7 +79,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
         _acu_state.last_time_pack_uv_fault_not_present = current_millis;
     }
     // Update temp fault time stamps
-    celsius ot_thresh = _acu_state.charging_enabled ? _acu_parameters.thresholds.charging_ot_thresh_c : _acu_parameters.thresholds.running_ot_thresh_c;
+    celsius ot_thresh = _acu_state.cell_balancing_requested ? _acu_parameters.thresholds.charging_ot_thresh_c : _acu_parameters.thresholds.running_ot_thresh_c;
     if (input_state.max_board_temp < ot_thresh || has_invalid_packet)
     { // charging ot thresh will be the lower of the 2
         _acu_state.last_time_board_ot_fault_not_present = current_millis;
