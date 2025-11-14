@@ -209,7 +209,6 @@ private:
      * 
      */
     static constexpr float STABILIZED_CURRENT_THRESH = 0.05; // Absolute value threshold
-    static constexpr float STABILIZED_VOLTAGE_THRESH = 0.05;
     static constexpr uint32_t MIN_STABILIZED_CURRENT_DURATION_MS = 1800000;  // 30 minutes in milliseconds
 };
 

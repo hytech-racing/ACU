@@ -127,19 +127,19 @@ uint16_t ACUController<num_cells, num_celltemps, num_boardtemps>::_get_soc_from_
     static constexpr size_t table_size = 101;
 
     if (avg_cell_voltage >= VOLTAGE_LOOKUP_TABLE[0]) {
-        return 100;
+        return 1.0f;
     }
     if (avg_cell_voltage <= VOLTAGE_LOOKUP_TABLE[table_size - 1]) {
-        return 0;
+        return 0.0f;
     }
 
     for (size_t i = 0; i < table_size - 1; i++) {
         if (avg_cell_voltage <= VOLTAGE_LOOKUP_TABLE[i] && avg_cell_voltage > VOLTAGE_LOOKUP_TABLE[i + 1]) {
-            return 100 - i;
+            return (100.0f - i) / 100.0f;
         }
     }
 
-    return 0;
+    return 0.0f;
 }
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
