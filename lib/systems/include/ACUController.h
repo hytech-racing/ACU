@@ -117,12 +117,12 @@ public:
      * @post updates configuration bytes and sends configuration command
      * @param pack_current current flowing from the pack in amps (negative during discharge, positive during charge)
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current, float em_voltage);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current);
 
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
      */
-    float get_state_of_charge(float em_current, float em_voltage, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis);
+    float get_state_of_charge(float em_current, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis);
 
     ACUStatus get_status() const { return _acu_state; };
 

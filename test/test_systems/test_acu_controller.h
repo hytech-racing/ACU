@@ -59,6 +59,7 @@ TEST(ACUControllerTesting, charging_state)
     BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data= {
         3.7, // min cell v
         3.85, // max cell v
+        3.775, // avg cell v
         430.00, // pack v
         {3.7, 3.81, 3.7, 3.7, 3.81, 3.76, 3.7, 3.7, 3.84, 3.85, 3.75, 3.75} // individual cell voltage data
     };
@@ -98,6 +99,7 @@ TEST(ACUControllerTesting, faulted_state)
     BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data= {
         3.03, // min cell v
         4.21, // max cell v
+        3.775, // avg cell v
         430.00, // pack v
         {3.18, 3.2, 3.03, 3.21, 3.10, 3.12, 3.11, 3.12, 3.18, 3.19, 4.21, 3.06}, // individual cell voltage data
         70,                                                                      // cell temp c
@@ -144,6 +146,7 @@ TEST(ACUControllerTesting, ir_compensation_discharge)
     BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data = {
         3.05,                                                                    // min cell v - EXACTLY at UV threshold to trigger IR compensation
         4.15,                                                                    // max cell v - well below OV threshold
+        3.775,                                                                   // avg cell v
         430.00,                                                                  // pack v
         {3.18, 3.2, 3.05, 3.21, 3.10, 3.12, 3.11, 3.12, 3.18, 3.19, 4.15, 3.08}, // individual cell voltage data
         40,                                                                      // cell temp c - normal
@@ -192,6 +195,7 @@ TEST(ACUControllerTesting, ir_compensation_charge)
     BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data = {
         4.10,                                                                     // min cell v - normal
         4.20,                                                                     // max cell v - EXACTLY at OV threshold to trigger IR compensation
+        3.775,                                                                   // avg cell v
         500.00,                                                                   // pack v - higher during charge
         {4.10, 4.15, 4.12, 4.13, 4.14, 4.11, 4.16, 4.17, 4.18, 4.20, 4.15, 4.14}, // individual cell voltage data
         40,                                                                       // cell temp c - normal
@@ -237,6 +241,7 @@ TEST(ACUControllerTesting, cell_overvoltage_fault_persistence)
     BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data = {
         3.70,                                                                     // min cell v - normal
         4.21,                                                                     // max cell v - ABOVE OV threshold
+        3.775,                                                                   // avg cell v
         500.00,                                                                   // pack v - normal
         {3.70, 3.75, 3.72, 3.71, 3.80, 3.76, 3.74, 3.73, 3.78, 4.21, 3.77, 3.79}, // individual cell voltage data
         40,                                                                       // cell temp c - normal
@@ -280,6 +285,7 @@ TEST(ACUControllerTesting, cell_undervoltage_fault_persistence)
     BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data = {
         3.04,                                                                     // min cell v - BELOW UV threshold
         4.10,                                                                     // max cell v - normal
+        3.775,                                                                   // avg cell v
         380.00,                                                                   // pack v - normal
         {3.70, 3.75, 3.04, 3.71, 3.80, 3.76, 3.74, 3.73, 3.78, 3.85, 3.77, 3.79}, // individual cell voltage data
         40,                                                                       // cell temp c - normal

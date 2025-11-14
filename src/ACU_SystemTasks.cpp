@@ -59,8 +59,7 @@ HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const
     ACUControllerInstance_t::instance().evaluate_accumulator(
         sys_time::hal_millis(), 
         BMSDriverInstance_t::instance().get_bms_core_data(), 
-        EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_current,
-        EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_voltage
+        EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_current
     );
     return HT_TASK::TaskResponse::YIELD;
 }
