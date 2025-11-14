@@ -27,7 +27,7 @@ ACUController<num_cells, num_celltemps, num_boardtemps>::evaluate_accumulator(ti
     { // meaning that at least one of the packets is invalid
         has_invalid_packet = true;
     }
-    _acu_state.SoC = get_state_of_charge(em_current, em_voltage, current_millis - _acu_state.prev_bms_time_stamp, input_state.avg_cell_voltage);
+    _acu_state.SoC = get_state_of_charge(em_current, em_voltage, current_millis - _acu_state.prev_bms_time_stamp, input_state.avg_cell_voltage, current_millis);
     // Cell balancing calculations
     bool previously_balancing = _acu_state.balancing_enabled;
 
@@ -124,6 +124,8 @@ std::array<bool, num_cells> ACUController<num_cells, num_celltemps, num_boardtem
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 uint16_t ACUController<num_cells, num_celltemps, num_boardtemps>::_get_soc_from_voltage(volt avg_cell_voltage)
 {
+    static constexpr size_t table_size = 101;
+    
     if (avg_cell_voltage >= VOLTAGE_LOOKUP_TABLE[0]) {
         return 100;
     }
@@ -141,7 +143,7 @@ uint16_t ACUController<num_cells, num_celltemps, num_boardtemps>::_get_soc_from_
 }
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
-float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_charge(float em_current, float em_voltage, uint32_t delta_time_ms, volt avg_cell_voltage)
+float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_charge(float em_current, float em_voltage, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis)
 {
     // we will use coulomb counting for the normal implementation of getting state of charge
     // whenever the car has been at rest (em voltage and em current at 0) for 30 mins, then we can correct the SoC to the voltage look up table value

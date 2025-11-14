@@ -121,7 +121,7 @@ public:
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
      */
-    float get_state_of_charge(float em_current, float em_voltage, uint32_t delta_time_ms, volt avg_cell_voltage);
+    float get_state_of_charge(float em_current, float em_voltage, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis);
 
     ACUStatus get_status() const { return _acu_state; };
 
