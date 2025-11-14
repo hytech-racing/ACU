@@ -7,6 +7,7 @@ template<size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 struct BMSCoreData_s {
     volt min_cell_voltage;
     volt max_cell_voltage;
+    volt avg_cell_voltage;
     volt pack_voltage;
     std::array<volt, num_cells> voltages;
     celsius max_cell_temp; 

@@ -22,13 +22,6 @@ namespace acu_controller_default_parameters
     constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
 }
 
-template <size_t table_size>
-struct OCVSOCLookupTable_s
-{
-    std::array<volt, table_size> ocv_points;
-    std::array<float, table_size> soc_points;
-};
-
 template <size_t num_cells>
 struct ACUControllerData_s
 {
@@ -40,6 +33,7 @@ struct ACUControllerData_s
     time_ms last_time_invalid_packet_present;
     time_ms prev_bms_time_stamp;
     time_ms prev_em_time_stamp;
+    time_ms first_zero_current_time_stamp;
     float SoC;
     bool has_fault;
     bool bms_ok;
@@ -122,12 +116,12 @@ public:
      * @post updates configuration bytes and sends configuration command
      * @param pack_current current flowing from the pack in amps (negative during discharge, positive during charge)
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current);
+    ACUStatus evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current, float em_voltage);
 
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
      */
-    float get_state_of_charge(float em_current, uint32_t delta_time_ms);
+    float get_state_of_charge(float em_current, float em_voltage, uint32_t delta_time_ms, volt avg_cell_voltage);
 
     ACUStatus get_status() const { return _acu_state; };
 
@@ -146,6 +140,11 @@ private:
      * @post _acu_state.cell_balance_statuses will have the new values
      */
     std::array<bool, num_cells> _calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage);
+
+        /**
+     * @brief Closest index that will represent the SoC of the average voltage on the cells
+     */
+    uint16_t _get_soc_from_voltage(volt avg_cell_voltage);
 
     /**
      * @pre data has been gathered
@@ -203,6 +202,14 @@ private:
         3.56, 3.56, 3.549, 3.549, 3.549, 3.549, 3.538, 3.538, 3.551, 3.546, 3.535, 3.535, 3.535, 3.53, 3.524, 3.524, 3.524, 3.513,
         3.513, 3.513, 3.503, 3.503, 3.492, 3.492, 3.492, 3.487, 3.481, 3.481, 3.476, 3.471, 3.46, 3.46, 3.449, 3.444, 3.428, 3.428,
         3.417, 3.401, 3.39, 3.379, 3.363, 3.331, 3.299, 3.267, 3.213, 3.149, 3.041, 3, 3, 0};
+
+    /**
+     * @brief Minimum current and voltage thresholds for the car to be considered stabilized
+     * 
+     */
+    static constexpr float STABILIZED_CURRENT_THRESH = 0.05; // Absolute value threshold
+    static constexpr float STABILIZED_VOLTAGE_THRESH = 0.05;
+    static constexpr uint32_t MIN_STABILIZED_CURRENT_DURATION_MS = 1800000;  // 30 minutes in milliseconds
 };
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
