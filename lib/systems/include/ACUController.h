@@ -2,6 +2,7 @@
 #define ACUCONTROLLER_H
 
 #include <array>
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <cstdint>
