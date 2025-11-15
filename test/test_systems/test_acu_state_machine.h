@@ -75,13 +75,13 @@ TEST (ACUStateMachineTesting, initial_state) {
     has_imd_fault_var = false;
     received_valid_shdn_out_var = false;
 
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP); // initial
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::SHDN_OUT_VOLTAGE_LOW); // initial
     state_machine.tick_state_machine(0);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::SHDN_OUT_VOLTAGE_LOW);
 
     received_valid_shdn_out_var = true;
     state_machine.tick_state_machine(0);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::SHDN_OUT_VOLTAGE_HIGH);
 }   
 
 TEST (ACUStateMachineTesting, CCU_msg_state) {
@@ -90,18 +90,20 @@ TEST (ACUStateMachineTesting, CCU_msg_state) {
     has_imd_fault_var = false;
     received_valid_shdn_out_var = false;
 
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE); // initial
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::SHDN_OUT_VOLTAGE_HIGH); // initial
 
     received_CCU_msg_var = true;
+    received_valid_shdn_out_var = true;
     ASSERT_EQ(charging_en, false);
 
     state_machine.tick_state_machine(0);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::CHARGING);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::REQUEST_CELL_BALANCING);
     ASSERT_EQ(charging_en, true);
 
     received_CCU_msg_var = false;
+    received_valid_shdn_out_var = false;
     state_machine.tick_state_machine(0);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::SHDN_OUT_VOLTAGE_HIGH);
     ASSERT_EQ(charging_en, false);
 }   
 
@@ -111,7 +113,7 @@ TEST (ACUStateMachineTesting, fault_states) {
     has_imd_fault_var = false;
     received_valid_shdn_out_var = true;
 
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE); // initial
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::SHDN_OUT_VOLTAGE_HIGH); // initial
 
     has_bms_fault_var = true;
 
@@ -140,10 +142,10 @@ TEST (ACUStateMachineTesting, fault_states) {
 
     has_bms_fault_var = false;
     state_machine.tick_state_machine(0);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::SHDN_OUT_VOLTAGE_LOW);
 
     state_machine.tick_state_machine(0);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::SHDN_OUT_VOLTAGE_HIGH);
 }   
 
 

@@ -11,10 +11,12 @@
 #include "WatchdogInterface.h"
 #include "WatchdogMetrics.h"
 #include "ACUEthernetInterface.h"
-#include "ACUCANInterfaceImpl.h"
+#include "ACUCANInterface.h"
+#include "CCUInterface.h"
 #include "ADCInterface.h"
 #include "FaultLatchManager.h"
 #include "SystemTimeInterface.h"
+#include "ACUCANBuffers.h"
 /* For Debugging */
 #include "ACUStateMachine.h"
 
@@ -22,10 +24,9 @@
 #include <chrono>
 
 using chip_type = LTC6811_Type_e;
-using BMSDriver_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
-using BMSFaultDataManager_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
-using ACUController_t = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>;
-
+using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
+using BMSFaultDataManagerInstance_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
+using ACUControllerInstance_t = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>;
 /**
  * Init Functions - to be called in setup
  */
@@ -51,6 +52,8 @@ void initialize_all_interfaces();
 ::HT_TASK::TaskResponse enqueue_ACU_all_voltages_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+::HT_TASK::TaskResponse enqueue_ACU_all_boards_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 

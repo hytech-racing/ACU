@@ -36,8 +36,8 @@ struct ACUControllerData_s
     bool has_fault;
     bool bms_ok;
     uint32_t last_bms_not_ok_eval;
-    bool charging_enabled;
-    bool balancing_enabled;
+    bool cell_balancing_requested;
+    bool cell_balancing_enabled;
     std::array<bool, num_cells> cell_balancing_statuses;
 };
 
@@ -124,11 +124,11 @@ public:
 
     void enableCharging()
     {
-        _acu_state.charging_enabled = true;
+        _acu_state.cell_balancing_requested = true;
     }
     void disableCharging()
     {
-        _acu_state.charging_enabled = false;
+        _acu_state.cell_balancing_requested = false;
     }
 private:
     /**
