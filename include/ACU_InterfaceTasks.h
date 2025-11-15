@@ -11,12 +11,10 @@
 #include "WatchdogInterface.h"
 #include "WatchdogMetrics.h"
 #include "ACUEthernetInterface.h"
-#include "ACUCANInterface.h"
-#include "CCUInterface.h"
+#include "ACUCANInterfaceImpl.h"
 #include "ADCInterface.h"
 #include "FaultLatchManager.h"
 #include "SystemTimeInterface.h"
-#include "ACUCANBuffers.h"
 /* For Debugging */
 #include "ACUStateMachine.h"
 

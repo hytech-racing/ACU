@@ -17,7 +17,7 @@ bool initialize_all_systems()
 
     /* Delegate Function Definitions */
     etl::delegate<bool()> charge_state_request = etl::delegate<bool()>::create([]() -> bool
-                                                                            { return CCUInterfaceInstance::instance().is_charging_with_balancing_requested(sys_time::hal_millis()); });
+                                                                            { return CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested; });
 
     etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool
                                                                         { return !ACUControllerInstance::instance().get_status().bms_ok; });

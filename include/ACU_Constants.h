@@ -56,20 +56,9 @@ namespace ACUConstants
 {  
     constexpr size_t NUM_CELLS = 126;
     constexpr size_t NUM_CHIPS = 12;
+    constexpr size_t NUM_CELL_TEMPS = 48;
     constexpr size_t NUM_CHIP_SELECTS = 2;
-    constexpr size_t NUM_CHIPS_PER_CS = 6;
-    constexpr size_t DATA_PER_CHIP_GROUP = 3;
-
-    constexpr std::array<size_t, NUM_CHIPS> TEMP_CELLS_PER_CHIP = {
-        4, 4, 4, 4, 4, 4,
-        4, 4, 4, 4, 4, 4
-    };
-    constexpr std::array<size_t, NUM_CHIPS> VOLTAGE_CELLS_PER_CHIP = {
-        12, 9, 12, 9, 12, 9,
-        12, 9, 12, 9, 12, 9
-    };
-
-
+    
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
     

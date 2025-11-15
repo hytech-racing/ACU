@@ -1,5 +1,5 @@
 #include "EMInterface.h"
-#include "ACUCANInterface.h"
+#include "ACUCANInterfaceImpl.h"
 
 void EMInterface::receive_EM_measurement_message(const CAN_message_t &msg, uint32_t curr_millis) {
     EM_MEASUREMENT_t em_msg;
