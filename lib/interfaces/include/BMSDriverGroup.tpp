@@ -116,18 +116,14 @@ constexpr std::array<uint16_t, 256> BMSDriverGroup<num_chips, num_chip_selects, 
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSCoreData_t
-BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_core_data()
+BMSCoreData_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_core_data()
     {
-        BMSCoreData_t out{};
+        BMSCoreData_s out{};
 
         // Basic voltages
         out.min_cell_voltage = _bms_data.min_cell_voltage;
         out.max_cell_voltage = _bms_data.max_cell_voltage;
         out.pack_voltage = _bms_data.total_voltage; 
-
-        // Per-cell array (sizes must match)
-        out.voltages = _bms_data.voltages;
 
         // Temps
         out.max_cell_temp  = _bms_data.max_cell_temp;
@@ -160,11 +156,11 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
     
     // Trigger ADC conversions at the start of each complete 6-group read cycle
     // This ensures all groups (A, B, C, D, AUX_A, AUX_B) read from the same timestamp
-    if (_current_read_group == CurrentReadGroup_e::AUX_GROUP_A)
+    if (_current_read_group == ReadGroup_e::AUX_GROUP_A)
     {
         _start_cell_voltage_ADC_conversion();
     }
-    if (_current_read_group == CurrentReadGroup_e::CV_GROUP_A)
+    if (_current_read_group == ReadGroup_e::CV_GROUP_A)
     {
         _start_GPIO_ADC_conversion();
     }
@@ -187,27 +183,27 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         _start_wakeup_protocol(cs);
 
         switch (_current_read_group) {
-            case CurrentReadGroup_e::CV_GROUP_A:
+            case ReadGroup_e::CV_GROUP_A:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A, -1); // The address should never be used here
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentReadGroup_e::CV_GROUP_B:
+            case ReadGroup_e::CV_GROUP_B:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentReadGroup_e::CV_GROUP_C:
+            case ReadGroup_e::CV_GROUP_C:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_C, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentReadGroup_e::CV_GROUP_D:
+            case ReadGroup_e::CV_GROUP_D:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_D, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentReadGroup_e::AUX_GROUP_A:
+            case ReadGroup_e::AUX_GROUP_A:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
-            case CurrentReadGroup_e::AUX_GROUP_B:
+            case ReadGroup_e::AUX_GROUP_B:
                 cmd_pec = _generate_CMD_PEC(CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B, -1);
                 spi_data = ltc_spi_interface::read_registers_command<data_size>(_chip_select[cs], cmd_pec);
                 break;
@@ -229,32 +225,32 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             //relevant for GPIO reading
             bool current_group_valid = false;
             switch(_current_read_group) {
-                case CurrentReadGroup_e::CV_GROUP_A:
+                case ReadGroup_e::CV_GROUP_A:
                     current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = current_group_valid;
                     start_index = 0;
                     break;
-                case CurrentReadGroup_e::CV_GROUP_B:
+                case ReadGroup_e::CV_GROUP_B:
                     current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = current_group_valid;
                     start_index = 3;
                     break;
-                case CurrentReadGroup_e::CV_GROUP_C:
+                case ReadGroup_e::CV_GROUP_C:
                     current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = current_group_valid;
                     start_index = 6;
                     break;
-                case CurrentReadGroup_e::CV_GROUP_D:
+                case ReadGroup_e::CV_GROUP_D:
                     current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
                     _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = current_group_valid;
                     start_index = 9;
                     break;
-                case CurrentReadGroup_e::AUX_GROUP_A:
+                case ReadGroup_e::AUX_GROUP_A:
                     current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
                     _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = current_group_valid;
                     start_index = 0;
                     break;
-                case CurrentReadGroup_e::AUX_GROUP_B:
+                case ReadGroup_e::AUX_GROUP_B:
                     current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
                     _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = current_group_valid;
                     start_index = 3;
@@ -265,18 +261,18 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
             }
 
             // Skip processing if current group packet is invalid and skip cells 9-12 for group D cuz they don't exist
-            if (!current_group_valid || (_current_read_group == CurrentReadGroup_e::CV_GROUP_D && cells_per_chip == 9)) {
+            if (!current_group_valid || (_current_read_group == ReadGroup_e::CV_GROUP_D && cells_per_chip == 9)) {
                 continue;
             }
 
-            if (_current_read_group == CurrentReadGroup_e::AUX_GROUP_B) {
+            if (_current_read_group == ReadGroup_e::AUX_GROUP_B) {
                     std::copy_n(spi_data.begin() + (8 * chip), 4, spi_response.begin());
                     std::fill(spi_response.begin() + 4, spi_response.end(), 0); // padding to make it 6 bytes
             } else {
                 std::copy_n(spi_data.begin() + (8 * chip), 6, spi_response.begin());
             }
 
-            if (_current_read_group <= CurrentReadGroup_e::CV_GROUP_D) {
+            if (_current_read_group <= ReadGroup_e::CV_GROUP_D) {
                 _load_cell_voltages(_bms_data, _max_min_reference, spi_response, chip_index, start_index);
             } else {
                 _load_auxillaries(_bms_data, _max_min_reference, spi_response, chip_index, start_index);
@@ -288,14 +284,14 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
     _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_cells;
     _bms_data.average_cell_temperature = _max_min_reference.total_thermistor_temps / (4 * num_chips);
     
-    if(_current_read_group == CurrentReadGroup_e::CV_GROUP_D) {
+    if(_current_read_group == ReadGroup_e::CV_GROUP_D) {
         _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
         _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
         // Reset max and mins
         _max_min_reference.min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE;
         _max_min_reference.max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE;
     }
-    if(_current_read_group == CurrentReadGroup_e::AUX_GROUP_B) {
+    if(_current_read_group == ReadGroup_e::AUX_GROUP_B) {
         _bms_data.max_cell_temp = _max_min_reference.max_cell_temp;
         _bms_data.min_cell_temp = _max_min_reference.min_cell_temp;
         _bms_data.max_board_temp = _max_min_reference.max_board_temp;
@@ -702,17 +698,17 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 const char* BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_current_read_group_name()
 {
     switch (_current_read_group) {
-        case CurrentReadGroup_e::CV_GROUP_A:
+        case ReadGroup_e::CV_GROUP_A:
             return "GROUP_A";
-        case CurrentReadGroup_e::CV_GROUP_B:
+        case ReadGroup_e::CV_GROUP_B:
             return "GROUP_B";
-        case CurrentReadGroup_e::CV_GROUP_C:
+        case ReadGroup_e::CV_GROUP_C:
             return "GROUP_C";
-        case CurrentReadGroup_e::CV_GROUP_D:
+        case ReadGroup_e::CV_GROUP_D:
             return "GROUP_D";
-        case CurrentReadGroup_e::AUX_GROUP_A:
+        case ReadGroup_e::AUX_GROUP_A:
             return "AUX_A";
-        case CurrentReadGroup_e::AUX_GROUP_B:
+        case ReadGroup_e::AUX_GROUP_B:
             return "AUX_B";
         default:
             return "UNKNOWN";
@@ -727,23 +723,23 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::last_read_all_valid
         const auto& validity = _bms_data.valid_read_packets[chip];
 
         switch (_current_read_group) {
-            case CurrentReadGroup_e::CV_GROUP_A:
+            case ReadGroup_e::CV_GROUP_A:
                 if (!validity.valid_read_cells_1_to_3) return false;
                 break;
-            case CurrentReadGroup_e::CV_GROUP_B:
+            case ReadGroup_e::CV_GROUP_B:
                 if (!validity.valid_read_cells_4_to_6) return false;
                 break;
-            case CurrentReadGroup_e::CV_GROUP_C:
+            case ReadGroup_e::CV_GROUP_C:
                 if (!validity.valid_read_cells_7_to_9) return false;
                 break;
-            case CurrentReadGroup_e::CV_GROUP_D:
+            case ReadGroup_e::CV_GROUP_D:
                 // Skip 9-cell chips (odd indices)
                 if (chip % 2 == 0 && !validity.valid_read_cells_10_to_12) return false;
                 break;
-            case CurrentReadGroup_e::AUX_GROUP_A:
+            case ReadGroup_e::AUX_GROUP_A:
                 if (!validity.valid_read_gpios_1_to_3) return false;
                 break;
-            case CurrentReadGroup_e::AUX_GROUP_B:
+            case ReadGroup_e::AUX_GROUP_B:
                 if (!validity.valid_read_gpios_4_to_6) return false;
                 break;
             default:
@@ -763,23 +759,23 @@ size_t BMSDriverGroup<num_chips, num_chip_selects, chip_type>::count_invalid_pac
         const auto& validity = _bms_data.valid_read_packets[chip];
 
         switch (_current_read_group) {
-            case CurrentReadGroup_e::CV_GROUP_A:
+            case ReadGroup_e::CV_GROUP_A:
                 if (!validity.valid_read_cells_1_to_3) invalid_count++;
                 break;
-            case CurrentReadGroup_e::CV_GROUP_B:
+            case ReadGroup_e::CV_GROUP_B:
                 if (!validity.valid_read_cells_4_to_6) invalid_count++;
                 break;
-            case CurrentReadGroup_e::CV_GROUP_C:
+            case ReadGroup_e::CV_GROUP_C:
                 if (!validity.valid_read_cells_7_to_9) invalid_count++;
                 break;
-            case CurrentReadGroup_e::CV_GROUP_D:
+            case ReadGroup_e::CV_GROUP_D:
                 // Skip 9-cell chips (odd indices) when counting
                 if (chip % 2 == 0 && !validity.valid_read_cells_10_to_12) invalid_count++;
                 break;
-            case CurrentReadGroup_e::AUX_GROUP_A:
+            case ReadGroup_e::AUX_GROUP_A:
                 if (!validity.valid_read_gpios_1_to_3) invalid_count++;
                 break;
-            case CurrentReadGroup_e::AUX_GROUP_B:
+            case ReadGroup_e::AUX_GROUP_B:
                 if (!validity.valid_read_gpios_4_to_6) invalid_count++;
                 break;
             default:
