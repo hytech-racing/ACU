@@ -87,6 +87,15 @@ namespace bms_driver_defaults
     constexpr const float CV_ADC_LSB_VOLTAGE = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
     constexpr const size_t SIZE_OF_PACKET_VALUE_BYTES = 2;
 }
+namespace ref_max_min_defaults
+{
+    constexpr const volt TOTAL_VOLTAGE = 0;
+    constexpr const volt MAX_CELL_VOLTAGE = 0;
+    constexpr const volt MIN_CELL_VOLTAGE = 10;
+    constexpr const celsius MIN_CELL_TEMP = 80;
+    constexpr const celsius MAX_CELL_TEMP = 0;
+    constexpr const celsius MAX_BOARD_TEMP = 0;
+};
 
 
 
@@ -114,13 +123,13 @@ struct BMSData_s
 
 struct ReferenceMaxMin_s
 {
-    volt total_voltage = 0;
-    volt max_cell_voltage = 0;
-    volt min_cell_voltage = 10;
-    celsius min_cell_temp = 80;
-    celsius max_cell_temp = 0;
-    celsius max_board_temp = 0;
-    celsius total_thermistor_temps = 0;
+    volt total_voltage;
+    volt max_cell_voltage;
+    volt min_cell_voltage;
+    celsius min_cell_temp;
+    celsius max_cell_temp;
+    celsius max_board_temp;
+    celsius total_thermistor_temps;
 };
 
 struct BMSDriverGroupConfig_s
@@ -161,15 +170,9 @@ template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_
 class BMSDriverGroup
 {
 public:
-    // constexpr static size_t num_cells = (num_chips / 2) * 21;
-
-    // constexpr static size_t num_cell_temps = (num_chips * 4);
-    // constexpr static size_t num_board_temps = num_chips;
-
-    static constexpr size_t _packet_data_size_bytes = 6;
-    static constexpr size_t _packet_pec_size_bytes = 2;
-    static constexpr size_t _num_values_per_packet = _packet_data_size_bytes / size_of_packet_value_bytes;
-    static constexpr size_t _total_packet_size_bytes = _packet_data_size_bytes + _packet_pec_size_bytes;
+    static constexpr size_t _data_size_bytes = 6;
+    static constexpr size_t _pec_size_bytes = 2;
+    static constexpr size_t _total_packet_size_bytes = _data_size_bytes + _pec_size_bytes;
     static constexpr std::array<CMD_CODES_e, ReadGroup_e::NUM_GROUPS> _read_group_to_cmd = {
         CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_A,
         CMD_CODES_e::READ_CELL_VOLTAGE_GROUP_B,
@@ -178,11 +181,15 @@ public:
         CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_A,
         CMD_CODES_e::READ_GPIO_VOLTAGE_GROUP_B
     };
-    using ChipSelectConfig_t = ChipSelectConfig<num_chip_selects, num_chips_per_chip_select, _num_values_per_packet>;
-    using ChipSelect_t = ChipSelect<num_chips_per_chip_select, _num_values_per_packet>;
-    using Chip_t = Chip<_num_values_per_packet>;
-    using BMSDriverData_t = BMSData_s<num_chip_selects * num_chips_per_chip_select, num_voltage_cells, num_temp_cells, num_board_temps>;
 
+    // constexpr static size_t num_cell_temps = (num_chips * 4);
+    // constexpr static size_t num_board_temps = num_chips;
+
+    using BMSCoreData_t = BMSCoreData_s<num_voltage_cells, num_temp_cells, num_board_temps>;
+    using BMSDriverData_t = BMSData_s<num_chip_selects * num_chips_per_chip_select, num_voltage_cells, num_temp_cells, num_board_temps>;
+    using ChipSelectConfig_t = ChipSelectConfig<num_chip_selects, num_chips_per_chip_select, _data_size_bytes / size_of_packet_value_bytes>;
+    using ChipSelect_t = ChipSelect<num_chips_per_chip_select, _data_size_bytes / size_of_packet_value_bytes>;
+    using Chip_t = Chip<_data_size_bytes / size_of_packet_value_bytes>;
     BMSDriverGroup(
         const ChipSelectConfig_t& chip_select_config,
         const BMSDriverGroupConfig_s default_params
@@ -214,7 +221,7 @@ public:
     /**
      * Getter function to retrieve the ACUData structure
      */
-    BMSCoreData_s get_bms_core_data();
+    BMSCoreData_t get_bms_core_data();
 
     /**
      * Getter function to retrieve the BMSDriverData structure
@@ -418,7 +425,6 @@ private:
     uint8_t _get_cmd_address(int address) { return 0x80 | (address << 3); }
 
 private:
-
     /**
      * initializes PEC table
      * Made static so that it can be called in constructor -> _pec15table is made const

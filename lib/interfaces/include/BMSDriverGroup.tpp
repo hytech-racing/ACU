@@ -8,7 +8,7 @@
 #include <optional>
 
 template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
-BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::BMSDriverGroup(const ChipSelectConfig_t& chip_select_config,
+BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::BMSDriverGroup(const ChipSelectConfig_t& chip_select_config = ACUConstants::BMS_CHIP_SELECTS,
                                                                         const BMSDriverGroupConfig_s default_params = {
                                                                             .device_refup_mode = bms_driver_defaults::DEVICE_REFUP_MODE,
                                                                             .adcopt = bms_driver_defaults::ADCOPT,
@@ -46,6 +46,14 @@ void BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cel
     _bms_data.board_temperatures.fill(0);
     _bms_data.valid_read_packets.fill({false});
     _bms_data.total_voltage = 0;
+    _max_min_reference = {
+                            .total_voltage = ref_max_min_defaults::TOTAL_VOLTAGE,
+                            .max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE,
+                            .min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE,
+                            .min_cell_temp = ref_max_min_defaults::MIN_CELL_TEMP,
+                            .max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP,
+                            .max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP,
+                        };
 }
 
 template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
@@ -102,14 +110,18 @@ constexpr std::array<uint16_t, 256> BMSDriverGroup<num_chips_per_chip_select, nu
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
-BMSCoreData_s BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::get_bms_core_data()
+typename BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::BMSCoreData_t 
+BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::get_bms_core_data()
     {
-        BMSCoreData_s out{};
+        BMSCoreData_t out{};
 
         // Basic voltages
         out.min_cell_voltage = _bms_data.min_cell_voltage;
         out.max_cell_voltage = _bms_data.max_cell_voltage;
         out.pack_voltage = _bms_data.total_voltage; 
+
+        // Per-cell array (sizes must match)
+        out.voltages = _bms_data.voltages;
 
         // Temps
         out.max_cell_temp  = _bms_data.max_cell_temp;
@@ -183,7 +195,7 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
             size_t global_chip_index = _chip_select_config.global_chip_index(chip_select_index, chip_index);  
 
             uint8_t start_index;
-            std::array<uint8_t, _packet_data_size_bytes> spi_response;
+            std::array<uint8_t, _total_packet_size_bytes> spi_response;
 
             //relevant for GPIO reading
             bool current_group_valid = false;
@@ -193,7 +205,7 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
             // Skip processing if current group packet is invalid and skip cells 9-12 for group D cuz they don't exist
 
             size_t chip_packet_num_values = chip.read_map.get_num_values_in_group(_current_read_group);
-            size_t chip_packet_size_byte = _packet_data_size_bytes * chip_packet_num_values;
+            size_t chip_packet_size_byte = _total_packet_size_bytes * chip_packet_num_values;
 
             // Skip processing if current group packet is invalid and updates indexes accordingly
             if (!current_group_valid) {
@@ -229,8 +241,6 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
         }
     }
 
-    _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
-    _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _max_min_reference.total_voltage;
     _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_voltage_cells;
 
@@ -252,7 +262,7 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
     std::array<bool, ReadGroup_e::NUM_GROUPS> clean_valid_packet_data = {true};                  // should be all reset to true
     _bms_data.valid_read_packets.fill(clean_valid_packet_data); // reset
     // std::array<uint8_t, 24> data_in_cell_voltages_1_to_12;
-    std::array<uint8_t, ReadGroup_e::NUM_GROUPS * _packet_data_size_bytes> chip_data;
+    std::array<uint8_t, ReadGroup_e::NUM_GROUPS * _total_packet_size_bytes> chip_data;
     // std::array<uint8_t, 10> data_in_auxillaries_1_to_5;
     std::array<uint8_t, 4> cmd_pec;
     size_t battery_cell_count = 0;
@@ -268,7 +278,7 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
         _start_wakeup_protocol(chip_select.cs_pin);
         for (const Chip_t& chip : chip_select.chips){
             size_t chip_packet_num_values = chip.read_map.get_num_values_in_each_group(_current_read_group);
-            size_t chip_packet_size_byte = _packet_data_size_bytes * chip_packet_num_values;
+            size_t chip_packet_size_byte = _total_packet_size_bytes * chip_packet_num_values;
 
             for (size_t group = 0; group < ReadGroup_e::NUM_GROUPS; group ++){
                 cmd_pec = _generate_CMD_PEC(_read_group_to_cmd[group], chip);
@@ -296,16 +306,17 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
     size_t total_num_voltage_cells = start_cell_voltage_index;
     size_t total_num_temp_cells = start_cell_temp_index;
 
-    _bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
-    _bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
-    _bms_data.total_voltage = max_min_reference.total_voltage;
-    _bms_data.avg_cell_voltage = _bms_data.total_voltage /  total_num_voltage_cells;
+    _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
+    _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
+    _bms_data.total_voltage = _max_min_reference.total_voltage;
+    _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_voltage_cells;
 
     _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / total_num_temp_cells;
 
     _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
 
+    
     return _bms_data;
 }
 
@@ -456,9 +467,9 @@ void BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cel
             size_t global_chip_index = _chip_select_config.global_chip_index(chip_select_index, chip_index);
             buffer_format[4] = ((cell_balance_statuses[global_chip_index] & 0x0FF));
             buffer_format[5] = ((dcto_mode & 0x0F) << 4) | ((cell_balance_statuses[global_chip_index] & 0xF00) >> 8);
-            temp_pec = _calculate_specific_PEC(buffer_format.data(), _packet_data_size_bytes);
-            std::copy_n(buffer_format.begin(), _packet_data_size_bytes, full_buffer.data() + (chip_select_index * _total_packet_size_bytes));
-            std::copy_n(temp_pec.begin(), _packet_pec_size_bytes, full_buffer.data() + _packet_data_size_bytes + (chip_select_index * _total_packet_size_bytes));
+            temp_pec = _calculate_specific_PEC(buffer_format.data(), _total_packet_size_bytes);
+            std::copy_n(buffer_format.begin(), _total_packet_size_bytes, full_buffer.data() + (chip_select_index * _total_packet_size_bytes));
+            std::copy_n(temp_pec.begin(), _pec_size_bytes, full_buffer.data() + _total_packet_size_bytes + (chip_select_index * _total_packet_size_bytes));
         }
         ltc_spi_interface::write_registers_command<data_size>(_chip_select_config.chip_selects[chip_select_index].cs_pin, cmd_and_pec, full_buffer);
     }
