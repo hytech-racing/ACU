@@ -243,14 +243,24 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
 
     _bms_data.total_voltage = _max_min_reference.total_voltage;
     _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_voltage_cells;
-
     _bms_data.average_cell_temperature = _max_min_reference.total_thermistor_temps / num_temp_cells;
+    
+    _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
+    _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
 
     _bms_data.max_cell_temp = _max_min_reference.max_cell_temp;
     _bms_data.min_cell_temp = _max_min_reference.min_cell_temp;
     _bms_data.max_board_temp = _max_min_reference.max_board_temp;
 
-    _current_read_group = advance_read_group(_current_read_group);
+    bool read_last_group = advance_read_group(&_current_read_group);
+    if (read_last_group) {
+        // Reset for next full read cycle
+        _max_min_reference.min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE;
+        _max_min_reference.max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE;
+        _max_min_reference.min_cell_temp = ref_max_min_defaults::MIN_CELL_TEMP;
+        _max_min_reference.max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP;
+        _max_min_reference.max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP;
+    }
     return _bms_data;
 }
 
