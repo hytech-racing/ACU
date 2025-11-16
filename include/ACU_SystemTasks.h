@@ -18,8 +18,8 @@
 #include <ht_task.hpp>
 
 using chip_type = LTC6811_Type_e;
-using ACUControllerInstance_t = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>;
-using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
+using ACUControllerInstance_t = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_TEMP_CELLS, ACUConstants::NUM_BOARD_TEMPS>;
+using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS_PER_CHIP_SELECT, ACUConstants::NUM_CHIP_SELECTS, ACUConstants::NUM_VOLTAGE_CELLS, ACUConstants::NUM_TEMP_CELLS, ACUConstants::NUM_BOARD_TEMPS, chip_type::LTC6811_1>;
 
 bool initialize_all_systems();
 
