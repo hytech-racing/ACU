@@ -145,7 +145,7 @@ private:
         /**
      * @brief Closest index that will represent the SoC of the average voltage on the cells
      */
-    uint16_t _get_soc_from_voltage(volt avg_cell_voltage);
+    float _get_soc_from_voltage(volt avg_cell_voltage);
 
     /**
      * @pre data has been gathered

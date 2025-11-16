@@ -122,7 +122,7 @@ std::array<bool, num_cells> ACUController<num_cells, num_celltemps, num_boardtem
 }
 
 template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
-uint16_t ACUController<num_cells, num_celltemps, num_boardtemps>::_get_soc_from_voltage(volt avg_cell_voltage)
+float ACUController<num_cells, num_celltemps, num_boardtemps>::_get_soc_from_voltage(volt avg_cell_voltage)
 {
     static constexpr size_t table_size = 101;
 
@@ -135,7 +135,12 @@ uint16_t ACUController<num_cells, num_celltemps, num_boardtemps>::_get_soc_from_
 
     for (size_t i = 0; i < table_size - 1; i++) {
         if (avg_cell_voltage <= VOLTAGE_LOOKUP_TABLE[i] && avg_cell_voltage > VOLTAGE_LOOKUP_TABLE[i + 1]) {
-            return (100.0f - i) / 100.0f;
+            float v_high = VOLTAGE_LOOKUP_TABLE[i];
+            float v_low = VOLTAGE_LOOKUP_TABLE[i + 1];
+            float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
+            float soc_low = (float)(table_size - 1 - (i + 1)) / (table_size - 1);
+            
+            return soc_low + (avg_cell_voltage - v_low) / (v_high - v_low) * (soc_high - soc_low);
         }
     }
 
@@ -155,16 +160,17 @@ float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_char
         if (_acu_state.first_zero_current_time_stamp == 0) {
             _acu_state.first_zero_current_time_stamp = current_millis;
         }
-        // we have another 0 and 0 current voltage, so we need to see if we have rested for long enough
+        // we have another 0 current, so we need to see if we have rested for long enough
         if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) {
             _acu_state.SoC = _get_soc_from_voltage(avg_cell_voltage);
-            _acu_state.first_zero_current_time_stamp = current_millis;
+            _acu_state.first_zero_current_time_stamp = 0;
             return _acu_state.SoC;
         }
     } else {
         _acu_state.first_zero_current_time_stamp = 0;
     }
 
+    // coulomb count the remaining charge
     float delta_ah = (em_current) * ((float)(delta_time_ms / 1000.0f) / 3600.0f);  // amp hours
     _acu_state.SoC += delta_ah / _acu_parameters.pack_specs.pack_nominal_capacity; // should be -= but EM inverted
     if (_acu_state.SoC < 0.0)
