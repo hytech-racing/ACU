@@ -36,13 +36,13 @@ struct CCUCANInterfaceData_s
     unsigned long prev_ccu_msg_recv_ms;
     bool charging_requested;
     bool is_connected_to_CCU;
-    size_t current_voltage_group_chip_id;
-    size_t current_voltage_cell_group_id;
-    size_t current_voltage_cell_id;
-    size_t current_temp_group_chip_id;
-    size_t current_temp_group_id;
-    size_t current_temp_cell_id;
-    size_t current_temp_board_id;
+    size_t voltage_group_chip_id;
+    size_t voltage_cell_group_id;
+    size_t voltage_cell_id;
+    size_t temp_group_chip_id;
+    size_t temp_group_id;
+    size_t temp_cell_id;
+    size_t temp_board_id;
 };
 
 struct CCUInterfaceParams_s {
@@ -78,13 +78,13 @@ public:
         _curr_data.prev_ccu_msg_recv_ms = 0;
         _curr_data.charging_requested = false;
         _curr_data.is_connected_to_CCU = false;
-        _curr_data.current_voltage_cell_group_id = 0;
-        _curr_data.current_voltage_group_chip_id = 0;
-        _curr_data.current_voltage_cell_id = 0;
-        _curr_data.current_temp_group_id = 0;
-        _curr_data.current_temp_group_chip_id = 0;
-        _curr_data.current_temp_cell_id = 0;
-        _curr_data.current_temp_board_id = 0;
+        _curr_data.voltage_cell_group_id = 0;
+        _curr_data.voltage_group_chip_id = 0;
+        _curr_data.voltage_cell_id = 0;
+        _curr_data.temp_group_id = 0;
+        _curr_data.temp_group_chip_id = 0;
+        _curr_data.temp_cell_id = 0;
+        _curr_data.temp_board_id = 0;
     };
 
     bool is_charging_requested() { return _curr_data.charging_requested; }
