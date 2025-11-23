@@ -14,7 +14,7 @@ void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned
 }
 
 void CCUInterface::handle_enqueue_acu_status_CAN_message() {
-    BMS_STATUS_t msg = {};s
+    BMS_STATUS_t msg = {};
     if (_curr_data.charging_requested) {
         msg.charging_state = ChargingCommand_e::CHARGE;
     } else {
