@@ -13,18 +13,23 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 
-constexpr const size_t NUM_CELLS = 126;
-constexpr const size_t NUM_CELLTEMPS = 48;
-constexpr const size_t NUM_CHIPS = 12;
-constexpr const size_t VOLTAGE_CELLS_PER_GROUP = 3;
-constexpr const size_t TEMP_CELLS_PER_GROUP = 2;
-constexpr const size_t GROUPS_PER_IC_EVEN = 4;
-constexpr const size_t GROUPS_PER_IC_ODD = 3;
+
 enum ChargingCommand_e
 {
     CHARGE = 0,
     IDLE = 1,
 };
+namespace ccu_interface_defaults{
+    constexpr const uint16_t MIN_CHARGING_ENABLE_THRESHOLD_MS = 1000;
+    constexpr const size_t NUM_CELLS = 126;
+    constexpr const size_t NUM_CELLTEMPS = 48;
+    constexpr const size_t NUM_CHIPS = 12;
+    constexpr const size_t VOLTAGE_CELLS_PER_GROUP = 3;
+    constexpr const size_t TEMP_CELLS_PER_GROUP = 2;
+    constexpr const size_t GROUPS_PER_IC_EVEN = 4;
+    constexpr const size_t GROUPS_PER_IC_ODD = 3;
+};
+
 struct CCUCANInterfaceData_s
 {
     unsigned long last_time_charging_requested;
@@ -40,12 +45,34 @@ struct CCUCANInterfaceData_s
     size_t current_temp_board_id;
 };
 
+struct CCUInterfaceParams_s {
+    unsigned long min_charging_enable_threshold;
+    size_t num_cells;
+    size_t num_celltemps;
+    size_t num_chips;
+    size_t voltage_cells_per_group;
+    size_t temp_cells_per_group;
+    size_t groups_per_ic_even;
+    size_t groups_per_ic_odd;
+};
+
 class CCUInterface
 {
 public:
     CCUInterface() = delete;
 
-    CCUInterface(unsigned long init_millis, unsigned long charging_enable_threshold_ms) : _min_charging_enable_threshold(charging_enable_threshold_ms)
+    CCUInterface(unsigned long init_millis,
+                CCUInterfaceParams_s params = {
+                    .min_charging_enable_threshold = ccu_interface_defaults::MIN_CHARGING_ENABLE_THRESHOLD_MS,
+                    .num_cells = ccu_interface_defaults::NUM_CELLS,
+                    .num_celltemps = ccu_interface_defaults::NUM_CELLTEMPS,
+                    .num_chips = ccu_interface_defaults::NUM_CHIPS,
+                    .voltage_cells_per_group = ccu_interface_defaults::VOLTAGE_CELLS_PER_GROUP,
+                    .temp_cells_per_group = ccu_interface_defaults::TEMP_CELLS_PER_GROUP,
+                    .groups_per_ic_even = ccu_interface_defaults::GROUPS_PER_IC_EVEN,
+                    .groups_per_ic_odd = ccu_interface_defaults::GROUPS_PER_IC_ODD
+                }
+            ) : _ccu_params{params}
     {
         _curr_data.last_time_charging_requested = 0;
         _curr_data.prev_ccu_msg_recv_ms = 0;
@@ -101,9 +128,9 @@ public:
 private:
     CCUCANInterfaceData_s _curr_data;
     ACUCoreData_s _acu_core_data;
-    ACUAllData_s<NUM_CELLS, NUM_CELLTEMPS, NUM_CHIPS> _acu_all_data;
+    ACUAllData_s<ccu_interface_defaults::NUM_CELLS, ccu_interface_defaults::NUM_CELLTEMPS, ccu_interface_defaults::NUM_CHIPS> _acu_all_data;
 
-    unsigned long _min_charging_enable_threshold;
+    CCUInterfaceParams_s _ccu_params;
 };
 
 using CCUInterfaceInstance = etl::singleton<CCUInterface>;

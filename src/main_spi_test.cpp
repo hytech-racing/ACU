@@ -1,6 +1,7 @@
 /* ACU Dependent */
 #include "ACU_Constants.h"
 #include "ACU_Globals.h"
+#include "SystemTimeInterface.h"
 #include "ACU_InterfaceTasks.h"
 #include "ACU_SystemTasks.h"
 
@@ -8,7 +9,7 @@
 #include <Arduino.h>
 #include "BMSDriverGroup.h"
 #include "WatchdogInterface.h"
-#include "SystemTimeInterface.h"
+// #include "ACUEthernetInterface.h"
 
 /* System Includes */
 #include "ACUController.h"
@@ -308,8 +309,6 @@ void setup()
     Serial.println("Setup Finished!");
     Serial.println();
 
-    /* ACU Data Struct */
-    ACUDataInstance::create();
 
     /* Watchdog Interface */
     WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,

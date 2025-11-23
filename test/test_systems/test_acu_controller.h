@@ -56,14 +56,15 @@ TEST(ACUControllerTesting, charging_state)
 
     controller.init(init_time, 430.0);
 
-    ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
-        3.7,                                                                // min cell v
-        3.85,                                                               // max cell v
-        430.00,                                                             // pack v
-        0.0,                                                                // avg v - don't care
+    BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data= {
+        3.7, // min cell v
+        3.85, // max cell v
+        430.00, // pack v
         {3.7, 3.81, 3.7, 3.7, 3.81, 3.76, 3.7, 3.7, 3.84, 3.85, 3.75, 3.75} // individual cell voltage data
     };
-    data.charging_enabled = charging_enabled;
+
+    controller.enableCharging();
+    // data.charging_enabled = charging_enabled;
 
     auto status = controller.evaluate_accumulator(init_time, data, ZERO_PACK_CURRENT);
 
@@ -94,11 +95,10 @@ TEST(ACUControllerTesting, faulted_state)
 
     controller.init(init_time, 430.0);
 
-    ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
-        3.03,                                                                    // min cell v
-        4.21,                                                                    // max cell v
-        430.00,                                                                  // pack v
-        0.0,                                                                     // avg v - don't care
+    BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data= {
+        3.03, // min cell v
+        4.21, // max cell v
+        430.00, // pack v
         {3.18, 3.2, 3.03, 3.21, 3.10, 3.12, 3.11, 3.12, 3.18, 3.19, 4.21, 3.06}, // individual cell voltage data
         70,                                                                      // cell temp c
         50,                                                                      // board temp c
@@ -141,11 +141,10 @@ TEST(ACUControllerTesting, ir_compensation_discharge)
     // Without IR comp: would fault immediately
     // With IR comp: discharge_current = 100A, CELL_INTERNAL_RESISTANCE = 0.246/12 = 0.0205Ω
     // Internal V = 3.05V + (0.0205Ω × 100A) = 3.05V + 2.05V = 5.10V (should NOT fault)
-    ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
+    BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data = {
         3.05,                                                                    // min cell v - EXACTLY at UV threshold to trigger IR compensation
         4.15,                                                                    // max cell v - well below OV threshold
         430.00,                                                                  // pack v
-        0.0,                                                                     // avg v - don't care
         {3.18, 3.2, 3.05, 3.21, 3.10, 3.12, 3.11, 3.12, 3.18, 3.19, 4.15, 3.08}, // individual cell voltage data
         40,                                                                      // cell temp c - normal
         35,                                                                      // board temp c - normal
@@ -190,11 +189,10 @@ TEST(ACUControllerTesting, ir_compensation_charge)
     // Without IR comp: would fault immediately
     // With IR comp: discharge_current = -10A, CELL_INTERNAL_RESISTANCE = 0.246/12 = 0.0205Ω
     // Internal V = 4.2V + (0.0205Ω × -10A) = 4.2V - 0.205V = 3.995V (should NOT fault)
-    ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
+    BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data = {
         4.10,                                                                     // min cell v - normal
         4.20,                                                                     // max cell v - EXACTLY at OV threshold to trigger IR compensation
         500.00,                                                                   // pack v - higher during charge
-        0.0,                                                                      // avg v - don't care
         {4.10, 4.15, 4.12, 4.13, 4.14, 4.11, 4.16, 4.17, 4.18, 4.20, 4.15, 4.14}, // individual cell voltage data
         40,                                                                       // cell temp c - normal
         35,                                                                       // board temp c - normal
@@ -236,11 +234,10 @@ TEST(ACUControllerTesting, cell_overvoltage_fault_persistence)
     controller.init(init_time, 430.0);
 
     // Cell voltage JUST above OV threshold (4.21V > 4.2V), zero current
-    ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
+    BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data = {
         3.70,                                                                     // min cell v - normal
         4.21,                                                                     // max cell v - ABOVE OV threshold
         500.00,                                                                   // pack v - normal
-        0.0,                                                                      // avg v
         {3.70, 3.75, 3.72, 3.71, 3.80, 3.76, 3.74, 3.73, 3.78, 4.21, 3.77, 3.79}, // individual cell voltage data
         40,                                                                       // cell temp c - normal
         35,                                                                       // board temp c - normal
@@ -280,11 +277,10 @@ TEST(ACUControllerTesting, cell_undervoltage_fault_persistence)
     controller.init(init_time, 430.0);
 
     // Cell voltage JUST below UV threshold (3.04V < 3.05V), zero current
-    ACUData_s<num_cells, num_cell_temps, num_board_temps> data = {
+    BMSCoreData_s<num_cells, num_cell_temps, num_board_temps> data = {
         3.04,                                                                     // min cell v - BELOW UV threshold
         4.10,                                                                     // max cell v - normal
         380.00,                                                                   // pack v - normal
-        0.0,                                                                      // avg v
         {3.70, 3.75, 3.04, 3.71, 3.80, 3.76, 3.74, 3.73, 3.78, 3.85, 3.77, 3.79}, // individual cell voltage data
         40,                                                                       // cell temp c - normal
         35,                                                                       // board temp c - normal

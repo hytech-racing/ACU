@@ -11,12 +11,30 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverGroup(const std::array<int, num_chip_selects>& cs,
                                                                         const std::array<int, num_chips>& cs_per_chip,
                                                                         const std::array<int, num_chips>& addr,
-                                                                        BMSDriverGroupConfig_s config
-                                                                ) : _pec15Table(_initialize_Pec_Table()),
-                                                                    _chip_select(cs),
+                                                                        const BMSDriverGroupConfig_s default_params = {
+                                                                            .device_refup_mode = bms_driver_defaults::DEVICE_REFUP_MODE,
+                                                                            .adcopt = bms_driver_defaults::ADCOPT,
+                                                                            .gpios_enabled = bms_driver_defaults::GPIOS_ENABLED,
+                                                                            .dcto_read = bms_driver_defaults::DCTO_READ,
+                                                                            .dcto_write = bms_driver_defaults::DCTO_WRITE,
+                                                                            .adc_conversion_cell_select_mode = bms_driver_defaults::ADC_CONVERSION_CELL_SELECT_MODE,
+                                                                            .adc_conversion_gpio_select_mode = bms_driver_defaults::ADC_CONVERSION_GPIO_SELECT_MODE,
+                                                                            .discharge_permitted = bms_driver_defaults::DISCHARGE_PERMITTED,
+                                                                            .adc_mode_cv_conversion = bms_driver_defaults::ADC_MODE_CV_CONVERSION,
+                                                                            .adc_mode_gpio_conversion = bms_driver_defaults::ADC_MODE_GPIO_CONVERSION,
+                                                                            .under_voltage_threshold = bms_driver_defaults::UNDER_VOLTAGE_THRESHOLD,
+                                                                            .over_voltage_threshold = bms_driver_defaults::OVER_VOLTAGE_THRESHOLD,
+                                                                            .gpio_enable = bms_driver_defaults::GPIO_ENABLE,
+                                                                            .CRC15_POLY = bms_driver_defaults::CRC15_POLY,
+                                                                            .cv_adc_conversion_time_ms = bms_driver_defaults::CV_ADC_CONVERSION_TIME_MS,
+                                                                            .gpio_adc_conversion_time_ms = bms_driver_defaults::GPIO_ADC_CONVERSION_TIME_MS,
+                                                                            .cv_adc_lsb_voltage = bms_driver_defaults::CV_ADC_LSB_VOLTAGE
+                                                                        }
+                                                                ) : _chip_select(cs),
                                                                     _chip_select_per_chip(cs_per_chip),
                                                                     _address(addr),
-                                                                    _config(config) {}
+                                                                    _config(default_params),
+                                                                    _pec15Table(_initialize_Pec_Table()) {}
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
@@ -34,6 +52,14 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
     _bms_data.board_temperatures.fill(0);
     _bms_data.valid_read_packets.fill(ValidPacketData_s{});
     _bms_data.total_voltage = 0;
+    _max_min_reference = {
+                            .total_voltage = ref_max_min_defaults::TOTAL_VOLTAGE,
+                            .max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE,
+                            .min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE,
+                            .min_cell_temp = ref_max_min_defaults::MIN_CELL_TEMP,
+                            .max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP,
+                            .max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP,
+                        };
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -90,6 +116,35 @@ constexpr std::array<uint16_t, 256> BMSDriverGroup<num_chips, num_chip_selects, 
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSCoreData_t
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_core_data()
+    {
+        BMSCoreData_t out{};
+
+        // Basic voltages
+        out.min_cell_voltage = _bms_data.min_cell_voltage;
+        out.max_cell_voltage = _bms_data.max_cell_voltage;
+        out.pack_voltage = _bms_data.total_voltage; 
+
+        // Per-cell array (sizes must match)
+        out.voltages = _bms_data.voltages;
+
+        // Temps
+        out.max_cell_temp  = _bms_data.max_cell_temp;
+        out.min_cell_temp  = _bms_data.min_cell_temp;
+        out.max_board_temp = _bms_data.max_board_temp;
+
+        return out;
+    }
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
+BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_data()
+{
+    return _bms_data;
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
@@ -116,7 +171,6 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
     
     return bms_data;
 }
-
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broadcast()
@@ -230,26 +284,36 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_broad
         }
     }
 
-    _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
-    _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
     _bms_data.total_voltage = _max_min_reference.total_voltage;
-
+    _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_cells;
     _bms_data.average_cell_temperature = _max_min_reference.total_thermistor_temps / (4 * num_chips);
-
-    _bms_data.max_cell_temp = _max_min_reference.max_cell_temp;
-    _bms_data.min_cell_temp = _max_min_reference.min_cell_temp;
-    _bms_data.max_board_temp = _max_min_reference.max_board_temp;
+    
+    if(_current_read_group == CurrentReadGroup_e::CV_GROUP_D) {
+        _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
+        _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
+        // Reset max and mins
+        _max_min_reference.min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE;
+        _max_min_reference.max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE;
+    }
+    if(_current_read_group == CurrentReadGroup_e::AUX_GROUP_B) {
+        _bms_data.max_cell_temp = _max_min_reference.max_cell_temp;
+        _bms_data.min_cell_temp = _max_min_reference.min_cell_temp;
+        _bms_data.max_board_temp = _max_min_reference.max_board_temp;
+        // Reset max and mins
+        _max_min_reference.min_cell_temp = ref_max_min_defaults::MIN_CELL_TEMP;
+        _max_min_reference.max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP;
+        _max_min_reference.max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP;
+    }
 
     _current_read_group = advance_read_group(_current_read_group);
     return _bms_data;
 }
 
-/* UNUSED: LTC6811-2 ADDRESS MODE - REFERENCE ONLY
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_address()
 {
-    ReferenceMaxMin max_min_reference;
+    ReferenceMaxMin_s max_min_reference;
     ValidPacketData_s clean_valid_packet_data;                  // should be all reset to true
     _bms_data.valid_read_packets.fill(clean_valid_packet_data); // reset
     std::array<uint8_t, 24> data_in_cell_voltages_1_to_12;
@@ -291,23 +355,24 @@ BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_addre
         _bms_data = _load_auxillaries(_bms_data, max_min_reference, data_in_auxillaries_1_to_5, chip, gpio_count);
     }
 
-    _bms_data.min_cell_voltage = max_min_reference.min_cell_voltage;
-    _bms_data.max_cell_voltage = max_min_reference.max_cell_voltage;
-    _bms_data.total_voltage = _sum_cell_voltages();
+    _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
+    _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
+    _bms_data.total_voltage = _max_min_reference.total_voltage;
+    _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_cells;
 
     // Avoid divide by zero - skip calculation if no GPIOs were read
     if (gpio_count > 0) {
         _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
     }
-
     _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
+    
     return _bms_data;
 }
-*/
+
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
                                                                             uint8_t chip_index, uint8_t start_cell_index)
 {
     std::array<uint8_t, 2> data_in_cell_voltage;
@@ -329,7 +394,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData& bms_data, ReferenceMaxMin &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(BMSDriverData& bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
                                                                             uint8_t chip_index, uint8_t start_gpio_index)
 {
     for (int gpio_index = start_gpio_index; gpio_index < start_gpio_index + 3 && gpio_index < 5; gpio_index++) // There are only five Auxillary ports
@@ -343,7 +408,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(B
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, volt voltage_in, uint8_t cell_index)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, volt voltage_in, uint8_t cell_index)
 {
     max_min_reference.total_voltage -= bms_data.voltages[cell_index];
     bms_data.voltages[cell_index] = voltage_in;
@@ -362,7 +427,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_voltage_data
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
-void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_index, uint8_t chip_index)
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_index, uint8_t chip_index)
 {
     // there is 8 cell temperatures per chip, and 2 board temperatures per board, so 4+1 per chip
     if (gpio_index < 4) // These are all thermistors [0,1,2,3].
@@ -386,7 +451,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
             bms_data.min_cell_temperature_cell_id = cell_temp_index;
         }
     }
-    else // this is apparently the case for temperature sensor for the BOARD, not the cells. There is 2 per segment
+    else // this is the case for temperature sensor for the BOARD, not the cells. There is 1 per chip
     {
         constexpr float mcp_9701_temperature_coefficient = 0.0195f;
         constexpr float mcp_9701_output_v_at_0c = 0.4f;
@@ -395,7 +460,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
         {
             max_min_reference.max_board_temp = bms_data.board_temperatures[chip_index];
 
-            bms_data.max_board_temperature_segment_id = chip_index; // Because each segment only has 1 humidity and 1 board temp sensor
+            bms_data.max_board_temperature_segment_id = chip_index; // Because each chip has 1 board temp sensor
         }
     }
 }
