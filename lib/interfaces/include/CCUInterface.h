@@ -14,11 +14,6 @@
 #include "shared_types.h"
 
 
-enum ChargingCommand_e
-{
-    CHARGE = 0,
-    IDLE = 1,
-};
 namespace ccu_interface_defaults{
     constexpr const uint16_t MIN_CHARGING_ENABLE_THRESHOLD_MS = 1000;
     constexpr const size_t NUM_CELLS = 126;
