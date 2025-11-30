@@ -63,7 +63,7 @@ void setup()
     scheduler.schedule(sample_CAN_task);
     scheduler.schedule(idle_sample_task);
 
-    //scheduler.schedule(debug_prints_task);
+    scheduler.schedule(debug_prints_task);
 
     handle_CAN_setup(ACUCANInterface::CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterface::on_ccu_can_receive);
     handle_CAN_setup(ACUCANInterface::EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterface::on_em_can_receive);

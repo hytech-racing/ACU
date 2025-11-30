@@ -14,11 +14,7 @@
 #include "shared_types.h"
 #include "ACUCANBuffers.h"  // NEW: Include shared buffer declarations
 
-enum ACUSHDNOutVoltageState_e
-{
-    VOLTAGE_LOW = 0,
-    VOLTAGE_HIGH = 1,
-};
+
 namespace ccu_interface_defaults{
     constexpr const uint16_t MIN_CHARGING_ENABLE_THRESHOLD_MS = 1000;
     constexpr const size_t VOLTAGE_CELLS_PER_GROUP = 3;
@@ -106,11 +102,10 @@ private:
 
     bool _increment_and_loop_id(size_t &id, size_t max_id, size_t increment = 1)
     {
-        if (id == max_id - increment) {
+        if (id + increment >= max_id) {
             id = 0;
             return true;
-        }
-        else {
+        } else {
             id += increment;
             return false;
         }

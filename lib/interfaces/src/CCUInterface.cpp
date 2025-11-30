@@ -11,12 +11,7 @@ void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned
 
 void CCUInterface::handle_enqueue_acu_status_CAN_message(bool shdn_out_voltage_high) {
     BMS_STATUS_t msg = {};
-    if (shdn_out_voltage_high) {
-        msg.shdn_out_voltage_state = ACUSHDNOutVoltageState_e::VOLTAGE_HIGH;
-    } else {
-        msg.shdn_out_voltage_state = ACUSHDNOutVoltageState_e::VOLTAGE_LOW;
-    }
-
+        msg.shdn_out_voltage_state = shdn_out_voltage_high;
     CAN_util::enqueue_msg(&msg, &Pack_BMS_STATUS_hytech, ACUCANBuffers::ccu_can_tx_buffer);
 }  
 
