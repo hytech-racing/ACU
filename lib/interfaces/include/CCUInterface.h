@@ -13,11 +13,16 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 
+
 namespace ccu_interface_defaults{
     constexpr const uint16_t MIN_CHARGING_ENABLE_THRESHOLD_MS = 1000;
     constexpr const size_t NUM_CELLS = 126;
     constexpr const size_t NUM_CELLTEMPS = 48;
     constexpr const size_t NUM_CHIPS = 12;
+    constexpr const size_t VOLTAGE_CELLS_PER_GROUP = 3;
+    constexpr const size_t TEMP_CELLS_PER_GROUP = 2;
+    constexpr const size_t GROUPS_PER_IC_EVEN = 4;
+    constexpr const size_t GROUPS_PER_IC_ODD = 3;
 };
 
 struct CCUCANInterfaceData_s
@@ -26,13 +31,13 @@ struct CCUCANInterfaceData_s
     unsigned long prev_ccu_msg_recv_ms;
     bool charging_requested;
     bool is_connected_to_CCU;
-    size_t detailed_voltages_ic_id;
-    size_t detailed_voltages_group_id;
-    size_t detailed_voltages_cell_id;
-    size_t detailed_temps_ic_id;
-    size_t detailed_temps_group_id;
-    size_t detailed_temps_cell_id;
-    size_t detailed_temps_board_id;
+    size_t voltage_group_chip_id;
+    size_t voltage_cell_group_id;
+    size_t voltage_cell_id;
+    size_t temp_group_chip_id;
+    size_t temp_group_id;
+    size_t temp_cell_id;
+    size_t temp_board_id;
 };
 
 struct CCUInterfaceParams_s {
@@ -40,6 +45,10 @@ struct CCUInterfaceParams_s {
     size_t num_cells;
     size_t num_celltemps;
     size_t num_chips;
+    size_t voltage_cells_per_group;
+    size_t temp_cells_per_group;
+    size_t groups_per_ic_even;
+    size_t groups_per_ic_odd;
 };
 
 class CCUInterface
@@ -52,7 +61,11 @@ public:
                     .min_charging_enable_threshold = ccu_interface_defaults::MIN_CHARGING_ENABLE_THRESHOLD_MS,
                     .num_cells = ccu_interface_defaults::NUM_CELLS,
                     .num_celltemps = ccu_interface_defaults::NUM_CELLTEMPS,
-                    .num_chips = ccu_interface_defaults::NUM_CHIPS
+                    .num_chips = ccu_interface_defaults::NUM_CHIPS,
+                    .voltage_cells_per_group = ccu_interface_defaults::VOLTAGE_CELLS_PER_GROUP,
+                    .temp_cells_per_group = ccu_interface_defaults::TEMP_CELLS_PER_GROUP,
+                    .groups_per_ic_even = ccu_interface_defaults::GROUPS_PER_IC_EVEN,
+                    .groups_per_ic_odd = ccu_interface_defaults::GROUPS_PER_IC_ODD
                 }
             ) : _ccu_params{params}
     {
@@ -60,13 +73,13 @@ public:
         _curr_data.prev_ccu_msg_recv_ms = 0;
         _curr_data.charging_requested = false;
         _curr_data.is_connected_to_CCU = false;
-        _curr_data.detailed_voltages_group_id = 0;
-        _curr_data.detailed_voltages_ic_id = 0;
-        _curr_data.detailed_voltages_cell_id = 0;
-        _curr_data.detailed_temps_group_id = 0;
-        _curr_data.detailed_temps_ic_id = 0;
-        _curr_data.detailed_temps_cell_id = 0;
-        _curr_data.detailed_temps_board_id = 0;
+        _curr_data.voltage_cell_group_id = 0;
+        _curr_data.voltage_group_chip_id = 0;
+        _curr_data.voltage_cell_id = 0;
+        _curr_data.temp_group_id = 0;
+        _curr_data.temp_group_chip_id = 0;
+        _curr_data.temp_cell_id = 0;
+        _curr_data.temp_board_id = 0;
     };
 
     bool is_charging_requested() { return _curr_data.charging_requested; }
