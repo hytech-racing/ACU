@@ -7,6 +7,7 @@
 #include <iostream>
 #include <array>
 #include <algorithm>
+#include "shared_types.h"
 
 using volt = float;
 using celsius = float;
@@ -14,6 +15,7 @@ using time_ms = uint32_t;
 
 namespace ACUSystems
 {
+    constexpr const volt MIN_DISCHARGE_VOLTAGE_THRESH = 3.8F; // Minimum voltage for a cell to be discharged
     constexpr const volt CELL_OVERVOLTAGE_THRESH = 4.2;   // Cell overvoltage threshold in Volts
     constexpr const volt CELL_UNDERVOLTAGE_THRESH = 3.05; // Cell undervoltage threshold in Volts
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0;  // Volts
@@ -51,16 +53,15 @@ namespace ACUInterfaces {
 }
 
 namespace ACUConstants
-{
+{  
     constexpr size_t NUM_CELLS = 126;
-    constexpr size_t NUM_CELL_TEMPS = 48;
     constexpr size_t NUM_CHIPS = 12;
-    constexpr size_t NUM_BOARD_TEMPS = 12;
+    constexpr size_t NUM_CELL_TEMPS = 48;
     constexpr size_t NUM_CHIP_SELECTS = 2;
     
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
-
+    
     // Initialize chip_select, chip_select_per_chip, and address
     constexpr std::array<int, NUM_CHIP_SELECTS> CS = {9, 10};
     constexpr std::array<int, NUM_CHIPS> CS_PER_CHIP = {9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10};
