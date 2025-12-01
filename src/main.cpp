@@ -7,7 +7,7 @@
 #include <Arduino.h>
 #include "BMSDriverGroup.h"
 #include "WatchdogInterface.h"
-#include "ACUCANInterfaceImpl.h"
+#include "ACUCANInterface.h"
 
 /* System Includes */
 #include "ACUController.h"
@@ -32,13 +32,14 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 ::HT_TASK::Task enqueue_CCU_core_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_core_CAN_data, ACUConstants::CCU_SEND_PRIORITY, ACUConstants::CCU_SEND_PERIOD_US);
 ::HT_TASK::Task enqueue_CCU_all_voltages_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_voltages_CAN_data, ACUConstants::CCU_SEND_A_PRIORITY, ACUConstants::CCU_SEND_A_PERIOD_US);
 ::HT_TASK::Task enqueue_CCU_all_temps_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_temps_CAN_data, ACUConstants::CCU_SEND_B_PRIORITY, ACUConstants::CCU_SEND_B_PERIOD_US);
+::HT_TASK::Task enqueue_CCU_all_boards_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_boards_CAN_data, ACUConstants::CCU_SEND_C_PRIORITY, ACUConstants::CCU_SEND_C_PERIOD_US);
 ::HT_TASK::Task enqueue_ACU_OK_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_ok_CAN_data, ACUConstants::ACU_OK_CAN_PRIORITY, ACUConstants::ACU_OK_CAN_PERIOD_US);
 ::HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConstants::RECV_CAN_PRIORITY, ACUConstants::RECV_CAN_PERIOD_US);
 ::HT_TASK::Task idle_sample_task(HT_TASK::DUMMY_FUNCTION, idle_sample_interfaces, ACUConstants::IDLE_SAMPLE_PRIORITY, ACUConstants::IDLE_SAMPLE_PERIOD_US);
 ::HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 
-FlexCAN_t<CAN3> ACUCANInterfaceImpl::CCU_CAN;
-FlexCAN_t<CAN2> ACUCANInterfaceImpl::EM_CAN;
+FlexCAN_t<CAN3> ACUCANInterface::CCU_CAN;
+FlexCAN_t<CAN2> ACUCANInterface::EM_CAN;
 
 void setup()
 {
@@ -65,10 +66,10 @@ void setup()
     scheduler.schedule(sample_CAN_task);
     scheduler.schedule(idle_sample_task);
 
-    //scheduler.schedule(debug_prints_task);
+    // scheduler.schedule(debug_prints_task);
 
-    handle_CAN_setup(ACUCANInterfaceImpl::CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
-    handle_CAN_setup(ACUCANInterfaceImpl::EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
+    handle_CAN_setup(ACUCANInterface::CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterface::on_ccu_can_receive);
+    handle_CAN_setup(ACUCANInterface::EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterface::on_em_can_receive);
 }
 
 void loop()
