@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <optional>
 
+// Debug instrumentation for BMS read path: switched to plain Serial prints.
+
 template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
 BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::BMSDriverGroup(const ChipSelectConfig_t& chip_select_config = ACUConstants::BMS_CHIP_SELECTS,
                                                                         const BMSDriverGroupConfig_s default_params = {
@@ -142,6 +144,8 @@ template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_
 typename BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::BMSDriverData_t
 BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::read_data()
 {
+    //Serial.println("BMS read_data: group=");
+    //Serial.println(get_current_read_group_name());
     BMSDriverData_t bms_data;
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
@@ -170,7 +174,8 @@ template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_
 typename BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::BMSDriverData_t
 BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::_read_data_through_broadcast()
 {
-    
+    //Serial.print("Broadcast start, group=");
+    //Serial.println(get_current_read_group_name());
     constexpr size_t chip_select_packet_size = _total_packet_size_bytes * num_chips_per_chip_select;
     size_t chip_start_voltage_cell_index = 0;
     size_t chip_start_temperature_cell_index = 0;
@@ -178,17 +183,25 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
     for (size_t chip_select_index = 0; chip_select_index < num_chip_selects; chip_select_index++)
     {
         const ChipSelect_t& chip_select = _chip_select_config.chip_selects[chip_select_index];
-        
+        //Serial.print("  CS["); //Serial.print(chip_select_index); //Serial.print("] pin="); //Serial.println(chip_select.cs_pin);
+        //Serial.print("  write_cfg dcto="); //Serial.print((int)_config.dcto_read); //Serial.println("");
         write_configuration(_config.dcto_read, _cell_discharge_en);
+        //Serial.println("  write_cfg done");
     
         std::array<uint8_t, 4> cmd_pec;
         std::array<uint8_t, chip_select_packet_size> spi_data;
 
         // Get buffers for each group we care about, all at once for ONE chip select line
+        //Serial.print("    wakeup...");
         _start_wakeup_protocol(chip_select.cs_pin);
+        //Serial.println("done");
 
-        cmd_pec = _generate_CMD_PEC(_read_group_to_cmd[_current_read_group], -1); // The address should never be used here
+        cmd_pec = _generate_CMD_PEC(_read_group_to_cmd[_current_read_group], (size_t)-1); // The address should never be used here
+        //Serial.print("    SPI read...");
+        unsigned long t0 = micros();
         spi_data = ltc_spi_interface::read_registers_command<chip_select_packet_size>(chip_select.cs_pin, cmd_pec);
+        unsigned long t1 = micros();
+        //Serial.print("done (us="); //Serial.print((long)(t1 - t0)); //Serial.println(")");
 
         for (size_t chip_index = 0; chip_index < num_chips_per_chip_select; chip_index++) {
             Chip_t chip = chip_select.chips[chip_index];
@@ -200,29 +213,41 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
             //relevant for GPIO reading
             bool current_group_valid = false;
             current_group_valid = _check_if_valid_packet(spi_data, _total_packet_size_bytes * chip_index);
-            _bms_data.valid_read_packets[chip_index][static_cast<size_t>(_current_read_group)] = current_group_valid;
+            _bms_data.valid_read_packets[global_chip_index][static_cast<size_t>(_current_read_group)] = current_group_valid;
+            //Serial.print("      chip["); //Serial.print(global_chip_index); //Serial.print("] valid="); //Serial.println(current_group_valid ? "Y" : "N");
 
             // Skip processing if current group packet is invalid and skip cells 9-12 for group D cuz they don't exist
 
             size_t chip_packet_num_values = chip.read_map.get_num_values_in_group(_current_read_group);
             size_t chip_packet_size_byte = _total_packet_size_bytes * chip_packet_num_values;
+            //Serial.print("        values="); //Serial.print(chip_packet_num_values); //Serial.print(", bytes="); //Serial.println(chip_packet_size_byte);
 
             // Skip processing if current group packet is invalid and updates indexes accordingly
             if (!current_group_valid) {
+                //Serial.println("        skip invalid");
                 continue;
             }
 
-
+            //Serial.println("        process valid");
             std::copy_n(spi_data.begin() + (_total_packet_size_bytes * chip_index), chip_packet_size_byte, spi_response.begin());
-            std::fill(spi_response.begin() + chip_packet_size_byte, spi_response.end(), 0); // padding
-
+            //Serial.println("        copied response");
+            // std::fill(spi_response.begin() + chip_packet_size_byte, spi_response.end(), 0); // padding
+            //Serial.println("        padded response");
             std::array<uint8_t, size_of_packet_value_bytes> value_buffer;
+            //Serial.println("        created value buffer");
             size_t start_voltage_index = chip_start_voltage_cell_index + chip.read_map.get_group_start_cell_voltage_index(_current_read_group);
             size_t start_temperature_index = chip_start_temperature_cell_index + chip.read_map.get_group_start_cell_temperature_index(_current_read_group);
             size_t start_board_temperature_index = chip_start_board_temperature_index + chip.read_map.get_group_start_board_temperature_index(_current_read_group);
+            //Serial.println("        calculated start indexes");
             auto read_group_data_types = chip.read_map.group_data_types[_current_read_group];
+            //Serial.println("        got data types");
+
+            //Serial.print("        start_voltage_index="); //Serial.print(start_voltage_index);
+            //Serial.print(", start_temperature_index="); //Serial.print(start_temperature_index);
+            //Serial.print(", start_board_temperature_index="); //Serial.println(start_board_temperature_index);
             for (size_t i = 0; i < chip_packet_num_values; i++) {
                 std::copy_n(spi_response.begin() + (i * size_of_packet_value_bytes), size_of_packet_value_bytes, value_buffer.begin());
+                //Serial.print("          value_buffer["); //Serial.print(i); //Serial.print("]=");
                 switch (read_group_data_types[i]){
                     case CELL_VOLTAGE:
                         _load_cell_voltages(_bms_data, _max_min_reference, value_buffer, start_voltage_index++);
@@ -253,6 +278,7 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
     _bms_data.max_board_temp = _max_min_reference.max_board_temp;
 
     bool read_last_group = advance_read_group(&_current_read_group);
+    //Serial.print("Advance group, now="); //Serial.println(get_current_read_group_name());
     if (read_last_group) {
         // Reset for next full read cycle
         _max_min_reference.min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE;
@@ -260,6 +286,7 @@ BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, n
         _max_min_reference.min_cell_temp = ref_max_min_defaults::MIN_CELL_TEMP;
         _max_min_reference.max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP;
         _max_min_reference.max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP;
+        //Serial.println("Completed full cycle; reference reset");
     }
     return _bms_data;
 }
@@ -441,6 +468,8 @@ void BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cel
 template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
 void BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chip_selects * num_chips_per_chip_select> &cell_balance_statuses)
 {
+    //Serial.print("BMS write_configuration: group=");
+    //Serial.println(get_current_read_group_name());
     std::copy(cell_balance_statuses.begin(), cell_balance_statuses.end(), _cell_discharge_en.begin());
 
     std::array<uint8_t, 6> buffer_format; // This buffer processing can be seen in more detail on page 62 of the data sheet
@@ -464,16 +493,19 @@ void BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cel
 template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
 void BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::_write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chip_selects * num_chips_per_chip_select> &cell_balance_statuses)
 {
+    //Serial.println("  _write_config_through_broadcast");
     constexpr size_t data_size = _total_packet_size_bytes * num_chips_per_chip_select;
     std::array<uint8_t, 4> cmd_and_pec = _generate_CMD_PEC(CMD_CODES_e::WRITE_CONFIG, -1);
     std::array<uint8_t, data_size> full_buffer;
-    std::array<uint8_t, 2> temp_pec;
+    std::array<uint8_t, _pec_size_bytes> temp_pec;
 
     // Needs to be sent on each chip select line
     for (size_t chip_select_index = 0; chip_select_index < num_chip_selects; chip_select_index++)
     {
-        for (size_t chip_index = num_chips_per_chip_select - 1; chip_index >= 0; chip_index--)              // This needs to be flipped because when writing a command, primary device holds the last bytes
+        for (int chip_index = static_cast<int>(num_chips_per_chip_select) - 1; chip_index >= 0; chip_index--)
+            // This needs to be flipped because when writing a command, primary device holds the last bytes
         {
+            //Serial.print("    chip_index="); //Serial.println(chip_index);
             size_t global_chip_index = _chip_select_config.global_chip_index(chip_select_index, chip_index);
             buffer_format[4] = ((cell_balance_statuses[global_chip_index] & 0x0FF));
             buffer_format[5] = ((dcto_mode & 0x0F) << 4) | ((cell_balance_statuses[global_chip_index] & 0xF00) >> 8);
@@ -481,6 +513,7 @@ void BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cel
             std::copy_n(buffer_format.begin(), _total_packet_size_bytes, full_buffer.data() + (chip_select_index * _total_packet_size_bytes));
             std::copy_n(temp_pec.begin(), _pec_size_bytes, full_buffer.data() + _total_packet_size_bytes + (chip_select_index * _total_packet_size_bytes));
         }
+        //Serial.print("  write_registers_command on CS pin "); //Serial.println(_chip_select_config.chip_selects[chip_select_index].cs_pin);
         ltc_spi_interface::write_registers_command<data_size>(_chip_select_config.chip_selects[chip_select_index].cs_pin, cmd_and_pec, full_buffer);
     }
 }

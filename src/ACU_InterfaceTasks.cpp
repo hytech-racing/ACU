@@ -67,8 +67,11 @@ void initialize_all_interfaces()
     FaultLatchManagerInstance::instance().set_shdn_out_latched(true); // Start shdn out latch cleared
 
     /* BMS Driver */
+    Serial.println("Initializing BMS Driver...");
     BMSDriverInstance_t::create();
+    Serial.println("BMS Driver created.");
     BMSDriverInstance_t::instance().init();
+    Serial.println("BMS Driver initialized.");
     /* Get Initial Pack Voltage for SoC and SoH Approximations */
     auto data = BMSDriverInstance_t::instance().read_data();
 
@@ -118,8 +121,8 @@ HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT
 HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     auto data = BMSDriverInstance_t::instance().read_data();
-    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
     // print_bms_data(data);
+    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
     
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -360,27 +363,27 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
 
     Serial.print("Number of Global Faults: ");
     Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
-    // Serial.println("Number of Consecutive Faults Per Chip: ");
-    // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-    //     Serial.print("CHIP ");
-    //     Serial.print(c);
-    //     Serial.print(": ");
-    //     Serial.print(ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[c]);
-    //     Serial.print("\t");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
-    //     Serial.print(" ");
-    // }
-    // Serial.println();
+    Serial.println("Number of Consecutive Faults Per Chip: ");
+    for (size_t c = 0; c < 12; c++) {
+        Serial.print("CHIP ");
+        Serial.print(c);
+        Serial.print(": ");
+        Serial.print(BMSFaultDataManagerInstance_t::instance().get_fault_data().consecutive_invalid_packet_counts[c]);
+        Serial.print("\t");
+        Serial.print(BMSFaultDataManagerInstance_t::instance().get_fault_data().chip_invalid_cmd_counts[c][0]);
+        Serial.print(" ");
+        Serial.print(BMSFaultDataManagerInstance_t::instance().get_fault_data().chip_invalid_cmd_counts[c][1]);
+        Serial.print(" ");
+        Serial.print(BMSFaultDataManagerInstance_t::instance().get_fault_data().chip_invalid_cmd_counts[c][2]);
+        Serial.print(" ");
+        Serial.print(BMSFaultDataManagerInstance_t::instance().get_fault_data().chip_invalid_cmd_counts[c][3]);
+        Serial.print(" ");
+        Serial.print(BMSFaultDataManagerInstance_t::instance().get_fault_data().chip_invalid_cmd_counts[c][4]);
+        Serial.print(" ");
+        Serial.print(BMSFaultDataManagerInstance_t::instance().get_fault_data().chip_invalid_cmd_counts[c][5]);
+        Serial.print(" ");
+    }
+    Serial.println();
 
     return HT_TASK::TaskResponse::YIELD;
 }
