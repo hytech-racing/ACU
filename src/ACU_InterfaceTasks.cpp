@@ -369,6 +369,10 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
 
     Serial.print("CCU Charging Requested? : ");
     Serial.println(CCUInterfaceInstance::instance().is_charging_with_balancing_requested(sys_time::hal_millis()) ? "YES" : "NO");
+    Serial.println(CCUInterfaceInstance::instance().get_latest_data().last_time_charging_with_balancing_requested);
+    Serial.println("CCU Last Received Time: ");
+    Serial.println(CCUInterfaceInstance::instance().get_latest_data().prev_ccu_msg_recv_ms);
+    Serial.println(sys_time::hal_millis());
     Serial.print("State of Charge: ");
     Serial.print(ACUControllerInstance_t::instance().get_status().SoC * 100, 3);
     Serial.println("%");
