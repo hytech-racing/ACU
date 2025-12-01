@@ -125,10 +125,10 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    
-    auto data = BMSDriverInstance_t::instance().get_bms_data();
-    static std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses;
-    ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), data.voltages.data(), ACUConstants::NUM_CELLS, data.min_cell_voltage);
+    static std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses = {false};
+    if(ACUControllerInstance::instance().get_status().balancing_enabled) {
+        ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), BMSDriverInstance_t::instance().get_bms_data().voltages.data(), ACUConstants::NUM_CELLS, BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage);
+    }
     BMSDriverInstance_t::instance().write_configuration(cell_balancing_statuses);
     return HT_TASK::TaskResponse::YIELD;
 }
