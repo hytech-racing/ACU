@@ -364,7 +364,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("Number of Global Faults: ");
     Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
     Serial.println("Number of Consecutive Faults Per Chip: ");
-    for (size_t c = 0; c < 12; c++) {
+    for (size_t c = 0; c < ACUConstants::NUM_CHIP_SELECTS * ACUConstants::NUM_CHIPS_PER_CHIP_SELECT; c++) {
         Serial.print("CHIP ");
         Serial.print(c);
         Serial.print(": ");
