@@ -112,18 +112,14 @@ constexpr std::array<uint16_t, 256> BMSDriverGroup<num_chips_per_chip_select, nu
 /* -------------------- READING DATA FUNCTIONS -------------------- */
 
 template <size_t num_chips_per_chip_select, size_t num_chip_selects, size_t num_voltage_cells, size_t num_temp_cells, size_t num_board_temps, LTC6811_Type_e chip_type, size_t size_of_packet_value_bytes>
-typename BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::BMSCoreData_t 
-BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::get_bms_core_data()
+BMSCoreData_s BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cells, num_temp_cells, num_board_temps, chip_type, size_of_packet_value_bytes>::get_bms_core_data()
     {
-        BMSCoreData_t out{};
+        BMSCoreData_s out{};
 
         // Basic voltages
         out.min_cell_voltage = _bms_data.min_cell_voltage;
         out.max_cell_voltage = _bms_data.max_cell_voltage;
         out.pack_voltage = _bms_data.total_voltage; 
-
-        // Per-cell array (sizes must match)
-        out.voltages = _bms_data.voltages;
 
         // Temps
         out.max_cell_temp  = _bms_data.max_cell_temp;
@@ -714,6 +710,7 @@ bool BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_cel
                 if (!validity[ReadGroup_e::CV_GROUP_C]) return false;
                 break;
             case ReadGroup_e::CV_GROUP_D:
+            case ReadGroup_e::CV_GROUP_D:
                 // Skip 9-cell chips (odd indices)
                 if (chip % 2 == 0 && !validity[ReadGroup_e::CV_GROUP_D]) return false;
                 break;
@@ -749,6 +746,7 @@ size_t BMSDriverGroup<num_chips_per_chip_select, num_chip_selects, num_voltage_c
             case ReadGroup_e::CV_GROUP_C:
                 if (!validity[ReadGroup_e::CV_GROUP_C]) invalid_count++;
                 break;
+            case ReadGroup_e::CV_GROUP_D:
             case ReadGroup_e::CV_GROUP_D:
                 // Skip 9-cell chips (odd indices) when counting
                 if (chip % 2 == 0 && !validity[ReadGroup_e::CV_GROUP_D]) invalid_count++;

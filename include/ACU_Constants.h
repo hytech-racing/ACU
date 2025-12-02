@@ -15,6 +15,7 @@ using time_ms = uint32_t;
 
 namespace ACUSystems
 {
+    constexpr const volt MIN_DISCHARGE_VOLTAGE_THRESH = 3.8F; // Minimum voltage for a cell to be discharged
     constexpr const volt CELL_OVERVOLTAGE_THRESH = 4.2;   // Cell overvoltage threshold in Volts
     constexpr const volt CELL_UNDERVOLTAGE_THRESH = 3.05; // Cell undervoltage threshold in Volts
     constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0;  // Volts
@@ -52,7 +53,7 @@ namespace ACUInterfaces {
 }
 
 namespace ACUConstants
-{
+{  
     constexpr size_t NUM_CELLS = 126;
     constexpr size_t NUM_CHIPS_PER_CHIP_SELECT = 6;
     constexpr size_t NUM_CHIP_SELECTS = 2;

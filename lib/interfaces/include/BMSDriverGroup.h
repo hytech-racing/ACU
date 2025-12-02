@@ -196,7 +196,6 @@ public:
     // constexpr static size_t num_cell_temps = (num_chips * 4);
     // constexpr static size_t num_board_temps = num_chips;
 
-    using BMSCoreData_t = BMSCoreData_s<num_voltage_cells, num_temp_cells, num_board_temps>;
     using BMSDriverData_t = BMSData_s<num_chip_selects * num_chips_per_chip_select, num_voltage_cells, num_temp_cells, num_board_temps>;
     using ChipSelectConfig_t = ChipSelectConfig<num_chip_selects, num_chips_per_chip_select, _data_size_bytes / size_of_packet_value_bytes>;
     using ChipSelect_t = ChipSelect<num_chips_per_chip_select, _data_size_bytes / size_of_packet_value_bytes>;
@@ -232,7 +231,7 @@ public:
     /**
      * Getter function to retrieve the ACUData structure
      */
-    BMSCoreData_t get_bms_core_data();
+    BMSCoreData_s get_bms_core_data();
 
     /**
      * Getter function to retrieve the BMSDriverData structure
