@@ -123,13 +123,17 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     return HT_TASK::TaskResponse::YIELD;
 }
 
+std::array<bool, ACUConstants::NUM_CELLS> check_and_get_balancing_status() {
+    std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses = {false};
+    if(ACUControllerInstance::instance().get_status().balancing_enabled) {
+        ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), BMSDriverInstance_t::instance().get_bms_data().voltages.data(), ACUConstants::NUM_CELLS, BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage);
+    }
+    return cell_balancing_statuses;
+}
+
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    
-    auto data = BMSDriverInstance_t::instance().get_bms_data();
-    static std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses;
-    ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), data.voltages.data(), ACUConstants::NUM_CELLS, data.min_cell_voltage);
-    BMSDriverInstance_t::instance().write_configuration(cell_balancing_statuses);
+    BMSDriverInstance_t::instance().write_configuration(check_and_get_balancing_status());
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -359,6 +363,12 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("Measured GLV: ");
     Serial.println("V");
     Serial.println();
+
+    Serial.println("Balancing status : ");
+    for(bool status : check_and_get_balancing_status()) {
+        Serial.print(status);
+        Serial.print(" ");
+    }
 
     Serial.print("Number of Global Faults: ");
     Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);

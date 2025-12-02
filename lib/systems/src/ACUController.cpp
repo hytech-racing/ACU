@@ -27,8 +27,8 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
         has_invalid_packet = true;
     }
     _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp);
+    
     // Cell balancing calculations
-
     bool previously_balancing = _acu_state.balancing_enabled;
 
     bool balance_enableable = ((previously_balancing && (input_state.max_board_temp < _acu_parameters.thresholds.balance_temp_limit_c)) ||
