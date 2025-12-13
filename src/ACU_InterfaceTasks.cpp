@@ -76,7 +76,39 @@ void initialize_all_interfaces()
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
-        
+
+    std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_scales = {
+        ACUInterfaces::ISO_PACK_N_SCALE,
+        ACUInterfaces::ISO_PACK_P_SCALE,
+        ACUInterfaces::PACK_VOLTAGE_SENSE_SCALE,
+        ACUInterfaces::SHUNT_CURRENT_OUT_SCALE,
+        ACUInterfaces::SHUNT_CURRENT_P_SCALE,
+        ACUInterfaces::SHUNT_CURRENT_N_SCALE,
+        ACUInterfaces::TS_OUT_FILTERED_SCALE,
+        ACUInterfaces::PACK_OUT_FILTERED_SCALE,
+    };
+
+    std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_offsets = {
+        ACUInterfaces::ISO_PACK_N_OFFSET,
+        ACUInterfaces::ISO_PACK_P_OFFSET,
+        ACUInterfaces::PACK_VOLTAGE_SENSE_OFFSET,
+        ACUInterfaces::SHUNT_CURRENT_OUT_OFFSET,
+        ACUInterfaces::SHUNT_CURRENT_P_OFFSET,
+        ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
+        ACUInterfaces::TS_OUT_FILTERED_OFFSET,
+        ACUInterfaces::PACK_OUT_FILTERED_OFFSET,
+    };
+
+    /* ADC Interface */
+    MAX1148ADCInstance_t::create(
+        ACUInterfaces::ADC0_CS,
+        ACUInterfaces::ADC0_MISO,
+        ACUInterfaces::ADC0_MOSI,
+        ACUInterfaces::ADC0_CLK,
+        ACUInterfaces::ADC0_SPEED,
+        adc0_scales.data(),
+        adc0_offsets.data()
+    );
         
     /* CCU Interface */
     CCUInterfaceInstance::create(sys_time::hal_millis());
@@ -130,6 +162,20 @@ HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros
     static std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses;
     ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), data.voltages.data(), ACUConstants::NUM_CELLS, data.min_cell_voltage);
     BMSDriverInstance_t::instance().write_configuration(cell_balancing_statuses);
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    MAX1148ADCInstance_t::instance().tick();
+
+    Serial.print("ADC0: ");
+    auto data = MAX1148ADCInstance_t::instance().get();
+    for (size_t i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
+        Serial.print(data.conversions[i].conversion);
+        Serial.print(" ");
+    }
+
     return HT_TASK::TaskResponse::YIELD;
 }
 

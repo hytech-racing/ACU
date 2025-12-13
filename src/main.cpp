@@ -36,6 +36,7 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 ::HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConstants::RECV_CAN_PRIORITY, ACUConstants::RECV_CAN_PERIOD_US);
 ::HT_TASK::Task idle_sample_task(HT_TASK::DUMMY_FUNCTION, idle_sample_interfaces, ACUConstants::IDLE_SAMPLE_PRIORITY, ACUConstants::IDLE_SAMPLE_PERIOD_US);
 ::HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
+::HT_TASK::Task sample_adc_task(HT_TASK::DUMMY_FUNCTION, sample_adc, ACUConstants::SAMPLE_ADC_PRIORITY, ACUConstants::SAMPLE_ADC_PERIOD_US);
 
 FlexCAN_t<CAN3> ACUCANInterfaceImpl::CCU_CAN;
 FlexCAN_t<CAN2> ACUCANInterfaceImpl::EM_CAN;
@@ -47,25 +48,27 @@ void setup()
     initialize_all_systems();
 
     scheduler.setTimingFunction(micros);
-    scheduler.schedule(tick_state_machine_task);
-    scheduler.schedule(kick_watchdog_task);
-    scheduler.schedule(sample_bms_data_task);
-    scheduler.schedule(eval_accumulator_task);
-    scheduler.schedule(write_cell_balancing_config_task);
+    // scheduler.schedule(tick_state_machine_task);
+    // scheduler.schedule(kick_watchdog_task);
+    // scheduler.schedule(sample_bms_data_task);
+    // scheduler.schedule(eval_accumulator_task);
+    // scheduler.schedule(write_cell_balancing_config_task);
 
-    scheduler.schedule(send_all_data_ethernet_task);
-    scheduler.schedule(send_core_data_ethernet_task); // waiting on update on drivebrain
+    // scheduler.schedule(send_all_data_ethernet_task);
+    // scheduler.schedule(send_core_data_ethernet_task); // waiting on update on drivebrain
 
-    scheduler.schedule(send_CAN_task);
-    scheduler.schedule(enqueue_CCU_core_CAN_task);
-    scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
-    scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
-    scheduler.schedule(enqueue_ACU_OK_CAN_task);
+    // scheduler.schedule(send_CAN_task);
+    // scheduler.schedule(enqueue_CCU_core_CAN_task);
+    // scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
+    // scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
+    // scheduler.schedule(enqueue_ACU_OK_CAN_task);
 
-    scheduler.schedule(sample_CAN_task);
-    scheduler.schedule(idle_sample_task);
+    // scheduler.schedule(sample_CAN_task);
+    // scheduler.schedule(idle_sample_task);
 
     //scheduler.schedule(debug_prints_task);
+    
+    scheduler.schedule(sample_adc_task);
 
     handle_CAN_setup(ACUCANInterfaceImpl::CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
     handle_CAN_setup(ACUCANInterfaceImpl::EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
