@@ -1,6 +1,5 @@
 /* ACU Dependent */
 #include "ACU_Constants.h"
-#include "ACU_Globals.h"
 #include "SystemTimeInterface.h"
 #include "ACU_InterfaceTasks.h"
 #include "ACU_SystemTasks.h"
@@ -24,23 +23,21 @@ elapsedMicros read_timer = 0;
 
 using chip_type = LTC6811_Type_e;
 
-const size_t sample_period_ms = 3; // 300 Hz - reads one group per call
+const size_t sample_period_ms = 50; // 300 Hz - reads one group per call
 const uint32_t spi_baudrate = 115200;
 const uint8_t num_cells_per_board = 21;
 
 // Initialize chip_select, chip_select_per_chip, and address
 const constexpr int num_cells_per_chip = 21;
 const constexpr int num_groups = 6;
-const constexpr int num_chips = 12; 
+const constexpr int num_chips = 2; 
 const constexpr int num_chip_selects = 1;
 const std::array<int, num_chip_selects> cs = {10};
-const std::array<int, num_chips> cs_per_chip = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
-const std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+const std::array<int, num_chips> cs_per_chip = {10, 10};
+const std::array<int, num_chips> addr = {0, 1};
 
 // Instantiate BMS Driver Group (non-const so we can call non-const methods)
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
-
-std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
 
 // Tracking variables for optimized read testing
 struct ReadGroupStats {
@@ -170,86 +167,6 @@ void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGrou
     Serial.println();
     Serial.println();
 
-    // // Validity tracking - show which groups were read this call
-    // Serial.println("--- Validity Status (Current Read) ---");
-    // for (size_t chip = 0; chip < num_chips; chip++)
-    // {
-    //     chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!data.valid_read_packets[chip].valid_read_cells_1_to_3) ? chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
-    //     chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!data.valid_read_packets[chip].valid_read_cells_4_to_6) ? chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
-    //     chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!data.valid_read_packets[chip].valid_read_cells_7_to_9) ? chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
-    //     chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!data.valid_read_packets[chip].valid_read_cells_10_to_12) ? chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count+1 : 0;
-    //     chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) ? chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count+1 : 0;
-    //     chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) ? chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count+1 : 0;
-
-    //     Serial.print("Chip ");
-    //     Serial.print(chip);
-    //     Serial.print(": ");
-
-    //     // Show validity for current group being read
-    //     bool has_invalid = false;
-    //     switch(current_group) {
-    //         case CurrentReadGroup_e::CV_GROUP_A:
-    //             if (!data.valid_read_packets[chip].valid_read_cells_1_to_3) {
-    //                 Serial.print("INVALID_GROUP_A ");
-    //                 has_invalid = true;
-    //             }
-    //             break;
-    //         case CurrentReadGroup_e::CV_GROUP_B:
-    //             if (!data.valid_read_packets[chip].valid_read_cells_4_to_6) {
-    //                 Serial.print("INVALID_GROUP_B ");
-    //                 has_invalid = true;
-    //             }
-    //             break;
-    //         case CurrentReadGroup_e::CV_GROUP_C:
-    //             if (!data.valid_read_packets[chip].valid_read_cells_7_to_9) {
-    //                 Serial.print("INVALID_GROUP_C ");
-    //                 has_invalid = true;
-    //             }
-    //             break;
-    //         case CurrentReadGroup_e::CV_GROUP_D:
-    //             if (!data.valid_read_packets[chip].valid_read_cells_10_to_12) {
-    //                 Serial.print("INVALID_GROUP_D ");
-    //                 has_invalid = true;
-    //             } else if (chip % 2 == 1) {
-    //                 Serial.print("SKIPPED_9CELL ");
-    //             }
-    //             break;
-    //         case CurrentReadGroup_e::AUX_GROUP_A:
-    //             if (!data.valid_read_packets[chip].valid_read_gpios_1_to_3) {
-    //                 Serial.print("INVALID_AUX_A ");
-    //                 has_invalid = true;
-    //             }
-    //             break;
-    //         case CurrentReadGroup_e::AUX_GROUP_B:
-    //             if (!data.valid_read_packets[chip].valid_read_gpios_4_to_6) {
-    //                 Serial.print("INVALID_AUX_B ");
-    //                 has_invalid = true;
-    //             }
-    //             break;
-    //         default:
-    //             break;
-    //     }
-
-    //     if (!has_invalid && !(current_group == CurrentReadGroup_e::CV_GROUP_D && chip % 2 == 1)) {
-    //         Serial.print("VALID");
-    //     }
-
-    //     Serial.print(" | Consecutive Invalids: c13:");
-    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count);
-    //     Serial.print(" c46:");
-    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count);
-    //     Serial.print(" c79:");
-    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count);
-    //     Serial.print(" c1012:");
-    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count);
-    //     Serial.print(" g13:");
-    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count);
-    //     Serial.print(" g46:");
-    //     Serial.print(chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count);
-    //     Serial.println();
-    // }
-
-    // Serial.println();
     // Serial.println();
 }
 
