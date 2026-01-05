@@ -32,8 +32,13 @@ const constexpr int num_cells_per_chip = 21;
 const constexpr int num_groups = 6;
 const constexpr int num_chips = 2; 
 const constexpr int num_chip_selects = 1;
+<<<<<<< Updated upstream
 const std::array<int, num_chip_selects> cs = {10};
 const std::array<int, num_chips> cs_per_chip = {10, 10};
+=======
+const std::array<int, num_chip_selects> cs = {36};
+const std::array<int, num_chips> cs_per_chip = {36, 36};
+>>>>>>> Stashed changes
 const std::array<int, num_chips> addr = {0, 1};
 
 // Instantiate BMS Driver Group (non-const so we can call non-const methods)
@@ -221,7 +226,7 @@ void print_performance_stats() {
 void setup()
 {
     Serial.begin(spi_baudrate);
-    SPI.begin();
+    SPI1.begin();
     BMSGroup.init();
     Serial.println("Setup Finished!");
     Serial.println();
