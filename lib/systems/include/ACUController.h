@@ -140,12 +140,6 @@ public:
         _acu_state.charging_enabled = false;
     }
 private:
-     /**
-     * Calculate Cell Balancing values
-     * @pre cell charging is enabled
-     * @post output will have the new values
-     */
-    void calculate_cell_balance_statuses(bool* output, const volt* voltages, size_t num_of_voltage_cells, volt min_voltage);
 
         /**
      * @brief Closest index that will represent the SoC of the average voltage on the cells
