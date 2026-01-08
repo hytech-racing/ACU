@@ -23,7 +23,6 @@ namespace acu_controller_default_parameters
     constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
 }
 
-template <size_t num_cells>
 struct ACUControllerData_s
 {
     time_ms last_time_uv_fault_not_present;
@@ -41,11 +40,11 @@ struct ACUControllerData_s
     uint32_t last_bms_not_ok_eval;
     bool charging_enabled;
     bool balancing_enabled;
-    std::array<bool, num_cells> cell_balancing_statuses;
 };
 
 struct ACUControllerThresholds_s
 {
+    volt min_discharge_voltage_thresh = 0;
     volt cell_overvoltage_thresh_v = 0;
     volt cell_undervoltage_thresh_v = 0;
     celsius charging_ot_thresh_c = 0;
@@ -68,6 +67,7 @@ struct ACUControllerPackSpecs_s
     float pack_nominal_capacity = 0;
     float pack_max_voltage = 0;
     float pack_min_voltage = 0;
+    float pack_internal_resistance = 0;
 };
 
 struct ACUControllerParameters_s
@@ -77,11 +77,9 @@ struct ACUControllerParameters_s
     ACUControllerFaultDurations_s fault_durations;
     ACUControllerPackSpecs_s pack_specs;
 };
-template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
 class ACUController
 {
-    using ACUData = etl::singleton<BMSCoreData_s<num_cells, num_celltemps, num_boardtemps>>;
-    using ACUStatus = ACUControllerData_s<num_cells>;
+    // using ACUData = etl::singleton<BMSCoreData_s<num_cells, num_celltemps, num_boardtemps>>;
 
 public:
     /**
@@ -104,8 +102,8 @@ public:
                     .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
                     .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
                     .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE,
-                    }
-                ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
+                    .pack_internal_resistance = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE
+                }) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
@@ -117,14 +115,21 @@ public:
      * @post updates configuration bytes and sends configuration command
      * @param pack_current current flowing from the pack in amps (negative during discharge, positive during charge)
      */
-    ACUStatus evaluate_accumulator(time_ms current_millis, const BMSCoreData_s<num_cells, num_celltemps, num_boardtemps> &input_state, float em_current);
+    ACUControllerData_s evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &bms_core_data, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells);
+
+        /**
+     * Calculate Cell Balancing values
+     * @pre cell charging is enabled
+     * @post output will have the new values
+     */
+    void calculate_cell_balance_statuses(bool* output, const volt* voltages, size_t num_of_voltage_cells, volt min_voltage);
 
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
      */
     float get_state_of_charge(float em_current, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis);
 
-    ACUStatus get_status() const { return _acu_state; };
+    ACUControllerData_s get_status() const { return _acu_state; };
 
     void enableCharging()
     {
@@ -135,12 +140,12 @@ public:
         _acu_state.charging_enabled = false;
     }
 private:
-    /**
+     /**
      * Calculate Cell Balancing values
      * @pre cell charging is enabled
-     * @post _acu_state.cell_balance_statuses will have the new values
+     * @post output will have the new values
      */
-    std::array<bool, num_cells> _calculate_cell_balance_statuses(std::array<volt, num_cells> voltages, volt min_voltage);
+    void calculate_cell_balance_statuses(bool* output, const volt* voltages, size_t num_of_voltage_cells, volt min_voltage);
 
         /**
      * @brief Closest index that will represent the SoC of the average voltage on the cells
@@ -175,18 +180,17 @@ private:
     bool _check_invalid_packet_faults(time_ms current_millis);
 
 private:
-    /**
-     * @brief Internal resistance per cell (computed from pack resistance divided by number of cells)
-     */
-    static constexpr float CELL_INTERNAL_RESISTANCE = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE / static_cast<float>(num_cells);
+
     /**
      * @brief ACU State Holder
      * Most importantly, holding the current cell balances, fault counters, and watchdog HIGH?LOW
-     * state is packaged this way so that we can feed it directly into the message interface as a struct
+     * state is packaged this way so that we ican feed it directly into the message interface as a struct
      */
-    ACUStatus _acu_state = {};
+    ACUControllerData_s _acu_state = {};
 
     static constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
+
+    static constexpr uint32_t _ms_to_hours = 3600000;
 
     /**
      * @brief ACU Controller Parameters holder
@@ -212,8 +216,6 @@ private:
     static constexpr uint32_t MIN_STABILIZED_CURRENT_DURATION_MS = 1800000;  // 30 minutes in milliseconds
 };
 
-template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
-using ACUControllerInstance = etl::singleton<ACUController<num_cells, num_celltemps, num_boardtemps>>;
+using ACUControllerInstance = etl::singleton<ACUController>;
 
-#include "ACUController.tpp"
 #endif

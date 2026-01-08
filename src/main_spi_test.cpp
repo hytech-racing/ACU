@@ -55,7 +55,7 @@ uint32_t cycle_count = 0;
 bool cycle_complete = false;
 
 template <typename driver_data>
-void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGroup_e current_group)
+void print_voltages(driver_data data, uint32_t read_duration_us, ReadGroup_e current_group)
 {
     Serial.println("========================================");
     Serial.print("Read Group: ");
@@ -327,7 +327,7 @@ void loop()
         timer = 0;
 
         // Get the group that WILL BE read by this call
-        CurrentReadGroup_e group_before_read = BMSGroup.get_current_read_group();
+        ReadGroup_e group_before_read = BMSGroup.get_current_read_group();
         uint32_t group_index = static_cast<uint32_t>(group_before_read);
 
         // Start timing the read
@@ -350,7 +350,7 @@ void loop()
         }
 
         // Detect cycle completion: we just read AUX_B and driver advanced back to GROUP_A
-        cycle_complete = (group_before_read == CurrentReadGroup_e::AUX_GROUP_B);
+        cycle_complete = (group_before_read == ReadGroup_e::AUX_GROUP_B);
         if (cycle_complete) {
             cycle_count++;
         }
@@ -364,8 +364,8 @@ void loop()
         }
 
         // Verify state machine advanced correctly
-        CurrentReadGroup_e expected_next = advance_read_group(group_before_read);
-        CurrentReadGroup_e actual_next = BMSGroup.get_current_read_group();
+        ReadGroup_e expected_next = advance_read_group(group_before_read);
+        ReadGroup_e actual_next = BMSGroup.get_current_read_group();
         if (expected_next != actual_next) {
             Serial.println("*** ERROR: State machine did not advance correctly! ***");
             Serial.print("Expected: ");
