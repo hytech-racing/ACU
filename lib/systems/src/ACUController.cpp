@@ -120,8 +120,7 @@ void ACUController::calculate_cell_balance_statuses(bool* output, const volt* vo
     }
 }
 
-template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
-float ACUController<num_cells, num_celltemps, num_boardtemps>::_get_soc_from_voltage(volt avg_cell_voltage)
+float ACUController::_get_soc_from_voltage(volt avg_cell_voltage)
 {
     static constexpr size_t table_size = 101;
 
@@ -146,8 +145,7 @@ float ACUController<num_cells, num_celltemps, num_boardtemps>::_get_soc_from_vol
     return 0.0f;
 }
 
-template <size_t num_cells, size_t num_celltemps, size_t num_boardtemps>
-float ACUController<num_cells, num_celltemps, num_boardtemps>::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis)
+float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis)
 {
     // we will use coulomb counting for the normal implementation of getting state of charge
     // whenever the car has been at rest (em voltage and em current at 0) for 30 mins, then we can correct the SoC to the voltage look up table value
