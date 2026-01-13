@@ -16,6 +16,8 @@ MAX114XInterface<MAX1148X_ADC_NUM_CHANNELS>::MAX114XInterface(const int spiPinCS
     }
     pinMode(_spiPinCS, OUTPUT);
     digitalWrite(_spiPinCS, HIGH);
+
+    _single_end_channel_to_select_map = {0, 4, 1, 5, 2, 6, 3, 7};
 }
 
 template <int MAX1148X_ADC_NUM_CHANNELS>
@@ -42,26 +44,26 @@ void MAX114XInterface<MAX1148X_ADC_NUM_CHANNELS>::_sample()
         digitalWrite(_spiPinCS, LOW);
         
         // UPDATE CODE BELOW
-        
+
         command = ((0x01 << 7) |                     // start bit
-                    ((channelIndex & 0x07) << 4) |   // channel number
+                    ((_single_end_channel_to_select_map[channelIndex] & 0x07) << 4) |   // channel number
                     (0x01 << 3) |                    // single or differential
                     (0x01 << 2) |                    // unipolar or !bipolar
                     (0x01 << 1) |                    // external clock mode
-                    (0x01 << 0));                    // 
+                    (0x01 << 1));                    // 
         b0 = SPI.transfer(command);
         b1 = SPI.transfer(0x00);
         b2 = SPI.transfer(0x00);
 
-        Serial.print("b0: ");
-        Serial.println(b0, HEX);
         Serial.print("b1: ");
-        Serial.println(b1, HEX);
-        Serial.print("b2: ");
-        Serial.println(b2, HEX);
+        Serial.print(b1, HEX);
+        Serial.print("  b2: ");
+        Serial.print(b2, HEX);
 
         // uint16_t value = SPI.transfer16(command | channelIndex << 11);
-        uint16_t value = (b0 & 0x01) << 11 | (b1 & 0xFF) << 3 | (b2 & 0xE0) >> 5;
+        uint16_t value = ((b1 & 0x3F) << 8) | (b2 & 0xFF);
+        Serial.print("  value: ");
+        Serial.println(value);
         MAX114XInterface<MAX1148X_ADC_NUM_CHANNELS>::_channels[channelIndex].lastSample = (value & 0x3FFF);
         
         // UPDATE CODE ABOVE

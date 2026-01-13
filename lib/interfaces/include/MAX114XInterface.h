@@ -24,6 +24,8 @@ private:
     const int _spiPinSDO;
     const int _spiPinCLK;
     const int _spiSpeed;
+    
+    std::array<uint8_t, MAX1148X_ADC_NUM_CHANNELS> _single_end_channel_to_select_map;
 
     /**
      * Samples the MCP_ADC over SPI. Samples all eight channels and, in accordance with the AnalogMultiSensor's function

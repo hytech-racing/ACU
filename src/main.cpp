@@ -43,6 +43,7 @@ FlexCAN_t<CAN2> ACUCANInterfaceImpl::EM_CAN;
 
 void setup()
 {
+    Serial.println("Initializing all systems...");
     /* Interface and System initialization */
     initialize_all_interfaces(); // must init first
     initialize_all_systems();
