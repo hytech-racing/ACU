@@ -139,8 +139,7 @@ float SOCKalmanFilter::_get_ocv_from_soc(float soc) const {
     return _VOLTAGE_LOOKUP_TABLE[idx_low] + fraction * (_VOLTAGE_LOOKUP_TABLE[idx_high] - _VOLTAGE_LOOKUP_TABLE[idx_low]);
 }
 
-float SOCKalmanFilter::_get_docv_dsoc(float soc) const
-{
+float SOCKalmanFilter::_get_docv_dsoc(float soc) const {
     constexpr float h = 0.01f;
     float soc_plus = fminf(soc + h, 1.0f);
     float soc_minus = fmaxf(soc - h, 0.0f);
@@ -149,9 +148,10 @@ float SOCKalmanFilter::_get_docv_dsoc(float soc) const
     return (ocv_plus - ocv_minus) / (soc_plus - soc_minus);
 }
 
-void SOCKalmanFilter::reset_soc(float new_soc)
-{
-    _state.soc = fmaxf(soc_ekf_constants::MIN_SOC, 
-                       fminf(soc_ekf_constants::MAX_SOC, new_soc));
-    _P[0][0] = 0.01f;
+void SOCKalmanFilter::reset_soc(float new_soc) {
+    _state.soc = fmaxf(soc_ekf_constants::MIN_SOC, fminf(soc_ekf_constants::MAX_SOC, new_soc));
+    _PMatrix[0][0] = 0.01f;
+    _PMatrix[0][1] = 0.0f;
+    _PMatrix[1][0] = 0.0f;
+    _PMatrix[1][1] = 0.1f;
 }
