@@ -10,8 +10,12 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.last_time_pack_uv_fault_not_present = system_start_time;
     _acu_state.last_time_invalid_packet_present = system_start_time;
     _acu_state.prev_bms_time_stamp = system_start_time;
-    _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
+    // _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
     _acu_state.balancing_enabled = false;
+
+    _soc_ekf.init(pack_voltage / 126.0f);
+    _ekf_initialized = true;
+    _acu_state.SoC = _soc_ekf.get_soc();
 }
 
 
@@ -26,7 +30,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     { // meaning that at least one of the packets is invalid
         has_invalid_packet = true;
     }
-    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, input_state.avg_cell_voltage, current_millis);
+    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, input_state.pack_voltage / num_of_voltage_cells, current_millis);
     // Cell balancing calculations
     bool previously_balancing = _acu_state.balancing_enabled;
 
@@ -147,10 +151,17 @@ float ACUController::_get_soc_from_voltage(volt avg_cell_voltage)
 
 float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis)
 {
-    // we will use coulomb counting for the normal implementation of getting state of charge
-    // whenever the car has been at rest (em voltage and em current at 0) for 30 mins, then we can correct the SoC to the voltage look up table value
-        // we will reset the soc with the voltage look up value
-        // we want to then start coulomb counting from this point, we also want to restart a 30 min timer, so we can set the start time to now
+    if (!_ekf_initialized) {
+        return _get_soc_from_voltage(avg_cell_voltage);
+    }
+
+    float dt = static_cast<float>(delta_time_ms) / 1000.0f; // in seconds
+    
+
+    // // we will use coulomb counting for the normal implementation of getting state of charge
+    // // whenever the car has been at rest (em voltage and em current at 0) for 30 mins, then we can correct the SoC to the voltage look up table value
+    //     // we will reset the soc with the voltage look up value
+    //     // we want to then start coulomb counting from this point, we also want to restart a 30 min timer, so we can set the start time to now
 
     bool is_stabilized = (fabs(em_current) <= STABILIZED_CURRENT_THRESH);
     if (is_stabilized) {
@@ -160,6 +171,7 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
         // we have another 0 current, so we need to see if we have rested for long enough
         if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) {
             _acu_state.SoC = _get_soc_from_voltage(avg_cell_voltage);
+            _soc_ekf.reset_soc(_acu_state.SoC);
             _acu_state.first_zero_current_time_stamp = 0;
             return _acu_state.SoC;
         }
@@ -167,14 +179,18 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
         _acu_state.first_zero_current_time_stamp = 0;
     }
 
-    // coulomb count the remaining charge
-    float delta_ah = (em_current) * ((float)(delta_time_ms / 1000.0f) / 3600.0f);  // amp hours
-    _acu_state.SoC += delta_ah / _acu_parameters.pack_specs.pack_nominal_capacity; // should be -= but EM inverted
-    if (_acu_state.SoC < 0.0)
-        _acu_state.SoC = 0;
-    if (_acu_state.SoC > 1.0)
-        _acu_state.SoC = 1;
+    EKFState_s ekf_state = _soc_ekf.update(-em_current, avg_cell_voltage, dt);
+    _acu_state.SoC = ekf_state.soc;
     return _acu_state.SoC;
+
+    // // coulomb count the remaining charge
+    // float delta_ah = (em_current) * ((float)(delta_time_ms / 1000.0f) / 3600.0f);  // amp hours
+    // _acu_state.SoC += delta_ah / _acu_parameters.pack_specs.pack_nominal_capacity; // should be -= but EM inverted
+    // if (_acu_state.SoC < 0.0)
+    //     _acu_state.SoC = 0;
+    // if (_acu_state.SoC > 1.0)
+    //     _acu_state.SoC = 1;
+    // return _acu_state.SoC;
 }
 
 

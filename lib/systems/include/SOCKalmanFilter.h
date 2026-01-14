@@ -123,6 +123,4 @@ private:
     };
 };
 
-using SOCKalmanFilterInstance = etl::singleton<SOCKalmanFilter>;
-
 #endif

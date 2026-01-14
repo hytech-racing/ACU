@@ -145,11 +145,18 @@ float SOCKalmanFilter::_get_docv_dsoc(float soc) const {
     float soc_minus = fmaxf(soc - h, 0.0f);
     float ocv_plus = _get_ocv_from_soc(soc_plus);
     float ocv_minus = _get_ocv_from_soc(soc_minus);
-    return (ocv_plus - ocv_minus) / (soc_plus - soc_minus);
+    float slope = (ocv_plus - ocv_minus) / (soc_plus - soc_minus);
+
+    if (slope < 0.1f) {
+        slope = 0.1f; 
+    }
+    
+    return slope;
 }
 
 void SOCKalmanFilter::reset_soc(float new_soc) {
     _state.soc = fmaxf(soc_ekf_constants::MIN_SOC, fminf(soc_ekf_constants::MAX_SOC, new_soc));
+    _state.v1 = 0.0f;
     _PMatrix[0][0] = 0.01f;
     _PMatrix[0][1] = 0.0f;
     _PMatrix[1][0] = 0.0f;

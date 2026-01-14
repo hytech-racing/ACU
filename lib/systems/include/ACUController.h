@@ -9,6 +9,7 @@
 #include "etl/singleton.h"
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
+#include "SOCKalmanFilter.h"
 
 namespace acu_controller_default_parameters
 {
@@ -190,6 +191,14 @@ private:
      * @brief ACU Controller Parameters holder
      */
     const ACUControllerParameters_s _acu_parameters = {};
+
+
+    /**
+     * @brief Extended Kalman Filter for SoC tracking using current and voltage measurements from pack
+     * This will replace the coulomb counting method for SoC tracking and will be used to track SoC of the pack
+     */
+    SOCKalmanFilter _soc_ekf;
+    bool _ekf_initialized = false;
 
     /**
      * @brief OCV-SOC Lookup Table from MCU on HT-08: voltage values corresponding to SOC from 0% to 100% 
