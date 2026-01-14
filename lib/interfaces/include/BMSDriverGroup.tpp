@@ -123,7 +123,6 @@ BMSCoreData_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_co
         // Basic voltages
         out.min_cell_voltage = _bms_data.min_cell_voltage;
         out.max_cell_voltage = _bms_data.max_cell_voltage;
-        out.avg_cell_voltage = _bms_data.avg_cell_voltage;
         out.pack_voltage = _bms_data.total_voltage; 
 
         // Temps
