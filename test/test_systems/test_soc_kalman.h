@@ -72,31 +72,20 @@ TEST(SOCKalmanFilterTesting, v1_dynamics_time_constant) {
 TEST(SOCKalmanFilterTesting, convergence_correction_zero_current) {
     SOCKalmanFilter ekf;
     
-    // 1. Initialize at ~50% SoC (3.56V)
-    // Physics Model says: "If current is 0, SoC stays at 50% forever."
     float start_voltage = 3.4f; 
     ekf.init(start_voltage);
     float start_soc = ekf.get_soc();
 
-    // 2. The Conflict
-    // Sensor says: "Actually, voltage is 3.8V (approx 80-90% SoC)."
-    // The Filter MUST override the Physics Model and climb up.
     float target_voltage = 3.7f; 
     float current = 0.0f;
     float dt = 0.1f;
 
-    // 3. Run the Correction Loop
     for (int i = 0; i < 3000; i++) {
         ekf.update(current, target_voltage, dt);
     }
 
-    // 4. Verification
-    // SoC must have climbed significantly from start (Correction working)
     EXPECT_GT(ekf.get_soc(), start_soc + 0.15f);
     
-    // Robustness Check: It shouldn't have jumped instantly to 100% or NaN.
-    // It should be approaching the target (approx 0.9) but maybe not fully there yet 
-    // (depending on Q/R tuning).
     EXPECT_LT(ekf.get_soc(), 1.0f); 
 }
 
