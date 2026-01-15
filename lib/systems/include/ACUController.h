@@ -10,6 +10,7 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 #include "SOCKalmanFilter.h"
+#include "ACU_Constants.h"
 
 namespace acu_controller_default_parameters
 {
@@ -186,6 +187,8 @@ private:
     static constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
 
     static constexpr uint32_t _ms_to_hours = 3600000;
+
+    static constexpr float _ms_to_seconds = 1000.0f;
 
     /**
      * @brief ACU Controller Parameters holder

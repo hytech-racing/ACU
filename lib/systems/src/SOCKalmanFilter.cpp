@@ -1,14 +1,10 @@
 #include "SOCKalmanFilter.h"
 #include <math.h>
 
-SOCKalmanFilter::SOCKalmanFilter() {
-    _state.soc = 0.5f;
-    _state.v1 = 0.0f;
-
-    _PMatrix[0][0] = 0.01f;
-    _PMatrix[0][1] = 0.0f;
-    _PMatrix[1][0] = 0.0f;
-    _PMatrix[1][1] = 0.1f;
+SOCKalmanFilter::SOCKalmanFilter()
+    : _state{soc_ekf_constants::INITIAL_SOC, soc_ekf_constants::INITIAL_V1},
+      _PMatrix{{soc_ekf_constants::P_SOC_INITIAL, soc_ekf_constants::P_CROSS_INITIAL},
+               {soc_ekf_constants::P_CROSS_INITIAL, soc_ekf_constants::P_V1_INITIAL}} {
 }
 
 void SOCKalmanFilter::init(float initial_voltage) {
@@ -20,9 +16,9 @@ void SOCKalmanFilter::init(float initial_voltage) {
         _state.soc = 0.0f;
     } else {
         for (size_t i = 0; i < table_size - 1; i++) {
-            if (initial_voltage <= _VOLTAGE_LOOKUP_TABLE[i] && initial_voltage > _VOLTAGE_LOOKUP_TABLE[i + 1]) {
-                float v_high = _VOLTAGE_LOOKUP_TABLE[i];
-                float v_low = _VOLTAGE_LOOKUP_TABLE[i + 1];
+            if (initial_voltage <= _VOLTAGE_LOOKUP_TABLE[i] && initial_voltage > _VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
+                float v_high = _VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
+                float v_low = _VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
                 float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
                 float soc_low = (float)(table_size - 1 - (i + 1)) / (table_size - 1);
                 
@@ -33,12 +29,12 @@ void SOCKalmanFilter::init(float initial_voltage) {
 
     }
 
-    _state.v1 = 0.0f;
+    _state.v1 = soc_ekf_constants::INITIAL_V1;
     
-    _PMatrix[0][0] = 0.01f;
-    _PMatrix[0][1] = 0.0f;
-    _PMatrix[1][0] = 0.0f;
-    _PMatrix[1][1] = 0.1f;
+    _PMatrix[0][0] = soc_ekf_constants::P_SOC_INITIAL;
+    _PMatrix[0][1] = soc_ekf_constants::P_CROSS_INITIAL;
+    _PMatrix[1][0] = soc_ekf_constants::P_CROSS_INITIAL;
+    _PMatrix[1][1] = soc_ekf_constants::P_V1_INITIAL;
 }
 
 EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
@@ -136,19 +132,18 @@ float SOCKalmanFilter::_get_ocv_from_soc(float soc) const {
     }
 
     float fraction = index_float - (float)idx_low;
-    return _VOLTAGE_LOOKUP_TABLE[idx_low] + fraction * (_VOLTAGE_LOOKUP_TABLE[idx_high] - _VOLTAGE_LOOKUP_TABLE[idx_low]);
+    return _VOLTAGE_LOOKUP_TABLE[idx_low] + fraction * (_VOLTAGE_LOOKUP_TABLE[idx_high] - _VOLTAGE_LOOKUP_TABLE[idx_low]); //NOLINT
 }
 
 float SOCKalmanFilter::_get_docv_dsoc(float soc) const {
-    constexpr float h = 0.01f;
-    float soc_plus = fminf(soc + h, 1.0f);
-    float soc_minus = fmaxf(soc - h, 0.0f);
+    float soc_plus = fminf(soc + soc_ekf_constants::DOCV_DSOC_STEP, soc_ekf_constants::MAX_SOC);
+    float soc_minus = fmaxf(soc - soc_ekf_constants::DOCV_DSOC_STEP, soc_ekf_constants::MIN_SOC);
     float ocv_plus = _get_ocv_from_soc(soc_plus);
     float ocv_minus = _get_ocv_from_soc(soc_minus);
     float slope = (ocv_plus - ocv_minus) / (soc_plus - soc_minus);
 
-    if (slope < 0.1f) {
-        slope = 0.1f; 
+    if (slope < soc_ekf_constants::MIN_DOCV_DSOC_SLOPE) {
+        slope = soc_ekf_constants::MIN_DOCV_DSOC_SLOPE; 
     }
     
     return slope;
@@ -156,9 +151,9 @@ float SOCKalmanFilter::_get_docv_dsoc(float soc) const {
 
 void SOCKalmanFilter::reset_soc(float new_soc) {
     _state.soc = fmaxf(soc_ekf_constants::MIN_SOC, fminf(soc_ekf_constants::MAX_SOC, new_soc));
-    _state.v1 = 0.0f;
-    _PMatrix[0][0] = 0.01f;
-    _PMatrix[0][1] = 0.0f;
-    _PMatrix[1][0] = 0.0f;
-    _PMatrix[1][1] = 0.1f;
+    _state.v1 = soc_ekf_constants::INITIAL_V1;
+    _PMatrix[0][0] = soc_ekf_constants::P_SOC_INITIAL;
+    _PMatrix[0][1] = soc_ekf_constants::P_CROSS_INITIAL;
+    _PMatrix[1][0] = soc_ekf_constants::P_CROSS_INITIAL;
+    _PMatrix[1][1] = soc_ekf_constants::P_V1_INITIAL;
 }

@@ -26,6 +26,18 @@ namespace soc_ekf_constants
     constexpr const float MIN_SOC = 0.0f;
     constexpr const float MAX_SOC = 1.0f;
     constexpr const float MAX_V1_MAGNITUDE = 0.5f;
+
+    // Initial/reset values for state and covariance
+    constexpr const float INITIAL_SOC = 0.5f;
+    constexpr const float INITIAL_V1 = 0.0f;
+    constexpr const float P_SOC_INITIAL = 0.01f;  // Initial variance for SoC
+    constexpr const float P_V1_INITIAL = 0.1f;    // Initial variance for V1
+    constexpr const float P_CROSS_INITIAL = 0.0f; // Initial cross-covariance
+
+    // Numerical differentiation step size
+    constexpr const float DOCV_DSOC_STEP = 0.01f;
+    // Minimum slope for dOCV/dSoC to prevent numerical instability
+    constexpr const float MIN_DOCV_DSOC_SLOPE = 0.1f;
 }
 
 struct EKFState_s

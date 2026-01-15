@@ -13,7 +13,7 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     // _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
     _acu_state.balancing_enabled = false;
 
-    _soc_ekf.init(pack_voltage / 126.0f);
+    _soc_ekf.init(pack_voltage / ACUConstants::NUM_CELLS);
     _ekf_initialized = true;
     _acu_state.SoC = _soc_ekf.get_soc();
 }
@@ -30,7 +30,9 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     { // meaning that at least one of the packets is invalid
         has_invalid_packet = true;
     }
-    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, input_state.pack_voltage / num_of_voltage_cells, current_millis);
+
+    volt avg_cell_voltage = input_state.pack_voltage / static_cast<float>(num_of_voltage_cells);
+    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, avg_cell_voltage, current_millis);
     // Cell balancing calculations
     bool previously_balancing = _acu_state.balancing_enabled;
 
@@ -136,9 +138,9 @@ float ACUController::_get_soc_from_voltage(volt avg_cell_voltage)
     }
 
     for (size_t i = 0; i < table_size - 1; i++) {
-        if (avg_cell_voltage <= VOLTAGE_LOOKUP_TABLE[i] && avg_cell_voltage > VOLTAGE_LOOKUP_TABLE[i + 1]) {
-            float v_high = VOLTAGE_LOOKUP_TABLE[i];
-            float v_low = VOLTAGE_LOOKUP_TABLE[i + 1];
+        if (avg_cell_voltage <= VOLTAGE_LOOKUP_TABLE[i] && avg_cell_voltage > VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
+            float v_high = VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
+            float v_low = VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
             float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
             float soc_low = (float)(table_size - 1 - (i + 1)) / (table_size - 1);
             
@@ -155,7 +157,7 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
         return _get_soc_from_voltage(avg_cell_voltage);
     }
 
-    float dt = static_cast<float>(delta_time_ms) / 1000.0f; // in seconds
+    float dt = static_cast<float>(delta_time_ms) / _ms_to_seconds; // in seconds
     
 
     // // we will use coulomb counting for the normal implementation of getting state of charge
