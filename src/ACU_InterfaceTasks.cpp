@@ -100,7 +100,7 @@ void initialize_all_interfaces()
     };
 
     // Consider saving this array as a constant in ACUConstants
-    std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS> adc0_channels = {
+    std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
         CHANNEL_TYPE_e::INV_DIFFERENTIAL,
         CHANNEL_TYPE_e::SINGLE,
         CHANNEL_TYPE_e::DIFFERENTIAL,
@@ -116,7 +116,7 @@ void initialize_all_interfaces()
         ACUInterfaces::ADC0_SPEED,
         adc0_scales.data(),
         adc0_offsets.data(),
-        adc0_channels.data(),
+        adc0_channels,
         ACUInterfaces::MAX1148_VERSION // Save this value as a constant in ACUConstants
     );
         

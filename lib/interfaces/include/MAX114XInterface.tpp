@@ -11,8 +11,8 @@ template <int MAX114X_ADC_NUM_CHANNELS>
 MAX114XInterface<MAX114X_ADC_NUM_CHANNELS>::MAX114XInterface(
     const int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed,
     const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS],
-    // const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes,
-    const CHANNEL_TYPE_e channelTypes[MAX114X_ADC_NUM_CHANNELS],
+    const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes,
+    // const CHANNEL_TYPE_e channelTypes[MAX114X_ADC_NUM_CHANNELS / 2],
     const int max114xVersion)
 
     : _spiPinCS(spiPinCS)
@@ -31,6 +31,7 @@ MAX114XInterface<MAX114X_ADC_NUM_CHANNELS>::MAX114XInterface(
     pinMode(_spiPinCS, OUTPUT);
     digitalWrite(_spiPinCS, HIGH);
     
+    // Page 15
     switch (max114xVersion) {
     case 6:
     case 7:
@@ -41,7 +42,7 @@ MAX114XInterface<MAX114X_ADC_NUM_CHANNELS>::MAX114XInterface(
         _single_end_channel_to_select_map = {0, 4, 1, 5, 2, 6, 3, 7};
         break;
     default:
-        // THROW ERROR
+        static_assert(false, "Invalid version number");
         break;
     }
     
@@ -108,10 +109,15 @@ int MAX114XInterface<MAX114X_ADC_NUM_CHANNELS>::_getSel(CHANNEL_TYPE_e channelTy
 {
     switch (channelType) {
         case CHANNEL_TYPE_e::SINGLE:
+            // The channel selection bits for single mode follows this array
             return _single_end_channel_to_select_map[channelId];
         case CHANNEL_TYPE_e::DIFFERENTIAL:
+            // The channel selection bits for differential mode is the channel number halved and then truncated
+            // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
             return channelId++ / 2;
         case CHANNEL_TYPE_e::INV_DIFFERENTIAL:
+            // The channel selection bits for inversed differential mode is the channel number halved, truncated, and plus 4
+            // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
             return (channelId++ / 2) + 4;
     }
 }

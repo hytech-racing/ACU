@@ -30,7 +30,7 @@ class MAX114XInterface : public AnalogMultiSensor<MAX114X_ADC_NUM_CHANNELS>
 private:
     // const int _max114xVersion;    
 
-    const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS> _channelTypes;
+    const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2> _channelTypes;
 
     const int _spiPinCS;
     const int _spiPinSDI;
@@ -52,7 +52,7 @@ private:
     
 public:
     /* Constructors */
-    MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const CHANNEL_TYPE_e channelTypes[MAX114X_ADC_NUM_CHANNELS], const int max114xVersion);
+    MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes, const int max114xVersion);
 
     /* Functions */
 
