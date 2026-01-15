@@ -1,8 +1,9 @@
-#ifndef MAX1148INTERFACE
-#define MAX1148INTERFACE
+#ifndef MAX114XINTERFACE_H
+#define MAX114XINTERFACE_H
+
+#include "AnalogSensorsInterface.h"
 
 #include <SPI.h>
-#include "AnalogSensorsInterface.h"
 
 // Definitions
 const int MAX114X_ADC_DEFAULT_SPI_SDI   = 12;
@@ -11,7 +12,7 @@ const int MAX114X_ADC_DEFAULT_SPI_CLK   = 13;
 const int MAX114X_ADC_DEFAULT_SPI_SPEED = 2000000;
 
 /**
- * Enum representing the different channel configurations in MAX114X ADCs
+ * Enum representing the different channel configurations in MAX114X ADCs (SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL)
  */
 enum class CHANNEL_TYPE_e{
     SINGLE, ///< single channel
@@ -72,4 +73,4 @@ using MAX114XInterfaceInstance = etl::singleton<MAX114XInterface<MAX114X_ADC_NUM
 
 #include "MAX114XInterface.tpp"
 
-#endif /* __MCP_ADC_H__ */
+#endif /* MAX114X_INTERFACE */

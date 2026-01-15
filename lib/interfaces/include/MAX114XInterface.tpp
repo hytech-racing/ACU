@@ -6,6 +6,7 @@
 
 
 #include "MAX114XInterface.h"
+
 #include <array>
 #include <stdexcept>
 
