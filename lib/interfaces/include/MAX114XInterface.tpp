@@ -4,6 +4,7 @@ Page 15: channel codes
 */
 
 #include "MAX114XInterface.h"
+
 #include <array>
 #include <stdexcept>
 
