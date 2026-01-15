@@ -31,6 +31,12 @@ template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 class MAX114XInterface : public AnalogMultiSensor<MAX114X_ADC_NUM_CHANNELS>
 {
 private:
+    /**
+     * Channel configuration is defined per channel pair (two physical channels).
+     * This array stores the channel type for each pair of channels in the ADC.
+     * Each pair may be configured as SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL as defined in the enclosed enum.
+     * SINGLE indicates both channels in the pair are single-ended inputs and operate separately.
+     */
     const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2> _channelTypes;
 
     const int _spiPinCS;
@@ -39,6 +45,10 @@ private:
     const int _spiPinCLK;
     const int _spiSpeed;
     
+    /**
+     * The select bits for single-ended channels are all over the place and do not follow a logical mapping.
+     * This array stores the specific single-ended select-bit mapping for each channel as defined in the datasheet. 
+     */
     std::array<uint8_t, MAX114X_ADC_NUM_CHANNELS> _single_end_channel_to_select_map;
 
     /**
