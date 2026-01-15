@@ -13,7 +13,7 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     // _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
     _acu_state.balancing_enabled = false;
 
-    _soc_ekf.init(pack_voltage / ACUConstants::NUM_CELLS);
+    _soc_ekf.init(pack_voltage / static_cast<float>(NUM_CELLS));
     _ekf_initialized = true;
     _acu_state.SoC = _soc_ekf.get_soc();
 }

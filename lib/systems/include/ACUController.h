@@ -10,7 +10,6 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 #include "SOCKalmanFilter.h"
-#include "ACU_Constants.h"
 
 namespace acu_controller_default_parameters
 {
@@ -202,6 +201,8 @@ private:
      */
     SOCKalmanFilter _soc_ekf;
     bool _ekf_initialized = false;
+
+    size_t NUM_CELLS = 126;
 
     /**
      * @brief OCV-SOC Lookup Table from MCU on HT-08: voltage values corresponding to SOC from 0% to 100% 
