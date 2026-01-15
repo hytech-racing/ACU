@@ -116,8 +116,7 @@ void initialize_all_interfaces()
         ACUInterfaces::ADC0_SPEED,
         adc0_scales.data(),
         adc0_offsets.data(),
-        adc0_channels,
-        ACUInterfaces::MAX1148_VERSION // Save this value as a constant in ACUConstants
+        adc0_channels
     );
         
     /* CCU Interface */

@@ -11,25 +11,25 @@ const int MAX114X_ADC_DEFAULT_SPI_CLK   = 13;
 const int MAX114X_ADC_DEFAULT_SPI_SPEED = 2000000;
 
 /**
- * Enum representing the different channel configurations in MAX114X ADCs (SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL)
+ * Enum representing the different channel configurations in MAX114X ADCs
  */
 enum class CHANNEL_TYPE_e{
-    SINGLE,
-    DIFFERENTIAL,
-    INV_DIFFERENTIAL,
+    SINGLE, ///< single channel
+    DIFFERENTIAL, ///< +- differential pair
+    INV_DIFFERENTIAL, ///< -+ differential pair
 };
 
 /**
  * The MAX114X_ADC is a concrete subclass of the AnalogMultiSensor parent class. This allows
  * for SPI communication with any version of the MAX114X_ADC, which can be a 4-channel or 8-channel sensor.
  * IMPORTANT - must call SPI.begin() once and only once before instantiating any MCP_ADC object!!
+ * @param MAX114X_ADC_NUM_CHANNELS number of channels for the ADC
+ * @param MAX114xVersion 6, 7, 8, or 9, corresponding to the MAX1146, MAX1147, MAX1148, and MAX1149 ADCs
  */
-template <int MAX114X_ADC_NUM_CHANNELS>
+template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 class MAX114XInterface : public AnalogMultiSensor<MAX114X_ADC_NUM_CHANNELS>
 {
 private:
-    // const int _max114xVersion;    
-
     const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2> _channelTypes;
 
     const int _spiPinCS;
@@ -39,8 +39,6 @@ private:
     const int _spiSpeed;
     
     std::array<uint8_t, MAX114X_ADC_NUM_CHANNELS> _single_end_channel_to_select_map;
-    std::array<uint8_t, MAX114X_ADC_NUM_CHANNELS> _differential_end_channel_to_select_map;
-    std::array<uint8_t, MAX114X_ADC_NUM_CHANNELS> _inv_differential_end_channel_to_select_map;
 
     /**
      * Samples the MCP_ADC over SPI. Samples all eight channels and, in accordance with the AnalogMultiSensor's function
@@ -48,11 +46,17 @@ private:
      */
     void _sample() override;
 
+    /**
+     * Returns the channel selection bits for a channel based on its type and ID. Also increments the channelId for the sample() function when channel is part of a pair.
+     * @param channelType CHANNEL_TYPE_e of the channel
+     * @param channelId the channel number
+     * @return channel selection bits
+     */
     int _getSel(CHANNEL_TYPE_e channelType, int& channelId);
     
 public:
     /* Constructors */
-    MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes, const int max114xVersion);
+    MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes);
 
     /* Functions */
 
@@ -63,8 +67,8 @@ public:
 
 };
 
-template <int MAX114X_ADC_NUM_CHANNELS>
-using MAX114XInterfaceInstance = etl::singleton<MAX114XInterface<MAX114X_ADC_NUM_CHANNELS>>;
+template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
+using MAX114XInterfaceInstance = etl::singleton<MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>>;
 
 #include "MAX114XInterface.tpp"
 
