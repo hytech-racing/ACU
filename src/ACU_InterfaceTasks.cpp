@@ -99,6 +99,14 @@ void initialize_all_interfaces()
         ACUInterfaces::PACK_OUT_FILTERED_OFFSET,
     };
 
+    // Consider saving this array as a constant in ACUConstants
+    std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS> adc0_channels = {
+        CHANNEL_TYPE_e::INV_DIFFERENTIAL,
+        CHANNEL_TYPE_e::SINGLE,
+        CHANNEL_TYPE_e::DIFFERENTIAL,
+        CHANNEL_TYPE_e::SINGLE
+    };
+
     /* ADC Interface */
     MAX1148ADCInstance_t::create(
         ACUInterfaces::ADC0_CS,
@@ -108,7 +116,8 @@ void initialize_all_interfaces()
         ACUInterfaces::ADC0_SPEED,
         adc0_scales.data(),
         adc0_offsets.data(),
-        
+        adc0_channels.data(),
+        ACUInterfaces::MAX1148_VERSION // Save this value as a constant in ACUConstants
     );
         
     /* CCU Interface */

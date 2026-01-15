@@ -5,12 +5,14 @@ Page 15: channel codes
 
 #include "MAX114XInterface.h"
 #include <array>
+#include <stdexcept>
 
 template <int MAX114X_ADC_NUM_CHANNELS>
 MAX114XInterface<MAX114X_ADC_NUM_CHANNELS>::MAX114XInterface(
     const int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed,
     const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS],
-    const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes,
+    // const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes,
+    const CHANNEL_TYPE_e channelTypes[MAX114X_ADC_NUM_CHANNELS],
     const int max114xVersion)
 
     : _spiPinCS(spiPinCS)

@@ -36,6 +36,8 @@ namespace ACUInterfaces {
     constexpr int ADC0_MISO = 12;
     constexpr int ADC0_CLK = 13;
     constexpr int ADC0_SPEED = 2000000; // 1 MHz
+    /* ADC Versions*/
+    constexpr int MAX1148_VERSION = 8;
     /* Channels on ADC */
     constexpr int ISO_PACK_N_CHANNEL         = 0;
     constexpr int ISO_PACK_P_CHANNEL         = 1;

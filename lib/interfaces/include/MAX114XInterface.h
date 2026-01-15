@@ -10,12 +10,14 @@ const int MAX114X_ADC_DEFAULT_SPI_SDO   = 11;
 const int MAX114X_ADC_DEFAULT_SPI_CLK   = 13;
 const int MAX114X_ADC_DEFAULT_SPI_SPEED = 2000000;
 
+/**
+ * Enum representing the different channel configurations in MAX114X ADCs (SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL)
+ */
 enum class CHANNEL_TYPE_e{
     SINGLE,
     DIFFERENTIAL,
     INV_DIFFERENTIAL,
 };
-
 
 /**
  * The MAX114X_ADC is a concrete subclass of the AnalogMultiSensor parent class. This allows
@@ -50,7 +52,7 @@ private:
     
 public:
     /* Constructors */
-    MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes, const int max114xVersion);
+    MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const CHANNEL_TYPE_e channelTypes[MAX114X_ADC_NUM_CHANNELS], const int max114xVersion);
 
     /* Functions */
 
