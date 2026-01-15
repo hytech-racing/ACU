@@ -107,7 +107,8 @@ void initialize_all_interfaces()
         ACUInterfaces::ADC0_CLK,
         ACUInterfaces::ADC0_SPEED,
         adc0_scales.data(),
-        adc0_offsets.data()
+        adc0_offsets.data(),
+        
     );
         
     /* CCU Interface */
