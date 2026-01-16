@@ -22,7 +22,8 @@ MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::MAX114XInterface(
     , _spiPinCLK(spiPinCLK)
     , _spiSpeed(spiSpeed)
     , _channelTypes(channelTypes)
-{
+{   
+    /* Constructs an AnalogChannel object for each channel of the ADC and sets scales and offsets*/
     for (int i = 0; i < MAX114X_ADC_NUM_CHANNELS; i++)
     {
         MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[i] = AnalogChannel();
@@ -40,6 +41,7 @@ MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::MAX114XInterface(
     );
 
     // Page 15 of datasheet
+    /* Assigns single mode selection codes to an array depending on version*/
     switch (MAX114xVersion) {
         case 6:
         case 7:
@@ -78,18 +80,19 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     {
         digitalWrite(_spiPinCS, LOW);
         
+        /* Creates variable corresponding to the current channels channelType (Single, Differential, Inverse Differential) using the array input by the user. The index is divided by 2 since there is one channelType enum corresponding to each pair of channels */
         CHANNEL_TYPE_e channelType = _channelTypes[channelIndex / 2];
-        // UPDATE CODE BELOW
 
+        /* Page 14 of datasheet */
         command = ((0x01 << 7) |                                                   // start bit
                    ((_getSel(channelType, channelIndex) & 0x07) << 4) |            // channel number
-                   ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single or differential
+                   ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single(1) or differential(0)
                    (0x01 << 2) |                                                   // unipolar or !bipolar
                    (0x01 << 1) |                                                   // external clock mode
-                   (0x01 << 1));                                                   // 
+                   (0x01 << 1));                                                   // CHECK THIS
         b0 = SPI.transfer(command);
-        b1 = SPI.transfer(0x00);
-        b2 = SPI.transfer(0x00);
+        b1 = SPI.transfer(0x00); // dummy bytes to clock out data from the ADC
+        b2 = SPI.transfer(0x00); // ^
 
         // MOVE DEBUGGING TO TASKS
         Serial.print("b1: ");
@@ -124,7 +127,7 @@ int MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_getSel(CHANNEL_
             return _single_end_channel_to_select_map[channelId];
 
         case CHANNEL_TYPE_e::DIFFERENTIAL:
-
+        
             // The channel selection bits for differential mode is the channel number halved and then truncated
             // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
             return channelId++ / 2;

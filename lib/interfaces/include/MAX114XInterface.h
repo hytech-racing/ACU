@@ -58,7 +58,7 @@ private:
     void _sample() override;
 
     /**
-     * Returns the channel selection bits for a channel based on its type and ID. Also increments the channelId for the sample() function when channel is part of a pair.
+     * Returns the channel selection bits for a channel based on its type and ID. Also increments the channelId/loop index for the sample() function when channel is part of a differential pair.
      * @param channelType CHANNEL_TYPE_e of the channel
      * @param channelId the channel number
      * @return channel selection bits
@@ -67,6 +67,10 @@ private:
     
 public:
     /* Constructors */
+    /**
+     * Constructs a MAX114X ADC interface of the specified ADC model, number of channels, and channel types.
+     * @param channelTypes Constructs an array of channel types (Single, Differential, Inverse Differential) that is half the length of the ADC's channels. This is because each element of the array corresponds to a pair of channels.
+     */
     MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes);
 
     /* Functions */
