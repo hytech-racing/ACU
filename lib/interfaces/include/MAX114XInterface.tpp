@@ -89,12 +89,13 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
                    ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single(1) or differential(0)
                    (0x01 << 2) |                                                   // unipolar or !bipolar
                    (0x01 << 1) |                                                   // external clock mode
-                   (0x01 << 1));                                                   // CHECK THIS
+                   (0x01 << 1));                                                   // ^
         b0 = SPI.transfer(command);
         b1 = SPI.transfer(0x00); // dummy bytes to clock out data from the ADC
         b2 = SPI.transfer(0x00); // ^
 
         // MOVE DEBUGGING TO TASKS
+        Serial.print("")
         Serial.print("b1: ");
         Serial.print(b1, HEX);
         Serial.print("  b2: ");
@@ -108,8 +109,6 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
 
         MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[channelIndex].lastSample = (value & 0x3FFF);
         
-        // UPDATE CODE ABOVE
-
         digitalWrite(_spiPinCS, HIGH);
         delayMicroseconds(1); // MAX114XInterface Tcsh = 500ns
     }
@@ -134,7 +133,7 @@ int MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_getSel(CHANNEL_
 
         case CHANNEL_TYPE_e::INV_DIFFERENTIAL:
 
-            // The channel selection bits for inversed differential mode is the channel number halved, truncated, and plus 4
+            // The channel selection bits for inverse differential mode is the channel number halved, truncated, and plus 4 (SEL codes 1-4 are differential and 5-8 are inverse differential)
             // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
             return (channelId++ / 2) + 4;
     }
