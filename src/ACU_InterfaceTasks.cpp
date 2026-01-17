@@ -106,6 +106,12 @@ void initialize_all_interfaces()
         CHANNEL_TYPE_e::DIFFERENTIAL,
         CHANNEL_TYPE_e::SINGLE
     };
+    // std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
+    //     CHANNEL_TYPE_e::SINGLE,
+    //     CHANNEL_TYPE_e::SINGLE,
+    //     CHANNEL_TYPE_e::SINGLE,
+    //     CHANNEL_TYPE_e::SINGLE
+    // };
 
     /* ADC Interface */
     MAX1148ADCInstance_t::create(
@@ -190,7 +196,7 @@ HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::
         Serial.print(data.conversions[i].conversion);
         Serial.print(" ");
     }
-
+    Serial.print("\n------------------------------------------------------------------");
     return HT_TASK::TaskResponse::YIELD;
 }
 

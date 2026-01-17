@@ -89,14 +89,38 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
                    ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single(1) or differential(0)
                    (0x01 << 2) |                                                   // unipolar or !bipolar
                    (0x01 << 1) |                                                   // external clock mode
-                   (0x01 << 1));                                                   // ^
+                   (0x01));                                                        // ^
         b0 = SPI.transfer(command);
         b1 = SPI.transfer(0x00); // dummy bytes to clock out data from the ADC
         b2 = SPI.transfer(0x00); // ^
 
-        // MOVE DEBUGGING TO TASKS
-        Serial.print("")
-        Serial.print("b1: ");
+        // MOVE TO DEBUG PRINT
+        Serial.print("\n");
+        if (channelType == CHANNEL_TYPE_e::SINGLE)
+        {
+            Serial.print("Single Channel: ");
+            Serial.print(channelIndex);
+        } 
+        else
+        {
+            if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL) {
+                Serial.print("Differential");
+            }
+            else
+            {
+                Serial.print("Inverse Differential");
+            }
+            Serial.print(" Channels: ");
+            Serial.print(channelIndex - 1);
+            Serial.print(" & ");
+            Serial.print(channelIndex);
+        }
+
+        Serial.print("  b0/command: ");
+        Serial.print(command, BIN);
+
+
+        Serial.print("  b1: ");
         Serial.print(b1, HEX);
         Serial.print("  b2: ");
         Serial.print(b2, HEX);
@@ -107,6 +131,7 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
         Serial.println(value);
         // REMOVE ABOVE
 
+        /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the higher of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 2 holds the return value. */
         MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[channelIndex].lastSample = (value & 0x3FFF);
         
         digitalWrite(_spiPinCS, HIGH);
