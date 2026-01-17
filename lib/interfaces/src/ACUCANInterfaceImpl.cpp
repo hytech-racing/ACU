@@ -1,8 +1,8 @@
 #include "ACUCANInterfaceImpl.h"
 
-CANRXBufferType ACUCANInterfaceImpl::ccu_can_rx_buffer;
-CANRXBufferType ACUCANInterfaceImpl::em_can_rx_buffer;
-CANTXBufferType ACUCANInterfaceImpl::ccu_can_tx_buffer;
+CANRXBuffer_t ACUCANInterfaceImpl::ccu_can_rx_buffer;
+CANRXBuffer_t ACUCANInterfaceImpl::em_can_rx_buffer;
+CANTXBuffer_t ACUCANInterfaceImpl::ccu_can_tx_buffer;
 
 void ACUCANInterfaceImpl::on_ccu_can_receive(const CAN_message_t &msg)
 {   
@@ -19,7 +19,7 @@ void ACUCANInterfaceImpl::on_em_can_receive(const CAN_message_t &msg)
     em_can_rx_buffer.push_back(buf.data(), sizeof(CAN_message_t));
 }
 
-void ACUCANInterfaceImpl::acu_CAN_recv(CANInterfaces &interfaces, const CAN_message_t &msg, unsigned long millis)
+void ACUCANInterfaceImpl::acu_CAN_recv(CANInterfaces_s &interfaces, const CAN_message_t &msg, unsigned long millis)
 {
     switch (msg.id)
     {
@@ -40,7 +40,7 @@ void ACUCANInterfaceImpl::acu_CAN_recv(CANInterfaces &interfaces, const CAN_mess
     }
 }
 
-void ACUCANInterfaceImpl::send_all_CAN_msgs(CANTXBufferType &buffer, FlexCAN_T4_Base *can_interface)
+void ACUCANInterfaceImpl::send_all_CAN_msgs(CANTXBuffer_t &buffer, FlexCAN_T4_Base *can_interface)
 {
     CAN_message_t msg;
     while (buffer.available())
