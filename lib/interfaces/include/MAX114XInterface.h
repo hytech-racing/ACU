@@ -30,41 +30,6 @@ enum class CHANNEL_TYPE_e{
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 class MAX114XInterface : public AnalogMultiSensor<MAX114X_ADC_NUM_CHANNELS>
 {
-private:
-    /**
-     * Channel configuration is defined per channel pair (two physical channels).
-     * This array stores the channel type for each pair of channels in the ADC.
-     * Each pair may be configured as SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL as defined in the enclosed enum.
-     * SINGLE indicates both channels in the pair are single-ended inputs and operate separately.
-     */
-    const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2> _channelTypes;
-
-    const int _spiPinCS;
-    const int _spiPinSDI;
-    const int _spiPinSDO;
-    const int _spiPinCLK;
-    const int _spiSpeed;
-    
-    /**
-     * The select bits for single-ended channels are all over the place and do not follow a logical mapping.
-     * This array stores the specific single-ended select-bit mapping for each channel as defined in the datasheet. 
-     */
-    std::array<uint8_t, MAX114X_ADC_NUM_CHANNELS> _single_end_channel_to_select_map;
-
-    /**
-     * Samples the MCP_ADC over SPI. Samples all eight channels and, in accordance with the AnalogMultiSensor's function
-     * contract, stores the raw sampled values into each AnalogChannel's lastSample instance variable.
-     */
-    void _sample() override;
-
-    /**
-     * Returns the channel selection bits for a channel based on its type and ID. Also increments the channelId/loop index for the sample() function when channel is part of a differential pair.
-     * @param channelType CHANNEL_TYPE_e of the channel
-     * @param channelId the channel number
-     * @return channel selection bits
-     */
-    int _getSel(CHANNEL_TYPE_e channelType, int& channelId);
-    
 public:
     /* Constructors */
     /**
@@ -79,16 +44,53 @@ public:
      * Calls sample() and convert(). After calling tick(), this MCP_ADC's data can be accessed using the get() command.
      */
     void tick() override;
-
+    
     /**
-     * Gets 14 bit value of a channel for a sample
+     * Gets raw 14 bit value of a channel for a sample
      */
     uint16_t getLastSampleRaw(int index) const;
-
+    
     /**
-     * Gets 14 bit value of a channel for a sample
+     * Gets real value (current/voltage) of a channel for a sample
      */
     float getLastSampleConverted(int index) const;
+    
+private:
+    /**
+     * Channel configuration is defined per channel pair (two physical channels).
+     * This array stores the channel type for each pair of channels in the ADC.
+     * Each pair may be configured as SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL as defined in the enclosed enum.
+     * SINGLE indicates both channels in the pair are single-ended inputs and operate separately.
+     */
+    const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2> _channelTypes;
+    
+    const int _spiPinCS;
+    const int _spiPinSDI;
+    const int _spiPinSDO;
+    const int _spiPinCLK;
+    const int _spiSpeed;
+    int _currentChannel;
+    
+    /**
+     * The select bits for single-ended channels are all over the place and do not follow a logical mapping.
+     * This array stores the specific single-ended select-bit mapping for each channel as defined in the datasheet. 
+     */
+    std::array<uint8_t, MAX114X_ADC_NUM_CHANNELS> _single_end_channel_to_select_map;
+    
+    /**
+     * Samples the MCP_ADC over SPI. Samples all eight channels and, in accordance with the AnalogMultiSensor's function
+     * contract, stores the raw sampled values into each AnalogChannel's lastSample instance variable.
+     */
+    void _sample() override;
+    
+    /**
+     * Returns the channel selection bits for a channel based on its type and ID. Also increments the channelId/loop index for the sample() function when channel is part of a differential pair.
+     * @param channelType CHANNEL_TYPE_e of the channel
+     * @param channelId the channel number
+     * @return channel selection bits
+     */
+    int _getSel(CHANNEL_TYPE_e channelType, int& channelId);
+    
 };
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>

@@ -454,6 +454,9 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print("CH");
         Serial.print(i);
         Serial.print(": ");
+        Serial.print("Raw = ");
+        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleRaw(i));
+        Serial.print(" Converted = ");
         Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
         Serial.print("  ");
     }

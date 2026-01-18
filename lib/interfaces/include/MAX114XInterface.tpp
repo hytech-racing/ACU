@@ -16,12 +16,13 @@ MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::MAX114XInterface(
     const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS],
     const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes)
 
-    : _spiPinCS(spiPinCS)
+    : _channelTypes(channelTypes)
+    , _spiPinCS(spiPinCS)
     , _spiPinSDI(spiPinSDI)
     , _spiPinSDO(spiPinSDO)
     , _spiPinCLK(spiPinCLK)
     , _spiSpeed(spiSpeed)
-    , _channelTypes(channelTypes)
+    , _currentChannel(0)
 {   
     /* Constructs an AnalogChannel object for each channel of the ADC and sets scales and offsets*/
     for (int i = 0; i < MAX114X_ADC_NUM_CHANNELS; i++)
@@ -65,8 +66,21 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::tick()
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
+uint16_t MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleRaw(int index) const
+{
+    return static_cast<uint16_t>(this->data.conversions[index].raw);
+}
+        
+template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
+float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleConverted(int index) const
+{
+    return this->data.conversions[index].conversion;
+}
+        
+template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
 {
+    _currentChannel %= 8;
     // uint16_t command = (
     //     (0b1 << 15) |    // start bit
     //     (0b1 << 14)      // single ended mode
@@ -76,16 +90,18 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     // initialize SPI bus. REQUIRED: call SPI.begin() before this
     SPI.beginTransaction(SPISettings(_spiSpeed, MSBFIRST, SPI_MODE0));
 
-    for (int channelIndex = 0; channelIndex < MAX114X_ADC_NUM_CHANNELS; channelIndex++)
+
+    int currentChannelPairEnd = _currentChannel + 2;
+    while (_currentChannel < currentChannelPairEnd)
     {
         digitalWrite(_spiPinCS, LOW);
         
         /* Creates variable corresponding to the current channels channelType (Single, Differential, Inverse Differential) using the array input by the user. The index is divided by 2 since there is one channelType enum corresponding to each pair of channels */
-        CHANNEL_TYPE_e channelType = _channelTypes[channelIndex / 2];
+        CHANNEL_TYPE_e channelType = _channelTypes[_currentChannel / 2];
 
         /* Page 14 of datasheet */
         command = ((0x01 << 7) |                                                   // start bit
-                   ((_getSel(channelType, channelIndex) & 0x07) << 4) |            // channel number
+                   ((_getSel(channelType, _currentChannel) & 0x07) << 4) |            // channel number
                    ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single(1) or differential(0)
                    (0x01 << 2) |                                                   // unipolar or !bipolar
                    (0x01 << 1) |                                                   // external clock mode
@@ -105,6 +121,7 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
         // {
         //     if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL) {
         //         Serial.print("Differential");
+        
         //     }
         //     else
         //     {
@@ -132,25 +149,14 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
         // REMOVE ABOVE
 
         /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the higher of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 2 holds the return value. */
-        MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[channelIndex].lastSample = (value & 0x3FFF);
+        MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = (value & 0x3FFF);
         
         digitalWrite(_spiPinCS, HIGH);
         delayMicroseconds(1); // MAX114XInterface Tcsh = 500ns
+        _currentChannel++;
     }
     
     SPI.endTransaction();
-}
-
-template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
-uint16_t MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleRaw(int index) const
-{
-    return static_cast<uint16_t>(this->data.conversions[index].raw);
-}
-
-template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
-float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleConverted(int index) const
-{
-    return this->data.conversions[index].conversion;
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
