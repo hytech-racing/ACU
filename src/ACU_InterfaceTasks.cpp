@@ -191,10 +191,10 @@ HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::
     MAX1148ADCInstance_t::instance().tick();
 
     auto data = MAX1148ADCInstance_t::instance().get();
-    for (size_t i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
-        Serial.print(data.conversions[i].conversion);
-        Serial.print(" ");
-    }
+    // for (size_t i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
+    //     Serial.print(data.conversions[i].conversion);
+    //     Serial.print(" ");
+    // }
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -455,7 +455,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     // }
     // Serial.println();
 
-    Serial.println("MAX114X Interface Output: ");
+    Serial.println("\nMAX114X Output: ");
     for (int i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
         Serial.print("CH");
         Serial.print(i);
@@ -463,6 +463,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print(MAX1148ADCInstance_t::instance().getLastSample(i));
         Serial.print("  ");
     }
+    Serial.print('\n');
 
     return HT_TASK::TaskResponse::YIELD;
 }
