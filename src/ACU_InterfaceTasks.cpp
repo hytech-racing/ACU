@@ -457,5 +457,13 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     // }
     // Serial.println();
 
+    for (int i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
+        Serial.print("CH");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.print(MAX1148ADCInstance_t::instance().getLastSample(i));
+        Serial.print("  ");
+    }
+
     return HT_TASK::TaskResponse::YIELD;
 }

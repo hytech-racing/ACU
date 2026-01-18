@@ -95,40 +95,40 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
         b2 = SPI.transfer(0x00); // ^
 
         // MOVE TO DEBUG PRINT
-        Serial.print("\n");
-        if (channelType == CHANNEL_TYPE_e::SINGLE)
-        {
-            Serial.print("Single Channel: ");
-            Serial.print(channelIndex);
-        } 
-        else
-        {
-            if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL) {
-                Serial.print("Differential");
-            }
-            else
-            {
-                Serial.print("Inverse Differential");
-            }
-            Serial.print(" Channels: ");
-            Serial.print(channelIndex - 1);
-            Serial.print(" & ");
-            Serial.print(channelIndex);
-        }
+        // Serial.print("\n");
+        // if (channelType == CHANNEL_TYPE_e::SINGLE)
+        // {
+        //     Serial.print("Single Channel: ");
+        //     Serial.print(channelIndex);
+        // } 
+        // else
+        // {
+        //     if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL) {
+        //         Serial.print("Differential");
+        //     }
+        //     else
+        //     {
+        //         Serial.print("Inverse Differential");
+        //     }
+        //     Serial.print(" Channels: ");
+        //     Serial.print(channelIndex - 1);
+        //     Serial.print(" & ");
+        //     Serial.print(channelIndex);
+        // }
 
-        Serial.print("  b0/command: ");
-        Serial.print(command, BIN);
+        // Serial.print("  b0/command: ");
+        // Serial.print(command, BIN);
 
 
-        Serial.print("  b1: ");
-        Serial.print(b1, HEX);
-        Serial.print("  b2: ");
-        Serial.print(b2, HEX);
+        // Serial.print("  b1: ");
+        // Serial.print(b1, HEX);
+        // Serial.print("  b2: ");
+        // Serial.print(b2, HEX);
 
         // uint16_t value = SPI.transfer16(command | channelIndex << 11);
         uint16_t value = ((b1 & 0x3F) << 8) | (b2 & 0xFF);
-        Serial.print("  value: "); 
-        Serial.println(value);
+        // Serial.print("  value: "); 
+        // Serial.println(value);
         // REMOVE ABOVE
 
         /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the higher of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 2 holds the return value. */
@@ -140,6 +140,13 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     
     SPI.endTransaction();
 }
+
+template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
+uint16_t MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSample(int index) const
+{
+    return this->_channels[index].lastSample;
+}
+
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 int MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_getSel(CHANNEL_TYPE_e channelType, int& channelId)
