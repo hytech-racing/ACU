@@ -99,7 +99,7 @@ void initialize_all_interfaces()
         ACUInterfaces::PACK_OUT_FILTERED_OFFSET,
     };
 
-    // Consider saving this array as a constant in ACUConstants
+    // Each channel type corresponds to a pair of channels (0&1, 2&3, etc.) So length is channels / 2
     std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
         CHANNEL_TYPE_e::INV_DIFFERENTIAL,
         CHANNEL_TYPE_e::SINGLE,
@@ -190,13 +190,11 @@ HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::
 {
     MAX1148ADCInstance_t::instance().tick();
 
-    Serial.print("ADC0: ");
     auto data = MAX1148ADCInstance_t::instance().get();
     for (size_t i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
         Serial.print(data.conversions[i].conversion);
         Serial.print(" ");
     }
-    Serial.print("\n------------------------------------------------------------------");
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -457,6 +455,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     // }
     // Serial.println();
 
+    Serial.println("MAX114X Interface Output: ");
     for (int i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
         Serial.print("CH");
         Serial.print(i);
