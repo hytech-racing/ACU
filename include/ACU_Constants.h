@@ -47,6 +47,7 @@ namespace ACUInterfaces {
     constexpr int SHUNT_CURRENT_N_CHANNEL    = 5;
     constexpr int TS_OUT_FILTERED_CHANNEL    = 6;
     constexpr int PACK_OUT_FILTERED_CHANNEL  = 7;
+    
     /* SCALE/OFFSETS on ADC */
     const float ISO_PACK_N_SCALE = 1;
     const float ISO_PACK_P_SCALE = 1;

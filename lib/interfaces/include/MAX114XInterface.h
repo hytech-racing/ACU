@@ -83,7 +83,12 @@ public:
     /**
      * Gets 14 bit value of a channel for a sample
      */
-    uint16_t getLastSample(int index) const;
+    uint16_t getLastSampleRaw(int index) const;
+
+    /**
+     * Gets 14 bit value of a channel for a sample
+     */
+    float getLastSampleConverted(int index) const;
 };
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>

@@ -142,11 +142,16 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
-uint16_t MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSample(int index) const
+uint16_t MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleRaw(int index) const
 {
-    return this->_channels[index].lastSample;
+    return static_cast<uint16_t>(this->data.conversions[index].raw);
 }
 
+template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
+float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleConverted(int index) const
+{
+    return this->data.conversions[index].conversion;
+}
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 int MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_getSel(CHANNEL_TYPE_e channelType, int& channelId)
