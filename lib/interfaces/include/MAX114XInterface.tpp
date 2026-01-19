@@ -80,82 +80,82 @@ float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleC
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
 {
-    _currentChannel %= 8;
     // uint16_t command = (
     //     (0b1 << 15) |    // start bit
     //     (0b1 << 14)      // single ended mode
     // );
+    if (_currentChannel == 8){
+        _currentChannel = 0;
+    }
+    
     byte command, b0, b1, b2;
 
     // initialize SPI bus. REQUIRED: call SPI.begin() before this
     SPI.beginTransaction(SPISettings(_spiSpeed, MSBFIRST, SPI_MODE0));
 
 
-    int currentChannelPairEnd = _currentChannel + 2;
-    while (_currentChannel < currentChannelPairEnd)
-    {
-        digitalWrite(_spiPinCS, LOW);
-        
-        /* Creates variable corresponding to the current channels channelType (Single, Differential, Inverse Differential) using the array input by the user. The index is divided by 2 since there is one channelType enum corresponding to each pair of channels */
-        CHANNEL_TYPE_e channelType = _channelTypes[_currentChannel / 2];
 
-        /* Page 14 of datasheet */
-        command = ((0x01 << 7) |                                                   // start bit
-                   ((_getSel(channelType, _currentChannel) & 0x07) << 4) |            // channel number
-                   ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single(1) or differential(0)
-                   (0x01 << 2) |                                                   // unipolar or !bipolar
-                   (0x01 << 1) |                                                   // external clock mode
-                   (0x01));                                                        // ^
-        b0 = SPI.transfer(command);
-        b1 = SPI.transfer(0x00); // dummy bytes to clock out data from the ADC
-        b2 = SPI.transfer(0x00); // ^
-
-        // MOVE TO DEBUG PRINT
-        // Serial.print("\n");
-        // if (channelType == CHANNEL_TYPE_e::SINGLE)
-        // {
-        //     Serial.print("Single Channel: ");
-        //     Serial.print(channelIndex);
-        // } 
-        // else
-        // {
-        //     if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL) {
-        //         Serial.print("Differential");
-        
-        //     }
-        //     else
-        //     {
-        //         Serial.print("Inverse Differential");
-        //     }
-        //     Serial.print(" Channels: ");
-        //     Serial.print(channelIndex - 1);
-        //     Serial.print(" & ");
-        //     Serial.print(channelIndex);
-        // }
-
-        // Serial.print("  b0/command: ");
-        // Serial.print(command, BIN);
-
-
-        // Serial.print("  b1: ");
-        // Serial.print(b1, HEX);
-        // Serial.print("  b2: ");
-        // Serial.print(b2, HEX);
-
-        // uint16_t value = SPI.transfer16(command | channelIndex << 11);
-        uint16_t value = ((b1 & 0x3F) << 8) | (b2 & 0xFF);
-        // Serial.print("  value: "); 
-        // Serial.println(value);
-        // REMOVE ABOVE
-
-        /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the higher of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 2 holds the return value. */
-        MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = (value & 0x3FFF);
-        
-        digitalWrite(_spiPinCS, HIGH);
-        delayMicroseconds(1); // MAX114XInterface Tcsh = 500ns
-        _currentChannel++;
-    }
+    digitalWrite(_spiPinCS, LOW);
     
+    /* Creates variable corresponding to the current channels channelType (Single, Differential, Inverse Differential) using the array input by the user. The index is divided by 2 since there is one channelType enum corresponding to each pair of channels */
+    CHANNEL_TYPE_e channelType = _channelTypes[_currentChannel / 2];
+
+    /* Page 14 of datasheet */
+    command = ((0x01 << 7) |                                                   // start bit
+                ((_getSel(channelType, _currentChannel) & 0x07) << 4) |            // channel number
+                ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single(1) or differential(0)
+                (0x01 << 2) |                                                   // unipolar or !bipolar
+                (0x01 << 1) |                                                   // external clock mode
+                (0x01));                                                        // ^
+    b0 = SPI.transfer(command);
+    b1 = SPI.transfer(0x00); // dummy bytes to clock out data from the ADC
+    b2 = SPI.transfer(0x00); // ^
+
+    // MOVE TO DEBUG PRINT
+    Serial.print("\n");
+    if (channelType == CHANNEL_TYPE_e::SINGLE)
+    {
+        Serial.print("Single Channel: ");
+        Serial.print(_currentChannel);
+    } 
+    else
+    {
+        if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL) {
+            Serial.print("Differential");
+    
+        }
+        else
+        {
+            Serial.print("Inverse Differential");
+        }
+        Serial.print(" Channels: ");
+        Serial.print(_currentChannel - 1);
+        Serial.print(" & ");
+        Serial.print(_currentChannel);
+    }
+
+    Serial.print("  b0/command: ");
+    Serial.print(command, BIN);
+
+
+    Serial.print("  b1: ");
+    Serial.print(b1, HEX);
+    Serial.print("  b2: ");
+    Serial.print(b2, HEX);
+
+    // uint16_t value = SPI.transfer16(command | _currentChannel << 11);
+    uint16_t value = ((b1 & 0x3F) << 8) | (b2 & 0xFF);
+    Serial.print("  value: "); 
+    Serial.println(value);
+    // REMOVE ABOVE
+
+    /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the higher of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 2 holds the return value. */
+    MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = (value & 0x3FFF);
+    
+    digitalWrite(_spiPinCS, HIGH);
+    delayMicroseconds(1); // MAX114XInterface Tcsh = 500ns
+    _currentChannel++;
+
     SPI.endTransaction();
 }
 
