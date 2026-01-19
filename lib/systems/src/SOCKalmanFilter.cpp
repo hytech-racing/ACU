@@ -1,10 +1,14 @@
 #include "SOCKalmanFilter.h"
 #include <math.h>
 
-SOCKalmanFilter::SOCKalmanFilter()
-    : _state{soc_ekf_constants::INITIAL_SOC, soc_ekf_constants::INITIAL_V1},
-      _PMatrix{{soc_ekf_constants::P_SOC_INITIAL, soc_ekf_constants::P_CROSS_INITIAL},
-               {soc_ekf_constants::P_CROSS_INITIAL, soc_ekf_constants::P_V1_INITIAL}} {
+SOCKalmanFilter::SOCKalmanFilter() {
+    _state.soc = soc_ekf_constants::INITIAL_SOC;
+    _state.v1 = soc_ekf_constants::INITIAL_V1;
+    
+    _PMatrix[0][0] = soc_ekf_constants::P_SOC_INITIAL;
+    _PMatrix[0][1] = soc_ekf_constants::P_CROSS_INITIAL;
+    _PMatrix[1][0] = soc_ekf_constants::P_CROSS_INITIAL;
+    _PMatrix[1][1] = soc_ekf_constants::P_V1_INITIAL;
 }
 
 void SOCKalmanFilter::init(float initial_voltage) {
@@ -47,43 +51,55 @@ EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
 
     _clamp_state();
 
-    // Predict covariance (F * P * F^T + Q)
+    // Predict covariance (Formula: F * P * F^T + Q)
+    // F is the state transition matrix that shows how the state (SoC, V1) changes over time
+    // F = [1, 0; 0, decay_factor] - SoC stays constant and V1 decays exponentially
     float F11 = decay_factor;
 
+    // P is the covariance matrix that tracks confidence in the SoC and V1 estimates
     float FP00 = _PMatrix[0][0];
     float FP01 = _PMatrix[0][1];
     float FP10 = F11 * _PMatrix[1][0];
     float FP11 = F11 * _PMatrix[1][1];
 
+    // Q is the process noise covariance that accounts for coulomb counting uncertainty and model mismatch
     _PMatrix[0][0] = FP00 + soc_ekf_constants::Q_SOC;
     _PMatrix[0][1] = FP01 * F11;
     _PMatrix[1][0] = FP10;
     _PMatrix[1][1] = FP11 * F11 + soc_ekf_constants::Q_V1;
 
-    // Update
+    // Update - corrects state estimation based on voltage measurement
     float ocv = _get_ocv_from_soc(_state.soc);
     float voltage_pred = ocv - current * soc_ekf_constants::R0 - _state.v1;
     float innovation = voltage - voltage_pred;
 
+    // H is the observation matrix that relates the state to measured voltage
+    // H = [dOCV/dSoC, -1]
     float H0 = _get_docv_dsoc(_state.soc);
     float H1 = -1.0f;
 
     float HP0 = H0 * _PMatrix[0][0] + H1 * _PMatrix[1][0];
     float HP1 = H0 * _PMatrix[0][1] + H1 * _PMatrix[1][1];
+    // S is the innovation covariance that represents uncertainty in the voltage prediction
+    // R_V1 is the measurement sensor noise in the voltage sensor
     float S = HP0 * H0 + HP1 * H1 + soc_ekf_constants::R_V1;
     
+    // K is the Kalman gain that shows how much we should update the state to optimally blend predict vs measurement
     float K0 = (_PMatrix[0][0] * H0 + _PMatrix[0][1] * H1) / S;
     float K1 = (_PMatrix[1][0] * H0 + _PMatrix[1][1] * H1) / S;
     
+    // Apply correction: adjust SoC and V1 based on voltage error
     _state.soc += K0 * innovation;
     _state.v1 += K1 * innovation;
     _clamp_state();
 
+    // (I - K*H): reduces uncertainty after incorporating measurement
     float I_KH_00 = 1.0f - K0 * H0;
     float I_KH_01 = -K0 * H1;
     float I_KH_10 = -K1 * H0;
     float I_KH_11 = 1.0f - K1 * H1;
     
+    // Update covariance matrix P
     float P00_new = I_KH_00 * _PMatrix[0][0] + I_KH_01 * _PMatrix[1][0];
     float P01_new = I_KH_00 * _PMatrix[0][1] + I_KH_01 * _PMatrix[1][1];
     float P10_new = I_KH_10 * _PMatrix[0][0] + I_KH_11 * _PMatrix[1][0];
