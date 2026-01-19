@@ -1,14 +1,10 @@
 #include "SOCKalmanFilter.h"
 #include <math.h>
 
-SOCKalmanFilter::SOCKalmanFilter() {
-    _state.soc = soc_ekf_constants::INITIAL_SOC;
-    _state.v1 = soc_ekf_constants::INITIAL_V1;
-    
-    _PMatrix[0][0] = soc_ekf_constants::P_SOC_INITIAL;
-    _PMatrix[0][1] = soc_ekf_constants::P_CROSS_INITIAL;
-    _PMatrix[1][0] = soc_ekf_constants::P_CROSS_INITIAL;
-    _PMatrix[1][1] = soc_ekf_constants::P_V1_INITIAL;
+SOCKalmanFilter::SOCKalmanFilter()
+    : _state{soc_ekf_constants::INITIAL_SOC, soc_ekf_constants::INITIAL_V1},
+      _PMatrix{{soc_ekf_constants::P_SOC_INITIAL, soc_ekf_constants::P_CROSS_INITIAL},
+               {soc_ekf_constants::P_CROSS_INITIAL, soc_ekf_constants::P_V1_INITIAL}} {
 }
 
 void SOCKalmanFilter::init(float initial_voltage) {
