@@ -52,7 +52,9 @@ static ACUAllDataType_s make_acu_all_data()
 void initialize_all_interfaces()
 {
     SPI.begin();
+    SPI1.begin();
     SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
+    SPI1.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
     Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
     analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
     /* Watchdog Interface */

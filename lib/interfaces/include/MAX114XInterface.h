@@ -89,7 +89,7 @@ private:
      * @param channelId the channel number
      * @return channel selection bits
      */
-    int _getSel(CHANNEL_TYPE_e channelType, int& channelId);
+    uint8_t _getSel(CHANNEL_TYPE_e channelType, int channelId);
     
 };
 

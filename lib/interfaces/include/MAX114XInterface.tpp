@@ -102,7 +102,8 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
 
     /* Page 14 of datasheet */
     command = ((0x01 << 7) |                                                   // start bit
-                ((_getSel(channelType, _currentChannel) & 0x07) << 4) |            // channel number
+                // ((_getSel(channelType, _currentChannel) & 0x07) << 4) |       // channel number
+                ((_getSel(channelType, _currentChannel) & 0x07) << 4) |                                   // channel number
                 ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single(1) or differential(0)
                 (0x01 << 2) |                                                   // unipolar or !bipolar
                 (0x01 << 1) |                                                   // external clock mode
@@ -129,9 +130,9 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
             Serial.print("Inverse Differential");
         }
         Serial.print(" Channels: ");
-        Serial.print(_currentChannel - 1);
-        Serial.print(" & ");
         Serial.print(_currentChannel);
+        Serial.print(" & ");
+        Serial.print(_currentChannel + 1);
     }
 
     Serial.print("  b0/command: ");
@@ -149,35 +150,46 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     Serial.println(value);
     // REMOVE ABOVE
 
-    /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the higher of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 2 holds the return value. */
+    
+    
+    /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the lower of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 1 holds the return value. */
     MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = (value & 0x3FFF);
     
     digitalWrite(_spiPinCS, HIGH);
     delayMicroseconds(1); // MAX114XInterface Tcsh = 500ns
+    if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL || channelType == CHANNEL_TYPE_e::INV_DIFFERENTIAL){
+        _currentChannel++;
+    }
     _currentChannel++;
 
     SPI.endTransaction();
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
-int MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_getSel(CHANNEL_TYPE_e channelType, int& channelId)
+uint8_t MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_getSel(CHANNEL_TYPE_e channelType, int channelId)
 {
     switch (channelType) {
         case CHANNEL_TYPE_e::SINGLE:
 
             // The channel selection bits for single mode follows this array
-            return _single_end_channel_to_select_map[channelId];
+            Serial.print("RETURNING SINGLE ");
+            Serial.print(static_cast<uint8_t>(_single_end_channel_to_select_map[channelId]));
+            return static_cast<uint8_t>(_single_end_channel_to_select_map[channelId]);
 
         case CHANNEL_TYPE_e::DIFFERENTIAL:
         
             // The channel selection bits for differential mode is the channel number halved and then truncated
             // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
-            return channelId++ / 2;
+            Serial.print("RETURNING DIFF ");
+            Serial.print(static_cast<uint8_t>(channelId / 2));
+            return static_cast<uint8_t>(channelId / 2);
 
         case CHANNEL_TYPE_e::INV_DIFFERENTIAL:
 
             // The channel selection bits for inverse differential mode is the channel number halved, truncated, and plus 4 (SEL codes 1-4 are differential and 5-8 are inverse differential)
             // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
-            return (channelId++ / 2) + 4;
+            Serial.print("RETURNING INV ");
+            Serial.print(static_cast<uint8_t>((channelId / 2) + 4));
+            return static_cast<uint8_t>((channelId / 2) + 4);
     }
 }
