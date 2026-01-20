@@ -79,114 +79,76 @@ float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleC
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
 {
+    byte command, b0, b1, b2;
+    uint8_t selNum;
 
-    if (_currentChannel == MAX114X_ADC_NUM_CHANNELS){
+    // Resets loop after last channel is reached
+    if (_currentChannel == MAX114X_ADC_NUM_CHANNELS)
+    {
         _currentChannel = 0;
     }
-    
-    byte command, b0, b1, b2;
 
-
-    /* Creates variable corresponding to the current channels channelType (Single, Differential, Inverse Differential) using the array input by the user. The index is divided by 2 since there is one channelType enum corresponding to each pair of channels */
+    /* Creates variable corresponding to the current channels channelType (Single, Differential, Inverse Differential) using the array input by the user.
+    * The index is divided by 2 since there is one channelType enum corresponding to each pair of channels 
+    */
     CHANNEL_TYPE_e channelType = _channelTypes[_currentChannel / 2];
-
-    uint8_t channelNum = 0;
 
     switch (channelType) {
         case CHANNEL_TYPE_e::SINGLE:
-
-            channelNum = (_single_end_channel_to_select_map[_currentChannel]);
+        
+            // The channel selection bits for single mode follows this array
+            selNum = (_single_end_channel_to_select_map[_currentChannel]);
             break;
 
         case CHANNEL_TYPE_e::DIFFERENTIAL:
-
-            channelNum = (_currentChannel / 2);
+        
+            // The channel selection bits for differential mode is the channel number halved and then truncated
+            // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
+            selNum = (_currentChannel / 2);
             break;
             
         case CHANNEL_TYPE_e::INV_DIFFERENTIAL:
 
-            channelNum = ((_currentChannel / 2) + 4);
+            // The channel selection bits for inversed differential mode is the channel number halved, truncated, and plus 4
+            // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
+            selNum = ((_currentChannel / 2) + 4);
             break;
     }
-        
     
-    /* Page 14 of datasheet */
+    /* Page 14 of datasheet 
+    * Create command byte to send to ADC
+    */
+
     command =   (0x01 << 7) |                                                   // start bit
-                ((channelNum & 0x7) << 4) |                                   // channel number
+                ((selNum & 0x7) << 4) |                                         // channel number
                 ((channelType == CHANNEL_TYPE_e::SINGLE ? 0x01 : 0x00) << 3) |  // single(1) or differential(0)
                 (0x01 << 2) |                                                   // unipolar or !bipolar
                 (0x01 << 1) |                                                   // external clock mode
                 (0x01);                                                         // ^
-    
     
     // initialize SPI bus. REQUIRED: call SPI.begin() before this
     SPI.beginTransaction(SPISettings(_spiSpeed, MSBFIRST, SPI_MODE0));
 
     digitalWrite(_spiPinCS, LOW);
 
-    delayMicroseconds(1); // MAX114XInterface Tcs = 500ns
-
     b0 = SPI.transfer(command);
     b1 = SPI.transfer(0x00); // dummy bytes to clock out data from the ADC
     b2 = SPI.transfer(0x00); // ^
 
     digitalWrite(_spiPinCS, HIGH);
-    
-    delayMicroseconds(1); // MAX114XInterface Tcsh = 500ns
 
     SPI.endTransaction();
 
-
-
     uint16_t value = ((b1 & 0x3F) << 8) | (b2 & 0xFF);
-
-    MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = 0;
     
     /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the lower of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 1 holds the return value. */
     MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = (value & 0x3FFF);
-    
 
-    // MOVE TO DEBUG PRINT
-    Serial.print("\n");
-    if (channelType == CHANNEL_TYPE_e::SINGLE)
+    // Increments channel ID if the pair is differential or inverse differential
+    if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL || channelType == CHANNEL_TYPE_e::INV_DIFFERENTIAL)
     {
-        Serial.print("Single Channel: ");
-        Serial.print(_currentChannel);
-    } 
-    else
-    {
-        if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL) {
-            Serial.print("Differential");
-    
-        }
-        else
-        {
-            Serial.print("Inverse Differential");
-        }
-        Serial.print(" Channels: ");
-        Serial.print(_currentChannel);
-        Serial.print(" & ");
-        Serial.print(_currentChannel + 1);
-    }
-    
-    Serial.print("  b0/command: ");
-    Serial.print(command, BIN);
-    Serial.print(" HEX: ");
-    Serial.print(command, HEX);
-    
-    Serial.print("  b1: ");
-    Serial.print(b1, HEX);
-    Serial.print("  b2: ");
-    Serial.print(b2, HEX);
-
-    Serial.print("  value: ");
-    Serial.println(value);
-
-    
-    if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL || channelType == CHANNEL_TYPE_e::INV_DIFFERENTIAL){
         _currentChannel++;
+        MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = (value & 0x3FFF);
     }
     _currentChannel++;
-
-    
 }

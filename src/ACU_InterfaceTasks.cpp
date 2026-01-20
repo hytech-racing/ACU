@@ -106,7 +106,7 @@ void initialize_all_interfaces()
         CHANNEL_TYPE_e::INV_DIFFERENTIAL,
         CHANNEL_TYPE_e::SINGLE,
         CHANNEL_TYPE_e::DIFFERENTIAL,
-        CHANNEL_TYPE_e::DIFFERENTIAL
+        CHANNEL_TYPE_e::SINGLE
     };
     // std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
     //     CHANNEL_TYPE_e::SINGLE,
@@ -460,7 +460,11 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print(MAX1148ADCInstance_t::instance().getLastSampleRaw(i));
         Serial.print(" Converted = ");
         Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
-        Serial.print("  ");
+        Serial.print('\n');
+        // skip other half of differential pair
+        if (i == 0 || i == 4) {
+            i++;
+        }
     }
     Serial.print('\n');
 

@@ -54,6 +54,11 @@ public:
      * Gets real value (current/voltage) of a channel for a sample
      */
     float getLastSampleConverted(int index) const;
+
+    /**
+     * Print debug statements
+     */
+    void debugPrint();
     
 private:
     /**
