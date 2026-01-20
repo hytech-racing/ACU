@@ -31,16 +31,51 @@ namespace ACUInterfaces {
     const size_t ANALOG_READ_RESOLUTION = 12;
     const size_t SERIAL_BAUDRATE = 115200;
 
+    constexpr int ADC0_CS = 10;
+    constexpr int ADC0_MOSI = 11;
+    constexpr int ADC0_MISO = 12;
+    constexpr int ADC0_CLK = 13;
+    constexpr int ADC0_SPEED = 2000000; // 1 MHz
+    /* ADC Versions*/
+    constexpr int MAX114X_VERSION = 8;
+    /* Channels on ADC */
+    constexpr int ISO_PACK_N_CHANNEL         = 0;
+    constexpr int ISO_PACK_P_CHANNEL         = 1;
+    constexpr int PACK_VOLTAGE_SENSE_CHANNEL = 2;
+    constexpr int SHUNT_CURRENT_OUT_CHANNEL  = 3;
+    constexpr int SHUNT_CURRENT_P_CHANNEL    = 4;
+    constexpr int SHUNT_CURRENT_N_CHANNEL    = 5;
+    constexpr int TS_OUT_FILTERED_CHANNEL    = 6;
+    constexpr int PACK_OUT_FILTERED_CHANNEL  = 7;
+    
+    /* SCALE/OFFSETS on ADC */
+    const float ISO_PACK_N_SCALE = 1;
+    const float ISO_PACK_P_SCALE = 1;
+    const float PACK_VOLTAGE_SENSE_SCALE = 1;
+    const float SHUNT_CURRENT_OUT_SCALE = 0.03125;
+    const float SHUNT_CURRENT_P_SCALE = 0.00025;
+    const float SHUNT_CURRENT_N_SCALE = 0.00025;
+    const float TS_OUT_FILTERED_SCALE = 1;
+    const float PACK_OUT_FILTERED_SCALE = 1;
+    const float ISO_PACK_N_OFFSET = 0;
+    const float ISO_PACK_P_OFFSET = 0;
+    const float PACK_VOLTAGE_SENSE_OFFSET = 0;
+    const float SHUNT_CURRENT_OUT_OFFSET = -250;
+    const float SHUNT_CURRENT_P_OFFSET = 0;
+    const float SHUNT_CURRENT_N_OFFSET = 0;
+    const float TS_OUT_FILTERED_OFFSET = 0;
+    const float PACK_OUT_FILTERED_OFFSET = 0;
+
     constexpr const size_t TEENSY_OK_PIN = 3; // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
     constexpr const size_t WD_KICK_PIN = 4;       // > Needs to flip at 100 Hz to keep BMS_OK high
     constexpr const size_t N_LATCH_EN_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
-    constexpr const size_t TS_OUT_FILTERED_PIN = 17;
-    constexpr const size_t PACK_OUT_FILTERED_PIN = 18;
-    constexpr const size_t IMD_OK_PIN = 25; // < READ from IMD hardware, go to FAULT state if HIGH
-    constexpr const size_t PRECHARGE_PIN = 26; // READ from PRECHARGE
-    constexpr const size_t BSPD_CURRENT_PIN = 27;
-    constexpr const size_t SHDN_OUT_PIN = 38; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
-    constexpr const size_t SCALED_24V_PIN = 39;
+    constexpr const size_t TS_OUT_FILTERED_PIN = 25;
+    constexpr const size_t PACK_OUT_FILTERED_PIN = 24;
+    constexpr const size_t IMD_OK_PIN = 23; // < READ from IMD hardware, go to FAULT state if HIGH
+    constexpr const size_t PRECHARGE_PIN = 17; // READ from PRECHARGE
+    constexpr const size_t BSPD_CURRENT_PIN = 15;
+    constexpr const size_t SHDN_OUT_PIN = 16; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
+    constexpr const size_t SCALED_24V_PIN = 41;
 
     constexpr const float SHUTDOWN_CONV_FACTOR = 0.1155F; // voltage divider -> 4.7k / (4.7k + 36k)
     constexpr const float PRECHARGE_CONV_FACTOR = 0.6623F; // voltage divider -> 10k / (5.1k + 10k)
@@ -58,7 +93,8 @@ namespace ACUConstants
     constexpr size_t NUM_CHIPS = 12;
     constexpr size_t NUM_CELL_TEMPS = 48;
     constexpr size_t NUM_CHIP_SELECTS = 2;
-    
+    constexpr size_t NUM_MAX1148_CHANNELS = 8;
+
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
     
@@ -82,6 +118,9 @@ namespace ACUConstants
     constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 5;
     constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 4;
+    
+    constexpr uint32_t SAMPLE_ADC_PRIORITY = 20;
+    constexpr uint32_t SAMPLE_ADC_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
 
     constexpr uint32_t CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t CCU_SEND_PRIORITY = 11;

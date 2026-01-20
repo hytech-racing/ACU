@@ -52,7 +52,9 @@ static ACUAllDataType_s make_acu_all_data()
 void initialize_all_interfaces()
 {
     SPI.begin();
-    SPI.setClockDivider(SPI_CLOCK_DIV8); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
+    SPI1.begin();
+    SPI.setClockDivider(SPI_CLOCK_DIV16); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
+    SPI1.setClockDivider(SPI_CLOCK_DIV16); // 16MHz (Arduino Clock Frequency) / 8 = 2MHz -> SPI Clock
     Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
     analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
     /* Watchdog Interface */
@@ -76,7 +78,54 @@ void initialize_all_interfaces()
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
-        
+
+    std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_scales = {
+        ACUInterfaces::ISO_PACK_N_SCALE,
+        ACUInterfaces::ISO_PACK_P_SCALE,
+        ACUInterfaces::PACK_VOLTAGE_SENSE_SCALE,
+        ACUInterfaces::SHUNT_CURRENT_OUT_SCALE,
+        ACUInterfaces::SHUNT_CURRENT_P_SCALE,
+        ACUInterfaces::SHUNT_CURRENT_N_SCALE,
+        ACUInterfaces::TS_OUT_FILTERED_SCALE,
+        ACUInterfaces::PACK_OUT_FILTERED_SCALE,
+    };
+
+    std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_offsets = {
+        ACUInterfaces::ISO_PACK_N_OFFSET,
+        ACUInterfaces::ISO_PACK_P_OFFSET,
+        ACUInterfaces::PACK_VOLTAGE_SENSE_OFFSET,
+        ACUInterfaces::SHUNT_CURRENT_OUT_OFFSET,
+        ACUInterfaces::SHUNT_CURRENT_P_OFFSET,
+        ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
+        ACUInterfaces::TS_OUT_FILTERED_OFFSET,
+        ACUInterfaces::PACK_OUT_FILTERED_OFFSET,
+    };
+
+    // Each channel type corresponds to a pair of channels (0&1, 2&3, etc.) So length is channels / 2
+    std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
+        CHANNEL_TYPE_e::INV_DIFFERENTIAL,
+        CHANNEL_TYPE_e::SINGLE,
+        CHANNEL_TYPE_e::DIFFERENTIAL,
+        CHANNEL_TYPE_e::SINGLE
+    };
+    // std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
+    //     CHANNEL_TYPE_e::SINGLE,
+    //     CHANNEL_TYPE_e::SINGLE,
+    //     CHANNEL_TYPE_e::SINGLE,
+    //     CHANNEL_TYPE_e::SINGLE
+    // };
+
+    /* ADC Interface */
+    MAX1148ADCInstance_t::create(
+        ACUInterfaces::ADC0_CS,
+        ACUInterfaces::ADC0_MISO,
+        ACUInterfaces::ADC0_MOSI,
+        ACUInterfaces::ADC0_CLK,
+        ACUInterfaces::ADC0_SPEED,
+        adc0_scales.data(),
+        adc0_offsets.data(),
+        adc0_channels
+    );
         
     /* CCU Interface */
     CCUInterfaceInstance::create(sys_time::hal_millis());
@@ -134,6 +183,12 @@ std::array<bool, ACUConstants::NUM_CELLS> check_and_get_balancing_status() {
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     BMSDriverInstance_t::instance().write_configuration(check_and_get_balancing_status());
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    MAX1148ADCInstance_t::instance().tick();
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -393,6 +448,23 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     //     Serial.print(" ");
     // }
     // Serial.println();
+
+    Serial.println("\nMAX114X Output: ");
+    for (int i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
+        Serial.print("CH");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.print("Raw = ");
+        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleRaw(i));
+        Serial.print(" Converted = ");
+        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
+        Serial.print('\n');
+        // skip other half of differential pair
+        if (i == 0 || i == 4) {
+            i++;
+        }
+    }
+    Serial.print('\n');
 
     return HT_TASK::TaskResponse::YIELD;
 }
