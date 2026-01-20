@@ -5,12 +5,6 @@
 
 #include <SPI.h>
 
-// Definitions
-const int MAX114X_ADC_DEFAULT_SPI_SDI   = 12;
-const int MAX114X_ADC_DEFAULT_SPI_SDO   = 11;
-const int MAX114X_ADC_DEFAULT_SPI_CLK   = 13;
-const int MAX114X_ADC_DEFAULT_SPI_SPEED = 2000000;
-
 /**
  * Enum representing the different channel configurations in MAX114X ADCs (SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL)
  */
@@ -54,13 +48,15 @@ public:
      * Gets real value (current/voltage) of a channel for a sample
      */
     float getLastSampleConverted(int index) const;
-
-    /**
-     * Print debug statements
-     */
-    void debugPrint();
     
 private:
+
+    /**
+     * Samples the MCP_ADC over SPI. Samples all eight channels and, in accordance with the AnalogMultiSensor's function
+     * contract, stores the raw sampled values into each AnalogChannel's lastSample instance variable.
+     */
+    void _sample() override;
+
     /**
      * Channel configuration is defined per channel pair (two physical channels).
      * This array stores the channel type for each pair of channels in the ADC.
@@ -81,21 +77,6 @@ private:
      * This array stores the specific single-ended select-bit mapping for each channel as defined in the datasheet. 
      */
     std::array<uint8_t, MAX114X_ADC_NUM_CHANNELS> _single_end_channel_to_select_map;
-    
-    /**
-     * Samples the MCP_ADC over SPI. Samples all eight channels and, in accordance with the AnalogMultiSensor's function
-     * contract, stores the raw sampled values into each AnalogChannel's lastSample instance variable.
-     */
-    void _sample() override;
-    
-    /**
-     * Returns the channel selection bits for a channel based on its type and ID. Also increments the channelId/loop index for the sample() function when channel is part of a differential pair.
-     * @param channelType CHANNEL_TYPE_e of the channel
-     * @param channelId the channel number
-     * @return channel selection bits
-     */
-    uint8_t _getSel(CHANNEL_TYPE_e channelType, int channelId);
-    
 };
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
