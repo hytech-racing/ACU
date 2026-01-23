@@ -10,9 +10,10 @@ void setup(void) {
   Serial2.begin(9600);  // DS2480B communicates at 19200 baud
   
   delay(1000);  // Wait for serial to initialize
-  
+  Serial.println("WE GOT TO HERE");
   // ds.begin function resets transceiver and puts it in command mode
   ds.begin();
+  ds.reset();
   Serial.println("DS2480B initialized!");
 }
 
@@ -20,15 +21,20 @@ void loop(void) {
   byte i;
   byte present = 0;
   byte data[12];
-  byte addr[8];
+  byte addr[8] = {};
   float celsius, fahrenheit;
+
+  for(i = 0; i < 8; i++) {
+    Serial.write(' ');
+    Serial.print(addr[i], HEX);
+  }
 
   // Checks if devices (temp sensors) exist on one wire bus
   if (!ds.search(addr)) {
     Serial.println("No more addresses.");
     Serial.println();
     ds.reset_search();
-    delay(5000);
+    delay(1000);
     return;
   }
 

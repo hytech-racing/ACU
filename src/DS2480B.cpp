@@ -17,6 +17,7 @@ void DS2480B::begin()
 {
 	_port->write(0xC1);
 	isCmdMode = true;
+	Serial.println("begin successful");
 }
 
 uint8_t DS2480B::reset(void)
@@ -26,6 +27,7 @@ uint8_t DS2480B::reset(void)
 	commandMode();
 
 	_port->write(0xC1);
+	delay(1000);
 	while (!_port->available());
 	r = _port->read();
 	Serial.print("RESET OUT: ");
@@ -88,7 +90,7 @@ uint8_t DS2480B::read_bit(void)
 	return r;
 }
 
-void DS2480B::write(uint8_t v, uint8_t power /* = 0 */) {
+void DS2480B::write(uint8_t v, uint8_t power) {
 	uint8_t r;
 
 	dataMode();
@@ -177,7 +179,7 @@ void DS2480B::target_search(uint8_t family_code)
 
 uint8_t DS2480B::search(uint8_t *newAddr)
 {
-	uint8_t id_bit_number;
+	uint8_t id_bit_number; 
 	uint8_t last_zero, rom_byte_number, search_result;
 	uint8_t id_bit, cmp_id_bit;
 
@@ -188,35 +190,42 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 	rom_byte_number = 0;
 	rom_byte_mask = 1;
 	search_result = 0;
-
-	if (!LastDeviceFlag)
+	reset();
+	if (!LastDeviceFlag) //if last device hasnt been found
 	{
 		if (!reset())
 		{
-			LastDiscrepancy = 0;
+			LastDiscrepancy = 0; 
 			LastDeviceFlag = FALSE;
 			LastFamilyDiscrepancy = 0;
-			return FALSE;
+			return FALSE; 
 		}
 
-		write(0xF0);
+		write(0xF0, 1);
 
 		do
-		{
+		{	
 			id_bit = read_bit();
 			cmp_id_bit = read_bit();
-
+			Serial.println("THIS IS THE BIT SENT");
+			Serial.println(id_bit);
+			Serial.println("THIS IS THE COMP SENT");
+			Serial.println(cmp_id_bit);
 			if ((id_bit == 1) && (cmp_id_bit == 1))
 				break;
 			else
-			{
-				if (id_bit != cmp_id_bit)
+			{	
+				if (id_bit != cmp_id_bit){//that means id bit is the bit for ALL of them...
 					search_direction = id_bit;
-				else
+					Serial.println(cmp_id_bit);
+					Serial.println("This is the Search Direction");
+					Serial.println(search_direction);
+				}else
 				{
-					if (id_bit_number < LastDiscrepancy)
+					if (id_bit_number < LastDiscrepancy) {
 						search_direction = ((ROM_NO[rom_byte_number] & rom_byte_mask) > 0);
-					else
+						Serial.println("ROM is being changed right now gang");
+					}else
 						search_direction = (id_bit_number == LastDiscrepancy);
 
 					if (search_direction == 0)
@@ -228,9 +237,10 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 					}
 				}
 
-				if (search_direction == 1)
+				if (search_direction == 1){
 					ROM_NO[rom_byte_number] |= rom_byte_mask;
-				else
+					Serial.println(rom_byte_mask);
+				}else
 					ROM_NO[rom_byte_number] &= ~rom_byte_mask;
 
 				write_bit(search_direction);
@@ -243,11 +253,12 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 					rom_byte_number++;
 					rom_byte_mask = 1;
 				}
+				
 			}
 		}
 		while(rom_byte_number < 8);
 
-		if (!(id_bit_number < 65))
+		if (id_bit_number >= 65)
 		{
 			LastDiscrepancy = last_zero;
 
@@ -258,15 +269,17 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 		}
 	}
 
-	if (!search_result || !ROM_NO[0])
+
+	/*if (!search_result || !ROM_NO[0])
 	{
+		Serial.println("No Device Found");
 		LastDiscrepancy = 0;
 		LastDeviceFlag = FALSE;
 		LastFamilyDiscrepancy = 0;
 		search_result = FALSE;
-	}
+	} */
 	for (int i = 0; i < 8; i++) newAddr[i] = ROM_NO[i];
-	return search_result;
+	return search_result; 
 }
 
 #endif
