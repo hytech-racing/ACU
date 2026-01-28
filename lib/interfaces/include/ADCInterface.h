@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "SharedFirmwareTypes.h"
 #include "etl/singleton.h"
+#include "MAX114XInterface.h"
 
 using pin = size_t;
 
@@ -18,7 +19,7 @@ namespace adc_default_parameters
 }
 struct ADCPinout_s 
 {
-    pin teensy_imd_ok_pin; 
+    pin teensy_imd_ok_pin;
     pin teensy_precharge_pin;
     pin teensy_shdn_out_pin;
     pin teensy_ts_out_filtered_pin;
@@ -50,12 +51,23 @@ struct ADCConfigs_s
     float teensy41_max_input_voltage;
 };
 
+struct ADCChannels_s
+{
+    int iso_pack_diff_channel;
+    int pack_voltage_sense_channel;
+    int shunt_current_out_single_channel;
+    int shunt_current_diff_channel;
+    // int ts_out_filtered_channel;
+    // int pack_out_filtered_channel;
+};
+
 struct ADCInterfaceParams_s
 {
     ADCPinout_s pinout;
     ADCConversions_s conversions;
     ADCThresholds_s thresholds;
     ADCConfigs_s configs;
+    ADCChannels_s channels;
     float bit_resolution;
 };
 
@@ -65,6 +77,8 @@ public:
     ADCInterface(ADCPinout_s pinout,
                 ADCConversions_s conversions,
                 float bit_resolution,
+                ADCChannels_s channels,
+                // MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>& MAX114XInterfaceInstance,
                 ADCThresholds_s thresholds = {
                     .teensy41_min_digital_read_voltage_thresh = adc_default_parameters::TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH,
                     .teensy41_max_digital_read_voltage_thresh = adc_default_parameters::TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH,
@@ -87,7 +101,10 @@ public:
                 }(),
                 thresholds, 
                 configs, 
-                bit_resolution} {}
+                channels,
+                bit_resolution},
+                // _max114x_instance(MAX114XInterfaceInstance)
+                {}
 
     /**
      * @pre constructor called and instance created
@@ -144,7 +161,36 @@ public:
      * @return shdn out voltage
     */
     volt read_shdn_out_voltage();
-    
+
+    // constexpr int ISO_PACK_N_CHANNEL         = 0;
+    // constexpr int ISO_PACK_P_CHANNEL         = 1;
+    // constexpr int PACK_VOLTAGE_SENSE_CHANNEL = 2;
+    // constexpr int SHUNT_CURRENT_OUT_CHANNEL  = 3;
+    // constexpr int SHUNT_CURRENT_P_CHANNEL    = 4;
+    // constexpr int SHUNT_CURRENT_N_CHANNEL    = 5;
+    // constexpr int TS_OUT_FILTERED_CHANNEL    = 6;
+    // constexpr int PACK_OUT_FILTERED_CHANNEL  = 7;
+
+    /**
+     * @return ISO Pack Differential
+    */
+    int read_iso_pack();
+
+    /**
+     * @return pack voltage sense
+    */
+    int read_pack_voltage_sense();
+
+    /**
+     * @return shunt current single channel
+    */
+    int read_shunt_current();
+
+    /**
+     * @return shunt current differential channels
+    */
+    int read_differential_shunt_current();
+
     /**
      * @return ADC parameters
      */
@@ -157,6 +203,8 @@ public:
 
 private:
     const ADCInterfaceParams_s _adc_parameters = {};
+    // MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion> _max114x_instance;
+
 
     /**
      * @brief true while within the IMD startup window (set in init())

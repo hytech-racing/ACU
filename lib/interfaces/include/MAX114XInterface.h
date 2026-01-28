@@ -2,7 +2,6 @@
 #define MAX114XINTERFACE_H
 
 #include "AnalogSensorsInterface.h"
-
 #include <SPI.h>
 
 /**

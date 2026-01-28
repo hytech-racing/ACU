@@ -74,6 +74,23 @@ volt ADCInterface::read_global_lv_value() {
     return data;
 }
 
+int ADCInterface::read_iso_pack() {
+    MAX1148ADCInstance_t
+       //  MAX114XInterfaceInstance<MAX114X_ADC_NUM_CHANNELS, MAX114X_ADC_NUM_CHANNELS>.getLastSampleConverted(_adc_parameters.channels.iso_pack_diff_channel);
+}
+
+int ADCInterface::read_pack_voltage_sense() {
+    MAX114XInterfaceInstance.getLastSampleConverted(_adc_parameters.channels.pack_voltage_sense_channel);
+}
+
+int ADCInterface::read_shunt_current() {
+    MAX114XInterfaceInstance<, >::instance().getLastSampleConverted(_adc_parameters.channels.shunt_current_out_single_channel);
+}
+
+int ADCInterface::read_differential_shunt_current() {
+    MAX114XInterfaceInstance<, >::instance().getLastSampleConverted(_adc_parameters.channels.shunt_current_diff_channel);
+}
+
 const ADCInterfaceParams_s& ADCInterface::get_adc_params() const {
     return _adc_parameters;
 }
