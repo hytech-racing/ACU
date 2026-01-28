@@ -16,7 +16,11 @@ namespace adc_default_parameters
 
     constexpr const uint32_t IMD_STARTUP_TIME = 2000;
     constexpr const float TEENSY41_MAX_INPUT_VOLTAGE = 3.3F;
-}
+
+    constexpr int MAX114X_VERSION = 8;
+    constexpr size_t NUM_MAX1148_CHANNELS = 8;
+};
+
 struct ADCPinout_s 
 {
     pin teensy_imd_ok_pin;
@@ -26,6 +30,13 @@ struct ADCPinout_s
     pin teensy_pack_out_filtered_pin;
     pin teensy_bspd_current_pin;
     pin teensy_scaled_24V_pin;
+
+    // MAX114X
+    pin spiPinCS;
+    pin spiPinSDI;
+    pin spiPinSDO;
+    pin spiPinCLK;
+    
 };
 
 struct ADCConversions_s
@@ -49,16 +60,51 @@ struct ADCConfigs_s
 {
     uint32_t imd_startup_time;
     float teensy41_max_input_voltage;
+    int spiSpeed;
 };
 
 struct ADCChannels_s
 {
-    int iso_pack_diff_channel;
+    int iso_pack_n_channel;
+    int iso_pack_p_channel;
     int pack_voltage_sense_channel;
-    int shunt_current_out_single_channel;
-    int shunt_current_diff_channel;
-    // int ts_out_filtered_channel;
-    // int pack_out_filtered_channel;
+    int shunt_current_out_channel;
+    int shunt_current_p_channel;
+    int shunt_current_n_channel;
+    int ts_out_filtered_channel;
+    int pack_out_filtered_channel;
+};
+
+struct ADCScales_s
+{
+    float iso_pack_n_scale;
+    float iso_pack_p_scale;
+    float pack_voltage_sense_scale;
+    float shunt_current_out_scale;
+    float shunt_current_p_scale;
+    float shunt_current_n_scale;
+    float ts_out_filtered_scale;
+    float pack_out_filtered_scale;
+};
+
+struct ADCOffsets_s
+{
+    float iso_pack_n_offset;
+    float iso_pack_p_offset;
+    float pack_voltage_sense_offset;
+    float shunt_current_out_offset;
+    float shunt_current_p_offset;
+    float shunt_current_n_offset;
+    float ts_out_filtered_offset;
+    float pack_out_filtered_offset;
+};
+
+struct MAX114XChannels_s
+{
+    CHANNEL_TYPE_e channelPair0;
+    CHANNEL_TYPE_e channelPair1;
+    CHANNEL_TYPE_e channelPair2;
+    CHANNEL_TYPE_e channelPair3;
 };
 
 struct ADCInterfaceParams_s
@@ -68,6 +114,10 @@ struct ADCInterfaceParams_s
     ADCThresholds_s thresholds;
     ADCConfigs_s configs;
     ADCChannels_s channels;
+    ADCScales_s scales;
+    ADCOffsets_s offsets;
+    MAX114XChannels_s pairs;
+    int spiSpeed;
     float bit_resolution;
 };
 
@@ -76,9 +126,12 @@ class ADCInterface
 public:
     ADCInterface(ADCPinout_s pinout,
                 ADCConversions_s conversions,
-                float bit_resolution,
                 ADCChannels_s channels,
-                // MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>& MAX114XInterfaceInstance,
+                ADCScales_s scales,
+                ADCOffsets_s offsets,
+                MAX114XChannels_s pairs,
+                int spiSpeed,
+                float bit_resolution,
                 ADCThresholds_s thresholds = {
                     .teensy41_min_digital_read_voltage_thresh = adc_default_parameters::TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH,
                     .teensy41_max_digital_read_voltage_thresh = adc_default_parameters::TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH,
@@ -102,15 +155,56 @@ public:
                 thresholds, 
                 configs, 
                 channels,
+                scales,
+                offsets,
+                pairs,
+                spiSpeed,
                 bit_resolution},
-                // _max114x_instance(MAX114XInterfaceInstance)
-                {}
+            _max114x_instance(
+                    _adc_parameters.pinout.spiPinCS,
+                    _adc_parameters.pinout.spiPinSDO,
+                    _adc_parameters.pinout.spiPinSDI,
+                    _adc_parameters.pinout.spiPinCLK,
+                    _adc_parameters.spiSpeed,
+                    std::array<float, adc_default_parameters::NUM_MAX1148_CHANNELS> {
+                        _adc_parameters.scales.iso_pack_n_scale,
+                        _adc_parameters.scales.iso_pack_p_scale,
+                        _adc_parameters.scales.pack_voltage_sense_scale,
+                        _adc_parameters.scales.shunt_current_out_scale,
+                        _adc_parameters.scales.shunt_current_p_scale,
+                        _adc_parameters.scales.shunt_current_n_scale,
+                        _adc_parameters.scales.ts_out_filtered_scale,
+                        _adc_parameters.scales.pack_out_filtered_scale,
+                    }.data(),
+                    std::array<float, adc_default_parameters::NUM_MAX1148_CHANNELS> {
+                        _adc_parameters.offsets.iso_pack_n_offset,
+                        _adc_parameters.offsets.iso_pack_p_offset,
+                        _adc_parameters.offsets.pack_voltage_sense_offset,
+                        _adc_parameters.offsets.shunt_current_out_offset,
+                        _adc_parameters.offsets.shunt_current_p_offset,
+                        _adc_parameters.offsets.shunt_current_n_offset,
+                        _adc_parameters.offsets.ts_out_filtered_offset,
+                        _adc_parameters.offsets.pack_out_filtered_offset,
+                    }.data(),
+                    std::array<CHANNEL_TYPE_e, adc_default_parameters::NUM_MAX1148_CHANNELS / 2> {
+                        _adc_parameters.pairs.channelPair0,
+                        _adc_parameters.pairs.channelPair1,
+                        _adc_parameters.pairs.channelPair2,
+                        _adc_parameters.pairs.channelPair3
+                    }
+            )
+            {}
 
     /**
      * @pre constructor called and instance created
      * @post Pins on Teensy configured and written as IN/OUT
     */ 
     void init(uint32_t init_millis);
+
+    /**
+    * Samples from MAX114X adc
+    */
+    void tick();
 
     /**
      * @return the state of the IMD, HIGH = NO FAULT
@@ -162,34 +256,25 @@ public:
     */
     volt read_shdn_out_voltage();
 
-    // constexpr int ISO_PACK_N_CHANNEL         = 0;
-    // constexpr int ISO_PACK_P_CHANNEL         = 1;
-    // constexpr int PACK_VOLTAGE_SENSE_CHANNEL = 2;
-    // constexpr int SHUNT_CURRENT_OUT_CHANNEL  = 3;
-    // constexpr int SHUNT_CURRENT_P_CHANNEL    = 4;
-    // constexpr int SHUNT_CURRENT_N_CHANNEL    = 5;
-    // constexpr int TS_OUT_FILTERED_CHANNEL    = 6;
-    // constexpr int PACK_OUT_FILTERED_CHANNEL  = 7;
-
     /**
      * @return ISO Pack Differential
     */
-    int read_iso_pack();
+    float read_iso_pack();
 
     /**
      * @return pack voltage sense
     */
-    int read_pack_voltage_sense();
+    float read_pack_voltage_sense();
 
     /**
      * @return shunt current single channel
     */
-    int read_shunt_current();
+    float read_shunt_current();
 
     /**
      * @return shunt current differential channels
     */
-    int read_differential_shunt_current();
+    float read_differential_shunt_current();
 
     /**
      * @return ADC parameters
@@ -203,8 +288,7 @@ public:
 
 private:
     const ADCInterfaceParams_s _adc_parameters = {};
-    // MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion> _max114x_instance;
-
+    MAX114XInterface<adc_default_parameters::NUM_MAX1148_CHANNELS, adc_default_parameters::MAX114X_VERSION> _max114x_instance;
 
     /**
      * @brief true while within the IMD startup window (set in init())

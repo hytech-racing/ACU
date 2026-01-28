@@ -25,7 +25,7 @@
 using chip_type = LTC6811_Type_e;
 using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
 using BMSFaultDataManagerInstance_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
-using MAX1148ADCInstance_t = MAX114XInterfaceInstance<ACUConstants::NUM_MAX1148_CHANNELS, ACUInterfaces::MAX114X_VERSION>;
+// using MAX1148ADCInstance_t = MAX114XInterfaceInstance<ACUConstants::NUM_MAX1148_CHANNELS, ACUInterfaces::MAX114X_VERSION>;
 /**
  * Init Functions - to be called in setup@
  */
