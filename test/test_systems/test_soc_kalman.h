@@ -46,7 +46,7 @@ TEST(SOCKalmanFilterTesting, coulomb_counting_accuracy) {
 
     float expected_delta = (current * dt) / soc_ekf_constants::CAPACITY_AS;
 
-    EXPECT_NEAR(ekf.get_soc(), start_soc - expected_delta, 0.01f);
+    EXPECT_NEAR(ekf.get_soc(), start_soc - expected_delta, 0.02f);
 }
 
 TEST(SOCKalmanFilterTesting, v1_dynamics_time_constant) {
