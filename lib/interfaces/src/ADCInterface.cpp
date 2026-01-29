@@ -78,19 +78,19 @@ volt ADCInterface::read_global_lv_value() {
 }
 
 float ADCInterface::read_iso_pack() {
-    _max114x_instance.getLastSampleConverted(_adc_parameters.channels.iso_pack_n_channel);
+    return _max114x_instance.getLastSampleConverted(_adc_parameters.channels.iso_pack_n_channel);
 }
 
 float ADCInterface::read_pack_voltage_sense() {
-    _max114x_instance.getLastSampleConverted(_adc_parameters.channels.pack_voltage_sense_channel);
+    return _max114x_instance.getLastSampleConverted(_adc_parameters.channels.pack_voltage_sense_channel);
 }
 
 float ADCInterface::read_shunt_current() {
-    _max114x_instance.getLastSampleConverted(_adc_parameters.channels.shunt_current_out_channel);
+    return _max114x_instance.getLastSampleConverted(_adc_parameters.channels.shunt_current_out_channel);
 }
 
 float ADCInterface::read_differential_shunt_current() {
-    _max114x_instance.getLastSampleConverted(_adc_parameters.channels.shunt_current_p_channel);
+    return _max114x_instance.getLastSampleConverted(_adc_parameters.channels.shunt_current_p_channel);
 }
 
 const ADCInterfaceParams_s& ADCInterface::get_adc_params() const {

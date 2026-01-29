@@ -137,7 +137,11 @@ void initialize_all_interfaces()
                                 ACUInterfaces::TS_OUT_FILTERED_PIN,
                                 ACUInterfaces::PACK_OUT_FILTERED_PIN,
                                 ACUInterfaces::BSPD_CURRENT_PIN,
-                                ACUInterfaces::SCALED_24V_PIN},
+                                ACUInterfaces::SCALED_24V_PIN,
+                                ACUInterfaces::ADC0_CS,
+                                ACUInterfaces::ADC0_MOSI,
+                                ACUInterfaces::ADC0_MISO,
+                                ACUInterfaces::ADC0_CLK},
                                 ADCConversions_s {ACUInterfaces::SHUTDOWN_CONV_FACTOR,
                                 ACUInterfaces::PRECHARGE_CONV_FACTOR,
                                 ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
@@ -172,9 +176,10 @@ void initialize_all_interfaces()
                                 CHANNEL_TYPE_e::SINGLE,
                                 CHANNEL_TYPE_e::DIFFERENTIAL,
                                 CHANNEL_TYPE_e::SINGLE},
-                                ACUInterfaces::BIT_RESOLUTION,
-                                ACUInterfaces::ADC0_SPEED
+                                ACUInterfaces::ADC0_SPEED,
+                                ACUInterfaces::BIT_RESOLUTION
     );
+    ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
@@ -492,17 +497,17 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     // }
     // Serial.print('\n');
     Serial.println("\nMAX114X Output:");
-    Serial.print(" CH 0&1:");
+    Serial.print(" CH 0&1: ");
     Serial.print(ADCInterfaceInstance::instance().read_iso_pack());
-    Serial.print(" CH 2:");
+    Serial.print(" CH 2: ");
     Serial.print(ADCInterfaceInstance::instance().read_pack_voltage_sense());
     Serial.print(" CH 3:");
     Serial.print(ADCInterfaceInstance::instance().read_shunt_current());
-    Serial.print(" CH 4&5:");
+    Serial.print(" CH 4&5: ");
     Serial.print(ADCInterfaceInstance::instance().read_differential_shunt_current());
-    Serial.print(" CH 6:");
+    Serial.print(" CH 6: ");
     Serial.print(ADCInterfaceInstance::instance().read_ts_out_filtered());
-    Serial.print(" CH 7:");
+    Serial.print(" CH 7: ");
     Serial.print(ADCInterfaceInstance::instance().read_pack_out_filtered());
     Serial.print('/n');
 

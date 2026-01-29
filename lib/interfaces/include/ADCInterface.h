@@ -162,8 +162,8 @@ public:
                 bit_resolution},
             _max114x_instance(
                     _adc_parameters.pinout.spiPinCS,
-                    _adc_parameters.pinout.spiPinSDO,
                     _adc_parameters.pinout.spiPinSDI,
+                    _adc_parameters.pinout.spiPinSDO,
                     _adc_parameters.pinout.spiPinCLK,
                     _adc_parameters.spiSpeed,
                     std::array<float, adc_default_parameters::NUM_MAX1148_CHANNELS> {
