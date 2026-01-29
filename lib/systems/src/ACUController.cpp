@@ -1,5 +1,5 @@
 #include "ACUController.h"
-#include "ACU_Constants.h"
+
 
 
 void ACUController::init(time_ms system_start_time, volt pack_voltage)
@@ -13,12 +13,17 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.prev_bms_time_stamp = system_start_time;
     _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
     _acu_state.balancing_enabled = false;
+    _acu_state.air_minus_welded = false;
+    _acu_state.air_plus_welded = false;
+
+    pinMode(_acu_parameters.weld_check_pin, OUTPUT);
+    digitalWrite(_acu_parameters.weld_check_pin, HIGH);
 }
 
 
 
 
-ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells, float pack_voltage_adc, float ts_voltage_adc, float ts_isolation_voltage)
+ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells)
 {   
     // _acu_state.charging_enabled = input_state.charging_enabled;
     
@@ -101,7 +106,6 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     // Determine if bms is ok
     _acu_state.bms_ok = _check_bms_ok(current_millis);
 
-    _acu_state.sw_not_ok = !((pack_voltage_adc < ts_isolation_voltage) && (ts_voltage_adc < ts_isolation_voltage));
     return _acu_state;
 }
 
@@ -174,4 +178,13 @@ bool ACUController::_check_invalid_packet_faults(time_ms current_millis)
 {
     bool invalid_packet_fault = (current_millis - _acu_state.last_time_invalid_packet_present) > _acu_parameters.fault_durations.max_allowed_invalid_packet_fault_dur;
     return invalid_packet_fault;
+}
+
+bool ACUController::check_ts_isolation(volt pack_voltage_adc, volt ts_voltage_adc) 
+{
+    bool sw_not_ok = !((pack_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage) && (ts_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage));
+    digitalWrite(_acu_parameters.weld_check_pin, sw_not_ok);
+    _acu_state.air_minus_welded = (pack_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage);
+    _acu_state.air_plus_welded = (ts_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage);
+    return sw_not_ok;
 }

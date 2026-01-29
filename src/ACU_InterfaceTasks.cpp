@@ -44,7 +44,11 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.min_measured_ts_out_voltage = watchdog.min_measured_ts_out_voltage;
     out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage; 
     // SoC/SoH placeholders (leave unchanged here)
-    out.SoC = ACUControllerInstance::instance().get_status().SoC;
+    auto ACU = ACUControllerInstance::instance().get_status();
+
+    out.SoC = ACU.SoC;
+    out.core_data.air_plus_welded = ACU.air_plus_welded;
+    out.core_data.air_minus_welded = ACU.air_minus_welded;
 
     return out;
 }

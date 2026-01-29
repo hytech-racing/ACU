@@ -11,7 +11,9 @@ bool initialize_all_systems()
                                                                 ACUSystems::MIN_PACK_TOTAL_VOLTAGE,
                                                                 ACUSystems::VOLTAGE_DIFF_TO_INIT_CB,
                                                                 ACUSystems::BALANCE_TEMP_LIMIT_C,
-                                                                ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C});
+                                                                ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C,
+                                                                ACUSystems::TS_ISOLATION_VOLTAGE}, 
+                                                            ACUInterfaces::SW_NOT_OK_PIN);
     ACUControllerInstance::instance().init(sys_time::hal_millis(), BMSDriverInstance_t::instance().get_bms_data().total_voltage);
     /* State Machine Initialization */
 
@@ -25,14 +27,19 @@ bool initialize_all_systems()
     etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
                                                                         { return !ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()); });
 
+    etl::delegate<bool()> weld_check = etl::delegate<bool()>::create([]() -> bool
+                                                                                { ACUControllerInstance::instance().check_ts_isolation(ADCInterfaceInstance::instance().read_pack_out_filtered(), ADCInterfaceInstance::instance().read_ts_out_filtered()); });
+
+    etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
+
     etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<ADCInterface, &ADCInterface::read_shdn_out>(ADCInterfaceInstance::instance());
+
 
     etl::delegate<void()> enable_cell_balancing = etl::delegate<void()>::create([]() -> void
                                                                                 { ACUControllerInstance::instance().enableCharging(); });
 
     etl::delegate<void()> disable_cell_balancing = etl::delegate<void()>::create([]() -> void
                                                                                 { ACUControllerInstance::instance().disableCharging(); });
-    etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
 
     etl::delegate<void()> reinitialize_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_high>(WatchdogInstance::instance());
 
@@ -40,9 +47,11 @@ bool initialize_all_systems()
 
     etl::delegate<void()> reset_latch = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_n_latch_en_high>(WatchdogInstance::instance());
 
+
     ACUStateMachineInstance::create(charge_state_request,
                                     has_bms_fault,
                                     has_imd_fault,
+                                    weld_check,
                                     received_valid_shdn_out,
                                     enable_cell_balancing,
                                     disable_cell_balancing,
@@ -62,8 +71,7 @@ HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const
         BMSDriverInstance_t::instance().get_bms_core_data(), 
         BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count,
         EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_current,
-        ACUConstants::NUM_CELLS,
-        ACUSystems::TS_ISOLATION_VOLTAGE
+        ACUConstants::NUM_CELLS
     );
     return HT_TASK::TaskResponse::YIELD;
 }

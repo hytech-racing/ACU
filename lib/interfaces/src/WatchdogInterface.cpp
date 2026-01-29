@@ -5,6 +5,7 @@ void WatchdogInterface::init() {
     pinMode(_watchdog_parameters.pinout.teensy_ok_pin, OUTPUT);
     pinMode(_watchdog_parameters.pinout.teensy_wd_kick_pin, OUTPUT);
     pinMode(_watchdog_parameters.pinout.teensy_n_latch_en_pin, OUTPUT);
+   
 
     // Initial Pin States for OUTPUT pins
     digitalWrite(_watchdog_parameters.pinout.teensy_ok_pin, HIGH);

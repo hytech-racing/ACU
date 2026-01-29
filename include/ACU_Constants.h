@@ -24,7 +24,7 @@ namespace ACUSystems
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02;  // differential with lowest cell voltage to enable cell balancing for a cell
     constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
     constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
-    constexpr const volt TS_ISOLATION_VOLTAGE = 0.2; // Voltas
+    constexpr const volt TS_ISOLATION_VOLTAGE = 0.2; // Volts
 }
 
 namespace ACUInterfaces {
