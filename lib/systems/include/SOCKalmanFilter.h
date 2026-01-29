@@ -19,9 +19,9 @@ namespace soc_ekf_constants
     constexpr const float C1 = TIME_CONSTANT / R1; // Polarization capacitance
 
     // EKF tuning parameters (update these to tune the EKF to track SoC better)
-    constexpr const float Q_SOC = 1e-6f; // process noise for SoC
-    constexpr const float Q_V1 = 1e-4f; // process noise for V1
-    constexpr const float R_V1 = 0.01f; // measurement noise for V1
+    constexpr const float Q_SOC = 1e-5f; // process noise for SoC
+    constexpr const float Q_V1 = 1e-6f; // process noise for V1
+    constexpr const float R_V1 = 0.001f; // measurement noise for V1
 
     constexpr const float MIN_SOC = 0.0f;
     constexpr const float MAX_SOC = 1.0f;
