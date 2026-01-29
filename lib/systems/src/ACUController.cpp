@@ -1,4 +1,5 @@
 #include "ACUController.h"
+#include "ACU_Constants.h"
 
 
 void ACUController::init(time_ms system_start_time, volt pack_voltage)
@@ -17,7 +18,7 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
 
 
 
-ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells)
+ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells, float pack_voltage_adc, float ts_voltage_adc, float ts_isolation_voltage)
 {   
     // _acu_state.charging_enabled = input_state.charging_enabled;
     
@@ -100,7 +101,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     // Determine if bms is ok
     _acu_state.bms_ok = _check_bms_ok(current_millis);
 
-
+    _acu_state.sw_not_ok = !((pack_voltage_adc < ts_isolation_voltage) && (ts_voltage_adc < ts_isolation_voltage));
     return _acu_state;
 }
 

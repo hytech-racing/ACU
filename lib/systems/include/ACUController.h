@@ -20,6 +20,8 @@ namespace acu_controller_default_parameters
     constexpr const float PACK_MAX_VOLTAGE = 529.2;         // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
     constexpr const float PACK_MIN_VOLTAGE = 378.0;         // from data sheet^ but just assume 126 * 3.0V
     constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
+
+    
 }
 struct ACUControllerData_s
 {
@@ -37,6 +39,7 @@ struct ACUControllerData_s
     uint32_t last_bms_not_ok_eval;
     bool charging_enabled;
     bool balancing_enabled;
+    bool sw_not_ok;
 };
 
 struct ACUControllerThresholds_s
@@ -73,6 +76,7 @@ struct ACUControllerParameters_s
     size_t invalid_packet_count_thresh = 0;
     ACUControllerFaultDurations_s fault_durations;
     ACUControllerPackSpecs_s pack_specs;
+    float ts_isolation_voltage;
 };
 class ACUController
 {
@@ -99,8 +103,10 @@ public:
                     .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
                     .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
                     .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE,
-                    .pack_internal_resistance = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE
-                }) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
+                    .pack_internal_resistance = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE}
+
+                
+            ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
@@ -112,12 +118,13 @@ public:
      * @post updates configuration bytes and sends configuration command
      * @param pack_current current flowing from the pack in amps (negative during discharge, positive during charge)
      */
-    ACUControllerData_s evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &bms_core_data, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells);
+    ACUControllerData_s evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &bms_core_data, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells, float pack_voltage_adc, float ts_voltage_adc, float ts_isolation_voltage);
 
         /**
      * Calculate Cell Balancing values
      * @pre cell charging is enabled
      * @post output will have the new values
+     * check TS isolation
      */
     void calculate_cell_balance_statuses(bool* output, const volt* voltages, size_t num_of_voltage_cells, volt min_voltage);
 
