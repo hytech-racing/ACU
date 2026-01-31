@@ -10,6 +10,7 @@ bool received_CCU_msg_var;
 bool has_bms_fault_var;
 bool has_imd_fault_var;
 bool received_valid_shdn_out_var;
+bool is_contactor_welded;
 
 bool charging_en = false;
 bool watchdog_en = true;
@@ -25,6 +26,10 @@ etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool
 
 etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool {
     return has_imd_fault_var;
+});
+
+etl::delegate<bool()> contactor_welded = etl::delegate<bool()>::create([]() -> bool {
+    return contactor_welded;
 });
 
 etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create([]() -> bool {
@@ -59,6 +64,7 @@ ACUStateMachine state_machine = ACUStateMachine(
     received_CCU_message,
     has_bms_fault,
     has_imd_fault,
+    contactor_welded,
     received_valid_shdn_out,
     enable_cell_balancing,
     disable_cell_balancing,
@@ -74,6 +80,7 @@ TEST (ACUStateMachineTesting, initial_state) {
     has_bms_fault_var = false;
     has_imd_fault_var = false;
     received_valid_shdn_out_var = false;
+    is_contactor_welded = false;
 
     ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP); // initial
     state_machine.tick_state_machine(0);
@@ -89,6 +96,7 @@ TEST (ACUStateMachineTesting, CCU_msg_state) {
     has_bms_fault_var = false;
     has_imd_fault_var = false;
     received_valid_shdn_out_var = false;
+    is_contactor_welded = false;
 
     ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE); // initial
 
@@ -110,6 +118,7 @@ TEST (ACUStateMachineTesting, fault_states) {
     has_bms_fault_var = false;
     has_imd_fault_var = false;
     received_valid_shdn_out_var = true;
+    is_contactor_welded = false;
 
     ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE); // initial
 

@@ -12,7 +12,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
-            if (_weld_check()) {
+            if (_contactor_welded()) {
                 _set_state(ACUState_e::WELDED, current_millis);
             }
             break;

@@ -27,7 +27,7 @@ bool initialize_all_systems()
     etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
                                                                         { return !ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()); });
 
-    etl::delegate<bool()> weld_check = etl::delegate<bool()>::create([]() -> bool
+    etl::delegate<bool()> contactor_welded = etl::delegate<bool()>::create([]() -> bool
                                                                                 { ACUControllerInstance::instance().check_ts_isolation(ADCInterfaceInstance::instance().read_pack_out_filtered(), ADCInterfaceInstance::instance().read_ts_out_filtered()); });
 
     etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
@@ -51,7 +51,7 @@ bool initialize_all_systems()
     ACUStateMachineInstance::create(charge_state_request,
                                     has_bms_fault,
                                     has_imd_fault,
-                                    weld_check,
+                                    contactor_welded,
                                     received_valid_shdn_out,
                                     enable_cell_balancing,
                                     disable_cell_balancing,
