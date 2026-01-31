@@ -29,7 +29,7 @@ etl::delegate<bool()> has_imd_fault = etl::delegate<bool()>::create([]() -> bool
 });
 
 etl::delegate<bool()> contactor_welded = etl::delegate<bool()>::create([]() -> bool {
-    return contactor_welded;
+    return is_contactor_welded;
 });
 
 etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create([]() -> bool {
