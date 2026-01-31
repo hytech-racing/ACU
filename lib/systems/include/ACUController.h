@@ -40,8 +40,8 @@ struct ACUControllerData_s
     uint32_t last_bms_not_ok_eval;
     bool charging_enabled;
     bool balancing_enabled;
-    bool air_plus_welded;
-    bool air_minus_welded;
+    bool high_side_contactor_welded;
+    bool low_side_contactor_welded;
    
 };
 

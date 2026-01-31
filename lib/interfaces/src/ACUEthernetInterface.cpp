@@ -45,6 +45,7 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
     out.min_measured_pack_voltage = shared_state.min_measured_pack_out_voltage;
     out.min_measured_tractive_system_voltage = shared_state.min_measured_ts_out_voltage;
     out.min_measured_shdn_out_voltage = shared_state.min_shdn_out_voltage;
+    
 
     return out;
 }

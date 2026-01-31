@@ -19,7 +19,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
         }
         case ACUState_e::WELDED:
         {
-            //do smth
+            
         }
         case ACUState_e::ACTIVE: 
         {

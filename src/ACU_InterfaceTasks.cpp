@@ -47,8 +47,8 @@ static ACUAllDataType_s make_acu_all_data()
     auto ACU = ACUControllerInstance::instance().get_status();
 
     out.SoC = ACU.SoC;
-    out.core_data.air_plus_welded = ACU.air_plus_welded;
-    out.core_data.air_minus_welded = ACU.air_minus_welded;
+    out.core_data.high_side_contactor_welded = ACU.high_side_contactor_welded;
+    out.core_data.low_side_contactor_welded = ACU.low_side_contactor_welded;
 
     return out;
 }
