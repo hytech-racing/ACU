@@ -25,6 +25,7 @@ struct ADCPinout_s
     pin teensy_pack_out_filtered_pin;
     pin teensy_bspd_current_pin;
     pin teensy_scaled_24V_pin;
+    pin teensy_sw_not_ok_pin;
 };
 
 struct ADCConversions_s
@@ -154,6 +155,10 @@ public:
      * @return true if still within IMD startup period
      */
     bool is_in_imd_startup_period() const;
+
+    void set_sw_not_ok_pin_high();
+
+    void set_sw_not_ok_pin_low();
 
 private:
     const ADCInterfaceParams_s _adc_parameters = {};

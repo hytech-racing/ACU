@@ -15,9 +15,6 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.balancing_enabled = false;
     _acu_state.high_side_contactor_welded = false;
     _acu_state.low_side_contactor_welded = false;
-
-    pinMode(_acu_parameters.weld_check_pin, OUTPUT);
-    digitalWrite(_acu_parameters.weld_check_pin, HIGH);
 }
 
 
@@ -183,7 +180,7 @@ bool ACUController::_check_invalid_packet_faults(time_ms current_millis)
 bool ACUController::check_ts_isolation(volt pack_voltage_adc, volt ts_voltage_adc) 
 {
     bool sw_not_ok = !((pack_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage) && (ts_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage));
-    digitalWrite(_acu_parameters.weld_check_pin, sw_not_ok);
+    
     _acu_state.low_side_contactor_welded = !(pack_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage);
     _acu_state.high_side_contactor_welded = !(ts_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage);
     return sw_not_ok;

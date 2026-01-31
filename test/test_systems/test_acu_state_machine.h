@@ -32,6 +32,12 @@ etl::delegate<bool()> contactor_welded = etl::delegate<bool()>::create([]() -> b
     return is_contactor_welded;
 });
 
+etl::delegate<void()> set_sw_not_ok_pin_high = etl::delegate<void()>::create([]() -> void {
+});
+
+etl::delegate<void()> set_sw_not_ok_pin_low = etl::delegate<void()>::create([]() -> void {
+});
+
 etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create([]() -> bool {
     return received_valid_shdn_out_var;
 });
@@ -65,6 +71,8 @@ ACUStateMachine state_machine = ACUStateMachine(
     has_bms_fault,
     has_imd_fault,
     contactor_welded,
+    set_sw_not_ok_pin_high,
+    set_sw_not_ok_pin_low,
     received_valid_shdn_out,
     enable_cell_balancing,
     disable_cell_balancing,

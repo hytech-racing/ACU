@@ -25,6 +25,8 @@ public:
         etl::delegate<bool()> has_bms_fault,
         etl::delegate<bool()> has_imd_fault,
         etl::delegate<bool()> contactor_welded,
+        etl::delegate<void()> set_sw_not_ok_pin_high,
+        etl::delegate<void()> set_sw_not_ok_pin_low,
         etl::delegate<bool()> received_valid_shdn_out,
         etl::delegate<void()> enable_cell_balancing,
         etl::delegate<void()> disable_cell_balancing,
@@ -38,6 +40,8 @@ public:
     _has_bms_fault(has_bms_fault),
     _has_imd_fault(has_imd_fault),
     _contactor_welded(contactor_welded),
+    _set_sw_not_ok_pin_high(set_sw_not_ok_pin_high),
+    _set_sw_not_ok_pin_low(set_sw_not_ok_pin_low),
     _received_valid_shdn_out(received_valid_shdn_out),
     _enable_cell_balancing(enable_cell_balancing),
     _disable_cell_balancing(disable_cell_balancing),
@@ -81,6 +85,8 @@ private:
     etl::delegate<bool()> _has_bms_fault;
     etl::delegate<bool()> _has_imd_fault;
     etl::delegate<bool()> _contactor_welded;
+    etl::delegate<void()> _set_sw_not_ok_pin_high;
+    etl::delegate<void()> _set_sw_not_ok_pin_low;
     etl::delegate<bool()> _received_valid_shdn_out;
     /// @brief setters
     etl::delegate<void()> _enable_cell_balancing;

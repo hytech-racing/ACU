@@ -12,8 +12,7 @@ bool initialize_all_systems()
                                                                 ACUSystems::VOLTAGE_DIFF_TO_INIT_CB,
                                                                 ACUSystems::BALANCE_TEMP_LIMIT_C,
                                                                 ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C,
-                                                                ACUSystems::TS_ISOLATION_VOLTAGE}, 
-                                                            ACUInterfaces::SW_NOT_OK_PIN);
+                                                                ACUSystems::TS_ISOLATION_VOLTAGE} );
     ACUControllerInstance::instance().init(sys_time::hal_millis(), BMSDriverInstance_t::instance().get_bms_data().total_voltage);
     /* State Machine Initialization */
 
@@ -29,7 +28,13 @@ bool initialize_all_systems()
 
     etl::delegate<bool()> contactor_welded = etl::delegate<bool()>::create([]() -> bool
                                                                                 { ACUControllerInstance::instance().check_ts_isolation(ADCInterfaceInstance::instance().read_pack_out_filtered(), ADCInterfaceInstance::instance().read_ts_out_filtered()); });
-
+    
+    etl::delegate<void()> set_sw_not_ok_pin_high = etl::delegate<void()>::create([]() -> void
+                                                                                { ADCInterfaceInstance::instance().set_sw_not_ok_pin_high(); });
+    
+    etl::delegate<void()> set_sw_not_ok_pin_low = etl::delegate<void()>::create([]() -> void
+                                                                                { ADCInterfaceInstance::instance().set_sw_not_ok_pin_low(); });
+    
     etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
 
     etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<ADCInterface, &ADCInterface::read_shdn_out>(ADCInterfaceInstance::instance());
@@ -52,6 +57,8 @@ bool initialize_all_systems()
                                     has_bms_fault,
                                     has_imd_fault,
                                     contactor_welded,
+                                    set_sw_not_ok_pin_high,
+                                    set_sw_not_ok_pin_low,
                                     received_valid_shdn_out,
                                     enable_cell_balancing,
                                     disable_cell_balancing,
@@ -60,6 +67,8 @@ bool initialize_all_systems()
                                     reset_latch,
                                     disable_n_latch_en,
                                     sys_time::hal_millis());
+
+    ADCInterfaceInstance::instance().set_sw_not_ok_pin_high();
 
     return true;
 }

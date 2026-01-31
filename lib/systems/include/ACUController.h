@@ -77,7 +77,6 @@ struct ACUControllerPackSpecs_s
 struct ACUControllerParameters_s
 {
     ACUControllerThresholds_s thresholds;
-    size_t weld_check_pin;
     size_t invalid_packet_count_thresh = 0;
     ACUControllerFaultDurations_s fault_durations;
     ACUControllerPackSpecs_s pack_specs;
@@ -98,7 +97,6 @@ public:
      * @param max_temp_fault_dur max number of temp faults allowed
      */
     ACUController(ACUControllerThresholds_s thresholds,
-                    size_t weld_check_pin,
                   size_t invalid_packet_count_thresh = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_COUNT,
                   ACUControllerFaultDurations_s fault_durations = {
                       .max_allowed_voltage_fault_dur = acu_controller_default_parameters::MAX_VOLTAGE_FAULT_DUR,
@@ -111,7 +109,7 @@ public:
                     .pack_internal_resistance = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE}
                     
 
-            ) : _acu_parameters{thresholds, weld_check_pin, invalid_packet_count_thresh, fault_durations, pack_specs} {};
+            ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults

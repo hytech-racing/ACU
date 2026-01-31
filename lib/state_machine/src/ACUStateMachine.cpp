@@ -4,6 +4,14 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
     switch(_current_state) {
         case ACUState_e::STARTUP: 
         {   
+            if (_contactor_welded()) {
+                _set_sw_not_ok_pin_high();
+                _set_state(ACUState_e::WELDED, current_millis);
+            }
+            else {
+                _set_sw_not_ok_pin_low();
+            }
+            
             if (_received_valid_shdn_out()) { // is there a race condition between voltage reading and shdn_out?
                 _set_state(ACUState_e::ACTIVE, current_millis);
                 break;
@@ -12,9 +20,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
-            if (_contactor_welded()) {
-                _set_state(ACUState_e::WELDED, current_millis);
-            }
+            
             break;
         }
         case ACUState_e::WELDED:
