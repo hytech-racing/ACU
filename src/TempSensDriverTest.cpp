@@ -7,10 +7,14 @@ DS2480B ds(Serial2);
 void setup(void) {
   // Begin serial communication
   Serial.begin(115200);
-  Serial2.begin(9600);  // DS2480B communicates at 19200 baud
+  Serial.println("Code is running");
+
+  //Serial2 represents Teensy 2, which communicates via serial to the transceiver
+  Serial2.begin(9600);  
   
   delay(1000);  // Wait for serial to initialize
   Serial.println("WE GOT TO HERE");
+
   // ds.begin function resets transceiver and puts it in command mode
   ds.begin();
   ds.reset();
@@ -18,16 +22,12 @@ void setup(void) {
 }
 
 void loop(void) {
+  Serial.println("Loop Begin!");
   byte i;
   byte present = 0;
   byte data[12];
   byte addr[8] = {};
   float celsius, fahrenheit;
-
-  for(i = 0; i < 8; i++) {
-    Serial.write(' ');
-    Serial.print(addr[i], HEX);
-  }
 
   // Checks if devices (temp sensors) exist on one wire bus
   if (!ds.search(addr)) {
@@ -53,9 +53,6 @@ void loop(void) {
     return;
   }
   Serial.println();
-
-  // We know the chip is DS18B20, just clarifying through Serial Monitor
-  Serial.println("  Chip = DS18B20");
   
   // Reset the one-wire bus
   ds.reset();
