@@ -100,12 +100,14 @@ public:
         _acu_all_data.core_data.max_board_temp = input.core_data.max_board_temp;
         _acu_all_data.core_data.min_cell_temp = input.core_data.min_cell_temp;
         _acu_all_data.core_data.max_cell_temp = input.core_data.max_cell_temp;
+        _acu_all_data.SoC = input.SoC;
     }
 
     void handle_enqueue_acu_status_CAN_message();
     void handle_enqueue_acu_core_voltages_CAN_message();
     void handle_enqueue_acu_voltages_CAN_message();
     void handle_enqueue_acu_temps_CAN_message();
+    void handle_enqueue_acu_SoC_CAN_message();
 
 private:
     CCUCANInterfaceData_s _curr_data;
