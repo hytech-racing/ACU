@@ -1,6 +1,5 @@
 /* ACU Dependent */
 #include "ACU_Constants.h"
-#include "ACU_Globals.h"
 #include "SystemTimeInterface.h"
 #include "ACU_InterfaceTasks.h"
 #include "ACU_SystemTasks.h"
@@ -40,7 +39,7 @@ const std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 // Instantiate BMS Driver Group (non-const so we can call non-const methods)
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
-std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
+std::array<BMSFaultDataManager<num_chips>::BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
 
 // Tracking variables for optimized read testing
 struct ReadGroupStats {

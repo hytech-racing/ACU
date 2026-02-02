@@ -62,6 +62,12 @@ MAX114XChannels_s pairs = {CHANNEL_TYPE_e::INV_DIFFERENTIAL,
 float bit_res = ACUInterfaces::BIT_RESOLUTION;
 int spi_speed = ACUInterfaces::ADC0_SPEED;
 
+template<int N>
+void AnalogMultiSensor<N>::_sample() {}
+
+template<int N>
+void AnalogMultiSensor<N>::tick() { _sample(); _convert(); }
+
 TEST (ADCInterfaceTesting, init) {
     When(Method(ArduinoFake(), pinMode)).AlwaysReturn();
 
