@@ -14,6 +14,10 @@ void ADCInterface::init(uint32_t init_millis) {
     _in_imd_startup_period = true; 
 }
 
+void ADCInterface::tick() {
+    _max114x_instance.tick();
+}
+
 bool ADCInterface::read_imd_ok(uint32_t curr_millis) {
     if (_in_imd_startup_period) {
         if ((curr_millis - _init_millis) >= _adc_parameters.configs.imd_startup_time) { // give 2 seconds for IMD to startup
@@ -21,7 +25,6 @@ bool ADCInterface::read_imd_ok(uint32_t curr_millis) {
         }
         return true;
     }
-    //
     return static_cast<float>(analogRead(_adc_parameters.pinout.teensy_imd_ok_pin)) * (_adc_parameters.configs.teensy41_max_input_voltage / _adc_parameters.bit_resolution) > _adc_parameters.thresholds.teensy41_min_digital_read_voltage_thresh; // idk if this would actually work, like if a LOW is a threshold or smth
 }
 
@@ -72,6 +75,22 @@ volt ADCInterface::read_bspd_current() {
 volt ADCInterface::read_global_lv_value() {
     volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_scaled_24V_pin)) * _adc_parameters.conversions.glv_conv_factor; // input before voltage divider (4.3k / (4.3k + 36k))
     return data;
+}
+
+float ADCInterface::read_iso_pack() {
+    return _max114x_instance.getLastSampleConverted(_adc_parameters.channels.iso_pack_n_channel);
+}
+
+float ADCInterface::read_pack_voltage_sense() {
+    return _max114x_instance.getLastSampleConverted(_adc_parameters.channels.pack_voltage_sense_channel);
+}
+
+float ADCInterface::read_shunt_current() {
+    return _max114x_instance.getLastSampleConverted(_adc_parameters.channels.shunt_current_out_channel);
+}
+
+float ADCInterface::read_differential_shunt_current() {
+    return _max114x_instance.getLastSampleConverted(_adc_parameters.channels.shunt_current_p_channel);
 }
 
 const ADCInterfaceParams_s& ADCInterface::get_adc_params() const {

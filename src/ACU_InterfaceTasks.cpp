@@ -79,53 +79,47 @@ void initialize_all_interfaces()
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
 
-    std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_scales = {
-        ACUInterfaces::ISO_PACK_N_SCALE,
-        ACUInterfaces::ISO_PACK_P_SCALE,
-        ACUInterfaces::PACK_VOLTAGE_SENSE_SCALE,
-        ACUInterfaces::SHUNT_CURRENT_OUT_SCALE,
-        ACUInterfaces::SHUNT_CURRENT_P_SCALE,
-        ACUInterfaces::SHUNT_CURRENT_N_SCALE,
-        ACUInterfaces::TS_OUT_FILTERED_SCALE,
-        ACUInterfaces::PACK_OUT_FILTERED_SCALE,
-    };
+    // std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_scales = {
+    //     ACUInterfaces::ISO_PACK_N_SCALE,
+    //     ACUInterfaces::ISO_PACK_P_SCALE,
+    //     ACUInterfaces::PACK_VOLTAGE_SENSE_SCALE,
+    //     ACUInterfaces::SHUNT_CURRENT_OUT_SCALE,
+    //     ACUInterfaces::SHUNT_CURRENT_P_SCALE,
+    //     ACUInterfaces::SHUNT_CURRENT_N_SCALE,
+    //     ACUInterfaces::TS_OUT_FILTERED_SCALE,
+    //     ACUInterfaces::PACK_OUT_FILTERED_SCALE,
+    // };
 
-    std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_offsets = {
-        ACUInterfaces::ISO_PACK_N_OFFSET,
-        ACUInterfaces::ISO_PACK_P_OFFSET,
-        ACUInterfaces::PACK_VOLTAGE_SENSE_OFFSET,
-        ACUInterfaces::SHUNT_CURRENT_OUT_OFFSET,
-        ACUInterfaces::SHUNT_CURRENT_P_OFFSET,
-        ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
-        ACUInterfaces::TS_OUT_FILTERED_OFFSET,
-        ACUInterfaces::PACK_OUT_FILTERED_OFFSET,
-    };
+    // std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_offsets = {
+    //     ACUInterfaces::ISO_PACK_N_OFFSET,
+    //     ACUInterfaces::ISO_PACK_P_OFFSET,
+    //     ACUInterfaces::PACK_VOLTAGE_SENSE_OFFSET,
+    //     ACUInterfaces::SHUNT_CURRENT_OUT_OFFSET,
+    //     ACUInterfaces::SHUNT_CURRENT_P_OFFSET,
+    //     ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
+    //     ACUInterfaces::TS_OUT_FILTERED_OFFSET,
+    //     ACUInterfaces::PACK_OUT_FILTERED_OFFSET,
+    // };
 
-    // Each channel type corresponds to a pair of channels (0&1, 2&3, etc.) So length is channels / 2
-    std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
-        CHANNEL_TYPE_e::INV_DIFFERENTIAL,
-        CHANNEL_TYPE_e::SINGLE,
-        CHANNEL_TYPE_e::DIFFERENTIAL,
-        CHANNEL_TYPE_e::SINGLE
-    };
+    // // Each channel type corresponds to a pair of channels (0&1, 2&3, etc.) So length is channels / 2
     // std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
+    //     CHANNEL_TYPE_e::INV_DIFFERENTIAL,
     //     CHANNEL_TYPE_e::SINGLE,
-    //     CHANNEL_TYPE_e::SINGLE,
-    //     CHANNEL_TYPE_e::SINGLE,
+    //     CHANNEL_TYPE_e::DIFFERENTIAL,
     //     CHANNEL_TYPE_e::SINGLE
     // };
 
-    /* ADC Interface */
-    MAX1148ADCInstance_t::create(
-        ACUInterfaces::ADC0_CS,
-        ACUInterfaces::ADC0_MISO,
-        ACUInterfaces::ADC0_MOSI,
-        ACUInterfaces::ADC0_CLK,
-        ACUInterfaces::ADC0_SPEED,
-        adc0_scales.data(),
-        adc0_offsets.data(),
-        adc0_channels
-    );
+    // /* ADC Interface */
+    // MAX1148ADCInstance_t::create(
+    //     ACUInterfaces::ADC0_CS,
+    //     ACUInterfaces::ADC0_MISO,
+    //     ACUInterfaces::ADC0_MOSI,
+    //     ACUInterfaces::ADC0_CLK,
+    //     ACUInterfaces::ADC0_SPEED,
+    //     adc0_scales.data(),
+    //     adc0_offsets.data(),
+    //     adc0_channels
+    // );
         
     /* CCU Interface */
     CCUInterfaceInstance::create(sys_time::hal_millis());
@@ -143,14 +137,48 @@ void initialize_all_interfaces()
                                 ACUInterfaces::TS_OUT_FILTERED_PIN,
                                 ACUInterfaces::PACK_OUT_FILTERED_PIN,
                                 ACUInterfaces::BSPD_CURRENT_PIN,
-                                ACUInterfaces::SCALED_24V_PIN},
+                                ACUInterfaces::SCALED_24V_PIN,
+                                ACUInterfaces::ADC0_CS,
+                                ACUInterfaces::ADC0_MOSI,
+                                ACUInterfaces::ADC0_MISO,
+                                ACUInterfaces::ADC0_CLK},
                                 ADCConversions_s {ACUInterfaces::SHUTDOWN_CONV_FACTOR,
                                 ACUInterfaces::PRECHARGE_CONV_FACTOR,
                                 ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
                                 ACUInterfaces::SHDN_OUT_CONV_FACTOR,
                                 ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
                                 ACUInterfaces::GLV_CONV_FACTOR},
-                                ACUInterfaces::BIT_RESOLUTION);
+                                ADCChannels_s {ACUInterfaces::ISO_PACK_N_CHANNEL,
+                                ACUInterfaces::ISO_PACK_P_CHANNEL,
+                                ACUInterfaces::PACK_VOLTAGE_SENSE_CHANNEL,
+                                ACUInterfaces::SHUNT_CURRENT_OUT_CHANNEL,
+                                ACUInterfaces::SHUNT_CURRENT_P_CHANNEL,
+                                ACUInterfaces::SHUNT_CURRENT_N_CHANNEL,
+                                ACUInterfaces::TS_OUT_FILTERED_CHANNEL,
+                                ACUInterfaces::PACK_OUT_FILTERED_CHANNEL},
+                                ADCScales_s {ACUInterfaces::ISO_PACK_N_SCALE,
+                                ACUInterfaces::ISO_PACK_P_SCALE,
+                                ACUInterfaces::PACK_VOLTAGE_SENSE_SCALE,
+                                ACUInterfaces::SHUNT_CURRENT_OUT_SCALE,
+                                ACUInterfaces::SHUNT_CURRENT_P_SCALE,
+                                ACUInterfaces::SHUNT_CURRENT_N_SCALE,
+                                ACUInterfaces::TS_OUT_FILTERED_SCALE,
+                                ACUInterfaces::PACK_OUT_FILTERED_SCALE},
+                                ADCOffsets_s {ACUInterfaces::ISO_PACK_N_OFFSET,
+                                ACUInterfaces::ISO_PACK_P_OFFSET,
+                                ACUInterfaces::PACK_VOLTAGE_SENSE_OFFSET,
+                                ACUInterfaces::SHUNT_CURRENT_OUT_OFFSET,
+                                ACUInterfaces::SHUNT_CURRENT_P_OFFSET,
+                                ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
+                                ACUInterfaces::TS_OUT_FILTERED_OFFSET,
+                                ACUInterfaces::PACK_OUT_FILTERED_OFFSET},
+                                MAX114XChannels_s {CHANNEL_TYPE_e::INV_DIFFERENTIAL,
+                                CHANNEL_TYPE_e::SINGLE,
+                                CHANNEL_TYPE_e::DIFFERENTIAL,
+                                CHANNEL_TYPE_e::SINGLE},
+                                ACUInterfaces::ADC0_SPEED,
+                                ACUInterfaces::BIT_RESOLUTION
+    );
     ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 
     /* CAN Interfaces Construct */
@@ -188,7 +216,7 @@ HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros
 
 HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
-    MAX1148ADCInstance_t::instance().tick();
+    ADCInterfaceInstance::instance().tick();
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -449,22 +477,40 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     // }
     // Serial.println();
 
-    Serial.println("\nMAX114X Output: ");
-    for (int i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
-        Serial.print("CH");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.print("Raw = ");
-        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleRaw(i));
-        Serial.print(" Converted = ");
-        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
-        Serial.print('\n');
-        // skip other half of differential pair
-        if (i == 0 || i == 4) {
-            i++;
-        }
-    }
-    Serial.print('\n');
+    //read_iso_pack
+    //read_pack_voltage_sense
+    //read_shunt_current
+    //read_differential_
+    // for (int i = 0; i < adc_default_parameters::NUM_MAX1148_CHANNELS; i++) {
+    //     Serial.print("CH");
+    //     Serial.print(i);
+    //     Serial.print(": ");
+    //     Serial.print("Raw = ");
+    //     Serial.print(ADCInterfaceInstance);
+    //     Serial.print(" Converted = ");
+    //     Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
+    //     Serial.print('\n');
+    //     // skip other half of differential pair
+    //     if (i == 0 || i == 4) {
+    //         i++;
+    //     }
+    // }
+    // Serial.print('\n');
+    Serial.println("\nMAX114X Output:");
+    Serial.print(" CH 0&1: ");
+    Serial.print(ADCInterfaceInstance::instance().read_iso_pack());
+    Serial.print(" CH 2: ");
+    Serial.print(ADCInterfaceInstance::instance().read_pack_voltage_sense());
+    Serial.print(" CH 3:");
+    Serial.print(ADCInterfaceInstance::instance().read_shunt_current());
+    Serial.print(" CH 4&5: ");
+    Serial.print(ADCInterfaceInstance::instance().read_differential_shunt_current());
+    Serial.print(" CH 6: ");
+    Serial.print(ADCInterfaceInstance::instance().read_ts_out_filtered());
+    Serial.print(" CH 7: ");
+    Serial.print(ADCInterfaceInstance::instance().read_pack_out_filtered());
+    Serial.print('/n');
+
 
     return HT_TASK::TaskResponse::YIELD;
 }
