@@ -5,7 +5,7 @@ Based on original OneWire library and DS2480B adaptations.
 
 #include "DS2480B.h"
 
-DS2480B::DS2480B(Stream& port)
+DS2480B::DS2480B(Stream &port)
 {
 	_port = &port;  // Store pointer to the Stream object
 #if ONEWIRE_SEARCH
@@ -17,22 +17,28 @@ void DS2480B::begin()
 {
 	_port->write(0xC1);
 	isCmdMode = true;
-	Serial.println("begin successful");
+	Serial.println("Begin successful");
 }
 
 uint8_t DS2480B::reset(void)
 {
 	uint8_t r;
-
+	Serial.println("Reset Called!");
 	commandMode();
 
-	_port->write(0xC1);
-	delay(1000);
-	while (!_port->available());
+	_port->write(0xC1); //0xC1 is the set reset command
+
+	while (!_port->available()); //waits for tx pulse
+
 	r = _port->read();
-	Serial.print("RESET OUT: ");
-	Serial.println(r, HEX);
-	// if (r == 0xCD) return 1;
+
+	//Debug output logic
+	if (r == 0xCD || r == 0xED){
+		Serial.println("Reset Successful!");
+	} else {
+		Serial.println("Reset Failed!");
+	}
+
 	return r;
 }
 
@@ -179,107 +185,35 @@ void DS2480B::target_search(uint8_t family_code)
 
 uint8_t DS2480B::search(uint8_t *newAddr)
 {
-	uint8_t id_bit_number; 
-	uint8_t last_zero, rom_byte_number, search_result;
-	uint8_t id_bit, cmp_id_bit;
+	uint8_t ROM[16];
 
-	unsigned char rom_byte_mask, search_direction;
-
-	id_bit_number = 1;
-	last_zero = 0;
-	rom_byte_number = 0;
-	rom_byte_mask = 1;
-	search_result = 0;
-	reset();
-	if (!LastDeviceFlag) //if last device hasnt been found
-	{
-		if (!reset())
-		{
-			LastDiscrepancy = 0; 
-			LastDeviceFlag = FALSE;
-			LastFamilyDiscrepancy = 0;
-			return FALSE; 
-		}
-
-		write(0xF0, 1);
-
-		do
-		{	
-			id_bit = read_bit();
-			cmp_id_bit = read_bit();
-			Serial.println("THIS IS THE BIT SENT");
-			Serial.println(id_bit);
-			Serial.println("THIS IS THE COMP SENT");
-			Serial.println(cmp_id_bit);
-			if ((id_bit == 1) && (cmp_id_bit == 1))
-				break;
-			else
-			{	
-				if (id_bit != cmp_id_bit){//that means id bit is the bit for ALL of them...
-					search_direction = id_bit;
-					Serial.println(cmp_id_bit);
-					Serial.println("This is the Search Direction");
-					Serial.println(search_direction);
-				}else
-				{
-					if (id_bit_number < LastDiscrepancy) {
-						search_direction = ((ROM_NO[rom_byte_number] & rom_byte_mask) > 0);
-						Serial.println("ROM is being changed right now gang");
-					}else
-						search_direction = (id_bit_number == LastDiscrepancy);
-
-					if (search_direction == 0)
-					{
-						last_zero = id_bit_number;
-
-						if (last_zero < 9)
-							LastFamilyDiscrepancy = last_zero;
-					}
-				}
-
-				if (search_direction == 1){
-					ROM_NO[rom_byte_number] |= rom_byte_mask;
-					Serial.println(rom_byte_mask);
-				}else
-					ROM_NO[rom_byte_number] &= ~rom_byte_mask;
-
-				write_bit(search_direction);
-
-				id_bit_number++;
-				rom_byte_mask <<= 1;
-
-				if (rom_byte_mask == 0)
-				{
-					rom_byte_number++;
-					rom_byte_mask = 1;
-				}
-				
-			}
-		}
-		while(rom_byte_number < 8);
-
-		if (id_bit_number >= 65)
-		{
-			LastDiscrepancy = last_zero;
-
-			if (LastDiscrepancy == 0)
-				LastDeviceFlag = TRUE;
-
-			search_result = TRUE;
-		}
+	if(reset()){
+		Serial.println("Search Called, Reset Performed!");
+		_port->write(0xE1); //Set Data Mode
+		_port->write(0xF0); //Search ROM Command
+		_port->write(0xE3); //Set Command Mode
+		_port->write(0xB1); //Search Accelerator On
+		_port->write(0xE1); //Set Data Mode
+		Serial.println("Search Accelerator On!");
+	} else {
+		Serial.println("Search Failed!");
+		return;
 	}
 
+	for(int i = 0; i < 16; i++){ //First, send out empty 16 bytes 
+		_port->write((uint8_t)0x00);
+	}
 
-	/*if (!search_result || !ROM_NO[0])
-	{
-		Serial.println("No Device Found");
-		LastDiscrepancy = 0;
-		LastDeviceFlag = FALSE;
-		LastFamilyDiscrepancy = 0;
-		search_result = FALSE;
-	} */
-	for (int i = 0; i < 8; i++) newAddr[i] = ROM_NO[i];
-	return search_result; 
+	for(int i = 0; i < 16; i++){ //Second, read the returned bytes
+		ROM[i] = _port->read();
+	}
+
+	for(int i = 0; i < 16; i++){ //Debug Step 1
+		Serial.println(ROM[i]);
+	}
+
+	//return;
+	return ROM[16];
 }
 
 #endif

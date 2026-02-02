@@ -17,12 +17,15 @@ void setup(void) {
 
   // ds.begin function resets transceiver and puts it in command mode
   ds.begin();
-  ds.reset();
-  Serial.println("DS2480B initialized!");
+  /*ds.reset();
+  (Serial.println("DS2480B initialized!");*/
 }
 
 void loop(void) {
-  Serial.println("Loop Begin!");
+  Serial.println("Test Begin!");
+  byte addr[8];
+  ds.search(addr);
+  /*Serial.println("Loop Begin!");
   byte i;
   byte present = 0;
   byte data[12];
@@ -108,5 +111,5 @@ void loop(void) {
   Serial.print(celsius);
   Serial.print(" Celsius, ");
   Serial.print(fahrenheit);
-  Serial.println(" Fahrenheit");
+  Serial.println(" Fahrenheit");*/
 }
