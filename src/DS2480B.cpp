@@ -162,7 +162,9 @@ void DS2480B::depower()
 
 #if ONEWIRE_SEARCH
 
-void DS2480B::reset_search()
+//Removing Search Algorithm
+
+/* void DS2480B::reset_search() 
 {
 	LastDiscrepancy = 0;
 	LastDeviceFlag = FALSE;
@@ -204,6 +206,7 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 		_port->write((uint8_t)0x00);
 	}
 
+<<<<<<< HEAD
 	for(int i = 0; i < 16; i++){ //Second, read the returned bytes
 		ROM[i] = _port->read();
 	}
@@ -215,6 +218,20 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 	//return;
 	return ROM[16];
 }
+=======
+	if (!search_result || !ROM_NO[0])
+	{
+		Serial.println("No Device Found");
+		LastDiscrepancy = 0;
+		LastDeviceFlag = FALSE;
+		LastFamilyDiscrepancy = 0;
+		search_result = FALSE;
+	} 
+	for (int i = 0; i < 8; i++) newAddr[i] = ROM_NO[i];
+	return search_result; 
+} */ 
+
+>>>>>>> 65b1665 (Added HardCoded ROMID's (Untested))
 
 #endif
 

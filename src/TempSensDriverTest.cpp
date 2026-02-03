@@ -29,20 +29,31 @@ void loop(void) {
   byte i;
   byte present = 0;
   byte data[12];
-  byte addr[8] = {};
+  byte addr[8]{};
+  
   float celsius, fahrenheit;
 
-  // Checks if devices (temp sensors) exist on one wire bus
-  if (!ds.search(addr)) {
-    Serial.println("No more addresses.");
-    Serial.println();
-    ds.reset_search();
-    delay(1000);
-    return;
+  //not really syre what this for loop is for, looks like its printing the ID's but addr is empty?
+    for(i = 0; i < 8; i++) {
+    Serial.write(' ');
+    Serial.print(addr[i], HEX);
   }
+   
 
+  // Checks if devices (temp sensors) exist on one wire bus
+  //Removed because no search algorithm
+    /*  if (!ds.search(addr)) {
+      Serial.println("No more addresses.");
+      Serial.println();
+      ds.reset_search();
+      delay(1000);
+      return;
+    }
+    */
+  
   // Prints out ROM ID of each temp sensor
   // For loop iterates 8 times for each byte of ROM ID and prints each byte
+
   Serial.print("ROM =");
   for(i = 0; i < 8; i++) {
     Serial.write(' ');
@@ -55,7 +66,11 @@ void loop(void) {
     Serial.println("CRC is not valid!");
     return;
   }
+
   Serial.println();
+
+  // We know the chip is DS18B20, just clarifying through Serial Monitor
+  Serial.println("Chip = DS18B20");
   
   // Reset the one-wire bus
   ds.reset();
