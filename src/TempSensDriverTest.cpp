@@ -23,17 +23,16 @@ void setup(void) {
 
 void loop(void) {
   Serial.println("Test Begin!");
-  byte addr[8];
+  byte addr[8] = {};
   ds.search(addr);
-  /*Serial.println("Loop Begin!");
+  Serial.println("Loop Begin!");
   byte i;
   byte present = 0;
   byte data[12];
-  byte addr[8]{};
   
   float celsius, fahrenheit;
 
-  //not really syre what this for loop is for, looks like its printing the ID's but addr is empty?
+  //not really sure what this for loop is for, looks like its printing the ID's but addr is empty?
     for(i = 0; i < 8; i++) {
     Serial.write(' ');
     Serial.print(addr[i], HEX);
@@ -126,5 +125,6 @@ void loop(void) {
   Serial.print(celsius);
   Serial.print(" Celsius, ");
   Serial.print(fahrenheit);
-  Serial.println(" Fahrenheit");*/
+  Serial.println(" Fahrenheit");
+
 }
