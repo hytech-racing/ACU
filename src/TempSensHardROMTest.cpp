@@ -20,7 +20,6 @@ void setup(void) {
 }
 
 void loop(void) {
-  byte i;
   byte present = 0;
   byte data[12];
   byte addr[8]{};
@@ -39,17 +38,24 @@ void loop(void) {
   for (int i = 0; i < 6; i++){
     //First lets load the rom ID into addr[]
 
-    for (int j = 0; j < 8; j++){
-        addr[j] = (byte)(RomIDArr[j + (8 * i)]); //casts into a byte and writes into corresponding addr.
+    for (int j = 0; j < 8 ; j++){
+        addr[j] = (byte)(RomIDArr[j + (8 * i)]); //casts into a byte and writes into corresponding addr. Does in reversing order(testing)
+        Serial.print((RomIDArr[j + (8 * i)]) + ' ');
+
     }
+
+    Serial.println(' ');
 
     Serial.print("ROM =");
-    for(i = 0; i < 8; i++) {
+    for(int k = 0; k < 8; k++) {
         Serial.write(' ');
-        Serial.print(addr[i], HEX);
+        Serial.print(addr[k], DEC);
     }
-    Serial.println("We are looking at ROMID:" + ' ' +(i + 1));
+    delay(1000);
 
+    Serial.println("We are looking at ROMID:");
+
+    delay(1000);
     //Rest of code should be identical from here on
 
     // The last byte of ROM ID should equal the CRC (derived from first 7 bytes)
@@ -94,9 +100,9 @@ void loop(void) {
     Serial.print(" ");
 
     // Read 9 bytes of data from the scratchpad
-    for(i = 0; i < 9; i++) {
+    for(int l = 0; l < 9; l++) {
         data[i] = ds.read();
-        Serial.print(data[i], HEX);
+        Serial.print(data[l], HEX);
         Serial.print(" ");
     }
 
@@ -119,5 +125,8 @@ void loop(void) {
     Serial.print(" Celsius, ");
     Serial.print(fahrenheit);
     Serial.println(" Fahrenheit");
+
+    Serial.println(i);
+    Serial.println("Going to the next line");
     }   
 }

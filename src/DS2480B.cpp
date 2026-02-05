@@ -8,9 +8,9 @@ Based on original OneWire library and DS2480B adaptations.
 DS2480B::DS2480B(Stream &port)
 {
 	_port = &port;  // Store pointer to the Stream object
-#if ONEWIRE_SEARCH
-	reset_search();
-#endif
+// #if ONEWIRE_SEARCH
+	// reset_search();
+// #endif
 }
 
 void DS2480B::begin()
@@ -24,11 +24,20 @@ uint8_t DS2480B::reset(void)
 {
 	uint8_t r;
 	Serial.println("Reset Called!");
+
+	while(_port->available()) _port->read();
+
+	Serial.println("Reset Flushed!");
+
 	commandMode();
 
 	_port->write(0xC1); //0xC1 is the set reset command
 
+	Serial.println("Command Sent!");
+
 	while (!_port->available()); //waits for tx pulse
+
+
 
 	r = _port->read();
 
@@ -206,7 +215,6 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 		_port->write((uint8_t)0x00);
 	}
 
-<<<<<<< HEAD
 	for(int i = 0; i < 16; i++){ //Second, read the returned bytes
 		ROM[i] = _port->read();
 	}
@@ -218,7 +226,6 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 	//return;
 	return ROM[16];
 }
-=======
 	if (!search_result || !ROM_NO[0])
 	{
 		Serial.println("No Device Found");
@@ -231,7 +238,6 @@ uint8_t DS2480B::search(uint8_t *newAddr)
 	return search_result; 
 } */ 
 
->>>>>>> 65b1665 (Added HardCoded ROMID's (Untested))
 
 #endif
 
