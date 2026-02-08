@@ -1,32 +1,37 @@
 #include "ACUStateMachine.h"
+#include <iostream>
+using namespace std;
+
 
 void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
     switch(_current_state) {
         case ACUState_e::STARTUP: 
         {   
-            if (_contactor_welded()) {
-                _set_sw_not_ok_pin_high();
-                _set_state(ACUState_e::WELDED, current_millis);
+            if (current_millis - _last_state_changed_time >= 1000) {
+                if (_contactor_welded()) {
+                    _set_state(ACUState_e::WELDED, current_millis);
+                    break;
+                }
+                else {
+                    _set_state(ACUState_e::WELDPASSED, current_millis);
+                    break;
+                }
             }
-            else {
-                _set_sw_not_ok_pin_low();
-            }
-            
-            if (_received_valid_shdn_out()) { // is there a race condition between voltage reading and shdn_out?
+
+            break;
+        }
+        case ACUState_e::WELDPASSED:
+        {
+            if (_received_valid_shdn_out()) { 
                 _set_state(ACUState_e::ACTIVE, current_millis);
                 break;
             }
-            if ((current_millis - _last_state_changed_time > 2000) && (_has_bms_fault() || _has_imd_fault())) {
-                _set_state(ACUState_e::FAULTED, current_millis);
-                break;
-            }
-            
-            break;
         }
         case ACUState_e::WELDED:
         {
             
         }
+        
         case ACUState_e::ACTIVE: 
         {
             if (_charge_state_requested()) {
@@ -97,6 +102,8 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
         }
         case ACUState_e::STARTUP:
         case ACUState_e::ACTIVE:
+        case ACUState_e::WELDPASSED:
+        case ACUState_e::WELDED:
         default:
             break;
     }
@@ -107,7 +114,18 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
     switch(new_state) {
         case ACUState_e::STARTUP: 
         {
+            _last_state_changed_time = curr_millis;
             _reinitialize_watchdog();
+            break;
+        }
+        case ACUState_e::WELDPASSED:
+        {
+            _set_sw_not_ok_pin_low();
+            break;
+        }
+        case ACUState_e::WELDED:
+        {
+            _set_sw_not_ok_pin_high();
             break;
         }
         case ACUState_e::CHARGING: 
@@ -127,3 +145,4 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
             break;
     }
 }
+

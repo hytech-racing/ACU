@@ -6,7 +6,7 @@
 
 #include "ACUStateMachine.h"
 
-bool received_CCU_msg_var;
+bool request_charge_state;
 bool has_bms_fault_var;
 bool has_imd_fault_var;
 bool received_valid_shdn_out_var;
@@ -16,8 +16,8 @@ bool charging_en = false;
 bool watchdog_en = true;
 bool n_latch_en = true;
 
-etl::delegate<bool()> received_CCU_message = etl::delegate<bool()>::create([]() -> bool {
-    return received_CCU_msg_var;
+etl::delegate<bool()> charge_state_requested = etl::delegate<bool()>::create([]() -> bool {
+    return request_charge_state;
 });
 
 etl::delegate<bool()> has_bms_fault = etl::delegate<bool()>::create([]() -> bool {
@@ -67,7 +67,7 @@ etl::delegate<void()> reset_latch = etl::delegate<void()>::create([]() -> void {
 });
 
 ACUStateMachine state_machine = ACUStateMachine(
-    received_CCU_message,
+    charge_state_requested,
     has_bms_fault,
     has_imd_fault,
     contactor_welded,
@@ -84,7 +84,7 @@ ACUStateMachine state_machine = ACUStateMachine(
 );
 
 TEST (ACUStateMachineTesting, initial_state) {
-    received_CCU_msg_var = false;
+    request_charge_state = false;
     has_bms_fault_var = false;
     has_imd_fault_var = false;
     received_valid_shdn_out_var = false;
@@ -94,13 +94,18 @@ TEST (ACUStateMachineTesting, initial_state) {
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP);
 
+    state_machine.tick_state_machine(1001);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDPASSED);
+
     received_valid_shdn_out_var = true;
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
+
+
 }   
 
-TEST (ACUStateMachineTesting, CCU_msg_state) {
-    received_CCU_msg_var = false;
+TEST (ACUStateMachineTesting, charge_state) {
+    request_charge_state = false;
     has_bms_fault_var = false;
     has_imd_fault_var = false;
     received_valid_shdn_out_var = false;
@@ -108,21 +113,22 @@ TEST (ACUStateMachineTesting, CCU_msg_state) {
 
     ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE); // initial
 
-    received_CCU_msg_var = true;
+    request_charge_state = true;
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
     ASSERT_EQ(charging_en, false);
 
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::CHARGING);
     ASSERT_EQ(charging_en, true);
 
-    received_CCU_msg_var = false;
+    request_charge_state = false;
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
     ASSERT_EQ(charging_en, false);
 }   
 
 TEST (ACUStateMachineTesting, fault_states) {
-    received_CCU_msg_var = false;
+    request_charge_state = false;
     has_bms_fault_var = false;
     has_imd_fault_var = false;
     received_valid_shdn_out_var = true;
@@ -158,9 +164,18 @@ TEST (ACUStateMachineTesting, fault_states) {
     has_bms_fault_var = false;
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP);
-
+    
+    is_contactor_welded = true;
     state_machine.tick_state_machine(0);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP);
+
+    state_machine.tick_state_machine(1000);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDED);
+
+    is_contactor_welded = false;
+    state_machine.tick_state_machine(0);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDED);
+
 }   
 
 

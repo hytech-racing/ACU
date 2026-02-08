@@ -14,7 +14,8 @@ enum class ACUState_e
     ACTIVE = 1, 
     CHARGING = 2, 
     FAULTED = 3,
-    WELDED = 4, 
+    WELDED = 4,
+    WELDPASSED = 5 
 };
 
 class ACUStateMachine
@@ -61,6 +62,8 @@ public:
     */
     ACUState_e get_state() { return _current_state; } 
 
+   
+
 private:
 
     void _set_state(ACUState_e new_state, unsigned long curr_millis);
@@ -79,7 +82,8 @@ private:
         
     ACUState_e _current_state;
     unsigned long _last_state_changed_time; // time of last state change
-
+    
+    
     // Lamdas for state machine abstraction, functions defined in main
     etl::delegate<bool()> _charge_state_requested; 
     etl::delegate<bool()> _has_bms_fault;
