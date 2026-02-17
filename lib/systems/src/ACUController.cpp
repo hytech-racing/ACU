@@ -181,7 +181,7 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
         _acu_state.first_zero_current_time_stamp = 0;
     }
 
-    EKFState_s ekf_state = _soc_ekf.update(-em_current, avg_cell_voltage, dt);
+    EKFState_s ekf_state = _soc_ekf.update(em_current, avg_cell_voltage, dt);
     _acu_state.SoC = ekf_state.soc;
     return _acu_state.SoC;
 
