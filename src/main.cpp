@@ -70,8 +70,6 @@ void setup()
     handle_CAN_setup(ACUCANInterfaceImpl::CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
     handle_CAN_setup(ACUCANInterfaceImpl::EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
 
-    Serial.begin(115200);
-
 }
 
 void loop()
