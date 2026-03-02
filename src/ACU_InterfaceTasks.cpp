@@ -44,7 +44,11 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.min_measured_ts_out_voltage = watchdog.min_measured_ts_out_voltage;
     out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage; 
     // SoC/SoH placeholders (leave unchanged here)
-    out.SoC = ACUControllerInstance::instance().get_status().SoC;
+    auto ACUStatus = ACUControllerInstance::instance().get_status();
+
+    out.SoC = ACUStatus.SoC;
+    out.core_data.high_side_contactor_welded = ACUStatus.high_side_contactor_welded;
+    out.core_data.low_side_contactor_welded = ACUStatus.low_side_contactor_welded;
 
     return out;
 }
@@ -143,7 +147,8 @@ void initialize_all_interfaces()
                                 ACUInterfaces::TS_OUT_FILTERED_PIN,
                                 ACUInterfaces::PACK_OUT_FILTERED_PIN,
                                 ACUInterfaces::BSPD_CURRENT_PIN,
-                                ACUInterfaces::SCALED_24V_PIN},
+                                ACUInterfaces::SCALED_24V_PIN, 
+                                ACUInterfaces::SW_NOT_OK_PIN},
                                 ADCConversions_s {ACUInterfaces::SHUTDOWN_CONV_FACTOR,
                                 ACUInterfaces::PRECHARGE_CONV_FACTOR,
                                 ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,

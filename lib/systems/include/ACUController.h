@@ -1,6 +1,7 @@
 #ifndef ACUCONTROLLER_H
 #define ACUCONTROLLER_H
 
+#include <Arduino.h>
 #include <array>
 #include <stddef.h>
 #include <stdio.h>
@@ -20,6 +21,8 @@ namespace acu_controller_default_parameters
     constexpr const float PACK_MAX_VOLTAGE = 529.2;         // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
     constexpr const float PACK_MIN_VOLTAGE = 378.0;         // from data sheet^ but just assume 126 * 3.0V
     constexpr const float PACK_INTERNAL_RESISTANCE = 0.246; // Ohms (measured)
+
+    
 }
 struct ACUControllerData_s
 {
@@ -37,6 +40,9 @@ struct ACUControllerData_s
     uint32_t last_bms_not_ok_eval;
     bool charging_enabled;
     bool balancing_enabled;
+    bool high_side_contactor_welded;
+    bool low_side_contactor_welded;
+   
 };
 
 struct ACUControllerThresholds_s
@@ -50,6 +56,7 @@ struct ACUControllerThresholds_s
     volt v_diff_to_init_cb = 0;
     celsius balance_temp_limit_c = 0;
     celsius balance_enable_temp_c = 0;
+    volt ts_isolation_voltage = 0;
 };
 
 struct ACUControllerFaultDurations_s
@@ -99,8 +106,10 @@ public:
                     .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
                     .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
                     .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE,
-                    .pack_internal_resistance = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE
-                }) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
+                    .pack_internal_resistance = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE}
+                    
+
+            ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
@@ -118,6 +127,7 @@ public:
      * Calculate Cell Balancing values
      * @pre cell charging is enabled
      * @post output will have the new values
+     * check TS isolation
      */
     void calculate_cell_balance_statuses(bool* output, const volt* voltages, size_t num_of_voltage_cells, volt min_voltage);
 
@@ -136,6 +146,9 @@ public:
     {
         _acu_state.charging_enabled = false;
     }
+
+    bool check_ts_isolation(volt pack_voltage_adc, volt ts_voltage_adc);
+
 private:
 
 

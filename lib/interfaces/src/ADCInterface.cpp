@@ -9,6 +9,7 @@ void ADCInterface::init(uint32_t init_millis) {
     pinMode(_adc_parameters.pinout.teensy_pack_out_filtered_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_bspd_current_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_scaled_24V_pin, INPUT);
+    pinMode(_adc_parameters.pinout.teensy_sw_not_ok_pin, OUTPUT);
 
     _init_millis = init_millis;
     _in_imd_startup_period = true; 
@@ -80,4 +81,12 @@ const ADCInterfaceParams_s& ADCInterface::get_adc_params() const {
 
 bool ADCInterface::is_in_imd_startup_period() const {
     return _in_imd_startup_period;
+}
+
+void ADCInterface::set_sw_not_ok_pin_high() {
+    digitalWrite(_adc_parameters.pinout.teensy_sw_not_ok_pin, HIGH);
+}
+
+void ADCInterface::set_sw_not_ok_pin_low() {
+    digitalWrite(_adc_parameters.pinout.teensy_sw_not_ok_pin, LOW);
 }
