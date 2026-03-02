@@ -1,5 +1,6 @@
 #include "ACUStateMachine.h"
 #include <iostream>
+#include <Arduino.h>
 using namespace std;
 
 
@@ -7,29 +8,29 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
     switch(_current_state) {
         case ACUState_e::STARTUP: 
         {   
-            if (current_millis - _last_state_changed_time >= 1000) {
-                if (_contactor_welded()) {
-                    _set_state(ACUState_e::WELDED, current_millis);
-                    break;
-                }
-                else {
-                    _set_state(ACUState_e::WELDPASSED, current_millis);
-                    break;
-                }
+            if (_received_valid_shdn_out()){
+                _set_state(ACUState_e::WELDCHECK, current_millis);
+                break;
             }
 
             break;
         }
-        case ACUState_e::WELDPASSED:
+        case ACUState_e::WELDCHECK:
         {
-            if (_received_valid_shdn_out()) { 
-                _set_state(ACUState_e::ACTIVE, current_millis);
-                break;
-            }
+             if (_contactor_welded()) {
+                    _set_state(ACUState_e::WELDED, current_millis);
+                    break;
+                }
+                else {
+                    _set_state(ACUState_e::ACTIVE, current_millis);
+                    break;
+                }
+
+            break;
         }
         case ACUState_e::WELDED:
         {
-            
+            break;
         }
         
         case ACUState_e::ACTIVE: 
@@ -62,6 +63,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis) {
         }
         case ACUState_e::FAULTED: 
         {   
+
             if ((current_millis - _last_state_changed_time > 1000) && !(_has_bms_fault())) {
                 _reinitialize_watchdog();
             }
@@ -102,7 +104,7 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
         }
         case ACUState_e::STARTUP:
         case ACUState_e::ACTIVE:
-        case ACUState_e::WELDPASSED:
+        case ACUState_e::WELDCHECK:
         case ACUState_e::WELDED:
         default:
             break;
@@ -118,9 +120,9 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
             _reinitialize_watchdog();
             break;
         }
-        case ACUState_e::WELDPASSED:
+        case ACUState_e::WELDCHECK:
         {
-            _set_sw_not_ok_pin_low();
+            
             break;
         }
         case ACUState_e::WELDED:
@@ -141,6 +143,10 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
             break;
         }
         case ACUState_e::ACTIVE:
+        {
+            _set_sw_not_ok_pin_low();
+            break;
+        }
         default:
             break;
     }

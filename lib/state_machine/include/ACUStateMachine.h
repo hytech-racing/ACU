@@ -15,7 +15,7 @@ enum class ACUState_e
     CHARGING = 2, 
     FAULTED = 3,
     WELDED = 4,
-    WELDPASSED = 5 
+    WELDCHECK = 5 
 };
 
 class ACUStateMachine

@@ -93,11 +93,11 @@ TEST (ACUStateMachineTesting, initial_state) {
     ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP); // initial
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP);
-
-    state_machine.tick_state_machine(1001);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDPASSED);
-
     received_valid_shdn_out_var = true;
+
+    state_machine.tick_state_machine(0);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDCHECK);
+
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
 
@@ -167,9 +167,9 @@ TEST (ACUStateMachineTesting, fault_states) {
     
     is_contactor_welded = true;
     state_machine.tick_state_machine(0);
-    ASSERT_EQ(state_machine.get_state(), ACUState_e::STARTUP);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDCHECK);
 
-    state_machine.tick_state_machine(1000);
+    state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDED);
 
     is_contactor_welded = false;

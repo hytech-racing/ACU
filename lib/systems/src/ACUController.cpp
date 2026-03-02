@@ -150,6 +150,7 @@ bool ACUController::_check_bms_ok(time_ms current_millis)
 
 bool ACUController::_check_faults(time_ms current_millis)
 {
+    
     return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis) || _check_invalid_packet_faults(current_millis);
 }
 
@@ -178,9 +179,7 @@ bool ACUController::_check_invalid_packet_faults(time_ms current_millis)
 }
 
 bool ACUController::check_ts_isolation(volt pack_voltage_adc, volt ts_voltage_adc) 
-{
-    
-    
+{    
     _acu_state.low_side_contactor_welded = !(pack_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage);
     _acu_state.high_side_contactor_welded = !(ts_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage);
 

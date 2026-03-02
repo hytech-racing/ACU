@@ -24,7 +24,7 @@ namespace ACUSystems
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02;  // differential with lowest cell voltage to enable cell balancing for a cell
     constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
     constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
-    constexpr const volt TS_ISOLATION_VOLTAGE = 0.2; // Volts
+    constexpr const volt TS_ISOLATION_VOLTAGE = 50; // Volts
 }
 
 namespace ACUInterfaces {
@@ -36,13 +36,13 @@ namespace ACUInterfaces {
     constexpr const size_t WD_KICK_PIN = 4; // > Needs to flip at 100 Hz to keep BMS_OK high
     constexpr const size_t SW_NOT_OK_PIN = 5;      
     constexpr const size_t N_LATCH_EN_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
-    constexpr const size_t TS_OUT_FILTERED_PIN = 17;
-    constexpr const size_t PACK_OUT_FILTERED_PIN = 18;
-    constexpr const size_t IMD_OK_PIN = 25; // < READ from IMD hardware, go to FAULT state if HIGH
-    constexpr const size_t PRECHARGE_PIN = 26; // READ from PRECHARGE
-    constexpr const size_t BSPD_CURRENT_PIN = 27;
-    constexpr const size_t SHDN_OUT_PIN = 38; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
-    constexpr const size_t SCALED_24V_PIN = 39;
+    constexpr const size_t TS_OUT_FILTERED_PIN = 25;
+    constexpr const size_t PACK_OUT_FILTERED_PIN = 24;
+    constexpr const size_t IMD_OK_PIN = 23; // < READ from IMD hardware, go to FAULT state if HIGH
+    constexpr const size_t PRECHARGE_PIN = 17; // READ from PRECHARGE
+    constexpr const size_t BSPD_CURRENT_PIN = 15;
+    constexpr const size_t SHDN_OUT_PIN = 16; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
+    constexpr const size_t SCALED_24V_PIN = 41;
 
     constexpr const float SHUTDOWN_CONV_FACTOR = 0.1155F; // voltage divider -> 4.7k / (4.7k + 36k)
     constexpr const float PRECHARGE_CONV_FACTOR = 0.6623F; // voltage divider -> 10k / (5.1k + 10k)
