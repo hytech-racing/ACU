@@ -60,6 +60,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
                             .max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP,
                             .max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP,
                         };
+
+    
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
