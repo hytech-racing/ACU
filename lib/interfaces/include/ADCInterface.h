@@ -9,8 +9,8 @@ using pin = size_t;
 
 namespace adc_default_parameters
 {
-    constexpr const float TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH = 0.2F;
-    constexpr const float TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH = 3.0F;
+    constexpr const float TEENSY41_MIN_DIGITAL_READ_VOLTAGE_THRESH = 0.5F;
+    constexpr const float TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH = 2.8F;
     constexpr const float SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD = 12.0F;
 
     constexpr const uint32_t IMD_STARTUP_TIME = 2000;
@@ -21,6 +21,12 @@ struct ADCPinout_s
     pin teensy_imd_ok_pin; 
     pin teensy_precharge_pin;
     pin teensy_shdn_out_pin;
+
+    pin teensy_hv_plus_out_ok_pin; 
+    pin teensy_main_ok_pin;
+    pin teensy_main_under_thresh_pin;
+    pin teensy_precharge_under_thresh_pin; 
+
     pin teensy_ts_out_filtered_pin;
     pin teensy_pack_out_filtered_pin;
     pin teensy_bspd_current_pin;
@@ -35,6 +41,8 @@ struct ADCConversions_s
     float shdn_out_conv_factor;
     float bspd_current_conv_factor;
     float glv_conv_factor;
+
+    float std_5V_to_3V3_conversion_factor;
 };
 
 struct ADCThresholds_s
@@ -77,12 +85,13 @@ public:
         ): _adc_parameters { 
                 pinout,
                 [=]() mutable {
-                    conversions.shutdown_conv_factor        = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.shutdown_conv_factor;
-                    conversions.precharge_conv_factor       = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.precharge_conv_factor;
-                    conversions.pack_and_ts_out_conv_factor = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.pack_and_ts_out_conv_factor;
-                    conversions.shdn_out_conv_factor        = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.shdn_out_conv_factor;
-                    conversions.bspd_current_conv_factor    = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.bspd_current_conv_factor;
-                    conversions.glv_conv_factor             = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.glv_conv_factor;
+                    conversions.shutdown_conv_factor            = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.shutdown_conv_factor;
+                    conversions.precharge_conv_factor           = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.precharge_conv_factor;
+                    conversions.pack_and_ts_out_conv_factor     = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.pack_and_ts_out_conv_factor;
+                    conversions.shdn_out_conv_factor            = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.shdn_out_conv_factor;
+                    conversions.bspd_current_conv_factor        = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.bspd_current_conv_factor;
+                    conversions.glv_conv_factor                 = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.glv_conv_factor;
+                    conversions.std_5V_to_3V3_conversion_factor = (configs.teensy41_max_input_voltage / bit_resolution) / conversions.std_5V_to_3V3_conversion_factor;
                     return conversions;
                 }(),
                 thresholds, 
@@ -119,6 +128,26 @@ public:
      * @return the voltage of PRECHARGE 
      */
     volt read_precharge_voltage();
+
+    /**
+     * @return HV+ out ok voltage -- output of AND gate that compares if the PACK_OUT voltage is within range
+    */
+    volt read_hv_plus_out_ok_voltage();
+
+    /**
+     * @return main ok voltage -- output of AND gate that checks MAIN_CHECK_OK and PACK_REF_UV_OK
+    */
+    volt read_main_ok_voltage();
+
+    /**
+     * @return main under threshold voltage -- dynamic voltage that is the output 0.9 Pack and TS_OUT hysteresis
+    */
+    volt read_main_under_threshold_voltage();
+
+    /**
+     * @return precharge under threshold voltage -- dynamic voltage that is output of 0.95 Pack and TS_OUT hysteresis
+    */
+    volt read_precharge_under_threshold_voltage();
 
     /**
      * @return voltage values of filtered TS OUT
