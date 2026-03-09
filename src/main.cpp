@@ -52,18 +52,18 @@ void setup()
     scheduler.schedule(kick_watchdog_task);
     scheduler.schedule(sample_bms_data_task);
     scheduler.schedule(eval_accumulator_task);
-    scheduler.schedule(write_cell_balancing_config_task);
+    // scheduler.schedule(write_cell_balancing_config_task);
 
-    scheduler.schedule(send_all_data_ethernet_task);
-    scheduler.schedule(send_core_data_ethernet_task); // waiting on update on drivebrain
+    // scheduler.schedule(send_all_data_ethernet_task);
+    // scheduler.schedule(send_core_data_ethernet_task); // waiting on update on drivebrain
 
-    scheduler.schedule(send_CAN_task);
-    scheduler.schedule(enqueue_CCU_core_CAN_task);
-    scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
-    scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
-    scheduler.schedule(enqueue_ACU_OK_CAN_task);
+    // scheduler.schedule(send_CAN_task);
+    // scheduler.schedule(enqueue_CCU_core_CAN_task);
+    // scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
+    // scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
+    // scheduler.schedule(enqueue_ACU_OK_CAN_task);
 
-    scheduler.schedule(sample_CAN_task);
+    // scheduler.schedule(sample_CAN_task);
     scheduler.schedule(idle_sample_task);
     
     scheduler.schedule(sample_adc_task);

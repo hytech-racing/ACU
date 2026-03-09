@@ -60,7 +60,8 @@ void initialize_all_interfaces()
     /* Watchdog Interface */
     WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
                                     ACUInterfaces::WD_KICK_PIN,
-                                    ACUInterfaces::N_LATCH_EN_PIN});
+                                    ACUInterfaces::N_FAULTED_STATE_PIN, 
+                                    ACUInterfaces::SW_NOT_OK_PIN});
     WatchdogInstance::instance().init();
 
     /* Fault Latch Manager */
@@ -140,6 +141,10 @@ void initialize_all_interfaces()
     ADCInterfaceInstance::create(ADCPinout_s {ACUInterfaces::IMD_OK_PIN,
                                 ACUInterfaces::PRECHARGE_PIN,
                                 ACUInterfaces::SHDN_OUT_PIN,
+                                ACUInterfaces::HV_PLUS_OUT_OK_PIN,
+                                ACUInterfaces::MAIN_OK_PIN,
+                                ACUInterfaces::MAIN_UNDER_THRESH_PIN,
+                                ACUInterfaces::PRECHARGE_THRESH_PIN,
                                 ACUInterfaces::TS_OUT_FILTERED_PIN,
                                 ACUInterfaces::PACK_OUT_FILTERED_PIN,
                                 ACUInterfaces::BSPD_CURRENT_PIN,
@@ -149,7 +154,8 @@ void initialize_all_interfaces()
                                 ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
                                 ACUInterfaces::SHDN_OUT_CONV_FACTOR,
                                 ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
-                                ACUInterfaces::GLV_CONV_FACTOR},
+                                ACUInterfaces::GLV_CONV_FACTOR,
+                                ACUInterfaces::STD_5V_3V3_CONVERSION_FACTOR},
                                 ACUInterfaces::BIT_RESOLUTION);
     ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 
@@ -377,8 +383,8 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
 
     Serial.printf("IMD OK: %d\n", ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()));
 
-    Serial.printf("SHDN VOLTAGE: %d\t", ADCInterfaceInstance::instance().read_shdn_voltage());
-    Serial.printf("SHDN OUT: %d\n", ADCInterfaceInstance::instance().read_shdn_out());
+    Serial.print("SHDN VOLTAGE: "); Serial.print(ADCInterfaceInstance::instance().read_shdn_voltage());
+    Serial.printf("\tSHDN OUT: %d\n", ADCInterfaceInstance::instance().read_shdn_out());
 
     Serial.printf("PRECHARGE VOLTAGE: %d\t", ADCInterfaceInstance::instance().read_precharge_voltage());
     Serial.printf("PRECHARGE OUT: %d\n", ADCInterfaceInstance::instance().read_precharge_out());
@@ -388,22 +394,34 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("PACK OUT Filtered: ");
     Serial.println(ADCInterfaceInstance::instance().read_pack_out_filtered(), 4);
 
+    Serial.print("HV PLUS OUT OK VOLTAGE: ");
+    Serial.println(ADCInterfaceInstance::instance().read_hv_plus_out_ok_voltage(), 4);
+
+    Serial.print("MAIN OK VOLTAGE: ");
+    Serial.println(ADCInterfaceInstance::instance().read_main_ok_voltage(), 4);
+
+    Serial.print("MAIN UNDER THRESHOLD VOLTAGE: ");
+    Serial.println(ADCInterfaceInstance::instance().read_main_under_threshold_voltage(), 4);
+
+    Serial.print("PRECHARGE UNDER THRESHOLD VOLTAGE: ");
+    Serial.println(ADCInterfaceInstance::instance().read_precharge_under_threshold_voltage(), 4);
+
     Serial.println();
 
-    Serial.print("Pack Voltage: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().total_voltage, 4);
+    // Serial.print("Pack Voltage: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().total_voltage, 4);
 
-    Serial.print("Minimum Cell Voltage: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);
+    // Serial.print("Minimum Cell Voltage: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);
 
-    Serial.print("Maximum Cell Voltage: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_voltage, 4);
+    // Serial.print("Maximum Cell Voltage: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_voltage, 4);
 
-    Serial.print("Maximum Board Temp: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_board_temp, 4);
+    // Serial.print("Maximum Board Temp: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_board_temp, 4);
 
-    Serial.print("Maximum Cell Temp: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
+    // Serial.print("Maximum Cell Temp: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
 
     // Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance::instance().calculate_cell_balance_statuses());
 
@@ -415,18 +433,18 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("State of Charge: ");
     Serial.print(ACUControllerInstance::instance().get_status().SoC * 100, 3);
     Serial.println("%");
-    Serial.print("Measured GLV: ");
+    Serial.print("Measured GLV: "); Serial.print(ADCInterfaceInstance::instance().read_global_lv_value());
     Serial.println("V");
     Serial.println();
 
-    Serial.println("Balancing status : ");
-    for(bool status : check_and_get_balancing_status()) {
-        Serial.print(status);
-        Serial.print(" ");
-    }
+    // Serial.println("Balancing status : ");
+    // for(bool status : check_and_get_balancing_status()) {
+    //     Serial.print(status);
+    //     Serial.print(" ");
+    // }
 
-    Serial.print("Number of Global Faults: ");
-    Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
+    // Serial.print("Number of Global Faults: ");
+    // Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
     // Serial.println("Number of Consecutive Faults Per Chip: ");
     // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
     //     Serial.print("CHIP ");
@@ -449,21 +467,22 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     // }
     // Serial.println();
 
-    Serial.println("\nMAX114X Output: ");
-    for (int i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
-        Serial.print("CH");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.print("Raw = ");
-        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleRaw(i));
-        Serial.print(" Converted = ");
-        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
-        Serial.print('\n');
-        // skip other half of differential pair
-        if (i == 0 || i == 4) {
-            i++;
-        }
-    }
+    // Serial.println("\nMAX114X Output: ");
+    // for (int i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
+    //     Serial.print("CH");
+    //     Serial.print(i);
+    //     Serial.print(": ");
+    //     Serial.print("Raw = ");
+    //     Serial.print(MAX1148ADCInstance_t::instance().getLastSampleRaw(i));
+    //     Serial.print(" Converted = ");
+    //     Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
+    //     Serial.print('\n');
+    //     // skip other half of differential pair
+    //     if (i == 0 || i == 4) {
+    //         i++;
+    //     }
+    // }
+
     Serial.print('\n');
 
     return HT_TASK::TaskResponse::YIELD;
