@@ -27,7 +27,7 @@ bool initialize_all_systems()
                                                                         { return !ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()); });
 
     etl::delegate<bool()> contactor_welded = etl::delegate<bool()>::create([]() -> bool
-                                                                                { ACUControllerInstance::instance().check_ts_isolation(ADCInterfaceInstance::instance().read_pack_out_filtered(), ADCInterfaceInstance::instance().read_ts_out_filtered()); });
+                                                                                { return ACUControllerInstance::instance().check_ts_isolation(ADCInterfaceInstance::instance().read_pack_out_filtered(), ADCInterfaceInstance::instance().read_ts_out_filtered()); });
     
     etl::delegate<void()> set_sw_not_ok_pin_high = etl::delegate<void()>::create([]() -> void
                                                                                 { ADCInterfaceInstance::instance().set_sw_not_ok_pin_high(); });
