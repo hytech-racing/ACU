@@ -60,11 +60,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
                             .max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP,
                             .max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP,
                         };
-    
-    // set up pins because it's not the default SPI1 MISO
-    SPI1.setMOSI(26);
-    SPI1.setSCK(27);
-    SPI1.setMISO(39); // need to verify
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
