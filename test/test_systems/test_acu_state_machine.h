@@ -47,12 +47,12 @@ etl::delegate<void()> reinitialize_watchdog = etl::delegate<void()>::create([]()
     watchdog_en = true;
 });
 
-etl::delegate<void()> disable_n_latch_en = etl::delegate<void()>::create([]() -> void {
-    n_latch_en = false;
-});
-
 etl::delegate<void()> reset_latch = etl::delegate<void()>::create([]() -> void {
     n_latch_en = true;
+});
+
+etl::delegate<void()> disable_n_latch_en = etl::delegate<void()>::create([]() -> void {
+    n_latch_en = false;
 });
 
 ACUStateMachine state_machine = ACUStateMachine(
@@ -64,8 +64,8 @@ ACUStateMachine state_machine = ACUStateMachine(
     disable_cell_balancing,
     disable_watchdog,
     reinitialize_watchdog,
-    disable_n_latch_en,
     reset_latch,
+    disable_n_latch_en,
     0
 );
 

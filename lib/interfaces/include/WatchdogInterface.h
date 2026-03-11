@@ -17,6 +17,7 @@ struct WatchdogPinout_s
     pin teensy_ok_pin; 
     pin teensy_wd_kick_pin;
     pin teensy_n_latch_en_pin;
+    pin teensy_sw_not_ok_pin;
 };
 struct WatchdogInterfaceParams_s
 {

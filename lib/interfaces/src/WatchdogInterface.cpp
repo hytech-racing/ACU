@@ -5,11 +5,13 @@ void WatchdogInterface::init() {
     pinMode(_watchdog_parameters.pinout.teensy_ok_pin, OUTPUT);
     pinMode(_watchdog_parameters.pinout.teensy_wd_kick_pin, OUTPUT);
     pinMode(_watchdog_parameters.pinout.teensy_n_latch_en_pin, OUTPUT);
+    pinMode(_watchdog_parameters.pinout.teensy_sw_not_ok_pin, OUTPUT);
 
     // Initial Pin States for OUTPUT pins
     digitalWrite(_watchdog_parameters.pinout.teensy_ok_pin, HIGH);
     digitalWrite(_watchdog_parameters.pinout.teensy_wd_kick_pin, LOW); // watchdog state set to low to start
-    digitalWrite(_watchdog_parameters.pinout.teensy_n_latch_en_pin, LOW);
+    digitalWrite(_watchdog_parameters.pinout.teensy_n_latch_en_pin, HIGH);
+    digitalWrite(_watchdog_parameters.pinout.teensy_sw_not_ok_pin, LOW);
 }
 
 bool WatchdogInterface::update_watchdog_state(uint32_t curr_millis) {
