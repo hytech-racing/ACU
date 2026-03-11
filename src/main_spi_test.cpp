@@ -27,6 +27,10 @@ const size_t sample_period_ms = 3; // 300 Hz - reads one group per call
 const uint32_t spi_baudrate = 115200;
 const uint8_t num_cells_per_board = 21;
 
+const size_t spi1_mosi_pin = 26;
+const size_t spi1_sck_pin = 27;
+const size_t spi1_miso_pin = 39;
+
 // Initialize chip_select, chip_select_per_chip, and address
 const constexpr int num_cells_per_chip = 21;
 const constexpr int num_groups = 6;
@@ -305,9 +309,9 @@ void setup()
     Serial.begin(spi_baudrate);
 
     SPI1.begin();
-    SPI1.setMOSI(26); // set up pins because it's not the default SPI1 MISO
-    SPI1.setSCK(27);
-    SPI1.setMISO(39);
+    SPI1.setMOSI(spi1_mosi_pin); // set up pins because it's not the default SPI1 MISO
+    SPI1.setSCK(spi1_sck_pin);
+    SPI1.setMISO(spi1_miso_pin);
     
     BMSGroup.init();
     Serial.println("Setup Finished!");
