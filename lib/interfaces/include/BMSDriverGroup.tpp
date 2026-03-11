@@ -63,7 +63,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
     
     // set up pins because it's not the default SPI1 MISO
     SPI1.setMOSI(26);
-    SPI1.setSCLK(27);
+    SPI1.setSCK(27);
     SPI1.setMISO(39); // need to verify
 }
 
