@@ -303,7 +303,12 @@ void print_performance_stats() {
 void setup()
 {
     Serial.begin(spi_baudrate);
+
     SPI1.begin();
+    SPI1.setMOSI(26); // set up pins because it's not the default SPI1 MISO
+    SPI1.setSCK(27);
+    SPI1.setMISO(39);
+    
     BMSGroup.init();
     Serial.println("Setup Finished!");
     Serial.println();
