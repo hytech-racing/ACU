@@ -36,6 +36,7 @@ namespace ACUInterfaces {
     constexpr int ADC0_MISO = 12;
     constexpr int ADC0_CLK = 13;
     constexpr int ADC0_SPEED = 2000000; // 1 MHz
+
     /* ADC Versions*/
     constexpr int MAX114X_VERSION = 8;
     /* Channels on ADC */
@@ -81,6 +82,11 @@ namespace ACUInterfaces {
     constexpr const size_t IMD_OK_PIN = 23; // < READ from IMD hardware, go to FAULT state if HIGH
     constexpr const size_t PACK_OUT_FILTERED_PIN = 24;
     constexpr const size_t TS_OUT_FILTERED_PIN = 25;
+
+    constexpr const size_t SPI1_MOSI_PIN = 26;
+    constexpr const size_t SPI1_SCK_PIN = 27;
+    constexpr const size_t SPI1_MISO_PIN = 39;
+
     constexpr const size_t SCALED_24V_PIN = 41;
 
     constexpr const float SHUTDOWN_CONV_FACTOR = 0.1155F; // voltage divider -> 4.7k / (4.7k + 36k)
