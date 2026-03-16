@@ -10,9 +10,9 @@ static ACUAllDataType_s make_acu_all_data()
     auto bms = BMSDriverInstance_t::instance().get_bms_data();
     auto fault_data = BMSFaultDataManagerInstance_t::instance().get_fault_data();
     // Copy per-cell data
-    out.cell_voltages = bms.voltages;
-    out.cell_temps = bms.cell_temperatures;
-    out.board_temps = bms.board_temperatures;
+    std::copy(bms.voltages.begin(), bms.voltages.end(), out.cell_voltages.begin());
+    std::copy(bms.cell_temperatures.begin(), bms.cell_temperatures.end(), out.cell_temps.begin());
+    std::copy(bms.board_temperatures.begin(), bms.board_temperatures.end(), out.board_temps.begin());
 
     // Core data from BMS
     out.core_data.avg_cell_voltage = bms.avg_cell_voltage;
@@ -30,7 +30,7 @@ static ACUAllDataType_s make_acu_all_data()
 
     // Faults and packet stats
     out.max_consecutive_invalid_packet_count = fault_data.max_consecutive_invalid_packet_count;
-    out.consecutive_invalid_packet_counts = fault_data.consecutive_invalid_packet_counts;
+    std::copy(fault_data.consecutive_invalid_packet_counts.begin(), fault_data.consecutive_invalid_packet_counts.end(), out.consecutive_invalid_packet_counts.begin());
     out.valid_packet_rate = fault_data.valid_packet_rate;
 
     auto watchdog = WatchdogMetricsInstance::instance().get_watchdog_metrics();
@@ -244,7 +244,7 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 
 HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     auto data = make_acu_all_data();
-    CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>(data);
+    // CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>(data);
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
