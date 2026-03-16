@@ -306,21 +306,23 @@ void print_bms_data(bms_data data)
     Serial.println();
 
     size_t chip_index = 1;
-    for (auto chip_voltages : data.voltages_by_chip)
+    for (auto chip_voltages : data.voltages)
     {
-        Serial.print("Chip ");
-        Serial.println(chip_index);
-        for (auto voltage : chip_voltages)
+        Serial.print("Cell ");
+        Serial.print (chip_index); Serial.print(" ");
+        if (chip_voltages)
         {
-            if (voltage)
-            {
-                Serial.print((*voltage), 4);
-                Serial.print("V\t");
-            }
+            Serial.print((chip_voltages), 4);
+            Serial.print("V  ");
         }
         chip_index++;
-        Serial.println();
+        if ((chip_index - 1) % 21 == 0)
+        {
+            Serial.println();
+        }
+        // Serial.println();
     }
+    Serial.println();
 
     int cti = 0;
     for (auto temp : data.cell_temperatures)
@@ -336,21 +338,25 @@ void print_bms_data(bms_data data)
     }
     Serial.println();
 
-    int temp_index = 0;
-    for (auto bt : data.board_temperatures)
-    {
-        Serial.print("board temp id ");
-        Serial.print(temp_index);
-        Serial.print(" val ");
-        Serial.print("");
-        Serial.print(bt);
-        Serial.print("\t");
-        if (temp_index % 4 == 3)
-            Serial.println();
-        temp_index++;
-    }
+    // int temp_index = 0;
+    // for (auto bt : data.board_temperatures)
+    // {
+    //     Serial.print("board temp id ");
+    //     Serial.print(temp_index);
+    //     Serial.print(" val ");
+    //     Serial.print("");
+    //     Serial.print(bt);
+    //     Serial.print("\t");
+    //     if (temp_index % 4 == 3)
+    //         Serial.println();
+    //     temp_index++;
+    // }
     Serial.print("Number of Global Faults: ");
-    Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
+    auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
+    Serial.println(faults.max_consecutive_invalid_packet_count);
+    
+    Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
+
     Serial.println("Number of Consecutive Faults Per Chip: ");
     for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
         Serial.print("CHIP ");
@@ -358,17 +364,18 @@ void print_bms_data(bms_data data)
         Serial.print(": ");
         // Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
         // Serial.print(" ");
-        Serial.print(data.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
+        
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
         Serial.print(" ");
-        Serial.print(data.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
         Serial.print(" ");
-        Serial.print(data.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
         Serial.print(" ");
-        Serial.print(data.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
         Serial.print(" ");
-        Serial.print(data.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
         Serial.print(" ");
-        Serial.print(data.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
         Serial.print("\t");
     }
     Serial.println();
@@ -413,20 +420,20 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
 
     Serial.println();
 
-    // Serial.print("Pack Voltage: ");
-    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().total_voltage, 4);
+    Serial.print("Pack Voltage: ");
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().total_voltage, 4);
 
-    // Serial.print("Minimum Cell Voltage: ");
-    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);
+    Serial.print("Minimum Cell Voltage: ");
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);
 
-    // Serial.print("Maximum Cell Voltage: ");
-    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_voltage, 4);
+    Serial.print("Maximum Cell Voltage: ");
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_voltage, 4);
 
-    // Serial.print("Maximum Board Temp: ");
-    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_board_temp, 4);
+    Serial.print("Maximum Board Temp: ");
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_board_temp, 4);
 
-    // Serial.print("Maximum Cell Temp: ");
-    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
+    Serial.print("Maximum Cell Temp: ");
+    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
 
     // Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance::instance().calculate_cell_balance_statuses());
 
@@ -448,29 +455,33 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     //     Serial.print(" ");
     // }
 
-    // Serial.print("Number of Global Faults: ");
-    // Serial.println(BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count);
-    // Serial.println("Number of Consecutive Faults Per Chip: ");
-    // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-    //     Serial.print("CHIP ");
-    //     Serial.print(c);
-    //     Serial.print(": ");
-    //     Serial.print(ACUFaultDataInstance::instance().consecutive_invalid_packet_counts[c]);
-    //     Serial.print("\t");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
-    //     Serial.print(" ");
-    //     Serial.print(ACUFaultDataInstance::instance().chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
-    //     Serial.print(" ");
-    // }
-    // Serial.println();
+    Serial.print("Number of Global Faults: ");
+    auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
+    Serial.println(faults.max_consecutive_invalid_packet_count);
+    Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
+    Serial.println("Number of Consecutive Faults Per Chip: ");
+    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
+       Serial.print("CHIP ");
+        Serial.print(c);
+        Serial.print(": ");
+        Serial.print(faults.consecutive_invalid_packet_counts[c]);
+        Serial.print(" ");
+        
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
+        Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
+        Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
+        Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
+        Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
+        Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
+        Serial.print("\t");
+        Serial.print(" ");
+    }
+    Serial.println();
 
     // Serial.println("\nMAX114X Output: ");
     // for (int i = 0; i < ACUConstants::NUM_MAX1148_CHANNELS; i++) {
