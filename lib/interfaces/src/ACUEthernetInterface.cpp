@@ -46,6 +46,11 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
     out.min_measured_tractive_system_voltage = shared_state.min_measured_ts_out_voltage;
     out.min_measured_shdn_out_voltage = shared_state.min_shdn_out_voltage;
 
+    out.hv_plus_out_voltage = shared_state.hv_plus_out_voltage;
+    out.main_ok_voltage = shared_state.main_ok_voltage;
+    out.main_under_threshold_voltage = shared_state.main_under_threshold_voltage;
+    out.precharge_under_threshold_voltage = shared_state.precharge_under_threshold_voltage;
+
     return out;
 }
 

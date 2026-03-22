@@ -152,7 +152,7 @@ namespace ACUConstants
     constexpr uint32_t DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
     constexpr uint32_t DEBUG_PRINT_PRIORITY = 20;
 
-    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 2000UL; // 2 000 us = 500 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
 
     /* Message Interface */
