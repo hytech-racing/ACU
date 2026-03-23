@@ -320,7 +320,7 @@ void print_bms_data(bms_data data)
             Serial.print("V  ");
         }
         chip_index++;
-        if ((chip_index - 1) % 21 == 0)
+        if ((chip_index - 1) % ACUConstants::NUM_CHIPS == 0)
         {
             Serial.println();
         }
