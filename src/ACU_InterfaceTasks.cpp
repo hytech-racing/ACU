@@ -218,7 +218,12 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_all_data(ACUEthernetInterfaceInstance::instance().make_acu_all_data_msg(send_data));
 
     // reset local extrema after sending a report period
-    WatchdogMetricsInstance::instance().reset_metrics();
+    WatchdogMetricsInstance::instance().reset_metrics(
+        ADCInterfaceInstance::instance().read_global_lv_value(),
+        ADCInterfaceInstance::instance().read_pack_out_filtered(),
+        ADCInterfaceInstance::instance().read_ts_out_filtered(),
+        ADCInterfaceInstance::instance().read_shdn_voltage()
+    );
 
     return HT_TASK::TaskResponse::YIELD;
 }
