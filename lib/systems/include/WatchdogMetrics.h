@@ -22,7 +22,7 @@ class WatchdogMetrics {
 
         void update_metrics(volt measured_glv, volt mesaured_pack_out_voltage, volt measured_ts_out_voltage, volt shdn_out_voltage, unsigned long millis);
 
-        void reset_metrics();
+        void reset_metrics(volt measured_glv, volt measured_pack_out_voltage, volt measured_ts_out_voltage, volt shdn_out_voltage);
 
         bool is_shdn_out_voltage_invalid(unsigned long millis);
 

@@ -35,7 +35,7 @@ namespace ACUInterfaces {
     constexpr int ADC0_MOSI = 11;
     constexpr int ADC0_MISO = 12;
     constexpr int ADC0_CLK = 13;
-    constexpr int ADC0_SPEED = 2000000; // 1 MHz
+    constexpr int ADC0_SPEED = 1000000; // 1 MHz
 
     /* ADC Versions*/
     constexpr int MAX114X_VERSION = 8;
@@ -121,7 +121,7 @@ namespace ACUConstants
     constexpr uint32_t TICK_SM_PRIORITY = 9;
     constexpr uint32_t KICK_WATCHDOG_PERIOD_US = 5000UL; // 5000 us = 200 Hz
     constexpr uint32_t WATCHDOG_PRIORITY = 1;
-    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 4000UL; // 4 000 us = 3250 Hz (since we are reading by group)
+    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 10000UL; // 10 000 us = 100 Hz (since we are reading by group)
     constexpr uint32_t SAMPLE_BMS_PRIORITY = 2;
     constexpr uint32_t EVAL_ACC_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr uint32_t EVAL_ACC_PRIORITY = 10;
@@ -152,7 +152,7 @@ namespace ACUConstants
     constexpr uint32_t DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
     constexpr uint32_t DEBUG_PRINT_PRIORITY = 20;
 
-    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 2000UL; // 2 000 us = 500 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
 
     /* Message Interface */
