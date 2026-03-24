@@ -208,16 +208,9 @@ HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT
 
 HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    auto start = sys_time::hal_millis();
-
     auto data = BMSDriverInstance_t::instance().read_data();
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
     // print_bms_data(data);
-
-    auto end = sys_time::hal_millis();
-
-    auto diff = end - start;
-    Serial.println(diff);
 
     return HT_TASK::TaskResponse::YIELD;
 }
