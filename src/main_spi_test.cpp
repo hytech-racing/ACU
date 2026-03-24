@@ -1,5 +1,6 @@
 /* ACU Dependent */
 #include "ACU_Constants.h"
+#include "ACU_Globals.h"
 #include "SystemTimeInterface.h"
 #include "ACU_InterfaceTasks.h"
 #include "ACU_SystemTasks.h"
