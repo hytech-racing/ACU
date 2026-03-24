@@ -213,7 +213,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     auto data = BMSDriverInstance_t::instance().read_data();
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
     // print_bms_data(data);
-    
+
     auto end = sys_time::hal_millis();
 
     auto diff = end - start;
@@ -286,7 +286,7 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
     return HT_TASK::TaskResponse::YIELD;
 }
 
-HT_TASK::TaskResponse enqueue_EM_Measurement_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) 
+HT_TASK::TaskResponse enqueue_EM_measurement_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) 
 {
     EM_MEASUREMENT_t msg = {};
     msg.em_current_ro = ADCInterfaceInstance::instance().read_shunt_current();
