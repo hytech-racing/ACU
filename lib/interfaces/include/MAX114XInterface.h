@@ -3,6 +3,7 @@
 
 #include "AnalogSensorsInterface.h"
 #include <SPI.h>
+#include <Arduino.h>
 
 /**
  * Enum representing the different channel configurations in MAX114X ADCs (SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL)

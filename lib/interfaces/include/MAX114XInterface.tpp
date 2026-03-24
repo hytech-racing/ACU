@@ -139,6 +139,11 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     // First two bits of b1 are filler
     uint16_t value = ((b1 & 0x3F) << 8) | (b2 & 0xFF);
     
+    // Serial.print("Sending channel "); Serial.println(_currentChannel);
+    // Serial.print("Command: "); Serial.println(command, HEX); 
+    // Serial.print("Value: "); Serial.println(value);
+    // Serial.println();
+
     /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the lower of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 1 holds the return value. */
     MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = value;
 

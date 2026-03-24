@@ -32,7 +32,7 @@ void ltc_spi_interface::_write_and_delay_high(int cs, int delay_microSeconds) {
 
 template <size_t buffer_size>
 void ltc_spi_interface::write_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec, const std::array<uint8_t, buffer_size> &data) {
-    SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
+    SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
     _write_and_delay_low(cs, 5);
 
@@ -48,7 +48,7 @@ template <size_t buffer_size>
 std::array<uint8_t, buffer_size> ltc_spi_interface::read_registers_command(int cs, std::array<uint8_t, 4> cmd_and_pec) {
     std::array<uint8_t, buffer_size> read_in;
     
-    SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
+    SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompts SPI enable
     _write_and_delay_low(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
@@ -61,7 +61,7 @@ std::array<uint8_t, buffer_size> ltc_spi_interface::read_registers_command(int c
 }
 
 void ltc_spi_interface::adc_conversion_command(int cs, std::array<uint8_t, 4> cmd_and_pec, size_t num_stacked_devices) {
-    SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
+    SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
     // Prompting SPI enable
     _write_and_delay_low(cs, 5);
     _transfer_SPI_data<4>(cmd_and_pec);
