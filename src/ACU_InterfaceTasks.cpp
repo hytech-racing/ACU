@@ -493,9 +493,9 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
         Serial.print(i);
         Serial.print(": ");
         Serial.print("Raw = ");
-        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleRaw(i));
+        Serial.print(MAX1148ADCInstance_t::instance().get_last_sample_raw(i));
         Serial.print(" Converted = ");
-        Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
+        Serial.print(MAX1148ADCInstance_t::instance().get_last_sample_converted(i));
         Serial.print('\n');
         // skip other half of differential pair
         if (i == 0 || i == 4) {
