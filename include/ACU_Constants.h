@@ -38,7 +38,6 @@ namespace ACUInterfaces {
     constexpr int ADC0_SPEED = 1000000; // 1 MHz
 
     /* ADC Versions*/
-    constexpr int MAX114X_VERSION = 8;
     /* Channels on ADC */
     constexpr int ISO_PACK_N_CHANNEL         = 0;
     constexpr int ISO_PACK_P_CHANNEL         = 1;
@@ -50,14 +49,14 @@ namespace ACUInterfaces {
     constexpr int PACK_OUT_FILTERED_CHANNEL  = 7;
     
     /* SCALE/OFFSETS on ADC */
-    const float ISO_PACK_N_SCALE = 1;
-    const float ISO_PACK_P_SCALE = 1;
-    const float PACK_VOLTAGE_SENSE_SCALE = 1;
+    const float ISO_PACK_N_SCALE = 0.0656553030302;
+    const float ISO_PACK_P_SCALE = 0.0656553030302;
+    const float PACK_VOLTAGE_SENSE_SCALE = 0.0410345643939;
     const float SHUNT_CURRENT_OUT_SCALE = 0.03125;
     const float SHUNT_CURRENT_P_SCALE = 0.00025;
     const float SHUNT_CURRENT_N_SCALE = 0.00025;
-    const float TS_OUT_FILTERED_SCALE = 1;
-    const float PACK_OUT_FILTERED_SCALE = 1;
+    const float TS_OUT_FILTERED_SCALE = 0.0547254764211;
+    const float PACK_OUT_FILTERED_SCALE = 0.0547254764211;
     const float ISO_PACK_N_OFFSET = 0;
     const float ISO_PACK_P_OFFSET = 0;
     const float PACK_VOLTAGE_SENSE_OFFSET = 0;
@@ -106,7 +105,6 @@ namespace ACUConstants
     constexpr size_t NUM_CHIPS = 12;
     constexpr size_t NUM_CELL_TEMPS = 48;
     constexpr size_t NUM_CHIP_SELECTS = 2;
-    constexpr size_t NUM_MAX1148_CHANNELS = 8;
 
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
