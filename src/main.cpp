@@ -33,13 +33,15 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 ::HT_TASK::Task enqueue_CCU_all_voltages_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_voltages_CAN_data, ACUConstants::CCU_SEND_A_PRIORITY, ACUConstants::CCU_SEND_A_PERIOD_US);
 ::HT_TASK::Task enqueue_CCU_all_temps_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_all_temps_CAN_data, ACUConstants::CCU_SEND_B_PRIORITY, ACUConstants::CCU_SEND_B_PERIOD_US);
 ::HT_TASK::Task enqueue_ACU_OK_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_ACU_ok_CAN_data, ACUConstants::ACU_OK_CAN_PRIORITY, ACUConstants::ACU_OK_CAN_PERIOD_US);
+
+::HT_TASK::Task enqueue_EM_MEASUREMENT_CAN_task(HT_TASK::DUMMY_FUNCTION, enqueue_EM_Measurement_CAN_data, ACUConstants::EM_MEASUREMENT_CAN_PRIORITY, ACUConstants::EM_MEASUREMENT_CAN_PERIOD_US);
 ::HT_TASK::Task sample_CAN_task(HT_TASK::DUMMY_FUNCTION, sample_CAN_data, ACUConstants::RECV_CAN_PRIORITY, ACUConstants::RECV_CAN_PERIOD_US);
 ::HT_TASK::Task idle_sample_task(HT_TASK::DUMMY_FUNCTION, idle_sample_interfaces, ACUConstants::IDLE_SAMPLE_PRIORITY, ACUConstants::IDLE_SAMPLE_PERIOD_US);
 ::HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 ::HT_TASK::Task sample_adc_task(HT_TASK::DUMMY_FUNCTION, sample_adc, ACUConstants::SAMPLE_ADC_PRIORITY, ACUConstants::SAMPLE_ADC_PERIOD_US);
 
-FlexCAN_t<CAN3> ACUCANInterfaceImpl::CCU_CAN;
-FlexCAN_t<CAN2> ACUCANInterfaceImpl::EM_CAN;
+FlexCAN_t<CAN2> ACUCANInterfaceImpl::CCU_CAN;
+FlexCAN_t<CAN3> ACUCANInterfaceImpl::EM_CAN;
 
 void setup()
 {
@@ -59,8 +61,8 @@ void setup()
 
     scheduler.schedule(send_CAN_task);
     scheduler.schedule(enqueue_CCU_core_CAN_task);
-    scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
-    scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
+    // scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
+    // scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
     scheduler.schedule(enqueue_ACU_OK_CAN_task);
 
     scheduler.schedule(sample_CAN_task);

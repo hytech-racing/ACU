@@ -46,6 +46,12 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
     out.min_measured_tractive_system_voltage = shared_state.min_measured_ts_out_voltage;
     out.min_measured_shdn_out_voltage = shared_state.min_shdn_out_voltage;
 
+    out.hv_plus_out_voltage = shared_state.hv_plus_out_voltage;
+    out.main_ok_voltage = shared_state.main_ok_voltage;
+    out.main_under_threshold_voltage = shared_state.main_under_threshold_voltage;
+    out.precharge_under_threshold_voltage = shared_state.precharge_under_threshold_voltage;
+    out.tractive_system_current = shared_state.tractive_system_current;
+
     return out;
 }
 
@@ -83,7 +89,12 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     std::copy(fw_version_hash.begin(), fw_version_hash.end(), out.firmware_version_info.git_hash);
     out.has_msg_versions = true;
     out.msg_versions.ht_can_version = HT_CAN_LIB_VERSION;
-    std::copy(version, version + std::min(strlen(version), sizeof(out.msg_versions.ht_proto_version) - 1), out.msg_versions.ht_proto_version);    
-    out.msg_versions.ht_proto_version[sizeof(out.msg_versions.ht_proto_version) - 1] = '\0';
+    
+    // for working with bytes in nanopb
+    std::string_view version_view(version);
+    size_t version_len = std::min(version_view.size(), sizeof(out.msg_versions.ht_proto_version.bytes));
+    out.msg_versions.ht_proto_version.size = version_len;
+    std::copy(version_view.begin(), version_view.begin() + version_len, std::begin(out.msg_versions.ht_proto_version.bytes));
+      
     return out;
 }

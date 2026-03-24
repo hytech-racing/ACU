@@ -35,7 +35,8 @@ namespace ACUInterfaces {
     constexpr int ADC0_MOSI = 11;
     constexpr int ADC0_MISO = 12;
     constexpr int ADC0_CLK = 13;
-    constexpr int ADC0_SPEED = 2000000; // 1 MHz
+    constexpr int ADC0_SPEED = 1000000; // 1 MHz
+
     /* ADC Versions*/
     /* Channels on ADC */
     constexpr int ISO_PACK_N_CHANNEL         = 0;
@@ -67,21 +68,33 @@ namespace ACUInterfaces {
 
     constexpr const size_t TEENSY_OK_PIN = 3; // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
     constexpr const size_t WD_KICK_PIN = 4;       // > Needs to flip at 100 Hz to keep BMS_OK high
-    constexpr const size_t N_LATCH_EN_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
-    constexpr const size_t TS_OUT_FILTERED_PIN = 25;
-    constexpr const size_t PACK_OUT_FILTERED_PIN = 24;
-    constexpr const size_t IMD_OK_PIN = 23; // < READ from IMD hardware, go to FAULT state if HIGH
-    constexpr const size_t PRECHARGE_PIN = 17; // READ from PRECHARGE
+    constexpr const size_t SW_NOT_OK_PIN = 5;  // should be HIGH by default, and then set LOW after traversing state machine
+    constexpr const size_t N_FAULTED_STATE_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
+       
     constexpr const size_t BSPD_CURRENT_PIN = 15;
     constexpr const size_t SHDN_OUT_PIN = 16; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
+    constexpr const size_t PRECHARGE_PIN = 17; // READ from PRECHARGE
+    constexpr const size_t HV_PLUS_OUT_OK_PIN = 19; // READ from HV OUT OK 
+    constexpr const size_t MAIN_OK_PIN = 20;
+    constexpr const size_t MAIN_UNDER_THRESH_PIN = 21;
+    constexpr const size_t PRECHARGE_THRESH_PIN = 22;
+    constexpr const size_t IMD_OK_PIN = 23; // < READ from IMD hardware, go to FAULT state if HIGH
+    constexpr const size_t PACK_OUT_FILTERED_PIN = 24;
+    constexpr const size_t TS_OUT_FILTERED_PIN = 25;
+
+    constexpr const size_t SPI1_MOSI_PIN = 26;
+    constexpr const size_t SPI1_SCK_PIN = 27;
+    constexpr const size_t SPI1_MISO_PIN = 39;
+
     constexpr const size_t SCALED_24V_PIN = 41;
 
     constexpr const float SHUTDOWN_CONV_FACTOR = 0.1155F; // voltage divider -> 4.7k / (4.7k + 36k)
     constexpr const float PRECHARGE_CONV_FACTOR = 0.6623F; // voltage divider -> 10k / (5.1k + 10k)
     constexpr const float PACK_AND_TS_OUT_CONV_FACTOR = 0.00482F;
-    constexpr const float SHDN_OUT_CONV_FACTOR = 0.1036F;
+    constexpr const float SHDN_OUT_CONV_FACTOR = 0.11545F;
     constexpr const float BSPD_CURRENT_CONV_FACTOR = 0.5118F;
-    constexpr const float GLV_CONV_FACTOR = 0.1036F;
+    constexpr const float GLV_CONV_FACTOR = 0.11545F;
+    constexpr const float STD_5V_3V3_CONVERSION_FACTOR = 0.641F;
 
     constexpr const float BIT_RESOLUTION = 4095.0F;
 }
@@ -97,21 +110,21 @@ namespace ACUConstants
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
     
     // Initialize chip_select, chip_select_per_chip, and address
-    constexpr std::array<int, NUM_CHIP_SELECTS> CS = {9, 10};
-    constexpr std::array<int, NUM_CHIPS> CS_PER_CHIP = {9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10};
+    constexpr std::array<int, NUM_CHIP_SELECTS> CS = {36, 38};
+    constexpr std::array<int, NUM_CHIPS> CS_PER_CHIP = {36, 36, 36, 36, 36, 36, 38, 38, 38, 38, 38, 38};
     constexpr std::array<int, NUM_CHIPS> ADDR = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // only for addressable bms chips
 
     /* Task Times */
-    constexpr uint32_t TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+    constexpr uint32_t TICK_SM_PERIOD_US = 2000UL; // 2 000 us = 1000 Hz
     constexpr uint32_t TICK_SM_PRIORITY = 9;
     constexpr uint32_t KICK_WATCHDOG_PERIOD_US = 5000UL; // 5000 us = 200 Hz
     constexpr uint32_t WATCHDOG_PRIORITY = 1;
-    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 4000UL; // 4 000 us = 3250 Hz (since we are reading by group)
+    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 10000UL; // 10 000 us = 100 Hz (since we are reading by group)
     constexpr uint32_t SAMPLE_BMS_PRIORITY = 2;
     constexpr uint32_t EVAL_ACC_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr uint32_t EVAL_ACC_PRIORITY = 10;
     constexpr uint32_t WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 6;
+    constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 15;
     constexpr uint32_t ALL_DATA_ETHERNET_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 5;
     constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
@@ -129,15 +142,18 @@ namespace ACUConstants
     constexpr uint32_t CCU_SEND_B_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t CCU_SEND_B_PRIORITY = 13;
 
+    constexpr uint32_t EM_MEASUREMENT_CAN_PERIOD_US = 10000; // 10 000 = 100 Hz
+    constexpr uint32_t EM_MEASUREMENT_CAN_PRIORITY = 6; 
+
     constexpr uint32_t SEND_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
     constexpr uint32_t SEND_CAN_PRIORITY = 8;
-    constexpr uint32_t RECV_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
+    constexpr uint32_t RECV_CAN_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t RECV_CAN_PRIORITY = 7;
 
     constexpr uint32_t DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
     constexpr uint32_t DEBUG_PRINT_PRIORITY = 20;
 
-    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 2000UL; // 2 000 us = 500 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
 
     /* Message Interface */

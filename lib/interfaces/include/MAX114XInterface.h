@@ -41,12 +41,12 @@ public:
     /**
      * Gets raw 14 bit value of a channel for a sample
      */
-    uint16_t getLastSampleRaw(int index) const;
+    uint16_t get_last_sample_raw(int index) const;
     
     /**
      * Gets real value (current/voltage) of a channel for a sample
      */
-    float getLastSampleConverted(int index) const;
+    float get_last_sample_converted(int index) const;
     
 private:
 
