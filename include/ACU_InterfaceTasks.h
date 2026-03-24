@@ -54,8 +54,6 @@ void initialize_all_interfaces();
 
 ::HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
-::HT_TASK::TaskResponse enqueue_EM_Measurement_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
-
 ::HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
