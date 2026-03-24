@@ -17,6 +17,8 @@ void ADCInterface::init(uint32_t init_millis)
     pinMode(_adc_parameters.pinout.teensy_bspd_current_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_scaled_24V_pin, INPUT);
 
+    _max114x_instance.init();
+
     _init_millis = init_millis;
     _in_imd_startup_period = true; 
 }

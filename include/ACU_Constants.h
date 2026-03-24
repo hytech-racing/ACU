@@ -31,6 +31,7 @@ namespace ACUInterfaces {
     const size_t ANALOG_READ_RESOLUTION = 12;
     const size_t SERIAL_BAUDRATE = 115200;
 
+    constexpr int ADC0_NOT_SHDN = 9;
     constexpr int ADC0_CS = 10;
     constexpr int ADC0_MOSI = 11;
     constexpr int ADC0_MISO = 12;

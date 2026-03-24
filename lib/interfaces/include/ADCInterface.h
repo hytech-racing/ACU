@@ -42,7 +42,7 @@ struct ADCPinout_s
     pin spiPinSDI;
     pin spiPinSDO;
     pin spiPinCLK;
-    
+    pin adc_not_shdn_pin;
 };
 
 struct ADCConversions_s
@@ -174,6 +174,7 @@ public:
                     _adc_parameters.pinout.spiPinSDI,
                     _adc_parameters.pinout.spiPinSDO,
                     _adc_parameters.pinout.spiPinCLK,
+                    _adc_parameters.pinout.adc_not_shdn_pin,
                     _adc_parameters.spiSpeed,
                     std::array<float, adc_default_parameters::NUM_MAX1148_CHANNELS> {
                         _adc_parameters.scales.iso_pack_n_scale,
