@@ -282,7 +282,7 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 HT_TASK::TaskResponse enqueue_EM_Measurement_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) 
 {
     EM_MEASUREMENT_t msg = {};
-    msg.em_current_ro = MAX1148ADCInstance_t::instance().get_last_sample_converted(ACUInterfaces::SHUNT_CURRENT_P_CHANNEL);
+    msg.em_current_ro = ADCInterfaceInstance::instance().read_shunt_current();
     msg.em_voltage_ro = BMSDriverInstance_t::instance().get_bms_data().total_voltage;
     CAN_util::enqueue_msg(&msg, &Pack_EM_MEASUREMENT_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
