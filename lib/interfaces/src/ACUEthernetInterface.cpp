@@ -93,6 +93,7 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     // for working with bytes in nanopb
     size_t version_len = std::min(strlen(version), sizeof(out.msg_versions.ht_proto_version.bytes));
     out.msg_versions.ht_proto_version.size = version_len;
-    memcpy(out.msg_versions.ht_proto_version.bytes, version, version_len);    
+    std::copy(version, version + version_len, std::begin(out.msg_versions.ht_proto_version.bytes)); 
+      
     return out;
 }
