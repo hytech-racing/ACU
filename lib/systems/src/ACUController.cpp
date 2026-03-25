@@ -12,10 +12,9 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.prev_bms_time_stamp = system_start_time;
     _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
     _acu_state.balancing_enabled = false;
+    _acu_state.high_side_contactor_welded = false;
+    _acu_state.low_side_contactor_welded = false;
 }
-
-
-
 
 ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells)
 {   
@@ -100,7 +99,6 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     // Determine if bms is ok
     _acu_state.bms_ok = _check_bms_ok(current_millis);
 
-
     return _acu_state;
 }
 
@@ -148,6 +146,7 @@ bool ACUController::_check_bms_ok(time_ms current_millis)
 
 bool ACUController::_check_faults(time_ms current_millis)
 {
+    
     return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis) || _check_invalid_packet_faults(current_millis);
 }
 
@@ -173,4 +172,13 @@ bool ACUController::_check_invalid_packet_faults(time_ms current_millis)
 {
     bool invalid_packet_fault = (current_millis - _acu_state.last_time_invalid_packet_present) > _acu_parameters.fault_durations.max_allowed_invalid_packet_fault_dur;
     return invalid_packet_fault;
+}
+
+bool ACUController::check_is_contactor_welded(volt pack_voltage_adc, volt ts_voltage_adc) 
+{    
+    _acu_state.low_side_contactor_welded = pack_voltage_adc > _acu_parameters.thresholds.ts_isolation_voltage;
+    _acu_state.high_side_contactor_welded = ts_voltage_adc > _acu_parameters.thresholds.ts_isolation_voltage;
+
+    bool is_welded = _acu_state.low_side_contactor_welded || _acu_state.high_side_contactor_welded;
+    return is_welded;
 }

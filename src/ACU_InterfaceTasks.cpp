@@ -45,12 +45,17 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage; 
     out.core_data.hv_plus_out_voltage = ADCInterfaceInstance::instance().read_hv_plus_out_ok_voltage();
     out.core_data.main_ok_voltage = ADCInterfaceInstance::instance().read_main_ok_voltage();
+    out.core_data.precharge_ok_voltage = ADCInterfaceInstance::instance().read_precharge_voltage();
     out.core_data.main_under_threshold_voltage = ADCInterfaceInstance::instance().read_main_under_threshold_voltage();
     out.core_data.precharge_under_threshold_voltage = ADCInterfaceInstance::instance().read_precharge_under_threshold_voltage();
     out.core_data.tractive_system_current = ADCInterfaceInstance::instance().read_shunt_current();
 
     // SoC/SoH placeholders (leave unchanged here)
-    out.SoC = ACUControllerInstance::instance().get_status().SoC;
+    auto ACUStatus = ACUControllerInstance::instance().get_status();
+
+    out.SoC = ACUStatus.SoC;
+    out.core_data.high_side_contactor_welded = ACUStatus.high_side_contactor_welded;
+    out.core_data.low_side_contactor_welded = ACUStatus.low_side_contactor_welded;
 
     return out;
 }
@@ -563,7 +568,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print(ADCInterfaceInstance::instance().read_ts_out_filtered());
     Serial.print(" CH 7: ");
     Serial.print(ADCInterfaceInstance::instance().read_pack_out_filtered());
-    Serial.print('/n');
+    Serial.println();
 
     return HT_TASK::TaskResponse::YIELD;
 }

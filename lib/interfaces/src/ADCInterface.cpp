@@ -6,7 +6,7 @@ void ADCInterface::init(uint32_t init_millis)
     pinMode(_adc_parameters.pinout.teensy_imd_ok_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_precharge_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_shdn_out_pin, INPUT);
-
+    
     pinMode(_adc_parameters.pinout.teensy_hv_plus_out_ok_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_main_ok_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_main_under_thresh_pin, INPUT);

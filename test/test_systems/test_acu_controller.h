@@ -19,17 +19,19 @@ ACUControllerThresholds_s thresholds = {ACUSystems::MIN_DISCHARGE_VOLTAGE_THRESH
                                         ACUSystems::MIN_PACK_TOTAL_VOLTAGE,
                                         ACUSystems::VOLTAGE_DIFF_TO_INIT_CB,
                                         ACUSystems::BALANCE_TEMP_LIMIT_C,
-                                        ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C
-                                        };
+                                        ACUSystems::BALANCE_ENABLE_TEMP_THRESH_C, 
+                                        ACUSystems::TS_ISOLATION_VOLTAGE};
 
 TEST(ACUControllerTesting, initial_state)
 {
     ACUControllerInstance::create(thresholds);
     ACUController controller = ACUControllerInstance::instance();
+
     charging_enabled = false;
     uint32_t start_time = 0;
-
+    
     controller.init(start_time, 420.0f);
+    
 
     BMSCoreData_s data{}; // zeros
     auto status = controller.evaluate_accumulator(start_time, data, 0, ZERO_PACK_CURRENT, num_cells);
@@ -260,7 +262,7 @@ TEST(ACUControllerTesting, cell_overvoltage_fault_persistence)
 // Tests that UV faults require 1000ms persistence before triggering
 TEST(ACUControllerTesting, cell_undervoltage_fault_persistence)
 {
-    ACUControllerInstance::create(thresholds);
+    ACUControllerInstance::create(thresholds, ACUInterfaces::SW_NOT_OK_PIN);
     ACUController controller = ACUControllerInstance::instance();
 
     charging_enabled = false;
