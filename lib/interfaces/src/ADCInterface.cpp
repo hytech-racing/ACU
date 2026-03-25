@@ -1,18 +1,30 @@
 #include "ADCInterface.h"
 
-void ADCInterface::init(uint32_t init_millis) {
+void ADCInterface::init(uint32_t init_millis) 
+{
     // Pin Configuration
     pinMode(_adc_parameters.pinout.teensy_imd_ok_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_precharge_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_shdn_out_pin, INPUT);
+    
+    pinMode(_adc_parameters.pinout.teensy_hv_plus_out_ok_pin, INPUT);
+    pinMode(_adc_parameters.pinout.teensy_main_ok_pin, INPUT);
+    pinMode(_adc_parameters.pinout.teensy_main_under_thresh_pin, INPUT);
+    pinMode(_adc_parameters.pinout.teensy_precharge_under_thresh_pin,INPUT);
+
     pinMode(_adc_parameters.pinout.teensy_ts_out_filtered_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_pack_out_filtered_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_bspd_current_pin, INPUT);
     pinMode(_adc_parameters.pinout.teensy_scaled_24V_pin, INPUT);
-    pinMode(_adc_parameters.pinout.teensy_sw_not_ok_pin, OUTPUT);
+
+    _max114x_instance.init();
 
     _init_millis = init_millis;
     _in_imd_startup_period = true; 
+}
+
+void ADCInterface::tick() {
+    _max114x_instance.tick();
 }
 
 bool ADCInterface::read_imd_ok(uint32_t curr_millis) {
@@ -22,71 +34,114 @@ bool ADCInterface::read_imd_ok(uint32_t curr_millis) {
         }
         return true;
     }
-    //
     return static_cast<float>(analogRead(_adc_parameters.pinout.teensy_imd_ok_pin)) * (_adc_parameters.configs.teensy41_max_input_voltage / _adc_parameters.bit_resolution) > _adc_parameters.thresholds.teensy41_min_digital_read_voltage_thresh; // idk if this would actually work, like if a LOW is a threshold or smth
 }
 
-volt ADCInterface::read_shdn_voltage() {
+volt ADCInterface::read_shdn_voltage() 
+{
     // 3.3 V for pin voltage cap. and 4095 for bit resolution
     volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_shdn_out_pin)) * _adc_parameters.conversions.shutdown_conv_factor;
     return data;
 }
 
-bool ADCInterface::read_shdn_out() {
+bool ADCInterface::read_shdn_out() 
+{
     bool data = read_shdn_voltage() > _adc_parameters.thresholds.shutdown_voltage_digital_threshold; // read shdn out goes high if shutdown voltage is > 12 volts
     return data;
 }
 
-volt ADCInterface::read_shdn_out_voltage() {
+volt ADCInterface::read_shdn_out_voltage() 
+{
     volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_shdn_out_pin)) * _adc_parameters.conversions.shdn_out_conv_factor;
     return data;
 }
 
-volt ADCInterface::read_precharge_voltage() {
+volt ADCInterface::read_precharge_voltage() 
+{
     // 3.3 V for pin voltage cap
     volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_precharge_pin)) * _adc_parameters.conversions.precharge_conv_factor;
     return data;
 }
 
-bool ADCInterface::read_precharge_out() {
-    bool data = read_precharge_voltage() > _adc_parameters.thresholds.teensy41_min_digital_read_voltage_thresh;
+bool ADCInterface::read_precharge_out() 
+{
+    // obviously we don't get too much value from comparing with the teensy min digital thresh, but it's still comparable to a non-0 voltage
+    bool data = read_precharge_voltage() > _adc_parameters.thresholds.teensy41_min_digital_read_voltage_thresh; 
     return data;
 }
 
-volt ADCInterface::read_ts_out_filtered() {
+volt ADCInterface::read_hv_plus_out_ok_voltage()
+{
+    volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_hv_plus_out_ok_pin)) * _adc_parameters.conversions.std_5V_to_3V3_conversion_factor;
+    return data;
+}
+
+volt ADCInterface::read_main_ok_voltage()
+{
+    volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_main_ok_pin)) * _adc_parameters.conversions.std_5V_to_3V3_conversion_factor;
+    return data;
+}
+
+volt ADCInterface::read_main_under_threshold_voltage()
+{
+    volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_main_under_thresh_pin)) * _adc_parameters.conversions.std_5V_to_3V3_conversion_factor;
+    return data;
+}
+
+volt ADCInterface::read_precharge_under_threshold_voltage()
+{
+    volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_precharge_under_thresh_pin)) * _adc_parameters.conversions.std_5V_to_3V3_conversion_factor;
+    return data;
+}
+
+volt ADCInterface::read_ts_out_filtered() 
+{
     // 3.3 V for pin voltage cap. and 4095 for bit resolution
     volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_ts_out_filtered_pin)) * _adc_parameters.conversions.pack_and_ts_out_conv_factor;
     return data;
 }
 
-volt ADCInterface::read_pack_out_filtered() {
+volt ADCInterface::read_pack_out_filtered() 
+{
     volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_pack_out_filtered_pin)) * _adc_parameters.conversions.pack_and_ts_out_conv_factor;
     return data;
 }
 
-volt ADCInterface::read_bspd_current() {
+volt ADCInterface::read_bspd_current() 
+{
     // 3.3 V for pin voltage cap. and 4095 for bit resolution
     volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_bspd_current_pin)) * _adc_parameters.conversions.bspd_current_conv_factor; //((24.16 / 5.0) * (4.3 / 36.0));
     return data;
 }
 
-volt ADCInterface::read_global_lv_value() {
+volt ADCInterface::read_global_lv_value() 
+{
     volt data = static_cast<float>(analogRead(_adc_parameters.pinout.teensy_scaled_24V_pin)) * _adc_parameters.conversions.glv_conv_factor; // input before voltage divider (4.3k / (4.3k + 36k))
     return data;
 }
 
-const ADCInterfaceParams_s& ADCInterface::get_adc_params() const {
+float ADCInterface::read_iso_pack() {
+    return _max114x_instance.get_last_sample_converted(_adc_parameters.channels.iso_pack_n_channel);
+}
+
+float ADCInterface::read_pack_voltage_sense() {
+    return _max114x_instance.get_last_sample_converted(_adc_parameters.channels.pack_voltage_sense_channel);
+}
+
+float ADCInterface::read_shunt_current() {
+    return _max114x_instance.get_last_sample_converted(_adc_parameters.channels.shunt_current_out_channel);
+}
+
+float ADCInterface::read_differential_shunt_current() {
+    return _max114x_instance.get_last_sample_converted(_adc_parameters.channels.shunt_current_p_channel);
+}
+
+const ADCInterfaceParams_s& ADCInterface::get_adc_params() const 
+{
     return _adc_parameters;
 }
 
-bool ADCInterface::is_in_imd_startup_period() const {
+bool ADCInterface::is_in_imd_startup_period() const 
+{
     return _in_imd_startup_period;
-}
-
-void ADCInterface::set_sw_not_ok_pin_high() {
-    digitalWrite(_adc_parameters.pinout.teensy_sw_not_ok_pin, HIGH);
-}
-
-void ADCInterface::set_sw_not_ok_pin_low() {
-    digitalWrite(_adc_parameters.pinout.teensy_sw_not_ok_pin, LOW);
 }

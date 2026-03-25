@@ -30,10 +30,10 @@ bool initialize_all_systems()
                                                                                 { return ACUControllerInstance::instance().check_ts_isolation(ADCInterfaceInstance::instance().read_pack_out_filtered(), ADCInterfaceInstance::instance().read_ts_out_filtered()); });
     
     etl::delegate<void()> set_sw_not_ok_pin_high = etl::delegate<void()>::create([]() -> void
-                                                                                { ADCInterfaceInstance::instance().set_sw_not_ok_pin_high(); });
+                                                                                { WatchdogInstance::instance().set_sw_not_ok_pin_high(); });
     
     etl::delegate<void()> set_sw_not_ok_pin_low = etl::delegate<void()>::create([]() -> void
-                                                                                { ADCInterfaceInstance::instance().set_sw_not_ok_pin_low(); });
+                                                                                { WatchdogInstance::instance().set_sw_not_ok_pin_low(); });
     
     etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
 
@@ -67,8 +67,6 @@ bool initialize_all_systems()
                                     reset_latch,
                                     disable_n_latch_en,
                                     sys_time::hal_millis());
-
-    ADCInterfaceInstance::instance().set_sw_not_ok_pin_high();
 
     return true;
 }

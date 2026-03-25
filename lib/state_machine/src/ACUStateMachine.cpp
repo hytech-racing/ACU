@@ -98,7 +98,7 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
         }
         case ACUState_e::FAULTED: 
         {
-            _set_n_latch_en_low();
+            _set_n_latch_en_high();
             _reinitialize_watchdog();
             break;
         }
@@ -138,7 +138,7 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
         case ACUState_e::FAULTED: 
         {   
             _disable_watchdog();
-            _set_n_latch_en_high();
+            _set_n_latch_en_low();
             _last_state_changed_time = curr_millis;
             break;
         }

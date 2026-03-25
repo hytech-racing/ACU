@@ -41,8 +41,8 @@ namespace ACUCANInterfaceImpl {
     extern CANRXBuffer_t em_can_rx_buffer;
     extern CANTXBuffer_t ccu_can_tx_buffer;
 
-    extern FlexCAN_t<CAN3> CCU_CAN;
-    extern FlexCAN_t<CAN2> EM_CAN;
+    extern FlexCAN_t<CAN2> CCU_CAN;
+    extern FlexCAN_t<CAN3> EM_CAN;
 
     void on_ccu_can_receive(const CAN_message_t &msg);
     void on_em_can_receive(const CAN_message_t &msg);
