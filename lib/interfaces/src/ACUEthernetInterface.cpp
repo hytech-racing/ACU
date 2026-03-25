@@ -48,9 +48,11 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
     
     out.hv_plus_out_voltage = shared_state.hv_plus_out_voltage;
     out.main_ok_voltage = shared_state.main_ok_voltage;
+    out.precharge_ok_voltage = shared_state.precharge_ok_voltage;
     out.main_under_threshold_voltage = shared_state.main_under_threshold_voltage;
     out.precharge_under_threshold_voltage = shared_state.precharge_under_threshold_voltage;
     out.tractive_system_current = shared_state.tractive_system_current;
+    out.acu_state = static_cast<hytech_msgs_ACUState_e>(shared_state.acu_sm_state);
 
     return out;
 }

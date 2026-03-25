@@ -8,16 +8,6 @@
 #include <etl/delegate.h>
 #include "etl/singleton.h"
 
-enum class ACUState_e
-{
-    STARTUP = 0, 
-    ACTIVE = 1, 
-    CHARGING = 2, 
-    FAULTED = 3,
-    WELDED = 4,
-    WELDCHECK = 5 
-};
-
 class ACUStateMachine
 {
 public:
@@ -101,7 +91,7 @@ private:
     etl::delegate<void()> _set_n_latch_en_high;
     etl::delegate<void()> _set_n_latch_en_low;
 
-    const uint8_t precharge_delay_ms = 500; // ms
+    const unsigned long precharge_delay_ms = 500UL; // ms
 };
 
 using ACUStateMachineInstance = etl::singleton<ACUStateMachine>;
