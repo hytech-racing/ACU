@@ -58,6 +58,11 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
+            if (!_received_valid_shdn_out()) 
+            {
+                _set_state(ACUState_e::STARTUP, current_millis);
+                break;
+            }
             break;
         }
         case ACUState_e::CHARGING: 
@@ -141,6 +146,7 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
     {
         case ACUState_e::STARTUP: 
         {
+            _set_sw_not_ok_pin_high();
             _reinitialize_watchdog();
             break;
         }
