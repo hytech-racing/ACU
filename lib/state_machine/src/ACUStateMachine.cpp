@@ -1,6 +1,6 @@
 #include "ACUStateMachine.h"
 #include <iostream>
-#include <Arduino.h>
+
 using namespace std;
 
 
@@ -20,22 +20,24 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
         }
         case ACUState_e::WELDCHECK:
         {
-            if ((current_millis - _last_state_changed_time > 500) && _contactor_welded()) 
+            if (current_millis - _last_state_changed_time > 500)
             {
-                _set_state(ACUState_e::WELDED, current_millis);
-                break;
+                if (_contactor_welded()) 
+                {
+                    _set_state(ACUState_e::WELDED, current_millis);
+                    break;
+                }
+                else 
+                {
+                    _set_state(ACUState_e::ACTIVE, current_millis);
+                    break;
+                }
             }
-            else 
-            {
-                _set_state(ACUState_e::ACTIVE, current_millis);
-                break;
-            }
-
+            
             break;
         }
         case ACUState_e::WELDED:
         {
-            Serial.println("Welded kachow");
             break;
         }
         

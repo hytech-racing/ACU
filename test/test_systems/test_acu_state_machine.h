@@ -98,10 +98,8 @@ TEST (ACUStateMachineTesting, initial_state) {
     state_machine.tick_state_machine(0);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDCHECK);
 
-    state_machine.tick_state_machine(0);
+    state_machine.tick_state_machine(1000);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::ACTIVE);
-
-
 }   
 
 TEST (ACUStateMachineTesting, charge_state) {
@@ -170,10 +168,13 @@ TEST (ACUStateMachineTesting, fault_states) {
     ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDCHECK);
 
     state_machine.tick_state_machine(0);
+    ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDCHECK);
+
+    state_machine.tick_state_machine(1010);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDED);
 
     is_contactor_welded = false;
-    state_machine.tick_state_machine(0);
+    state_machine.tick_state_machine(2020);
     ASSERT_EQ(state_machine.get_state(), ACUState_e::WELDED);
 
 }   

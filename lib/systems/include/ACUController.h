@@ -1,7 +1,6 @@
 #ifndef ACUCONTROLLER_H
 #define ACUCONTROLLER_H
 
-#include <Arduino.h>
 #include <array>
 #include <stddef.h>
 #include <stdio.h>
