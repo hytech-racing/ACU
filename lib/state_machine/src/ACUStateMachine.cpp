@@ -20,7 +20,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
         }
         case ACUState_e::WELDCHECK:
         {
-            if ((current_millis - _last_state_changed_time > 1000) && _contactor_welded()) 
+            if ((current_millis - _last_state_changed_time > 500) && _contactor_welded()) 
             {
                 _set_state(ACUState_e::WELDED, current_millis);
                 break;

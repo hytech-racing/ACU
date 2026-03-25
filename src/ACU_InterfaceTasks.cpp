@@ -567,7 +567,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print(ADCInterfaceInstance::instance().read_ts_out_filtered());
     Serial.print(" CH 7: ");
     Serial.print(ADCInterfaceInstance::instance().read_pack_out_filtered());
-    Serial.print('/n');
+    Serial.print("\n");
 
     return HT_TASK::TaskResponse::YIELD;
 }
