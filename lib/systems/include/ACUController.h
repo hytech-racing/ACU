@@ -147,7 +147,7 @@ public:
         _acu_state.charging_enabled = false;
     }
 
-    bool check_ts_isolation(volt pack_voltage_adc, volt ts_voltage_adc);
+    bool check_is_contactor_welded(volt pack_voltage_adc, volt ts_voltage_adc);
 
 private:
 

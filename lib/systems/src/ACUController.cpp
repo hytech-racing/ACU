@@ -178,11 +178,11 @@ bool ACUController::_check_invalid_packet_faults(time_ms current_millis)
     return invalid_packet_fault;
 }
 
-bool ACUController::check_ts_isolation(volt pack_voltage_adc, volt ts_voltage_adc) 
+bool ACUController::check_is_contactor_welded(volt pack_voltage_adc, volt ts_voltage_adc) 
 {    
-    _acu_state.low_side_contactor_welded = !(pack_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage);
-    _acu_state.high_side_contactor_welded = !(ts_voltage_adc < _acu_parameters.thresholds.ts_isolation_voltage);
+    _acu_state.low_side_contactor_welded = pack_voltage_adc > _acu_parameters.thresholds.ts_isolation_voltage;
+    _acu_state.high_side_contactor_welded = ts_voltage_adc > _acu_parameters.thresholds.ts_isolation_voltage;
 
-    bool sw_not_ok = _acu_state.low_side_contactor_welded || _acu_state.high_side_contactor_welded;
-    return sw_not_ok;
+    bool is_welded = _acu_state.low_side_contactor_welded || _acu_state.high_side_contactor_welded;
+    return is_welded;
 }

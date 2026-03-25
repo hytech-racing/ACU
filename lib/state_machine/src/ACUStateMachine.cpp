@@ -20,10 +20,10 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
         }
         case ACUState_e::WELDCHECK:
         {
-             if (_contactor_welded()) 
-             {
-                    _set_state(ACUState_e::WELDED, current_millis);
-                    break;
+            if ((current_millis - _last_state_changed_time > 1000) && _contactor_welded()) 
+            {
+                _set_state(ACUState_e::WELDED, current_millis);
+                break;
             }
             else 
             {
@@ -35,6 +35,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
         }
         case ACUState_e::WELDED:
         {
+            Serial.println("Welded kachow");
             break;
         }
         
@@ -98,6 +99,9 @@ void ACUStateMachine::_set_state(ACUState_e new_state, unsigned long curr_millis
     _handle_exit_logic(_current_state, curr_millis);
     _current_state = new_state;
     _handle_entry_logic(_current_state, curr_millis);
+
+    // update any time there is a state change
+    _last_state_changed_time = curr_millis;
 }
 
 void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis)
@@ -130,13 +134,11 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
     {
         case ACUState_e::STARTUP: 
         {
-            _last_state_changed_time = curr_millis;
             _reinitialize_watchdog();
             break;
         }
         case ACUState_e::WELDCHECK:
         {
-            
             break;
         }
         case ACUState_e::WELDED:
