@@ -47,6 +47,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.main_ok_voltage = ADCInterfaceInstance::instance().read_main_ok_voltage();
     out.core_data.main_under_threshold_voltage = ADCInterfaceInstance::instance().read_main_under_threshold_voltage();
     out.core_data.precharge_under_threshold_voltage = ADCInterfaceInstance::instance().read_precharge_under_threshold_voltage();
+    out.core_data.tractive_system_current = ADCInterfaceInstance::instance().read_shunt_current();
 
     // SoC/SoH placeholders (leave unchanged here)
     out.SoC = ACUControllerInstance::instance().get_status().SoC;
@@ -163,7 +164,8 @@ void initialize_all_interfaces()
                                 ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
                                 ACUInterfaces::SHDN_OUT_CONV_FACTOR,
                                 ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
-                                ACUInterfaces::GLV_CONV_FACTOR},
+                                ACUInterfaces::GLV_CONV_FACTOR,
+                                ACUInterfaces::STD_5V_3V3_CONVERSION_FACTOR},
                                     ADCChannels_s {ACUInterfaces::ISO_PACK_N_CHANNEL,
                                 ACUInterfaces::ISO_PACK_P_CHANNEL,
                                 ACUInterfaces::PACK_VOLTAGE_SENSE_CHANNEL,
@@ -283,8 +285,8 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
 HT_TASK::TaskResponse enqueue_EM_measurement_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) 
 {
     EM_MEASUREMENT_t msg = {};
-    msg.em_current_ro = ADCInterfaceInstance::instance().read_shunt_current();
-    msg.em_voltage_ro = BMSDriverInstance_t::instance().get_bms_data().total_voltage;
+    msg.em_current_ro = HYTECH_em_current_ro_toS(ADCInterfaceInstance::instance().read_shunt_current());
+    msg.em_voltage_ro = HYTECH_em_voltage_ro_toS(ADCInterfaceInstance::instance().read_pack_voltage_sense());
     CAN_util::enqueue_msg(&msg, &Pack_EM_MEASUREMENT_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 
     return HT_TASK::TaskResponse::YIELD;
@@ -410,9 +412,7 @@ void print_bms_data(bms_data data)
         Serial.print("CHIP ");
         Serial.print(c);
         Serial.print(": ");
-        // Serial.print(ACUFaultDataInstance::instance().consecutive_fault_count_per_chip[c]);
-        // Serial.print(" ");
-        
+
         Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
         Serial.print(" ");
         Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
@@ -564,7 +564,6 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print(" CH 7: ");
     Serial.print(ADCInterfaceInstance::instance().read_pack_out_filtered());
     Serial.print('/n');
-
 
     return HT_TASK::TaskResponse::YIELD;
 }
