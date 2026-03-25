@@ -92,6 +92,7 @@ private:
     etl::delegate<void()> _set_sw_not_ok_pin_high;
     etl::delegate<void()> _set_sw_not_ok_pin_low;
     etl::delegate<bool()> _received_valid_shdn_out;
+    
     /// @brief setters
     etl::delegate<void()> _enable_cell_balancing;
     etl::delegate<void()> _disable_cell_balancing;
