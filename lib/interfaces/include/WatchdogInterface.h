@@ -17,6 +17,7 @@ struct WatchdogPinout_s
     pin teensy_ok_pin; 
     pin teensy_wd_kick_pin;
     pin teensy_n_latch_en_pin;
+    pin teensy_sw_not_ok_pin;
 };
 struct WatchdogInterfaceParams_s
 {
@@ -59,6 +60,13 @@ public:
     */
     void set_n_latch_en_low();
     void set_n_latch_en_high();
+
+    /**
+     * Set sw not ok
+     * @pre there is a weld detected
+    */
+    void set_sw_not_ok_pin_low();
+    void set_sw_not_ok_pin_high();
 
 private:
     const WatchdogInterfaceParams_s _watchdog_parameters = {};

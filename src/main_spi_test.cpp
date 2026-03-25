@@ -1,6 +1,5 @@
 /* ACU Dependent */
 #include "ACU_Constants.h"
-#include "ACU_Globals.h"
 #include "SystemTimeInterface.h"
 #include "ACU_InterfaceTasks.h"
 #include "ACU_SystemTasks.h"
@@ -28,19 +27,23 @@ const size_t sample_period_ms = 3; // 300 Hz - reads one group per call
 const uint32_t spi_baudrate = 115200;
 const uint8_t num_cells_per_board = 21;
 
+const size_t spi1_mosi_pin = 26;
+const size_t spi1_sck_pin = 27;
+const size_t spi1_miso_pin = 39;
+
 // Initialize chip_select, chip_select_per_chip, and address
 const constexpr int num_cells_per_chip = 21;
 const constexpr int num_groups = 6;
 const constexpr int num_chips = 12; 
-const constexpr int num_chip_selects = 1;
-const std::array<int, num_chip_selects> cs = {10};
-const std::array<int, num_chips> cs_per_chip = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
+const constexpr int num_chip_selects = 2;
+const std::array<int, num_chip_selects> cs = {38, 36};
+const std::array<int, num_chips> cs_per_chip = {38, 38, 38, 38, 38, 38, 36, 36, 36, 36, 36, 36};
 const std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
 // Instantiate BMS Driver Group (non-const so we can call non-const methods)
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
 
-std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
+// std::array<BMSFaultCountData_s, num_chips> chip_invalid_cmd_counts;
 
 // Tracking variables for optimized read testing
 struct ReadGroupStats {
@@ -55,7 +58,7 @@ uint32_t cycle_count = 0;
 bool cycle_complete = false;
 
 template <typename driver_data>
-void print_voltages(driver_data data, uint32_t read_duration_us, CurrentReadGroup_e current_group)
+void print_voltages(driver_data data, uint32_t read_duration_us, ReadGroup_e current_group)
 {
     Serial.println("========================================");
     Serial.print("Read Group: ");
@@ -304,7 +307,12 @@ void print_performance_stats() {
 void setup()
 {
     Serial.begin(spi_baudrate);
-    SPI.begin();
+
+    SPI1.begin();
+    SPI1.setMOSI(spi1_mosi_pin); // set up pins because it's not the default SPI1 MISO
+    SPI1.setSCK(spi1_sck_pin);
+    SPI1.setMISO(spi1_miso_pin);
+    
     BMSGroup.init();
     Serial.println("Setup Finished!");
     Serial.println();
@@ -313,7 +321,7 @@ void setup()
     /* Watchdog Interface */
     WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
                                     ACUInterfaces::WD_KICK_PIN,
-                                    ACUInterfaces::N_LATCH_EN_PIN});
+                                    ACUInterfaces::N_FAULTED_STATE_PIN});
     WatchdogInstance::instance().init();
 }
 
@@ -327,7 +335,7 @@ void loop()
         timer = 0;
 
         // Get the group that WILL BE read by this call
-        CurrentReadGroup_e group_before_read = BMSGroup.get_current_read_group();
+        ReadGroup_e group_before_read = BMSGroup.get_current_read_group();
         uint32_t group_index = static_cast<uint32_t>(group_before_read);
 
         // Start timing the read
@@ -350,7 +358,7 @@ void loop()
         }
 
         // Detect cycle completion: we just read AUX_B and driver advanced back to GROUP_A
-        cycle_complete = (group_before_read == CurrentReadGroup_e::AUX_GROUP_B);
+        cycle_complete = (group_before_read == ReadGroup_e::AUX_GROUP_B);
         if (cycle_complete) {
             cycle_count++;
         }
@@ -364,8 +372,8 @@ void loop()
         }
 
         // Verify state machine advanced correctly
-        CurrentReadGroup_e expected_next = advance_read_group(group_before_read);
-        CurrentReadGroup_e actual_next = BMSGroup.get_current_read_group();
+        ReadGroup_e expected_next = advance_read_group(group_before_read);
+        ReadGroup_e actual_next = BMSGroup.get_current_read_group();
         if (expected_next != actual_next) {
             Serial.println("*** ERROR: State machine did not advance correctly! ***");
             Serial.print("Expected: ");

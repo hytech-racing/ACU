@@ -15,6 +15,7 @@
 #include "ADCInterface.h"
 #include "FaultLatchManager.h"
 #include "SystemTimeInterface.h"
+#include "MAX114XInterface.h"
 /* For Debugging */
 #include "ACUStateMachine.h"
 
@@ -22,12 +23,11 @@
 #include <chrono>
 
 using chip_type = LTC6811_Type_e;
-using BMSDriver_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
-using BMSFaultDataManager_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
-using ACUController_t = ACUControllerInstance<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_BOARD_TEMPS>;
-
+using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
+using BMSFaultDataManagerInstance_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
+// using MAX1148ADCInstance_t = MAX114XInterfaceInstance<ACUConstants::NUM_MAX1148_CHANNELS, ACUInterfaces::MAX114X_VERSION>;
 /**
- * Init Functions - to be called in setup
+ * Init Functions - to be called in setup@
  */
 void initialize_all_interfaces();
 
@@ -54,7 +54,11 @@ void initialize_all_interfaces();
 
 ::HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
+::HT_TASK::TaskResponse enqueue_EM_measurement_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
 ::HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+::HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
