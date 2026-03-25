@@ -46,7 +46,6 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
     out.min_measured_tractive_system_voltage = shared_state.min_measured_ts_out_voltage;
     out.min_measured_shdn_out_voltage = shared_state.min_shdn_out_voltage;
     
-
     out.hv_plus_out_voltage = shared_state.hv_plus_out_voltage;
     out.main_ok_voltage = shared_state.main_ok_voltage;
     out.main_under_threshold_voltage = shared_state.main_under_threshold_voltage;
@@ -98,6 +97,9 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     }();
     out.msg_versions.ht_proto_version.size = version_len;
     std::copy(version_view.begin(), version_view.begin() + version_len, std::begin(out.msg_versions.ht_proto_version.bytes));   
+
+    // temp for loc
+    out.shutdown_has_gone_low = shared_state.core_data.low_side_contactor_welded;
 
     return out;
 }
