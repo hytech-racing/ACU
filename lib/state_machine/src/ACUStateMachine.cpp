@@ -20,7 +20,7 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
         }
         case ACUState_e::WELDCHECK:
         {
-            if (current_millis - _last_state_changed_time > 500)
+            if (current_millis - _last_state_changed_time > precharge_delay_ms)
             {
                 if (_contactor_welded()) 
                 {
@@ -38,6 +38,11 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
         }
         case ACUState_e::WELDED:
         {
+            if (_has_bms_fault() || _has_imd_fault()) 
+            {
+                _set_state(ACUState_e::FAULTED, current_millis);
+                break;
+            }
             break;
         }
         

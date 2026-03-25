@@ -100,6 +100,8 @@ private:
     etl::delegate<void()> _reinitialize_watchdog;
     etl::delegate<void()> _set_n_latch_en_high;
     etl::delegate<void()> _set_n_latch_en_low;
+
+    const uint8_t precharge_delay_ms = 500; // ms
 };
 
 using ACUStateMachineInstance = etl::singleton<ACUStateMachine>;

@@ -1,7 +1,6 @@
 #include "ACUController.h"
 
 
-
 void ACUController::init(time_ms system_start_time, volt pack_voltage)
 {
     _acu_state.last_time_ov_fault_not_present = system_start_time;
@@ -16,9 +15,6 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.high_side_contactor_welded = false;
     _acu_state.low_side_contactor_welded = false;
 }
-
-
-
 
 ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells)
 {   
