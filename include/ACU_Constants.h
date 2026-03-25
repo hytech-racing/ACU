@@ -129,7 +129,7 @@ namespace ACUConstants
     constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 15;
     constexpr uint32_t ALL_DATA_ETHERNET_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 5;
-    constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
+    constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 10000UL; // 20 000 us = 50 Hz
     constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 4;
     
     constexpr uint32_t SAMPLE_ADC_PRIORITY = 20;
@@ -154,7 +154,7 @@ namespace ACUConstants
     constexpr uint32_t DEBUG_PRINT_PERIOD_US = 250000UL; // 250 000 us = 4 Hz
     constexpr uint32_t DEBUG_PRINT_PRIORITY = 20;
 
-    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 2000UL; // 2 000 us = 500 Hz
+    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 100 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
 
     /* Message Interface */
