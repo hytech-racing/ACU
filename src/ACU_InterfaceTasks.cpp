@@ -49,6 +49,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.main_under_threshold_voltage = ADCInterfaceInstance::instance().read_main_under_threshold_voltage();
     out.core_data.precharge_under_threshold_voltage = ADCInterfaceInstance::instance().read_precharge_under_threshold_voltage();
     out.core_data.tractive_system_current = ADCInterfaceInstance::instance().read_shunt_current();
+    out.core_data.acu_sm_state = ACUStateMachineInstance::instance().get_state();
 
     // SoC/SoH placeholders (leave unchanged here)
     auto ACUStatus = ACUControllerInstance::instance().get_status();

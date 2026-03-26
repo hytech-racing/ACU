@@ -39,7 +39,6 @@ struct ACUControllerData_s
     bool balancing_enabled;
     bool high_side_contactor_welded;
     bool low_side_contactor_welded;
-   
 };
 
 struct ACUControllerThresholds_s
