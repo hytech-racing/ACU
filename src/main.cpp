@@ -61,8 +61,8 @@ void setup()
 
     scheduler.schedule(send_CAN_task);
     scheduler.schedule(enqueue_CCU_core_CAN_task);
-    // scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
-    // scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
+    scheduler.schedule(enqueue_CCU_all_voltages_CAN_task);
+    scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
     scheduler.schedule(enqueue_ACU_OK_CAN_task);
     scheduler.schedule(enqueue_EM_measurement_CAN_task);
 

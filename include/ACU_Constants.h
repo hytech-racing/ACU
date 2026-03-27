@@ -121,7 +121,7 @@ namespace ACUConstants
     constexpr uint32_t TICK_SM_PRIORITY = 9;
     constexpr uint32_t KICK_WATCHDOG_PERIOD_US = 5000UL; // 5000 us = 200 Hz
     constexpr uint32_t WATCHDOG_PRIORITY = 1;
-    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 100000UL; // 10 000 us = 100 Hz (since we are reading by group)
+    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 20000UL; // 10 000 us = 100 Hz (since we are reading by group)
     constexpr uint32_t SAMPLE_BMS_PRIORITY = 2;
     constexpr uint32_t EVAL_ACC_PERIOD_US = 20000UL; // 20 000 us = 50 Hz
     constexpr uint32_t EVAL_ACC_PRIORITY = 10;
