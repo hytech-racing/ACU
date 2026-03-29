@@ -37,6 +37,7 @@ std::array<uint8_t, data_size> _receive_SPI_data_DMA() {
     SPI.transfer(nullptr, data_in.data(), data_size, event);
     return data_in;
 }
+
 void ltc_spi_interface::_write_and_delay_low(int cs, int delay_microSeconds) {
     digitalWrite(cs, LOW);
     delayMicroseconds(delay_microSeconds);
