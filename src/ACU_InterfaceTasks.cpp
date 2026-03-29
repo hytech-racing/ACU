@@ -513,7 +513,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println("V");
     Serial.println();
 
-    Serial.println("Balancing status : ");
+    Serial.print("Is charging enabled: "); Serial.print(ACUControllerInstance::instance().get_status().balancing_enabled ? "YES" : "NO"); Serial.println(" Balancing status : ");
     for(bool status : check_and_get_balancing_status()) {
         Serial.print(status);
         Serial.print(" ");
