@@ -5,6 +5,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include <EventResponder.h>
 #include <stdio.h>
 #include <cstdint>
 #include "etl/optional.h"
@@ -19,6 +20,14 @@ enum class LTC6811_Type_e
 {
     LTC6811_1 = 0,  ///< Broadcast mode (used in production)
     LTC6811_2       ///< Address mode (reference only)
+};
+
+enum class SPIState_e
+{
+    IDLE,
+    WAIT_CMD_COMPLETE,
+    WAIT_DATA_COMPLETE,
+    WAIT_ADC_COMPLETE,
 };
 
 // Command Codes
@@ -313,6 +322,8 @@ private:
 
     ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
 
+    SPIState_e _spi_state = SPIState_e::IDLE;
+
     /**
      * PEC:
      * The Packet Error Code (PEC) is a Error Checker–like CRC for CAN–to make sure that command and data
@@ -389,6 +400,8 @@ private:
 
     void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
                                     uint8_t chip_index, uint8_t start_gpio_index);
+
+    void _dma_callback();
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
 
@@ -488,6 +501,10 @@ private:
      * out of the 16 bits
      */
     std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const  
+
+    EventResponder _spi_event;
+
+    size_t _current_cs = 0;
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
