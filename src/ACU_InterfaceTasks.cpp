@@ -394,19 +394,31 @@ void print_bms_data(bms_data data)
     }
     Serial.println();
 
-    // int temp_index = 0;
-    // for (auto bt : data.board_temperatures)
-    // {
-    //     Serial.print("board temp id ");
-    //     Serial.print(temp_index);
-    //     Serial.print(" val ");
-    //     Serial.print("");
-    //     Serial.print(bt);
-    //     Serial.print("\t");
-    //     if (temp_index % 4 == 3)
-    //         Serial.println();
-    //     temp_index++;
-    // }
+    int temp_index = 0;
+    for (auto bt : data.board_temperatures)
+    {
+        Serial.print("board temp id ");
+        Serial.print(temp_index);
+        Serial.print(" val ");
+        Serial.print("");
+        Serial.print(bt);
+        Serial.print("\t");
+        if (temp_index % 4 == 3)
+            Serial.println();
+        temp_index++;
+    }
+
+    chip_index = 0;
+    Serial.println("Balancing status : ");
+    for(bool status : check_and_get_balancing_status()) {
+        if (status)
+        {
+            Serial.print("Chip "); Serial.print(chip_index); Serial.print(" DISC\t");
+        }
+        chip_index++;
+    }
+    Serial.println();
+
     Serial.print("Number of Global Faults: ");
     auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
     Serial.println(faults.max_consecutive_invalid_packet_count);
@@ -489,8 +501,6 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.print("Maximum Cell Temp: ");
     Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
 
-    // Serial.printf("Cell Balance Statuses: %d\n", ACUControllerInstance::instance().calculate_cell_balance_statuses());
-
     Serial.print("ACU State: ");
     Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
 
@@ -503,11 +513,12 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println("V");
     Serial.println();
 
-    // Serial.println("Balancing status : ");
-    // for(bool status : check_and_get_balancing_status()) {
-    //     Serial.print(status);
-    //     Serial.print(" ");
-    // }
+    Serial.println("Balancing status : ");
+    for(bool status : check_and_get_balancing_status()) {
+        Serial.print(status);
+        Serial.print(" ");
+    }
+    Serial.println();
 
     Serial.print("Number of Global Faults: ");
     auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
@@ -537,25 +548,6 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     }
     Serial.println();
 
-    //read_iso_pack
-    //read_pack_voltage_sense
-    //read_shunt_current
-    //read_differential_
-    // for (int i = 0; i < adc_default_parameters::NUM_MAX1148_CHANNELS; i++) {
-    //     Serial.print("CH");
-    //     Serial.print(i);
-    //     Serial.print(": ");
-    //     Serial.print("Raw = ");
-    //     Serial.print(ADCInterfaceInstance);
-    //     Serial.print(" Converted = ");
-    //     Serial.print(MAX1148ADCInstance_t::instance().getLastSampleConverted(i));
-    //     Serial.print('\n');
-    //     // skip other half of differential pair
-    //     if (i == 0 || i == 4) {
-    //         i++;
-    //     }
-    // }
-    // Serial.print('\n');
     Serial.println("\nMAX114X Output:");
     Serial.print(" CH 0&1: ");
     Serial.print(ADCInterfaceInstance::instance().read_iso_pack());

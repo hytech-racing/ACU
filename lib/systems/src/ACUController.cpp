@@ -109,7 +109,7 @@ void ACUController::calculate_cell_balance_statuses(bool* output, const volt* vo
     for (size_t cell = 0; cell < num_of_voltage_cells; cell++)
     {
         volt cell_voltage = voltages[cell]; //NOLINT
-        if ((cell_voltage-min_voltage > _acu_parameters.thresholds.v_diff_to_init_cb) && (cell_voltage > _acu_parameters.thresholds.min_discharge_voltage_thresh)) // && max_voltage - (cell_voltage) < 200 &&
+        if (((cell_voltage - min_voltage) > _acu_parameters.thresholds.v_diff_to_init_cb) && (cell_voltage > _acu_parameters.thresholds.min_discharge_voltage_thresh)) // && max_voltage - (cell_voltage) < 200 &&
         {
             output[cell] = true; //NOLINT
         } else 
