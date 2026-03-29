@@ -38,12 +38,10 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     if (allow_balancing)
     {
         _acu_state.balancing_enabled = true;
-        // _acu_state.cell_balancing_statuses = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
     }
     else
-    { // Fill with zeros, no balancing
+    {
         _acu_state.balancing_enabled = false;
-        // _acu_state.cell_balancing_statuses.fill(0);
     }
 
     // Update voltage fault time stamps with IR compensation
