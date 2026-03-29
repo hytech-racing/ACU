@@ -8,6 +8,16 @@
 
 namespace ltc_spi_interface {
     /**
+     * @brief initialize Event Responder for DMA
+    */
+    void init_DMA();
+
+    bool is_busy();
+
+    template <size_t buffer_size>
+    void begin_transfer(std::array<uint8_t, buffer_size> tx_buf, std::array<uint8_t, buffer_size> rx_buf, EventResponder& event);
+
+    /**
      * Sends a SPI command to write data to the registers
      * @param cs chip select
      * @param cmd_and_pec 4 bytes if using _1 model, 24 bytes for _2 model

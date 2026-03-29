@@ -60,6 +60,65 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
                             .max_cell_temp = ref_max_min_defaults::MAX_CELL_TEMP,
                             .max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP,
                         };
+
+    _spi_event.setContext(this);
+    _spi_event.attachImmediate([](EventResponderRef ref) {
+        SPI1.endTransaction();
+        static_cast<BMSDriverGroup*>(ref.getContext())->_dma_callback();
+    });
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
+{
+    // CS was being held low — release it now
+    ltc_spi_interface::_write_and_delay_high(_chip_select[_current_cs], 5);
+
+    // if (_spi_state == SPIState_e::WAIT_DATA_COMPLETE) {
+    //     _finish_current_group();
+
+    //     _current_cs++;
+    //     if (_current_cs < num_chip_selects) {
+    //         _start_next_cs_transfer(); // kicks off next DMA, returns immediately
+    //         return;
+    //     }
+
+    //     _bms_data.total_voltage     = _max_min_reference.total_voltage;
+    //     _bms_data.avg_cell_voltage  = _bms_data.total_voltage / num_cells;
+    //     _bms_data.average_cell_temperature =
+    //         _max_min_reference.total_thermistor_temps / (4 * num_chips);
+
+    //     if (_current_read_group == ReadGroup_e::CV_GROUP_D) {
+    //         _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
+    //         _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
+    //         _max_min_reference.min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE;
+    //         _max_min_reference.max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE;
+    //     }
+    //     if (_current_read_group == ReadGroup_e::AUX_GROUP_B) {
+    //         _bms_data.max_cell_temp  = _max_min_reference.max_cell_temp;
+    //         _bms_data.min_cell_temp  = _max_min_reference.min_cell_temp;
+    //         _bms_data.max_board_temp = _max_min_reference.max_board_temp;
+    //         _max_min_reference.min_cell_temp  = ref_max_min_defaults::MIN_CELL_TEMP;
+    //         _max_min_reference.max_cell_temp  = ref_max_min_defaults::MAX_CELL_TEMP;
+    //         _max_min_reference.max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP;
+    //     }
+
+    //     ReadGroup_e just_finished = _current_read_group;
+    //     _current_read_group = advance_read_group(_current_read_group);
+
+    //     if (just_finished == ReadGroup_e::AUX_GROUP_A) {
+    //         _start_cell_voltage_ADC_conversion(); // blocking is fine here — tiny cmd
+    //     }
+    //     if (just_finished == ReadGroup_e::CV_GROUP_A) {  // note: after advance, was AUX_GROUP_B
+    //         _start_GPIO_ADC_conversion();
+    //     }
+
+    //     _spi_state = SPIState_e::IDLE; // ready for next read_data() call
+    // }
+
+    // if (_spi_state == SPIState_e::WAIT_ADC_COMPLETE) {
+    //     _spi_state = SPIState_e::IDLE;
+    // }
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
