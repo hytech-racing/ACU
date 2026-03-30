@@ -23,13 +23,17 @@ void ADCInterface::init(uint32_t init_millis)
     _in_imd_startup_period = true; 
 }
 
-void ADCInterface::tick() {
+void ADCInterface::tick() 
+{
     _max114x_instance.tick();
 }
 
-bool ADCInterface::read_imd_ok(uint32_t curr_millis) {
-    if (_in_imd_startup_period) {
-        if ((curr_millis - _init_millis) >= _adc_parameters.configs.imd_startup_time) { // give 2 seconds for IMD to startup
+bool ADCInterface::read_imd_ok(uint32_t curr_millis) 
+{
+    if (_in_imd_startup_period) 
+    {
+        if ((curr_millis - _init_millis) >= _adc_parameters.configs.imd_startup_time) 
+        {   // give 2 seconds for IMD to startup
             _in_imd_startup_period = false;
         }
         return true;
@@ -120,19 +124,23 @@ volt ADCInterface::read_global_lv_value()
     return data;
 }
 
-float ADCInterface::read_iso_pack() {
+float ADCInterface::read_iso_pack() 
+{
     return _max114x_instance.get_last_sample_converted(_adc_parameters.channels.iso_pack_n_channel);
 }
 
-float ADCInterface::read_pack_voltage_sense() {
+float ADCInterface::read_pack_voltage_sense() 
+{
     return _max114x_instance.get_last_sample_converted(_adc_parameters.channels.pack_voltage_sense_channel);
 }
 
-float ADCInterface::read_shunt_current() {
+float ADCInterface::read_shunt_current() 
+{
     return _max114x_instance.get_last_sample_converted(_adc_parameters.channels.shunt_current_out_channel);
 }
 
-float ADCInterface::read_differential_shunt_current() {
+float ADCInterface::read_differential_shunt_current() 
+{
     return _max114x_instance.get_last_sample_converted(_adc_parameters.channels.shunt_current_p_channel);
 }
 
