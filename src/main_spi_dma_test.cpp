@@ -27,15 +27,17 @@ elapsedMillis timer = 0;
 void asyncEventResponder(EventResponderRef event_responder)
 {
     dma_busy = false;
+
     digitalWrite(38, HIGH);
+    delayMicroseconds(1);
     SPI1.endTransaction();
 
-    Serial.println("RX DATA after Callback");
-    for (int i = 0; i < buffer_size; i++)
+    Serial.println("RX DATA after Callback:");
+    for (size_t i = 0; i < buffer_size; i++)
     {   
-        Serial.println(rx_buf[i]);
+        Serial.print(rx_buf[i], HEX); Serial.print(" ");
     }
-    
+    Serial.println();
 }
 
 void setup()
@@ -62,20 +64,24 @@ void setup()
 
 void loop()
 {
-    if (timer > 5000 && !dma_busy)
+    if (timer > 1)
     {
+        Serial.print("TIMER AT: "); Serial.println(timer);
         timer = 0;
+        if (!dma_busy)
+        {
+            auto start = sys_time::hal_micros();
+            SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
 
-        auto start = sys_time::hal_millis();
-        SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
+            digitalWrite(38, LOW);
+            delayMicroseconds(1);
+            
+            SPI1.transfer(tx_buf.data(), rx_buf.data(), buffer_size, spi_event);
+            dma_busy = true;
 
-        digitalWrite(38, LOW);
-        
-        SPI1.transfer(tx_buf.data(), rx_buf.data(), buffer_size, spi_event);
-        dma_busy = true;
-
-        auto end = sys_time::hal_millis();
-        auto diff = end - start;
-        Serial.print("Send and Received Time: "); Serial.println(diff);
+            auto end = sys_time::hal_micros();
+            auto diff = end - start;
+            Serial.print("Send and Received Time: "); Serial.println(diff);
+        }
     }
 }
