@@ -18,13 +18,13 @@
 
 enum class LTC6811_Type_e
 {
-    LTC6811_1 = 0,  ///< Broadcast mode (used in production)
-    LTC6811_2       ///< Address mode (reference only)
+    LTC6811_1 = 0,  // Broadcast mode (used in production)
+    LTC6811_2       // Address mode (reference only)
 };
 
 enum class SPIState_e
 {
-    IDLE,
+    IDLE = 0,
     WAIT_CMD_COMPLETE,
     WAIT_DATA_COMPLETE,
     WAIT_ADC_COMPLETE,
@@ -188,7 +188,6 @@ class BMSDriverGroup
 {
 public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
-
     constexpr static size_t num_cell_temps = (num_chips * 4);
     constexpr static size_t num_board_temps = num_chips;
 
