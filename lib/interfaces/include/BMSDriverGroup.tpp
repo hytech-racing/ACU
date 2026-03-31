@@ -71,7 +71,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
 {
-    // CS was being held low — release it now
+    // CS was being held low, so et it back high
     ltc_spi_interface::_write_and_delay_high(_chip_select[_current_cs], 5);
 
     // if (_spi_state == SPIState_e::WAIT_DATA_COMPLETE) {
@@ -182,6 +182,8 @@ BMSCoreData_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_co
     {
         BMSCoreData_s out{};
 
+        noInterrupts();
+
         // Basic voltages
         out.min_cell_voltage = _bms_data.min_cell_voltage;
         out.max_cell_voltage = _bms_data.max_cell_voltage;
@@ -192,13 +194,15 @@ BMSCoreData_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_co
         out.min_cell_temp  = _bms_data.min_cell_temp;
         out.max_board_temp = _bms_data.max_board_temp;
 
+        interrupts();
+
         return out;
     }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_data()
-{
+{   
     return _bms_data;
 }
 
