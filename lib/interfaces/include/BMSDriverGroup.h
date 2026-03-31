@@ -16,6 +16,8 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 
+using namespace std;
+
 enum class LTC6811_Type_e
 {
     LTC6811_1 = 0,  // Broadcast mode (used in production)
@@ -25,9 +27,9 @@ enum class LTC6811_Type_e
 enum class SPIState_e
 {
     IDLE = 0,
-    WAIT_CMD_COMPLETE,
-    WAIT_DATA_COMPLETE,
-    WAIT_ADC_COMPLETE,
+    WAIT_READ_COMPLETE,
+    WAIT_WRITE_COMPLETE,
+    WAIT_POLL_ADC_COMPLETE,
 };
 
 // Command Codes
@@ -119,10 +121,10 @@ struct ValidPacketData_s
 template <size_t num_chips, size_t num_cells, size_t num_board_thermistors>
 struct BMSData_s
 {
-    std::array<ValidPacketData_s, num_chips> valid_read_packets;
-    std::array<volt, num_cells> voltages;
-    std::array<celsius, 4 * num_chips> cell_temperatures;
-    std::array<celsius, num_board_thermistors> board_temperatures;
+    array<ValidPacketData_s, num_chips> valid_read_packets;
+    array<volt, num_cells> voltages;
+    array<celsius, 4 * num_chips> cell_temperatures;
+    array<celsius, num_board_thermistors> board_temperatures;
     volt min_cell_voltage;
     volt max_cell_voltage;
     celsius max_cell_temp;
@@ -190,13 +192,15 @@ public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     constexpr static size_t num_cell_temps = (num_chips * 4);
     constexpr static size_t num_board_temps = num_chips;
+    constexpr static size_t read_buffer_size = 4 + ((num_chips / num_chip_selects) * 8);
+    constexpr static size_t write_buffer_size = 4;
 
     using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
 
     BMSDriverGroup(
-        const std::array<int, num_chip_selects>& cs,
-        const std::array<int, num_chips>& cs_per_chip,
-        const std::array<int, num_chips>& addr,
+        const array<int, num_chip_selects>& cs,
+        const array<int, num_chips>& cs_per_chip,
+        const array<int, num_chips>& addr,
         const BMSDriverGroupConfig_s default_params
     );
     
@@ -220,8 +224,7 @@ public:
      * @post store all temperature data into the board_temperatures container
      * AND record the maximum value and locations
      */
-    // void read_thermistor_and_humidity();
-    BMSDriverData read_data();
+    void read_data();
 
     /**
      * Getter function to retrieve the ACUData structure
@@ -240,12 +243,12 @@ public:
      * @pre needs access to undervoltage, overvoltage, configuration MACROS, and discharge data
      * @post sends packaged data over SPI
      */
-    void write_configuration(uint8_t dcto_mode, const std::array<uint16_t, num_chips> &cell_balance_statuses);
+    void write_configuration(uint8_t dcto_mode, const array<uint16_t, num_chips> &cell_balance_statuses);
 
     /**
      * Alternative header for configuration function call
      */
-    void write_configuration(const std::array<bool, num_cells> &cell_balance_statuses);
+    void write_configuration(const array<bool, num_cells> &cell_balance_statuses);
 
     /* -------------------- OBSERVABILITY FUNCTIONS -------------------- */
 
@@ -280,7 +283,7 @@ public:
      * @note Each chip has 6 validity flags (cells 1-3, 4-6, 7-9, 10-12, GPIO 1-3, 4-6)
      * @note Useful for fault detection and EMI resilience monitoring
      */
-    const std::array<ValidPacketData_s, num_chips>& get_validity_data() {
+    const array<ValidPacketData_s, num_chips>& get_validity_data() {
         return _bms_data.valid_read_packets;
     }
 
@@ -304,7 +307,7 @@ public:
      * @note Each bit represents one cell's balance enable status
      * @note Useful for verifying write_configuration() worked correctly
      */
-    const std::array<uint16_t, num_chips>& get_cell_discharge_enable() {
+    const array<uint16_t, num_chips>& get_cell_discharge_enable() {
         return _cell_discharge_en;
     }
 
@@ -343,7 +346,7 @@ private:
 
     void _start_wakeup_protocol(size_t cs);
 
-    BMSDriverData _read_data_through_broadcast();
+    void _read_data_through_broadcast();
 
     /**
      * REFERENCE ONLY: LTC6811-2 ADDRESS MODE IS BROKEN AND UNUSED
@@ -352,7 +355,7 @@ private:
      *
      * BUG #1 (Line 318 in .tpp): Function signature mismatch
      *   - Calls: _load_cell_voltages(..., data_in_cell_voltages_1_to_12, chip, battery_cell_count)
-     *   - Expects: _load_cell_voltages(..., std::array<uint8_t, 6>, chip_index, start_cell_index)
+     *   - Expects: _load_cell_voltages(..., array<uint8_t, 6>, chip_index, start_cell_index)
      *   - Problem: Passing 24-byte array where 6-byte array expected, wrong parameters
      *
      * BUG #2 (Line 319 in .tpp): Wrong function called
@@ -367,15 +370,15 @@ private:
      * PRODUCTION: All production code uses LTC6811_1 (broadcast mode) exclusively.
      * See ACU_InterfaceTasks.cpp lines 27-28.
      */
-    BMSDriverData _read_data_through_address();
+    void _read_data_through_address();
 
     void _store_temperature_humidity_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, const uint16_t &gpio_in, uint8_t gpio_index, uint8_t chip_index);
 
     void _store_voltage_data(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_reference, volt voltage_in, uint8_t cell_index);
 
-    void _write_config_through_broadcast(uint8_t dcto_mode, std::array<uint8_t, 6> buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
+    void _write_config_through_broadcast(uint8_t dcto_mode, array<uint8_t, 6> buffer_format, const array<uint16_t, num_chips> &cell_balance_statuses);
 
-    void _write_config_through_address(uint8_t dcto_mode, const std::array<uint8_t, 6>& buffer_format, const std::array<uint16_t, num_chips> &cell_balance_statuses);
+    void _write_config_through_address(uint8_t dcto_mode, const array<uint8_t, 6>& buffer_format, const array<uint16_t, num_chips> &cell_balance_statuses);
 
     /**
      * Writes command to start cell voltage ADC converion
@@ -390,17 +393,19 @@ private:
      */
     void _start_GPIO_ADC_conversion();
 
-    void _start_ADC_conversion_through_broadcast(const std::array<uint8_t, 2> &cmd_code);
+    void _start_ADC_conversion_through_broadcast(const array<uint8_t, 2> &cmd_code);
 
-    void _start_ADC_conversion_through_address(const std::array<uint8_t, 2>& cmd_code);
+    void _start_ADC_conversion_through_address(const array<uint8_t, 2>& cmd_code);
 
-    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_cv_group,
+    void _load_cell_voltages(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const array<uint8_t, 6> &data_in_cv_group,
                                       uint8_t chip_index, uint8_t start_cell_index);
 
-    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const std::array<uint8_t, 6> &data_in_gpio_group,
+    void _load_auxillaries(BMSDriverData &bms_data, ReferenceMaxMin_s &max_min_ref, const array<uint8_t, 6> &data_in_gpio_group,
                                     uint8_t chip_index, uint8_t start_gpio_index);
 
     void _dma_callback();
+
+    void _process_broadcast_read_rx_buffer();
 
     /* -------------------- GETTER FUNCTIONS -------------------- */
 
@@ -408,7 +413,7 @@ private:
      * @brief When the inverters are idle, comms get funky from EMI. This function allows us to determine if the acu reads valid packets
      * @return bool of whether the PEC correctly reflects the buffer being given. If no, then we know that EMI (likely) is causing invalid reads
      */
-    bool _check_if_valid_packet(const std::array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator);
+    bool _check_if_valid_packet(const array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator);
 
     /**
      * Generates a Packet Error Code
@@ -418,19 +423,19 @@ private:
      * @param length length of data
      * @return unsigned 16 bit PEC, array of uint8_t of length 2
      */
-    std::array<uint8_t, 2> _calculate_specific_PEC(const uint8_t *data, int length);
+    array<uint8_t, 2> _calculate_specific_PEC(const uint8_t *data, int length);
 
     /**
      * Generates a formmatted 2 byte array for the Command bytes
      * @return unsigned 8 bit array of length 2
      */
-    std::array<uint8_t, 2> _generate_formatted_CMD(CMD_CODES_e command, int ic_index);
+    array<uint8_t, 2> _generate_formatted_CMD(CMD_CODES_e command, int ic_index);
 
     /**
      * Generates Command and PEC as one byte array of length 4: CMD0, CMD1, PEC0, PEC1
      * @return unsigned 8 bit, length 4
      */
-    std::array<uint8_t, 4> _generate_CMD_PEC(CMD_CODES_e command, int ic_index);
+    array<uint8_t, 4> _generate_CMD_PEC(CMD_CODES_e command, int ic_index);
 
     /**
      * @return usable command address for LTC6811_2
@@ -445,7 +450,7 @@ private:
      * This implementation is straight from: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
      * On page <76>, section: Applications Information
      */
-    constexpr std::array<uint16_t, 256> _initialize_Pec_Table();
+    constexpr array<uint16_t, 256> _initialize_Pec_Table();
 
     /* MEMBER VARIABLES */
     BMSDriverData _bms_data;
@@ -462,7 +467,7 @@ private:
      * It can only be 9 or 10
      * NOTE: needs to be initialized
      */
-    const std::array<int, num_chip_selects> _chip_select;
+    const array<int, num_chip_selects> _chip_select;
     
     /**
      * We will need this for both models of the IC
@@ -470,7 +475,7 @@ private:
      * It can only be 9 or 10
      * NOTE: needs to be initialized
      */
-    const std::array<int, num_chips> _chip_select_per_chip;
+    const array<int, num_chips> _chip_select_per_chip;
     
     /**
      * We will only end up using the address if this is a LTC6811-2
@@ -480,7 +485,7 @@ private:
      * Those segments correspond to 2 ICs each, so the instance with chip_select 9
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
      */
-    const std::array<int, num_chips> _address; // constant
+    const array<int, num_chips> _address; // constant
     
     /**
      * REPLACING SEPARATE CONFIGURATION FILE
@@ -492,18 +497,23 @@ private:
      * Pointer to the PEC table we will use to calculate new PEC tables
      */
     // uint16_t _pec15Table[256];
-    const std::array<uint16_t, 256> _pec15Table; //must be below _config to be initialized after it
+    const array<uint16_t, 256> _pec15Table; //must be below _config to be initialized after it
     
     /**
      * Stores the balance statuses for all the chips
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
      * out of the 16 bits
      */
-    std::array<uint16_t, num_chips> _cell_discharge_en = {}; // not const  
+    array<uint16_t, num_chips> _cell_discharge_en = {}; // not const  
 
     EventResponder _spi_event;
 
-    size_t _current_cs = 0;
+    size_t _current_cs_index = 0;
+
+    array<uint8_t, read_buffer_size> _tx_read_buffer;
+    array<uint8_t, read_buffer_size> _rx_read_buffer;
+    array<uint8_t, write_buffer_size> _tx_write_buffer;
+    array<uint8_t, write_buffer_size> _rx_write_buffer;
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
