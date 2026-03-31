@@ -145,16 +145,14 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
     {
         for (size_t pulse_index = 0; pulse_index < ((num_chips + 1) / num_chip_selects); pulse_index++)
         {
-            ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
-            SPI1.transfer16(0);
-            ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400);
+            ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 250);
+            ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 250);
         }
     }
     else
     {
-        ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 400);
-        SPI1.transfer(0);
-        ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 400); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+        ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 250);
+        ltc_spi_interface::_write_and_delay_high(_chip_select[cs], 250); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
     }
 }
 
@@ -561,8 +559,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration
     buffer_format[2] = ((_config.over_voltage_threshold & 0x00F) << 4) | ((_config.under_voltage_threshold & 0xF00) >> 8);
     buffer_format[3] = ((_config.over_voltage_threshold & 0xFF0) >> 4);
 
-    _start_wakeup_protocol();
-
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
         _write_config_through_broadcast(dcto_mode, buffer_format, cell_balance_statuses);
@@ -597,6 +593,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
                 j++;
             }
         }
+        _start_wakeup_protocol(cs);
         // ltc_spi_interface::write_registers_command<data_size>(_chip_select[cs], cmd_and_pec, full_buffer);
     }
 }
@@ -660,17 +657,16 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversion_through_broadcast(const array<uint8_t, 2> &cmd_code)
 {
-    // Leave the command code as is
-    array<uint8_t, 2> cc = {cmd_code[0], cmd_code[1]};
-    array<uint8_t, 2> pec = _calculate_specific_PEC(cc.data(), 2);
-    array<uint8_t, 4> cmd_and_pec;
-    copy_n(cmd_code.begin(), 2, cmd_and_pec.begin()); // Copy first two bytes (cmd)
-    copy_n(pec.begin(), 2, cmd_and_pec.begin() + 2);  // Copy next two bytes (pec)
+    array<uint8_t, 4> cmd_and_pec = _generate_CMD_PEC(cmd_code, -1);
 
     // Needs to be sent on each chip select line
-    for (size_t cs = 0; cs < num_chip_selects; cs++) {
+    for (size_t cs = 0; cs < num_chip_selects; cs++) 
+    {
         _start_wakeup_protocol(cs);
-        // ltc_spi_interface::adc_conversion_command(_chip_select[cs], cmd_and_pec, (num_chips / num_chip_selects));
+
+        SPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE3));
+        ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 1);
+        ltc_spi_interface::begin_transfer<write_buffer_size>(_tx_write_buffer, _rx_write_buffer, _spi_event);
     }
 }
 
@@ -741,8 +737,6 @@ array<uint8_t, 4> BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_gener
     copy_n(pec.data(), 2, cmd_pec.data() + 2); // Copy next two bytes (pec)
     return cmd_pec;
 }
-
-
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_valid_packet(const array<uint8_t, 8 * (num_chips / num_chip_selects)> &data, size_t param_iterator)
