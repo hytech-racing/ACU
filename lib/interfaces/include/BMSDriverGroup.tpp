@@ -422,10 +422,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_
     if (gpio_count > 0) {
         _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
     }
+
     _bms_data.max_cell_temp = _bms_data.cell_temperatures[_bms_data.max_cell_temperature_cell_id];
     _bms_data.max_board_temp = _bms_data.board_temperatures[_bms_data.max_board_temperature_segment_id];
-    
-    return _bms_data;
 }
 
 
@@ -593,8 +592,14 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
                 j++;
             }
         }
+        copy(cmd_and_pec.begin(), cmd_and_pec.end(), _tx_read_buffer.begin());
+        copy(full_buffer.begin(), full_buffer.end(), _tx_read_buffer.begin() + 4);
+
         _start_wakeup_protocol(cs);
-        // ltc_spi_interface::write_registers_command<data_size>(_chip_select[cs], cmd_and_pec, full_buffer);
+
+        SPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE3));
+        ltc_spi_interface::_write_and_delay_low(_chip_select[cs], 1);
+        ltc_spi_interface::begin_transfer<read_buffer_size>(_tx_read_buffer, _rx_read_buffer, _spi_event);
     }
 }
 
