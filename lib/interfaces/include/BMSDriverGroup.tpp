@@ -85,7 +85,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
     if (_spi_state == SPIState_e::WAIT_READ_COMPLETE)
     {
         // Unpack and postprocess
-        _process_broadcast_read_rx_buffer();
+        if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
+        {
+            _process_broadcast_read_rx_buffer();
+        }
+        else
+        {
+            _process_addressed_read_rx_buffer();
+        }
+        
 
         // After postprocessing, we need to continue sending broadcast commands if there are other chip selects available
         _current_cs_index++;
@@ -95,7 +103,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
             return;
         }
 
-        // else we do a complete update 
+        // Reset chip select and address indexing state variables
+        _current_cs_index = 0;
+        _current_chip_address_index = 0;
+
+        // Complete update 
         _bms_data.total_voltage     = _max_min_reference.total_voltage;
         _bms_data.avg_cell_voltage  = _bms_data.total_voltage / num_cells;
         _bms_data.average_cell_temperature =
@@ -189,25 +201,25 @@ constexpr array<uint16_t, 256> BMSDriverGroup<num_chips, num_chip_selects, chip_
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 BMSCoreData_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_core_data()
-    {
-        BMSCoreData_s out{};
+{
+    BMSCoreData_s out{};
 
-        noInterrupts();
+    noInterrupts();
 
-        // Basic voltages
-        out.min_cell_voltage = _bms_data.min_cell_voltage;
-        out.max_cell_voltage = _bms_data.max_cell_voltage;
-        out.pack_voltage = _bms_data.total_voltage; 
+    // Basic voltages
+    out.min_cell_voltage = _bms_data.min_cell_voltage;
+    out.max_cell_voltage = _bms_data.max_cell_voltage;
+    out.pack_voltage = _bms_data.total_voltage; 
 
-        // Temps
-        out.max_cell_temp  = _bms_data.max_cell_temp;
-        out.min_cell_temp  = _bms_data.min_cell_temp;
-        out.max_board_temp = _bms_data.max_board_temp;
+    // Temps
+    out.max_cell_temp  = _bms_data.max_cell_temp;
+    out.min_cell_temp  = _bms_data.min_cell_temp;
+    out.max_board_temp = _bms_data.max_board_temp;
 
-        interrupts();
+    interrupts();
 
-        return out;
-    }
+    return out;
+}
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
@@ -492,7 +504,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_
     _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_cells;
 
     // Avoid divide by zero - skip calculation if no GPIOs were read
-    if (gpio_count > 0) {
+    if (gpio_count > 0) 
+    {
         _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
     }
 
@@ -509,15 +522,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages
 
     uint8_t cell_global_offset = (chip_index / 2) * 21 + (chip_index % 2) * 12;
 
-    for (int cell_Index = start_cell_index; cell_Index < start_cell_index+3; cell_Index++)
+    for (int cell_index = start_cell_index; cell_index < start_cell_index+3; cell_index++)
     {
-        copy_n(data_in_cv_group.begin() + (cell_Index - start_cell_index) * 2, 2, data_in_cell_voltage.begin());
+        copy_n(data_in_cv_group.begin() + (cell_index - start_cell_index) * 2, 2, data_in_cell_voltage.begin());
 
         uint16_t voltage_in = data_in_cell_voltage[1] << 8 | data_in_cell_voltage[0];
 
         float voltage_converted = voltage_in * _config.cv_adc_lsb_voltage;
 
-        uint8_t cell_voltage_index = cell_global_offset + cell_Index;
+        uint8_t cell_voltage_index = cell_global_offset + cell_index;
         // Calculate the correct global voltage array index
         _store_voltage_data(bms_data, max_min_ref, voltage_converted, cell_voltage_index);
     }
