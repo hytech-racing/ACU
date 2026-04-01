@@ -85,7 +85,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
     if (_spi_state == SPIState_e::WAIT_READ_COMPLETE)
     {
         // Unpack and postprocess
-        _finish_current_group();
+        _process_broadcast_read_rx_buffer();
 
         // After postprocessing, we need to continue sending broadcast commands if there are other chip selects available
         _current_cs_index++;
