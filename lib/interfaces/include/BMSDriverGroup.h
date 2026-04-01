@@ -192,8 +192,8 @@ public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     constexpr static size_t num_cell_temps = (num_chips * 4);
     constexpr static size_t num_board_temps = num_chips;
-    constexpr static size_t read_buffer_size = 4 + ((num_chips / num_chip_selects) * 8);
-    constexpr static size_t write_buffer_size = 4;
+    constexpr static size_t cmd_and_data_buffer_size = 4 + ((num_chips / num_chip_selects) * 8);
+    constexpr static size_t cmd_only_buffer_size = 4;
 
     using BMSDriverData = BMSData_s<num_chips, num_cells, num_chips>;
 
@@ -509,11 +509,12 @@ private:
     EventResponder _spi_event;
 
     size_t _current_cs_index = 0;
+    size_t _current_chip_address_index = 0;
 
-    array<uint8_t, read_buffer_size> _tx_read_buffer;
-    array<uint8_t, read_buffer_size> _rx_read_buffer;
-    array<uint8_t, write_buffer_size> _tx_write_buffer;
-    array<uint8_t, write_buffer_size> _rx_write_buffer;
+    array<uint8_t, cmd_and_data_buffer_size> _tx_read_buffer;
+    array<uint8_t, cmd_and_data_buffer_size> _rx_read_buffer;
+    array<uint8_t, cmd_only_buffer_size> _tx_write_buffer;
+    array<uint8_t, cmd_only_buffer_size> _rx_write_buffer;
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>

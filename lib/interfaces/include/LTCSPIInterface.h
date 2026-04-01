@@ -35,8 +35,8 @@ namespace ltc_spi_interface {
      * @param delay_us is the number of microseconds to delay for 
      * @return void
     */
-    inline void _write_and_delay_high(int cs, int delay_us);
-    inline void _write_and_delay_low(int cs, int delay_us);
+    inline void write_and_delay_high(int cs, int delay_us);
+    inline void write_and_delay_low(int cs, int delay_us);
 }
 
 #include <LTCSPIInterface.tpp>

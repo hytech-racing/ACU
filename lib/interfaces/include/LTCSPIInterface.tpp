@@ -22,13 +22,13 @@ namespace ltc_spi_interface
         SPI1.transfer(tx_buf.data(), rx_buf.data(), buffer_size, event);
     }
 
-    void _write_and_delay_low(int cs, int delay_us) 
+    void write_and_delay_low(int cs, int delay_us) 
     {
         digitalWrite(cs, LOW);
         delayMicroseconds(delay_us);
     }
 
-    void _write_and_delay_high(int cs, int delay_us) 
+    void write_and_delay_high(int cs, int delay_us) 
     {
         digitalWrite(cs, HIGH);
         delayMicroseconds(delay_us);
