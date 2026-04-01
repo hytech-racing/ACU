@@ -30,6 +30,7 @@ extern ::etl::delegate<bool()> has_imd_fault;
 extern ::etl::delegate<bool()> received_valid_shdn_out;
 extern ::etl::delegate<void()> enable_cell_balancing;
 extern ::etl::delegate<void()> disable_cell_balancing;
+extern ::etl::delegate<bool()> contactor_welded;
 extern ::etl::delegate<void()> disable_watchdog;
 extern ::etl::delegate<void()> reinitialize_watchdog;
 extern ::etl::delegate<void()> disable_n_latch_en;
@@ -38,5 +39,7 @@ extern ::etl::delegate<void()> reset_latch;
 ::HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
 ::HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
+
+
 
 #endif 

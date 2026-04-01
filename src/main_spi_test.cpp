@@ -34,11 +34,11 @@ const size_t spi1_miso_pin = 39;
 // Initialize chip_select, chip_select_per_chip, and address
 const constexpr int num_cells_per_chip = 21;
 const constexpr int num_groups = 6;
-const constexpr int num_chips = 2; 
-const constexpr int num_chip_selects = 1;
-const std::array<int, num_chip_selects> cs = {38};
-const std::array<int, num_chips> cs_per_chip = {38, 38}; //, 38, 38, 38, 38, 36, 36, 36, 36, 36, 36};
-const std::array<int, num_chips> addr = {0, 1}; //, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+const constexpr int num_chips = 12; 
+const constexpr int num_chip_selects = 2;
+const std::array<int, num_chip_selects> cs = {38, 36};
+const std::array<int, num_chips> cs_per_chip = {38, 38, 38, 38, 38, 38, 36, 36, 36, 36, 36, 36};
+const std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
 // Instantiate BMS Driver Group (non-const so we can call non-const methods)
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);

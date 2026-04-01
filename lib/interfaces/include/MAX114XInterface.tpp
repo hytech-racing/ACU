@@ -10,17 +10,18 @@
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::MAX114XInterface(
-    const int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed,
+    const int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int adc_not_shdn_pin, const int spiSpeed,
     const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS],
     const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes)
 
-    : _channelTypes(channelTypes)
-    , _spiPinCS(spiPinCS)
-    , _spiPinSDI(spiPinSDI)
-    , _spiPinSDO(spiPinSDO)
-    , _spiPinCLK(spiPinCLK)
-    , _spiSpeed(spiSpeed)
-    , _currentChannel(0)
+    : _channelTypes(channelTypes),
+    _spiPinCS(spiPinCS),
+    _spiPinSDI(spiPinSDI),
+    _spiPinSDO(spiPinSDO),
+    _spiPinCLK(spiPinCLK),
+    _adc_not_shdn_pin(adc_not_shdn_pin),
+    _spiSpeed(spiSpeed),
+    _currentChannel(0)
 {   
     /* Constructs an AnalogChannel object for each channel of the ADC and sets scales and offsets*/
     for (int i = 0; i < MAX114X_ADC_NUM_CHANNELS; i++)
@@ -28,9 +29,6 @@ MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::MAX114XInterface(
         MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[i] = AnalogChannel();
         this->setChannelScaleAndOffset(i, scales[i], offsets[i]);    
     }
-
-    pinMode(_spiPinCS, OUTPUT);
-    digitalWrite(_spiPinCS, HIGH);
     
     // Returns a compile time error if an incorrect version is given to the interface's template
     static_assert(
@@ -56,6 +54,15 @@ MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::MAX114XInterface(
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
+void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::init()
+{
+    pinMode(_spiPinCS, OUTPUT);
+    digitalWrite(_spiPinCS, HIGH);
+    pinMode(_adc_not_shdn_pin, OUTPUT);
+    digitalWrite(_adc_not_shdn_pin, HIGH);
+}
+
+template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::tick()
 {
     _sample();
@@ -63,13 +70,13 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::tick()
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
-uint16_t MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleRaw(int index) const
+uint16_t MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::get_last_sample_raw(int index) const
 {
     return static_cast<uint16_t>(this->data.conversions[index].raw);
 }
         
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
-float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::getLastSampleConverted(int index) const
+float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::get_last_sample_converted(int index) const
 {
     return this->data.conversions[index].conversion;
 }
@@ -126,7 +133,7 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     // initialize SPI bus. REQUIRED: call SPI.begin() before this
     SPI.beginTransaction(SPISettings(_spiSpeed, MSBFIRST, SPI_MODE0));
 
-    digitalWrite(_spiPinCS, LOW);
+    digitalWrite(_spiPinCS, LOW); 
 
     b0 = SPI.transfer(command);
     b1 = SPI.transfer(0x00); // dummy bytes to clock out data from the ADC

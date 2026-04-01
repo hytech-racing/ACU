@@ -2,8 +2,8 @@
 #define MAX114XINTERFACE_H
 
 #include "AnalogSensorsInterface.h"
-
 #include <SPI.h>
+#include <Arduino.h>
 
 /**
  * Enum representing the different channel configurations in MAX114X ADCs (SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL)
@@ -30,9 +30,13 @@ public:
      * Constructs a MAX114X ADC interface of the specified ADC model, number of channels, and channel types.
      * @param channelTypes Constructs an array of channel types (Single, Differential, Inverse Differential) that is half the length of the ADC's channels. This is because each element of the array corresponds to a pair of channels.
      */
-    MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes);
+    MAX114XInterface(int spiPinCS, const int spiPinSDI, const int spiPinSDO, const int spiPinCLK, const int adc_not_shdn_pin, const int spiSpeed, const float scales[MAX114X_ADC_NUM_CHANNELS], const float offsets[MAX114X_ADC_NUM_CHANNELS], const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2>& channelTypes);
 
     /* Functions */
+    /**
+     * initialize pins particularly CS and ADC_!SHDN
+    */
+    void init();
 
     /**
      * Calls sample() and convert(). After calling tick(), this MCP_ADC's data can be accessed using the get() command.
@@ -42,12 +46,12 @@ public:
     /**
      * Gets raw 14 bit value of a channel for a sample
      */
-    uint16_t getLastSampleRaw(int index) const;
+    uint16_t get_last_sample_raw(int index) const;
     
     /**
      * Gets real value (current/voltage) of a channel for a sample
      */
-    float getLastSampleConverted(int index) const;
+    float get_last_sample_converted(int index) const;
     
 private:
 
@@ -69,6 +73,7 @@ private:
     const int _spiPinSDI;
     const int _spiPinSDO;
     const int _spiPinCLK;
+    const int _adc_not_shdn_pin;
     const int _spiSpeed;
     int _currentChannel;
     
