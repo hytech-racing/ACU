@@ -47,6 +47,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
         pinMode(cs, OUTPUT);
         digitalWrite(cs, HIGH);
     }
+    
     _bms_data.voltages.fill(0);
     _bms_data.cell_temperatures.fill(0);
     _bms_data.board_temperatures.fill(0);
@@ -108,10 +109,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
         _current_chip_address_index = 0;
 
         // Complete update 
-        _bms_data.total_voltage     = _max_min_reference.total_voltage;
-        _bms_data.avg_cell_voltage  = _bms_data.total_voltage / num_cells;
-        _bms_data.average_cell_temperature =
-            _max_min_reference.total_thermistor_temps / (4 * num_chips);
+        _bms_data.total_voltage             = _max_min_reference.total_voltage;
+        _bms_data.avg_cell_voltage          = _bms_data.total_voltage / num_cells;
+        _bms_data.average_cell_temperature  = _max_min_reference.total_thermistor_temps / (4 * num_chips);
 
         if (_current_read_group == ReadGroup_e::CV_GROUP_D) 
         {
