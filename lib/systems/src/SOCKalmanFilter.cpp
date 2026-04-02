@@ -10,15 +10,15 @@ SOCKalmanFilter::SOCKalmanFilter()
 void SOCKalmanFilter::init(float initial_voltage) {
     static constexpr size_t table_size = 101;
 
-    if (initial_voltage >= _VOLTAGE_LOOKUP_TABLE[0]) {
+    if (initial_voltage >= VOLTAGE_LOOKUP_TABLE[0]) {
         _state.soc = 1.0f;
-    } else if (initial_voltage <= _VOLTAGE_LOOKUP_TABLE[table_size - 1]) {
+    } else if (initial_voltage <= VOLTAGE_LOOKUP_TABLE[table_size - 1]) {
         _state.soc = 0.0f;
     } else {
         for (size_t i = 0; i < table_size - 1; i++) {
-            if (initial_voltage <= _VOLTAGE_LOOKUP_TABLE[i] && initial_voltage > _VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
-                float v_high = _VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
-                float v_low = _VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
+            if (initial_voltage <= VOLTAGE_LOOKUP_TABLE[i] && initial_voltage > VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
+                float v_high = VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
+                float v_low = VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
                 float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
                 float soc_low = (float)(table_size - 1 - (i + 1)) / (table_size - 1);
                 
@@ -157,10 +157,10 @@ float SOCKalmanFilter::_get_ocv_from_soc(float soc) const {
     static constexpr size_t table_size = 101;
     
     if (soc >= 1.0f) {
-        return _VOLTAGE_LOOKUP_TABLE[0];
+        return VOLTAGE_LOOKUP_TABLE[0];
     }
     if (soc <= 0.0f) {
-        return _VOLTAGE_LOOKUP_TABLE[table_size - 1];
+        return VOLTAGE_LOOKUP_TABLE[table_size - 1];
     }
     
     float index_float = (1.0f - soc) * 100.0f;
@@ -173,7 +173,7 @@ float SOCKalmanFilter::_get_ocv_from_soc(float soc) const {
     }
 
     float fraction = index_float - (float)idx_low;
-    return _VOLTAGE_LOOKUP_TABLE[idx_low] + fraction * (_VOLTAGE_LOOKUP_TABLE[idx_high] - _VOLTAGE_LOOKUP_TABLE[idx_low]); //NOLINT
+    return VOLTAGE_LOOKUP_TABLE[idx_low] + fraction * (VOLTAGE_LOOKUP_TABLE[idx_high] - VOLTAGE_LOOKUP_TABLE[idx_low]); //NOLINT
 }
 
 float SOCKalmanFilter::_get_docv_dsoc(float soc) const {

@@ -94,7 +94,7 @@ public:
     // OCV Lookup Table
     // Index 0 = 100% SoC (4.2V approx), Index 100 = 0% SoC (3.0V approx)
     // fix tuned
-    static constexpr float _VOLTAGE_LOOKUP_TABLE[101] = {
+    static constexpr float VOLTAGE_LOOKUP_TABLE[101] = {
         3.972, 3.945, 3.918, 3.891, 3.885, 3.874, 3.864, 3.858, 3.847, 3.836,
         3.820, 3.815, 3.815, 3.798, 3.788, 3.782, 3.771, 3.755, 3.744, 3.744,
         3.733, 3.728, 3.723, 3.712, 3.701, 3.695, 3.690, 3.679, 3.679, 3.668,
