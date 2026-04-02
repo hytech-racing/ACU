@@ -43,17 +43,17 @@ void asyncEventResponder(EventResponderRef event_responder)
 void setup()
 {
     // Serial init
-    Serial.begin(115200);
+    Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
 
     // SPI1 init
     SPI1.begin();
-    SPI1.setMOSI(26);
-    SPI1.setMISO(39);
-    SPI1.setSCK(27);
+    SPI1.setMOSI(ACUInterfaces::SPI1_MOSI_PIN);
+    SPI1.setMISO(ACUInterfaces::SPI1_MISO_PIN);
+    SPI1.setSCK(ACUInterfaces::SPI1_SCK_PIN);
 
     // CS init
-    pinMode(38, OUTPUT);
-    digitalWrite(38, HIGH);
+    pinMode(ACUConstants::CS[1], OUTPUT);
+    digitalWrite(ACUConstants::CS[1], HIGH);
 
     // EventResponder init
     spi_event.attachImmediate(&asyncEventResponder);
@@ -73,7 +73,7 @@ void loop()
             auto start = sys_time::hal_micros();
             SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
 
-            digitalWrite(38, LOW);
+            digitalWrite(, LOW);
             delayMicroseconds(1);
             
             SPI1.transfer(tx_buf.data(), rx_buf.data(), buffer_size, spi_event);
