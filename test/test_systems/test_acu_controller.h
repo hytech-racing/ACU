@@ -236,7 +236,6 @@ TEST(ACUControllerTesting, cell_overvoltage_fault_persistence)
     BMSCoreData_s data = {
         3.70,                                                                     // min cell v - normal
         4.21,                                                                     // max cell v - ABOVE OV threshold
-        3.775,                                                                   // avg cell v
         500.00,                                                                   // pack v - normal
         40,                                                                       // cell temp c - normal
         35,                                                                       // board temp c - normal
