@@ -73,7 +73,7 @@ void loop()
             auto start = sys_time::hal_micros();
             SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
 
-            digitalWrite(, LOW);
+            digitalWrite(ACUCosntants::CS[1], LOW);
             delayMicroseconds(1);
             
             SPI1.transfer(tx_buf.data(), rx_buf.data(), buffer_size, spi_event);
