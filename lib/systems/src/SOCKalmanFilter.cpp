@@ -42,7 +42,7 @@ EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
     if (dt <= 0.0f) {
         return _state;
     }
-        
+
     // Prediction
     float soc_rate = -current / soc_ekf_constants::CAPACITY_AS;
     _state.soc += soc_rate * dt;
@@ -86,7 +86,7 @@ EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
     float S = HP0 * H0 + HP1 * H1 + soc_ekf_constants::R_V1;
 
     // If the innovation covariance is too small, then we don't update the state
-    if (S <= 1e-6f) {
+    if (S <= soc_ekf_constants::MIN_INNOVATION_COV_THRESH) {
         return _state;
     }
     
@@ -131,7 +131,7 @@ EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
     _PMatrix[1][1] = term1_11 + term2_11;
 
 
-    float p_cross_avg = (_PMatrix[0][1] + _PMatrix[1][0]) / 2.0f;
+    float p_cross_avg = (_PMatrix[0][1] + _PMatrix[1][0]) / soc_ekf_constants::DIVIDER_CROSS_AVG;
     _PMatrix[0][1] = p_cross_avg;
     _PMatrix[1][0] = p_cross_avg;
     

@@ -38,6 +38,8 @@ namespace soc_ekf_constants
     constexpr const float DOCV_DSOC_STEP = 0.01f;
     // Minimum slope for dOCV/dSoC to prevent numerical instability
     constexpr const float MIN_DOCV_DSOC_SLOPE = 0.1f;
+    constexpr const float MIN_INNOVATION_COV_THRESH = 1e-6f;
+    constexpr const float DIVIDER_CROSS_AVG = 2.0f;
 }
 
 struct EKFState_s
