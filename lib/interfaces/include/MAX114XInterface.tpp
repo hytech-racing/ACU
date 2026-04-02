@@ -84,7 +84,7 @@ float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::get_last_sampl
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
 {
-    byte command, b0, b1, b2;
+    uint8_t command, b0, b1, b2;
     uint8_t selNum;
 
     // Resets loop after last channel is reached

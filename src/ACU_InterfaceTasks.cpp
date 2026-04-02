@@ -88,10 +88,10 @@ void initialize_all_interfaces()
     BMSDriverInstance_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
     BMSDriverInstance_t::instance().init();
     /* Get Initial Pack Voltage for SoC and SoH Approximations */
-    auto data = BMSDriverInstance_t::instance().read_data();
+    BMSDriverInstance_t::instance().read_data();
 
     BMSFaultDataManagerInstance_t::create();
-    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
+    // BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
@@ -175,7 +175,8 @@ HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT
 HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     auto start = sys_time::hal_micros();
-    auto data = BMSDriverInstance_t::instance().read_data();
+    BMSDriverInstance_t::instance().read_data();
+    auto data = BMSDriverInstance_t::instance().get_bms_data();
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
     // print_bms_data(data);
 

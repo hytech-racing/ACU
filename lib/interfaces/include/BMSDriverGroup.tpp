@@ -73,8 +73,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
 {
-    // CS was being held low, so et it back high
+    // CS was being held low, so set it back high
     ltc_spi_interface::write_and_delay_high(_chip_select[_current_cs_index], 1);
+
+    // reset dma_busy var
+    ltc_spi_interface::set_dma_idle();
 
     if (_spi_state == SPIState_e::WAIT_POLL_ADC_COMPLETE) 
     {
@@ -232,7 +235,7 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
     // Always check the state of SPI and only continue if it's idle
-    if (_spi_state != SPIState_e::IDLE)
+    if (_spi_state != SPIState_e::IDLE && !ltc_spi_interface::is_busy())
     {
         return;
     }
@@ -300,7 +303,10 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_
             break;
         }
         default:
+        {
+            cmd = CMD_CODES_e::READ_CONFIG;
             break;
+        }
     }
 
     // store the command into tx_buf
@@ -756,7 +762,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversion_through_broadcast(const array<uint8_t, 2> &cmd_code)
 {
-    array<uint8_t, 4> cmd_and_pec = _generate_CMD_PEC(cmd_code, -1);
+    array<uint8_t, 4> cmd_and_pec;
+    array<uint8_t, 2> pec = _calculate_specific_PEC(cmd_code.data(), 2);
+    copy(cmd_code.begin(), cmd_code.end(), cmd_and_pec.begin());
+    copy(pec.begin(), pec.end(), cmd_and_pec.begin() + 2);
+
+    _tx_write_buffer.fill(0);
+    copy(cmd_and_pec.begin(), cmd_and_pec.end(), _tx_write_buffer.begin());
 
     // Needs to be sent on each chip select line
     for (size_t cs = 0; cs < num_chip_selects; cs++) 
@@ -781,6 +793,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
         array<uint8_t, 4> cmd_and_pec;
         copy(cmd_code.data(), cmd_code.data() + 2, cmd_and_pec.data()); // Copy first two bytes (cmd)
         copy(pec.data(), pec.data() + 2, cmd_and_pec.data() + 2);       // Copy next two bytes (pec)
+
+
         adc_conversion_command(_chip_select_per_chip[i], cmd_and_pec, 0);
     }
 }

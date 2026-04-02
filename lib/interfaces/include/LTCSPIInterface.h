@@ -7,6 +7,8 @@
 #include <array>
 
 namespace ltc_spi_interface {
+    extern volatile bool _dma_busy;
+
     /**
      * @brief initialize Event Responder for DMA
     */
@@ -17,6 +19,12 @@ namespace ltc_spi_interface {
      * @return bool - is_busy
     */
     bool is_busy();
+
+    /**
+     * @brief call in the callback function for spi transfers
+     * @return none
+    */
+    void set_dma_idle();
 
     /**
      * @brief begin_transfer is a more advanced SPI.transfer wrapper that uses a tx_buf, rx_buf, length, and EventResponder to initiate a callback when finished
@@ -35,8 +43,8 @@ namespace ltc_spi_interface {
      * @param delay_us is the number of microseconds to delay for 
      * @return void
     */
-    inline void write_and_delay_high(int cs, int delay_us);
-    inline void write_and_delay_low(int cs, int delay_us);
+    void write_and_delay_high(int cs, int delay_us);
+    void write_and_delay_low(int cs, int delay_us);
 }
 
 #include <LTCSPIInterface.tpp>
