@@ -26,9 +26,7 @@ elapsedMillis timer = 0;
 
 void asyncEventResponder(EventResponderRef event_responder)
 {
-    dma_busy = false;
-
-    digitalWrite(38, HIGH);
+    digitalWrite(ACUConstants::CS[1], HIGH);
     delayMicroseconds(1);
     SPI1.endTransaction();
 
@@ -38,6 +36,8 @@ void asyncEventResponder(EventResponderRef event_responder)
         Serial.print(rx_buf[i], HEX); Serial.print(" ");
     }
     Serial.println();
+
+    dma_busy = false;
 }
 
 void setup()
@@ -64,16 +64,19 @@ void setup()
 
 void loop()
 {
-    if (timer > 1)
+    if (timer > 3)
     {
         Serial.print("TIMER AT: "); Serial.println(timer);
         timer = 0;
         if (!dma_busy)
         {
+            ltc_spi_interface::write_and_delay_low(ACUConstants::CS[1], 250);
+            ltc_spi_interface::write_and_delay_high(ACUConstants::CS[1], 250);
+            
             auto start = sys_time::hal_micros();
             SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
 
-            digitalWrite(ACUCosntants::CS[1], LOW);
+            digitalWrite(ACUConstants::CS[1], LOW);
             delayMicroseconds(1);
             
             SPI1.transfer(tx_buf.data(), rx_buf.data(), buffer_size, spi_event);
