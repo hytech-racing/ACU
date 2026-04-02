@@ -345,11 +345,11 @@ void loop()
 
         // Read one group from the BMS Driver
 
-        Serial.println("RIGHT before first read");
+        // Serial.println("RIGHT before first read");
         BMSGroup.read_data();
-        auto bms_data = BMSGroup.get_bms_data();
+        // auto bms_data = BMSGroup.get_bms_data();
 
-        Serial.println("Right after first read");
+        // Serial.println("Right after first read");
 
         // Capture read duration
         uint32_t read_duration_us = read_timer;

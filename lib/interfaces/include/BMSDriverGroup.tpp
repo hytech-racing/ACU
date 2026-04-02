@@ -78,6 +78,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
     // reset dma_busy var
     ltc_spi_interface::set_dma_idle();
 
+    _tx_read_buffer.fill(0);
+    _tx_write_buffer.fill(0);
+
     if (_spi_state == SPIState_e::WAIT_POLL_ADC_COMPLETE) 
     {
         _spi_state = SPIState_e::IDLE;
@@ -97,18 +100,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
             _process_addressed_read_rx_buffer();
         }
         
-
         // After postprocessing, we need to continue sending broadcast commands if there are other chip selects available
         _current_cs_index++;
         if (_current_cs_index < num_chip_selects)
         {
-            Serial.println("Entered condition to broadcast again");
             _read_data_through_broadcast();
             return;
         }
-
-        Serial.println("Reseting index trackers and moving on to different groups");
-
         // Reset chip select and address indexing state variables
         _current_cs_index = 0;
         _current_chip_address_index = 0;
@@ -139,13 +137,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
 
         if (just_finished == ReadGroup_e::AUX_GROUP_B) 
         {
-            // Serial.println("GPIO ADC Conversion");
-            // _start_GPIO_ADC_conversion();
+            _start_GPIO_ADC_conversion();
         }
         if (just_finished == ReadGroup_e::CV_GROUP_D) 
         { 
-            // Serial.println("CV ADC Conversion");
-            // _start_cell_voltage_ADC_conversion();
+            _start_cell_voltage_ADC_conversion();
         }
 
         _spi_state = SPIState_e::IDLE; // ready for next read_data() call
@@ -166,7 +162,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
 {
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
-        for (size_t pulse_index = 0; pulse_index < ((num_chips + 1) / num_chip_selects); pulse_index++)
+        for (size_t pulse_index = 0; pulse_index < ((num_chips) / num_chip_selects); pulse_index++)
         {
             ltc_spi_interface::write_and_delay_low(_chip_select[cs], 250);
             ltc_spi_interface::write_and_delay_high(_chip_select[cs], 250);
@@ -251,17 +247,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
     else
     {
         _read_data_through_address();
-    }
-    
-    // Trigger ADC conversions at the start of each complete 6-group read cycle
-    // This ensures all groups (CV_A, CV_B, CV_C, CV_D, AUX_A, AUX_B) read from the same timestamp
-    if (_current_read_group == ReadGroup_e::AUX_GROUP_A)
-    {
-        _start_cell_voltage_ADC_conversion();
-    }
-    if (_current_read_group == ReadGroup_e::CV_GROUP_A)
-    {
-        _start_GPIO_ADC_conversion();
     }
 }
 
