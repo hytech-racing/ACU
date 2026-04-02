@@ -38,6 +38,11 @@ void SOCKalmanFilter::init(float initial_voltage) {
 }
 
 EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
+    // If the time delta is too small, then we don't update the state
+    if (dt <= 0.0f) {
+        return _state;
+    }
+        
     // Prediction
     float soc_rate = -current / soc_ekf_constants::CAPACITY_AS;
     _state.soc += soc_rate * dt;
@@ -79,6 +84,11 @@ EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
     // S is the innovation covariance that represents uncertainty in the voltage prediction
     // R_V1 is the measurement sensor noise in the voltage sensor
     float S = HP0 * H0 + HP1 * H1 + soc_ekf_constants::R_V1;
+
+    // If the innovation covariance is too small, then we don't update the state
+    if (S <= 1e-6f) {
+        return _state;
+    }
     
     // K is the Kalman gain that shows how much we should update the state to optimally blend predict vs measurement
     float K0 = (_PMatrix[0][0] * H0 + _PMatrix[0][1] * H1) / S;
@@ -94,17 +104,36 @@ EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
     float I_KH_01 = -K0 * H1;
     float I_KH_10 = -K1 * H0;
     float I_KH_11 = 1.0f - K1 * H1;
-    
-    // Update covariance matrix P
-    float P00_new = I_KH_00 * _PMatrix[0][0] + I_KH_01 * _PMatrix[1][0];
-    float P01_new = I_KH_00 * _PMatrix[0][1] + I_KH_01 * _PMatrix[1][1];
-    float P10_new = I_KH_10 * _PMatrix[0][0] + I_KH_11 * _PMatrix[1][0];
-    float P11_new = I_KH_10 * _PMatrix[0][1] + I_KH_11 * _PMatrix[1][1];
-    
-    _PMatrix[0][0] = P00_new;
-    _PMatrix[0][1] = P01_new;
-    _PMatrix[1][0] = P10_new;
-    _PMatrix[1][1] = P11_new;
+
+    // Formula: P = (I-K*H) * P * (I-K*H)^T + K*R*K^T - This is the Joseph Form which is much more stable
+    // Calculate temp = (I - K*H) * P
+    float temp_00 = I_KH_00 * _PMatrix[0][0] + I_KH_01 * _PMatrix[1][0];
+    float temp_01 = I_KH_00 * _PMatrix[0][1] + I_KH_01 * _PMatrix[1][1];
+    float temp_10 = I_KH_10 * _PMatrix[0][0] + I_KH_11 * _PMatrix[1][0];
+    float temp_11 = I_KH_10 * _PMatrix[0][1] + I_KH_11 * _PMatrix[1][1];
+
+    // Calculate term1 = temp * (I - K*H)^T
+    float term1_00 = temp_00 * I_KH_00 + temp_01 * I_KH_01;
+    float term1_01 = temp_00 * I_KH_10 + temp_01 * I_KH_11;
+    float term1_10 = temp_10 * I_KH_00 + temp_11 * I_KH_01;
+    float term1_11 = temp_10 * I_KH_10 + temp_11 * I_KH_11;
+
+    // Calculate term2 = K * R * K^T  (Note: R is just soc_ekf_constants::R_V1)
+    float term2_00 = K0 * soc_ekf_constants::R_V1 * K0;
+    float term2_01 = K0 * soc_ekf_constants::R_V1 * K1;
+    float term2_10 = K1 * soc_ekf_constants::R_V1 * K0;
+    float term2_11 = K1 * soc_ekf_constants::R_V1 * K1;
+
+    //Add term1 and term2 to get the new P matrix
+    _PMatrix[0][0] = term1_00 + term2_00;
+    _PMatrix[0][1] = term1_01 + term2_01;
+    _PMatrix[1][0] = term1_10 + term2_10;
+    _PMatrix[1][1] = term1_11 + term2_11;
+
+
+    float p_cross_avg = (_PMatrix[0][1] + _PMatrix[1][0]) / 2.0f;
+    _PMatrix[0][1] = p_cross_avg;
+    _PMatrix[1][0] = p_cross_avg;
     
     return _state;
 }

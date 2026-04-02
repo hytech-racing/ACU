@@ -128,17 +128,17 @@ float ACUController::_get_soc_from_voltage(volt avg_cell_voltage)
 {
     static constexpr size_t table_size = 101;
 
-    if (avg_cell_voltage >= VOLTAGE_LOOKUP_TABLE[0]) {
+    if (avg_cell_voltage >= SOCKalmanFilter::_VOLTAGE_LOOKUP_TABLE[0]) {
         return 1.0f;
     }
-    if (avg_cell_voltage <= VOLTAGE_LOOKUP_TABLE[table_size - 1]) {
+    if (avg_cell_voltage <= SOCKalmanFilter::_VOLTAGE_LOOKUP_TABLE[table_size - 1]) {
         return 0.0f;
     }
 
     for (size_t i = 0; i < table_size - 1; i++) {
-        if (avg_cell_voltage <= VOLTAGE_LOOKUP_TABLE[i] && avg_cell_voltage > VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
-            float v_high = VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
-            float v_low = VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
+        if (avg_cell_voltage <= SOCKalmanFilter::_VOLTAGE_LOOKUP_TABLE[i] && avg_cell_voltage > SOCKalmanFilter::_VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
+            float v_high = SOCKalmanFilter::_VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
+            float v_low = SOCKalmanFilter::_VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
             float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
             float soc_low = (float)(table_size - 1 - (i + 1)) / (table_size - 1);
             
