@@ -30,8 +30,8 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
         has_invalid_packet = true;
     }
 
-    volt avg_cell_voltage = input_state.pack_voltage / static_cast<float>(num_of_voltage_cells);
-    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, avg_cell_voltage, current_millis);
+    volt min_cell_voltage = input_state.min_cell_voltage;
+    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, min_cell_voltage, current_millis);
     // Cell balancing calculations
     bool previously_balancing = _acu_state.balancing_enabled;
 
@@ -124,35 +124,35 @@ void ACUController::calculate_cell_balance_statuses(bool* output, const volt* vo
     }
 }
 
-float ACUController::_get_soc_from_voltage(volt avg_cell_voltage)
+float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
 {
     static constexpr size_t table_size = 101;
 
-    if (avg_cell_voltage >= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[0]) {
+    if (min_cell_voltage >= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[0]) {
         return 1.0f;
     }
-    if (avg_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[table_size - 1]) {
+    if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[table_size - 1]) {
         return 0.0f;
     }
 
     for (size_t i = 0; i < table_size - 1; i++) {
-        if (avg_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i] && avg_cell_voltage > SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
+        if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i] && min_cell_voltage > SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
             float v_high = SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
             float v_low = SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
             float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
             float soc_low = (float)(table_size - 1 - (i + 1)) / (table_size - 1);
             
-            return soc_low + (avg_cell_voltage - v_low) / (v_high - v_low) * (soc_high - soc_low);
+            return soc_low + (min_cell_voltage - v_low) / (v_high - v_low) * (soc_high - soc_low);
         }
     }
 
     return 0.0f;
 }
 
-float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis)
+float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis)
 {
     if (!_ekf_initialized) {
-        return _get_soc_from_voltage(avg_cell_voltage);
+        return _get_soc_from_voltage(min_cell_voltage);
     }
 
     float dt = static_cast<float>(delta_time_ms) / _ms_to_seconds; // in seconds
@@ -170,7 +170,7 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
         }
         // we have another 0 current, so we need to see if we have rested for long enough
         if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) {
-            _acu_state.SoC = _get_soc_from_voltage(avg_cell_voltage);
+            _acu_state.SoC = _get_soc_from_voltage(min_cell_voltage);
             _soc_ekf.reset_soc(_acu_state.SoC);
             _acu_state.first_zero_current_time_stamp = 0;
             return _acu_state.SoC;
@@ -179,7 +179,7 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
         _acu_state.first_zero_current_time_stamp = 0;
     }
 
-    EKFState_s ekf_state = _soc_ekf.update(-em_current, avg_cell_voltage, dt);
+    EKFState_s ekf_state = _soc_ekf.update(-em_current, min_cell_voltage, dt);
     _acu_state.SoC = ekf_state.soc;
     return _acu_state.SoC;
 

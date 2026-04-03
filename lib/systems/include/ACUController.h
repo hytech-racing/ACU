@@ -137,7 +137,7 @@ public:
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
      */
-    float get_state_of_charge(float em_current, uint32_t delta_time_ms, volt avg_cell_voltage, time_ms current_millis);
+    float get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis);
 
     ACUControllerData_s get_status() const { return _acu_state; };
 
@@ -155,9 +155,9 @@ public:
 private:
 
         /**
-     * @brief Closest index that will represent the SoC of the average voltage on the cells
+     * @brief Closest index that will represent the SoC of the minimum voltage on the cells
      */
-    float _get_soc_from_voltage(volt avg_cell_voltage);
+    float _get_soc_from_voltage(volt min_cell_voltage);
 
     /**
      * @pre data has been gathered

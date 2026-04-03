@@ -56,14 +56,14 @@ public:
     /**
      * @brief Set the EKF state appropriately based on the initial voltage
      * This is called when the ACU starts and is the first reading done on the EKF
-     * @param initial_voltage // this is the voltage coming in from the cells on the pack (we take the average voltage for a per cell EKF)
+     * @param initial_voltage // this is the voltage coming in from the cells on the pack (we take the minimum voltage for a per cell EKF)
      */
     void init(float initial_voltage);
 
     /**
      * @brief Used to update the state of our EKF at specified time intervals
      * @param current // current going across the pack in amps
-     * @param voltage // average cell voltage across the pack
+     * @param voltage // minimum cell voltage across the pack
      * @param dt // time elapsed since last update in seconds
      */
     EKFState_s update(float current, float voltage, float dt);
