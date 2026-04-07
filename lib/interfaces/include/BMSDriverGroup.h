@@ -30,6 +30,7 @@ enum class SPIState_e
     WAIT_READ_COMPLETE,
     WAIT_WRITE_COMPLETE,
     WAIT_POLL_ADC_COMPLETE,
+    WAIT_CONVERSION
 };
 
 // Command Codes

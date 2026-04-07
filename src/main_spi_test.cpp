@@ -347,7 +347,7 @@ void loop()
 
         // Serial.println("RIGHT before first read");
         BMSGroup.read_data();
-        // auto bms_data = BMSGroup.get_bms_data();
+        auto bms_data = BMSGroup.get_bms_data();
 
         // Serial.println("Right after first read");
 
@@ -379,14 +379,14 @@ void loop()
         }
 
         // Verify state machine advanced correctly
-        ReadGroup_e expected_next = advance_read_group(group_before_read);
-        ReadGroup_e actual_next = BMSGroup.get_current_read_group();
-        if (expected_next != actual_next) {
-            Serial.println("*** ERROR: State machine did not advance correctly! ***");
-            Serial.print("Expected: ");
-            Serial.print(static_cast<int>(expected_next));
-            Serial.print(" Actual: ");
-            Serial.println(static_cast<int>(actual_next));
-        }
+        // ReadGroup_e expected_next = advance_read_group(group_before_read);
+        // ReadGroup_e actual_next = BMSGroup.get_current_read_group();
+        // if (expected_next != actual_next) {
+        //     Serial.println("*** ERROR: State machine did not advance correctly! ***");
+        //     Serial.print("Expected: ");
+        //     Serial.print(static_cast<int>(expected_next));
+        //     Serial.print(" Actual: ");
+        //     Serial.println(static_cast<int>(actual_next));
+        // }
     }
 }

@@ -17,9 +17,15 @@ const constexpr size_t num_chips = 2;
 const constexpr size_t buffer_size = num_chips * 8 + num_bytes_command_and_pec;
 
 EventResponder spi_event;
-array<uint8_t, buffer_size> tx_buf;
-array<uint8_t, buffer_size> rx_buf;
+array<uint8_t, 4> poll_tx_buf;
+array<uint8_t, 4> poll_rx_buf;
+array<uint8_t, buffer_size> read_tx_buf;
+array<uint8_t, buffer_size> read_rx_buf;
 volatile bool dma_busy;
+
+volatile SPIState_e spi_state = SPIState_e::IDLE;
+
+elapsedMillis conversion_timer;
 
 unsigned long current_time = 0; 
 elapsedMillis timer = 0;
@@ -30,14 +36,23 @@ void asyncEventResponder(EventResponderRef event_responder)
     delayMicroseconds(1);
     SPI1.endTransaction();
 
-    Serial.println("RX DATA after Callback:");
-    for (size_t i = 0; i < buffer_size; i++)
-    {   
-        Serial.print(rx_buf[i], HEX); Serial.print(" ");
+    if (spi_state == SPIState_e::WAIT_POLL_ADC_COMPLETE) 
+    {
+        conversion_timer = 0;
+        dma_busy = false;
+        spi_state = SPIState_e::WAIT_CONVERSION;
+    } 
+    else if (spi_state == SPIState_e::WAIT_READ_COMPLETE)
+    {
+        Serial.println("RX DATA after Callback:");
+        for (size_t i = 0; i < buffer_size; i++)
+        {   
+            Serial.print(read_rx_buf[i], HEX); Serial.print(" ");
+        }
+        Serial.println();
+        dma_busy = false;
+        spi_state = SPIState_e::IDLE;
     }
-    Serial.println();
-
-    dma_busy = false;
 }
 
 void setup()
@@ -57,9 +72,11 @@ void setup()
 
     // EventResponder init
     spi_event.attachImmediate(&asyncEventResponder);
-
-    // set static tx buf
-    tx_buf = {0x00, 0x04, 0x07, 0xC2};
+    
+    // set static poll tx buf
+    poll_tx_buf = {0x02, 0xE0, 0x38, 0x06};
+    // set static read tx buf
+    read_tx_buf = {0x00, 0x04, 0x07, 0xC2};
 }
 
 void loop()
@@ -70,21 +87,30 @@ void loop()
         timer = 0;
         if (!dma_busy)
         {
-            ltc_spi_interface::write_and_delay_low(ACUConstants::CS[1], 250);
-            ltc_spi_interface::write_and_delay_high(ACUConstants::CS[1], 250);
-            
-            auto start = sys_time::hal_micros();
-            SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
+            auto send = [&](auto* tx, auto* rx, size_t len) {
+                ltc_spi_interface::write_and_delay_low(ACUConstants::CS[1], 250);
+                ltc_spi_interface::write_and_delay_high(ACUConstants::CS[1], 250);
+                SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
+                digitalWrite(ACUConstants::CS[1], LOW);
+                delayMicroseconds(1);
+                auto start = sys_time::hal_micros();
+                SPI1.transfer(tx, rx, len, spi_event);
+                dma_busy = true;
+                Serial.println(sys_time::hal_micros() - start);
+            };
 
-            digitalWrite(ACUConstants::CS[1], LOW);
-            delayMicroseconds(1);
-            
-            SPI1.transfer(tx_buf.data(), rx_buf.data(), buffer_size, spi_event);
-            dma_busy = true;
-
-            auto end = sys_time::hal_micros();
-            auto diff = end - start;
-            Serial.print("Send and Received Time: "); Serial.println(diff);
+            if (spi_state == SPIState_e::IDLE)
+            {
+                Serial.print("(POLL) Send and Received Time: ");
+                send(poll_tx_buf.data(), poll_rx_buf.data(), 4);
+                spi_state = SPIState_e::WAIT_POLL_ADC_COMPLETE;
+            }
+            else if (spi_state == SPIState_e::WAIT_CONVERSION && conversion_timer > 3)
+            {
+                Serial.print("(READ) Send and Received Time: ");
+                send(read_tx_buf.data(), read_rx_buf.data(), buffer_size);
+                spi_state = SPIState_e::WAIT_READ_COMPLETE;
+            }
         }
     }
 }
