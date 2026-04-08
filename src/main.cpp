@@ -52,7 +52,7 @@ void setup()
     scheduler.setTimingFunction(micros);
     scheduler.schedule(tick_state_machine_task);
     scheduler.schedule(kick_watchdog_task);
-    // scheduler.schedule(sample_bms_data_task);
+    scheduler.schedule(sample_bms_data_task);
     scheduler.schedule(eval_accumulator_task);
     scheduler.schedule(write_cell_balancing_config_task);
 

@@ -68,6 +68,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
         SPI1.endTransaction();
         static_cast<BMSDriverGroup*>(ref.getContext())->_dma_callback();
     });
+    _start_cell_voltage_ADC_conversion();
+    _start_GPIO_ADC_conversion();
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -83,7 +85,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
 
     if (_spi_state == SPIState_e::WAIT_POLL_ADC_COMPLETE) 
     {
-        _spi_state = SPIState_e::IDLE;
+        _conversion_timer = 0;
+        _spi_state = SPIState_e::WAIT_CONVERSION;
         return;
     }
 
@@ -138,14 +141,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
         if (just_finished == ReadGroup_e::AUX_GROUP_B) 
         {
             _start_GPIO_ADC_conversion();
+            return;
         }
         if (just_finished == ReadGroup_e::CV_GROUP_D) 
         { 
             _start_cell_voltage_ADC_conversion();
+            return;
         }
-
-        _spi_state = SPIState_e::IDLE; // ready for next read_data() call
     }
+    _read_data_through_broadcast();
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -235,7 +239,17 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 {
     // Always check the state of SPI and only continue if it's idle
-    if (_spi_state != SPIState_e::IDLE && !ltc_spi_interface::is_busy())
+    if (ltc_spi_interface::is_busy())
+    {
+        return;
+    }
+
+    if (_spi_state == SPIState_e::WAIT_CONVERSION && _conversion_timer > _config.cv_adc_conversion_time_ms)
+    {
+        _spi_state = SPIState_e::IDLE;
+    }
+
+    if (_spi_state != SPIState_e::IDLE)
     {
         return;
     }
@@ -734,6 +748,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage
     {
         _start_ADC_conversion_through_address(cmd);
     }
+    _spi_state = SPIState_e::WAIT_POLL_ADC_COMPLETE;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -752,6 +767,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
     {
         _start_ADC_conversion_through_address(cmd);
     }
+    _spi_state = SPIState_e::WAIT_POLL_ADC_COMPLETE;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>

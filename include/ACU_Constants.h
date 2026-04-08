@@ -103,18 +103,18 @@ namespace ACUInterfaces {
 
 namespace ACUConstants
 {  
-    constexpr size_t NUM_CELLS = 126;
-    constexpr size_t NUM_CHIPS = 12;
-    constexpr size_t NUM_CELL_TEMPS = 48;
-    constexpr size_t NUM_CHIP_SELECTS = 2;
+    constexpr size_t NUM_CELLS = 21;
+    constexpr size_t NUM_CHIPS = 2;
+    constexpr size_t NUM_CELL_TEMPS = 8;
+    constexpr size_t NUM_CHIP_SELECTS = 1;
 
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
     
     // Initialize chip_select, chip_select_per_chip, and address
-    constexpr std::array<int, NUM_CHIP_SELECTS> CS = {36, 38};
-    constexpr std::array<int, NUM_CHIPS> CS_PER_CHIP = {36, 36, 36, 36, 36, 36, 38, 38, 38, 38, 38, 38};
-    constexpr std::array<int, NUM_CHIPS> ADDR = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // only for addressable bms chips
+    constexpr std::array<int, NUM_CHIP_SELECTS> CS = {38};
+    constexpr std::array<int, NUM_CHIPS> CS_PER_CHIP = {38, 38};
+    constexpr std::array<int, NUM_CHIPS> ADDR = {0, 1}; // only for addressable bms chips
 
     /* Task Times */
     constexpr uint32_t TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz

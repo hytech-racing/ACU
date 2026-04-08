@@ -27,10 +27,10 @@ enum class LTC6811_Type_e
 enum class SPIState_e
 {
     IDLE = 0,
-    WAIT_READ_COMPLETE,
-    WAIT_WRITE_COMPLETE,
-    WAIT_POLL_ADC_COMPLETE,
-    WAIT_CONVERSION
+    WAIT_WRITE_COMPLETE = 1,
+    WAIT_POLL_ADC_COMPLETE = 2,
+    WAIT_CONVERSION = 3,
+    WAIT_READ_COMPLETE = 4,
 };
 
 // Command Codes
@@ -515,6 +515,8 @@ private:
 
     size_t _current_cs_index = 0;
     size_t _current_chip_address_index = 0;
+
+    elapsedMillis _conversion_timer;
 
     array<uint8_t, cmd_and_data_buffer_size> _tx_read_buffer;
     array<uint8_t, cmd_and_data_buffer_size> _rx_read_buffer;

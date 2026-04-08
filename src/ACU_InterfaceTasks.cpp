@@ -178,7 +178,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     BMSDriverInstance_t::instance().read_data();
     auto data = BMSDriverInstance_t::instance().get_bms_data();
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
-    // print_bms_data(data);
+    print_bms_data(data);
 
     auto end = sys_time::hal_micros();
     auto diff = end - start;
