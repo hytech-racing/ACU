@@ -319,6 +319,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_
 
     // initiate SPI transfers
     _rx_read_buffer.fill(0);
+    _start_wakeup_protocol(_current_cs_index);
     SPI1.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE3));
     ltc_spi_interface::write_and_delay_low(cs, 1);
     ltc_spi_interface::begin_transfer<cmd_and_data_buffer_size>(_tx_read_buffer, _rx_read_buffer, _spi_event);

@@ -16,6 +16,8 @@
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 
+#include "SystemTimeInterface.h"
+
 using namespace std;
 
 enum class LTC6811_Type_e
