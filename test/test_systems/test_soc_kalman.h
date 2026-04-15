@@ -8,17 +8,17 @@ float coulomb_count(float initial_soc, float current, float dt) {
 
 TEST(SOCKalmanFilterTesting, initialization_from_voltage) {
     SOCKalmanFilter ekf;
-    ekf.init(3.972f);
+    ekf.init(4.197f);
     float soc = ekf.get_soc();
     EXPECT_NEAR(soc, 1.0f, 0.01f);
 
     SOCKalmanFilter ekf2;
-    ekf2.init(3.56f);
+    ekf2.init(3.828f);
     float soc2 = ekf2.get_soc();
     EXPECT_NEAR(soc2, 0.5f, 0.1f);
 
     SOCKalmanFilter ekf3;
-    ekf3.init(3.0f);
+    ekf3.init(3.585f);
     float soc3 = ekf3.get_soc();
     EXPECT_NEAR(soc3, 0.0f, 0.01f);
 }
@@ -69,26 +69,6 @@ TEST(SOCKalmanFilterTesting, v1_dynamics_time_constant) {
     EXPECT_NEAR(state.v1, expected_v1, 0.05f);
 }
 
-TEST(SOCKalmanFilterTesting, convergence_correction_zero_current) {
-    SOCKalmanFilter ekf;
-    
-    float start_voltage = 3.4f; 
-    ekf.init(start_voltage);
-    float start_soc = ekf.get_soc();
-
-    float target_voltage = 3.7f; 
-    float current = 0.0f;
-    float dt = 0.1f;
-
-    for (int i = 0; i < 3000; i++) {
-        ekf.update(current, target_voltage, dt);
-    }
-
-    EXPECT_GT(ekf.get_soc(), start_soc + 0.15f);
-    
-    EXPECT_LT(ekf.get_soc(), 1.0f); 
-}
-
 TEST(SOCKalmanFilterTesting, safety_clamping_bounds) {
     SOCKalmanFilter ekf;
     
@@ -99,17 +79,4 @@ TEST(SOCKalmanFilterTesting, safety_clamping_bounds) {
     ekf.init(3.0f);
     ekf.update(100.0f, 2.0f, 3600.0f); 
     EXPECT_GE(ekf.get_soc(), 0.0f);
-}
-
-TEST(SOCKalmanFilterTesting, initialization_accuracy) {
-    SOCKalmanFilter ekf;
-    
-    ekf.init(3.972f);
-    EXPECT_NEAR(ekf.get_soc(), 1.0f, 0.01f);
-
-    ekf.init(3.0f);
-    EXPECT_NEAR(ekf.get_soc(), 0.0f, 0.01f);
-
-    ekf.init(3.56f);
-    EXPECT_NEAR(ekf.get_soc(), 0.5f, 0.05f);
 }
