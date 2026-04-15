@@ -30,6 +30,9 @@ elapsedMillis conversion_timer;
 unsigned long current_time = 0; 
 elapsedMillis timer = 0;
 
+const int pulse_time = 250;
+const int spi_buadrate = 1000000;
+
 void asyncEventResponder(EventResponderRef event_responder)
 {
     digitalWrite(ACUConstants::CS[1], HIGH);
@@ -88,9 +91,9 @@ void loop()
         if (!dma_busy)
         {
             auto send = [&](auto* tx, auto* rx, size_t len) {
-                ltc_spi_interface::write_and_delay_low(ACUConstants::CS[1], 250);
-                ltc_spi_interface::write_and_delay_high(ACUConstants::CS[1], 250);
-                SPI1.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
+                ltc_spi_interface::write_and_delay_low(ACUConstants::CS[1], pulse_time);
+                ltc_spi_interface::write_and_delay_high(ACUConstants::CS[1], pulse_time);
+                SPI1.beginTransaction(SPISettings(spi_buadrate, MSBFIRST, SPI_MODE3));
                 digitalWrite(ACUConstants::CS[1], LOW);
                 delayMicroseconds(1);
                 auto start = sys_time::hal_micros();
