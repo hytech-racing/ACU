@@ -14,10 +14,6 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.balancing_enabled = false;
     _acu_state.high_side_contactor_welded = false;
     _acu_state.low_side_contactor_welded = false;
-
-    _soc_ekf.init(pack_voltage / static_cast<float>(NUM_CELLS));
-    _ekf_initialized = true;
-    _acu_state.SoC = _soc_ekf.get_soc();
 }
 
 ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells)
@@ -152,7 +148,13 @@ float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
 float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis)
 {
     if (!_ekf_initialized) {
-        return _get_soc_from_voltage(min_cell_voltage);
+        if (min_cell_voltage < 2.5f) {
+            return 0.0f; 
+        }
+        _soc_ekf.init(min_cell_voltage);
+        _ekf_initialized = true;
+        _acu_state.SoC = _soc_ekf.get_soc();
+        return _acu_state.SoC;
     }
 
     float dt = static_cast<float>(delta_time_ms) / _ms_to_seconds; // in seconds
@@ -172,7 +174,7 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
         if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) {
             _acu_state.SoC = _get_soc_from_voltage(min_cell_voltage);
             _soc_ekf.reset_soc(_acu_state.SoC);
-            _acu_state.first_zero_current_time_stamp = 0;
+
             return _acu_state.SoC;
         }
     } else {
