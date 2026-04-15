@@ -21,6 +21,7 @@
 using chip_type = LTC6811_Type_e;
 using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
 using BMSFaultDataManagerInstance_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
+
 bool initialize_all_systems();
 
 /* Delegate Functions */

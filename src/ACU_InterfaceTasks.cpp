@@ -88,56 +88,14 @@ void initialize_all_interfaces()
     BMSDriverInstance_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
     BMSDriverInstance_t::instance().init();
     /* Get Initial Pack Voltage for SoC and SoH Approximations */
-    auto data = BMSDriverInstance_t::instance().read_data();
+    BMSDriverInstance_t::instance().read_data();
 
     BMSFaultDataManagerInstance_t::create();
-    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
+    // BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
     /* Ethernet Interface */
     ACUEthernetInterfaceInstance::create();
     ACUEthernetInterfaceInstance::instance().init_ethernet_device();
 
-    // std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_scales = {
-    //     ACUInterfaces::ISO_PACK_N_SCALE,
-    //     ACUInterfaces::ISO_PACK_P_SCALE,
-    //     ACUInterfaces::PACK_VOLTAGE_SENSE_SCALE,
-    //     ACUInterfaces::SHUNT_CURRENT_OUT_SCALE,
-    //     ACUInterfaces::SHUNT_CURRENT_P_SCALE,
-    //     ACUInterfaces::SHUNT_CURRENT_N_SCALE,
-    //     ACUInterfaces::TS_OUT_FILTERED_SCALE,
-    //     ACUInterfaces::PACK_OUT_FILTERED_SCALE,
-    // };
-
-    // std::array<float, ACUConstants::NUM_MAX1148_CHANNELS> adc0_offsets = {
-    //     ACUInterfaces::ISO_PACK_N_OFFSET,
-    //     ACUInterfaces::ISO_PACK_P_OFFSET,
-    //     ACUInterfaces::PACK_VOLTAGE_SENSE_OFFSET,
-    //     ACUInterfaces::SHUNT_CURRENT_OUT_OFFSET,
-    //     ACUInterfaces::SHUNT_CURRENT_P_OFFSET,
-    //     ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
-    //     ACUInterfaces::TS_OUT_FILTERED_OFFSET,
-    //     ACUInterfaces::PACK_OUT_FILTERED_OFFSET,
-    // };
-
-    // // Each channel type corresponds to a pair of channels (0&1, 2&3, etc.) So length is channels / 2
-    // std::array<CHANNEL_TYPE_e, ACUConstants::NUM_MAX1148_CHANNELS / 2> adc0_channels = {
-    //     CHANNEL_TYPE_e::INV_DIFFERENTIAL,
-    //     CHANNEL_TYPE_e::SINGLE,
-    //     CHANNEL_TYPE_e::DIFFERENTIAL,
-    //     CHANNEL_TYPE_e::SINGLE
-    // };
-
-    // /* ADC Interface */
-    // MAX1148ADCInstance_t::create(
-    //     ACUInterfaces::ADC0_CS,
-    //     ACUInterfaces::ADC0_MISO,
-    //     ACUInterfaces::ADC0_MOSI,
-    //     ACUInterfaces::ADC0_CLK,
-    //     ACUInterfaces::ADC0_SPEED,
-    //     adc0_scales.data(),
-    //     adc0_offsets.data(),
-    //     adc0_channels
-    // );
-        
     /* CCU Interface */
     CCUInterfaceInstance::create(sys_time::hal_millis());
 
@@ -216,9 +174,16 @@ HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT
 
 HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    auto data = BMSDriverInstance_t::instance().read_data();
+    auto start = sys_time::hal_micros();
+    BMSDriverInstance_t::instance().read_data();
+    auto data = BMSDriverInstance_t::instance().get_bms_data();
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
-    // print_bms_data(data);
+    print_bms_data(data);
+
+    auto end = sys_time::hal_micros();
+    auto diff = end - start;
+
+    Serial.println(diff);
 
     return HT_TASK::TaskResponse::YIELD;
 }

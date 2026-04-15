@@ -23,7 +23,7 @@ elapsedMicros read_timer = 0;
 
 using chip_type = LTC6811_Type_e;
 
-const size_t sample_period_ms = 3; // 300 Hz - reads one group per call
+const size_t sample_period_ms = 100; // 300 Hz - reads one group per call
 const uint32_t spi_baudrate = 115200;
 const uint8_t num_cells_per_board = 21;
 
@@ -34,11 +34,11 @@ const size_t spi1_miso_pin = 39;
 // Initialize chip_select, chip_select_per_chip, and address
 const constexpr int num_cells_per_chip = 21;
 const constexpr int num_groups = 6;
-const constexpr int num_chips = 12; 
-const constexpr int num_chip_selects = 2;
-const std::array<int, num_chip_selects> cs = {38, 36};
-const std::array<int, num_chips> cs_per_chip = {38, 38, 38, 38, 38, 38, 36, 36, 36, 36, 36, 36};
-const std::array<int, num_chips> addr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+const constexpr int num_chips = 2; 
+const constexpr int num_chip_selects = 1;
+const std::array<int, num_chip_selects> cs = {38};
+const std::array<int, num_chips> cs_per_chip = {38, 38};// , 38, 38, 38, 38, 36, 36, 36, 36, 36, 36};
+const std::array<int, num_chips> addr = {0, 1};//, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
 // Instantiate BMS Driver Group (non-const so we can call non-const methods)
 BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1> BMSGroup = BMSDriverGroup<num_chips, num_chip_selects, chip_type::LTC6811_1>(cs, cs_per_chip, addr);
@@ -308,6 +308,8 @@ void setup()
 {
     Serial.begin(spi_baudrate);
 
+    while(!Serial) {}
+
     SPI1.begin();
     SPI1.setMOSI(spi1_mosi_pin); // set up pins because it's not the default SPI1 MISO
     SPI1.setSCK(spi1_sck_pin);
@@ -342,7 +344,12 @@ void loop()
         read_timer = 0;
 
         // Read one group from the BMS Driver
-        auto bms_data = BMSGroup.read_data();
+
+        // Serial.println("RIGHT before first read");
+        BMSGroup.read_data();
+        auto bms_data = BMSGroup.get_bms_data();
+
+        // Serial.println("Right after first read");
 
         // Capture read duration
         uint32_t read_duration_us = read_timer;
@@ -364,7 +371,7 @@ void loop()
         }
 
         // Print detailed output
-        print_voltages(bms_data, read_duration_us, group_before_read);
+        // print_voltages(bms_data, read_duration_us, group_before_read);
 
         // Print performance stats every 10 complete cycles
         if (cycle_complete && (cycle_count % 10 == 0)) { //NOLINT
@@ -372,14 +379,14 @@ void loop()
         }
 
         // Verify state machine advanced correctly
-        ReadGroup_e expected_next = advance_read_group(group_before_read);
-        ReadGroup_e actual_next = BMSGroup.get_current_read_group();
-        if (expected_next != actual_next) {
-            Serial.println("*** ERROR: State machine did not advance correctly! ***");
-            Serial.print("Expected: ");
-            Serial.print(static_cast<int>(expected_next));
-            Serial.print(" Actual: ");
-            Serial.println(static_cast<int>(actual_next));
-        }
+        // ReadGroup_e expected_next = advance_read_group(group_before_read);
+        // ReadGroup_e actual_next = BMSGroup.get_current_read_group();
+        // if (expected_next != actual_next) {
+        //     Serial.println("*** ERROR: State machine did not advance correctly! ***");
+        //     Serial.print("Expected: ");
+        //     Serial.print(static_cast<int>(expected_next));
+        //     Serial.print(" Actual: ");
+        //     Serial.println(static_cast<int>(actual_next));
+        // }
     }
 }
