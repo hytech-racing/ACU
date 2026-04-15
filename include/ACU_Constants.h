@@ -129,11 +129,11 @@ namespace ACUConstants
     constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 15;
     constexpr uint32_t ALL_DATA_ETHERNET_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 5;
-    constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 4000UL; // 20 000 us = 50 Hz
+    constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 8000UL; // 8 000 us = 125 Hz
     constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 4;
     
     constexpr uint32_t SAMPLE_ADC_PRIORITY = 20;
-    constexpr uint32_t SAMPLE_ADC_PERIOD_US = 5000UL; // 10 000 us = 100 Hz
+    constexpr uint32_t SAMPLE_ADC_PERIOD_US = 5000UL; // 50 000 us = 200 Hz
 
     constexpr uint32_t CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t CCU_SEND_PRIORITY = 11;
@@ -143,10 +143,10 @@ namespace ACUConstants
     constexpr uint32_t CCU_SEND_A_PRIORITY = 12;
     constexpr uint32_t CCU_SEND_B_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t CCU_SEND_B_PRIORITY = 13;
-    constexpr uint32_t EM_MEASUREMENT_SEND_PERIOD_US = 4000UL; // 10 000 us = 100 Hz
+    constexpr uint32_t EM_MEASUREMENT_SEND_PERIOD_US = 4000UL; // 4 000 us = 250 Hz
     constexpr uint32_t EM_MEASUREMENT_SEND_PRIORITY = 6;
 
-    constexpr uint32_t SEND_CAN_PERIOD_US = 4000UL; // 10 000 us = 100 Hz
+    constexpr uint32_t SEND_CAN_PERIOD_US = 4000UL; // 40 000 us = 250 Hz
     constexpr uint32_t SEND_CAN_PRIORITY = 8;
     constexpr uint32_t RECV_CAN_PERIOD_US = 10000UL; // 10 000 us = 100 Hz
     constexpr uint32_t RECV_CAN_PRIORITY = 7;
