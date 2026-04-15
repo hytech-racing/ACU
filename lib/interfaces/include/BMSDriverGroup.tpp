@@ -68,8 +68,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
         SPI1.endTransaction();
         static_cast<BMSDriverGroup*>(ref.getContext())->_dma_callback();
     });
-    _start_cell_voltage_ADC_conversion();
-    _start_GPIO_ADC_conversion();
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -149,7 +147,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
             return;
         }
     }
-    _read_data_through_broadcast();
+    _spi_state = SPIState_e::IDLE;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
