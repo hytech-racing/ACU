@@ -17,8 +17,8 @@ const constexpr size_t num_chips = 2;
 const constexpr size_t buffer_size = num_chips * 8 + num_bytes_command_and_pec;
 
 EventResponder spi_event;
-array<uint8_t, 4> poll_tx_buf;
-array<uint8_t, 4> poll_rx_buf;
+const array<uint8_t, 4> poll_tx_buf = {0x02, 0xE0, 0x38, 0x06};
+const array<uint8_t, 4> poll_rx_buf = {0x00, 0x04, 0x07, 0xC2};
 array<uint8_t, buffer_size> read_tx_buf;
 array<uint8_t, buffer_size> read_rx_buf;
 volatile bool dma_busy;
@@ -73,10 +73,10 @@ void setup()
     // EventResponder init
     spi_event.attachImmediate(&asyncEventResponder);
     
-    // set static poll tx buf
-    poll_tx_buf = {0x02, 0xE0, 0x38, 0x06};
-    // set static read tx buf
-    read_tx_buf = {0x00, 0x04, 0x07, 0xC2};
+    // // set static poll tx buf
+    // poll_tx_buf = {0x02, 0xE0, 0x38, 0x06};
+    // // set static read tx buf
+    // read_tx_buf = {0x00, 0x04, 0x07, 0xC2};
 }
 
 void loop()
