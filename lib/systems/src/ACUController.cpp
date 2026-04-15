@@ -148,7 +148,7 @@ float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
 float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis)
 {
     if (!_ekf_initialized) {
-        if (min_cell_voltage < _acu_parameters.MIN_CELL_VOLTAGE_FOR_SOC) {
+        if (min_cell_voltage < acu_controller_default_parameters::MIN_CELL_VOLTAGE_FOR_SOC) {
             return 0.0f; 
         } else {
             _soc_ekf.init(min_cell_voltage);
