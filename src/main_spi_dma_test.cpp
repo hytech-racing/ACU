@@ -31,9 +31,9 @@ unsigned long current_time = 0;
 elapsedMillis timer = 0;
 
 const int pulse_time = 250;
-const int spi_buadrate = 1000000;
+const int spi_baudrate = 1000000;
 
-void asyncEventResponder(EventResponderRef event_responder)
+void async_event_responder(EventResponderRef event_responder)
 {
     digitalWrite(ACUConstants::CS[1], HIGH);
     delayMicroseconds(1);
@@ -75,11 +75,6 @@ void setup()
 
     // EventResponder init
     spi_event.attachImmediate(&asyncEventResponder);
-    
-    // // set static poll tx buf
-    // poll_tx_buf = {0x02, 0xE0, 0x38, 0x06};
-    // // set static read tx buf
-    // read_tx_buf = {0x00, 0x04, 0x07, 0xC2};
 }
 
 void loop()
@@ -93,7 +88,7 @@ void loop()
             auto send = [&](auto* tx, auto* rx, size_t len) {
                 ltc_spi_interface::write_and_delay_low(ACUConstants::CS[1], pulse_time);
                 ltc_spi_interface::write_and_delay_high(ACUConstants::CS[1], pulse_time);
-                SPI1.beginTransaction(SPISettings(spi_buadrate, MSBFIRST, SPI_MODE3));
+                SPI1.beginTransaction(SPISettings(spi_baudrate, MSBFIRST, SPI_MODE3));
                 digitalWrite(ACUConstants::CS[1], LOW);
                 delayMicroseconds(1);
                 auto start = sys_time::hal_micros();
