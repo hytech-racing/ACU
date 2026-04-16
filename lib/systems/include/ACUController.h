@@ -13,7 +13,7 @@
 
 namespace acu_controller_default_parameters
 {
-    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 1000000; // Same as voltage fault count
+    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 50; // Same as voltage fault count
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 1000;            // At 15 Hz, we'll know if there is an error within 3 seconds of startup
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 1000;
     constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults

@@ -197,19 +197,22 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
 
 bool ACUController::_check_bms_ok(time_ms current_millis)
 {   
-   if (_acu_state.has_fault) {
-        _acu_state.bms_ok = !_acu_state.has_fault;
+    if (_acu_state.has_fault) 
+    {
+        _acu_state.bms_ok = false;
         _acu_state.last_bms_not_ok_eval = current_millis;
-    } else if (!_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) {
+    } 
+    else if (!_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) 
+    {
         _acu_state.bms_ok = true;
     }
+    
     return _acu_state.bms_ok;
 }
 
 
 bool ACUController::_check_faults(time_ms current_millis)
 {
-    
     return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis) || _check_invalid_packet_faults(current_millis);
 }
 

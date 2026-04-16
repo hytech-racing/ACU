@@ -14,7 +14,7 @@ namespace adc_default_parameters
     constexpr const float TEENSY41_MAX_DIGITAL_READ_VOLTAGE_THRESH = 2.8F;
     constexpr const float SHUTDOWN_VOLTAGE_DIGITAL_THRESHOLD = 12.0F;
 
-    constexpr const uint32_t IMD_STARTUP_TIME = 5000;
+    constexpr const uint32_t IMD_STARTUP_TIME = 10000;
     constexpr const float TEENSY41_MAX_INPUT_VOLTAGE = 3.3F;
 
     constexpr int MAX114X_VERSION = 8;
