@@ -183,8 +183,6 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
                 (0x01 << 1) |                                                   // external clock mode
                 (0x01);                                                         // ^
     
-    // initialize SPI bus. REQUIRED: call SPI.begin() before this
-    
     SPI.beginTransaction(SPISettings(_spiSpeed, MSBFIRST, SPI_MODE0));
 
     digitalWrite(_spiPinCS, LOW); 
