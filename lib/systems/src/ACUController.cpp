@@ -39,12 +39,10 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     if (allow_balancing)
     {
         _acu_state.balancing_enabled = true;
-        // _acu_state.cell_balancing_statuses = _calculate_cell_balance_statuses(input_state.voltages, input_state.min_cell_voltage);
     }
     else
-    { // Fill with zeros, no balancing
+    {
         _acu_state.balancing_enabled = false;
-        // _acu_state.cell_balancing_statuses.fill(0);
     }
 
     // Update voltage fault time stamps with IR compensation
@@ -110,7 +108,7 @@ void ACUController::calculate_cell_balance_statuses(bool* output, const volt* vo
     for (size_t cell = 0; cell < num_of_voltage_cells; cell++)
     {
         volt cell_voltage = voltages[cell]; //NOLINT
-        if ((cell_voltage-min_voltage > _acu_parameters.thresholds.v_diff_to_init_cb) && (cell_voltage > _acu_parameters.thresholds.min_discharge_voltage_thresh)) // && max_voltage - (cell_voltage) < 200 &&
+        if (((cell_voltage - min_voltage) > _acu_parameters.thresholds.v_diff_to_init_cb) && (cell_voltage > _acu_parameters.thresholds.min_discharge_voltage_thresh))
         {
             output[cell] = true; //NOLINT
         } else 
