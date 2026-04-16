@@ -154,10 +154,10 @@ void initialize_all_interfaces()
                                 ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
                                 ACUInterfaces::TS_OUT_FILTERED_OFFSET,
                                 ACUInterfaces::PACK_OUT_FILTERED_OFFSET},
-                                    MAX114XChannels_s {CHANNEL_TYPE_e::INV_DIFFERENTIAL,
+                                    MAX114XChannels_s {CHANNEL_TYPE_e::NOT_USED,
                                 CHANNEL_TYPE_e::SINGLE,
-                                CHANNEL_TYPE_e::DIFFERENTIAL,
-                                CHANNEL_TYPE_e::SINGLE},
+                                CHANNEL_TYPE_e::NOT_USED,
+                                CHANNEL_TYPE_e::NOT_USED},
                                     ACUInterfaces::ADC0_SPEED,
                                     ACUInterfaces::BIT_RESOLUTION
     );

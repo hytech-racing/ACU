@@ -83,7 +83,6 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::tick()
     }
 
     _sample();
-    // this->_convert(); // moved to dma callback
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
@@ -144,26 +143,34 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     */
     CHANNEL_TYPE_e channelType = _channelTypes[_currentChannel / 2];
 
-    switch (channelType) {
+    switch (channelType) 
+    {
         case CHANNEL_TYPE_e::SINGLE:
-        
+        {
             // The channel selection bits for single mode follows this array
             selNum = (_single_end_channel_to_select_map[_currentChannel]);
             break;
-
+        }
         case CHANNEL_TYPE_e::DIFFERENTIAL:
-        
+        {
             // The channel selection bits for differential mode is the channel number halved and then truncated
             // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
             selNum = (_currentChannel / 2);
             break;
-            
+        }    
         case CHANNEL_TYPE_e::INV_DIFFERENTIAL:
-
+        {
             // The channel selection bits for inversed differential mode is the channel number halved, truncated, and with a 1 in the MSB
             // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
             selNum = ((_currentChannel / 2) | 0b100);
             break;
+        }
+        case CHANNEL_TYPE_e::NOT_USED:
+        {
+            // assumes that the channels not being used is in pairs - works for acu rev 10 application
+            _currentChannel += 2;
+            return;
+        }
     }
     
     /* Page 14 of datasheet 
@@ -186,5 +193,6 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     _rx_buf.fill(0);
     SPI.transfer(_tx_buf.data(), _rx_buf.data(), buffer_size, _spi_event);
 
+    // set the dma busy flag
     _dma_busy = true;
 }

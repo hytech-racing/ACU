@@ -14,6 +14,7 @@ enum class CHANNEL_TYPE_e{
     SINGLE, ///< single channel
     DIFFERENTIAL, ///< +- differential pair
     INV_DIFFERENTIAL, ///< -+ differential pair
+    NOT_USED,
 };
 
 /**
