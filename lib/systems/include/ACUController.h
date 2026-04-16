@@ -166,7 +166,7 @@ private:
     /**
      * @brief Update the BMS status (bms_ok) based on the time since the last fault not present
      */
-    bool _check_bms_ok(time_ms current_millis);
+    bool _is_bms_ok(time_ms current_millis);
     /**
      * @pre voltage data has been gathered
      * @return boolean, true if there exists at least 1 voltage fault
@@ -193,7 +193,7 @@ private:
      */
     ACUControllerData_s _acu_state = {};
 
-    static constexpr uint32_t _bms_not_ok_hold_time_ms = 1000;
+    static constexpr uint32_t _bms_not_ok_hold_time_ms = 2000;
 
     static constexpr uint32_t _ms_to_hours = 3600000;
 

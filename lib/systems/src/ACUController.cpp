@@ -14,6 +14,7 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.balancing_enabled = false;
     _acu_state.high_side_contactor_welded = false;
     _acu_state.low_side_contactor_welded = false;
+    _acu_state.bms_ok = true;
 }
 
 ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells)
@@ -96,7 +97,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     _acu_state.has_fault = _check_faults(current_millis);
 
     // Determine if bms is ok
-    _acu_state.bms_ok = _check_bms_ok(current_millis);
+    _acu_state.bms_ok = _is_bms_ok(current_millis);
 
     return _acu_state;
 }
@@ -195,18 +196,18 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
 }
 
 
-bool ACUController::_check_bms_ok(time_ms current_millis)
+bool ACUController::_is_bms_ok(time_ms current_millis)
 {   
     if (_acu_state.has_fault) 
     {
-        _acu_state.bms_ok = false;
         _acu_state.last_bms_not_ok_eval = current_millis;
+        return false;
     } 
     else if (!_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) 
     {
-        _acu_state.bms_ok = true;
+       return true;
     }
-    
+
     return _acu_state.bms_ok;
 }
 
