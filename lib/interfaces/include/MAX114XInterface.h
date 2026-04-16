@@ -5,6 +5,8 @@
 #include <SPI.h>
 #include <Arduino.h>
 
+using namespace std;
+
 /**
  * Enum representing the different channel configurations in MAX114X ADCs (SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL)
  */
@@ -25,6 +27,9 @@ template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 class MAX114XInterface : public AnalogMultiSensor<MAX114X_ADC_NUM_CHANNELS>
 {
 public:
+
+    constexpr static size_t buffer_size = 3;
+
     /* Constructors */
     /**
      * Constructs a MAX114X ADC interface of the specified ADC model, number of channels, and channel types.
@@ -62,6 +67,11 @@ private:
     void _sample() override;
 
     /**
+     * Callback function for DMA SPI reads
+    */
+    void _dma_callback();
+
+    /**
      * Channel configuration is defined per channel pair (two physical channels).
      * This array stores the channel type for each pair of channels in the ADC.
      * Each pair may be configured as SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL as defined in the enclosed enum.
@@ -76,6 +86,12 @@ private:
     const int _adc_not_shdn_pin;
     const int _spiSpeed;
     int _currentChannel;
+
+    bool _dma_busy;
+    EventResponder _spi_event;
+
+    array<uint8_t, buffer_size> _tx_buf;
+    array<uint8_t, buffer_size> _rx_buf;
     
     /**
      * The select bits for single-ended channels are all over the place and do not follow a logical mapping.
