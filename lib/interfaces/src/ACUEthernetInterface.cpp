@@ -54,6 +54,9 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
     out.tractive_system_current = shared_state.tractive_system_current;
     out.acu_state = static_cast<hytech_msgs_ACUState_e>(shared_state.acu_sm_state);
 
+    out.low_side_contactor_welded = shared_state.low_side_contactor_welded;
+    out.high_side_contactor_welded = shared_state.high_side_contactor_welded;
+
     return out;
 }
 
@@ -102,8 +105,6 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
 
     // temp for loc
     out.shutdown_has_gone_low = shared_state.core_data.low_side_contactor_welded;
-
-    
 
     return out;
 }

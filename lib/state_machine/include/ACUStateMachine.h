@@ -52,8 +52,6 @@ public:
     */
     ACUState_e get_state() { return _current_state; } 
 
-   
-
 private:
 
     void _set_state(ACUState_e new_state, unsigned long curr_millis);
