@@ -335,12 +335,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
     array<uint8_t, data_size> spi_data;
     copy_n(_rx_read_buffer.begin() + 4, data_size, spi_data.begin());
 
-    for (int i = 0; i < data_size; i++)
-    {
-        Serial.print(spi_data[i]); Serial.print(" ");
-    }
-    Serial.println();
-
     for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++) 
     {
         size_t chip_index  = chip + (_current_cs_index * (num_chips / num_chip_selects));
