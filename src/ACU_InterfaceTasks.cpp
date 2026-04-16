@@ -49,6 +49,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.main_under_threshold_voltage = ADCInterfaceInstance::instance().read_main_under_threshold_voltage();
     out.core_data.precharge_under_threshold_voltage = ADCInterfaceInstance::instance().read_precharge_under_threshold_voltage();
     out.core_data.tractive_system_current = ADCInterfaceInstance::instance().read_shunt_current();
+    out.core_data.acu_sm_state = ACUStateMachineInstance::instance().get_state();
 
     // SoC/SoH placeholders (leave unchanged here)
     auto ACUStatus = ACUControllerInstance::instance().get_status();
@@ -178,12 +179,12 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     BMSDriverInstance_t::instance().read_data();
     auto data = BMSDriverInstance_t::instance().get_bms_data();
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
-    print_bms_data(data);
+    // print_bms_data(data);
 
     auto end = sys_time::hal_micros();
     auto diff = end - start;
 
-    Serial.println(diff);
+    // Serial.println(diff);
 
     return HT_TASK::TaskResponse::YIELD;
 }

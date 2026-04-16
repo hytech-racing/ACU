@@ -70,7 +70,7 @@ namespace ACUInterfaces {
 
     constexpr const size_t TEENSY_OK_PIN = 3; // > Needs to stay HIGH while wd_kick_pin flips to keep BMS_OK high
     constexpr const size_t WD_KICK_PIN = 4;       // > Needs to flip at 100 Hz to keep BMS_OK high
-        constexpr const size_t SW_NOT_OK_PIN = 5;  // should be HIGH by default, and then set LOW after traversing state machine
+    constexpr const size_t SW_NOT_OK_PIN = 5;  // should be HIGH by default, and then set LOW after traversing state machine
     constexpr const size_t N_FAULTED_STATE_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
        
     constexpr const size_t BSPD_CURRENT_PIN = 15;
@@ -100,7 +100,6 @@ namespace ACUInterfaces {
 
     constexpr const float BIT_RESOLUTION = 4095.0F;
 }
-
 namespace ACUConstants
 {  
     constexpr size_t NUM_CELLS = 126;
