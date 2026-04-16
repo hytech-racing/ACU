@@ -13,15 +13,15 @@
 namespace soc_ekf_constants
 {
     constexpr const float CAPACITY_AS = 48600.0f; // Pack capacity in Amp-seconds (13.5 Ah * 3600 s/h)
-    constexpr const float R0 = 0.00195238095f; // Internal series resistance (instantaneous voltage drop) - fix
+    constexpr const float R0 = 0.00195238095f; // Internal series resistance (instantaneous voltage drop)
     constexpr const float R1 = 0.00039047619f; // Polarization resistance to see slow voltage response - fix
-    constexpr const float TIME_CONSTANT = 20.0f; // time constant value
+    constexpr const float TIME_CONSTANT = 20.0f; // time constant value - fix
     constexpr const float C1 = TIME_CONSTANT / R1; // Polarization capacitance
 
     // EKF tuning parameters (update these to tune the EKF to track SoC better)
-    constexpr const float Q_SOC = 1e-5f; // process noise for SoC
-    constexpr const float Q_V1 = 1e-6f; // process noise for V1
-    constexpr const float R_V1 = 0.001f; // measurement noise for V1
+    constexpr const float Q_SOC = 1e-5f; // process noise for SoC - fix
+    constexpr const float Q_V1 = 1e-6f; // process noise for V1 - fix
+    constexpr const float R_V1 = 0.001f; // measurement noise for V1 - fix
 
     constexpr const float MIN_SOC = 0.0f;
     constexpr const float MAX_SOC = 1.0f;
@@ -40,6 +40,9 @@ namespace soc_ekf_constants
     constexpr const float MIN_DOCV_DSOC_SLOPE = 0.1f;
     constexpr const float MIN_INNOVATION_COV_THRESH = 1e-6f;
     constexpr const float DIVIDER_CROSS_AVG = 2.0f;
+
+    constexpr const float P_SOC_AFTER_REST = 0.001f;
+    constexpr const float P_V1_AFTER_REST = 0.001f;
 }
 
 struct EKFState_s

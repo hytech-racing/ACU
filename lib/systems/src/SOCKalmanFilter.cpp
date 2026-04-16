@@ -193,8 +193,8 @@ float SOCKalmanFilter::_get_docv_dsoc(float soc) const {
 void SOCKalmanFilter::reset_soc(float new_soc) {
     _state.soc = fmaxf(soc_ekf_constants::MIN_SOC, fminf(soc_ekf_constants::MAX_SOC, new_soc));
     _state.v1 = soc_ekf_constants::INITIAL_V1;
-    _PMatrix[0][0] = soc_ekf_constants::P_SOC_INITIAL;
+    _PMatrix[0][0] = soc_ekf_constants::P_SOC_AFTER_REST;
     _PMatrix[0][1] = soc_ekf_constants::P_CROSS_INITIAL;
     _PMatrix[1][0] = soc_ekf_constants::P_CROSS_INITIAL;
-    _PMatrix[1][1] = soc_ekf_constants::P_V1_INITIAL;
+    _PMatrix[1][1] = soc_ekf_constants::P_V1_AFTER_REST;
 }
