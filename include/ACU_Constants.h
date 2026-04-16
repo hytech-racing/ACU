@@ -132,7 +132,7 @@ namespace ACUConstants
     constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 4;
     
     constexpr uint32_t SAMPLE_ADC_PRIORITY = 11;
-    constexpr uint32_t SAMPLE_ADC_PERIOD_US = 4000UL; // 4 000 us = 250 Hz
+    constexpr uint32_t SAMPLE_ADC_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
 
     constexpr uint32_t CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
     constexpr uint32_t CCU_SEND_PRIORITY = 14;
