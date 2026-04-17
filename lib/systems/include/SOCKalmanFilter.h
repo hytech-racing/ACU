@@ -21,7 +21,7 @@ namespace soc_ekf_constants
     // EKF tuning parameters (update these to tune the EKF to track SoC better)
     constexpr const float Q_SOC = 1e-5f; // process noise for SoC - fix
     constexpr const float Q_V1 = 1e-6f; // process noise for V1 - fix
-    constexpr const float R_V1 = 0.001f; // measurement noise for V1 - fix
+    constexpr const float R_V1 = 0.1f; // measurement noise for V1 - fix
 
     constexpr const float MIN_SOC = 0.0f;
     constexpr const float MAX_SOC = 1.0f;
