@@ -260,7 +260,14 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
         return;
     }
     
-    _read_data_through_broadcast();
+    if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
+    {
+        _read_data_through_broadcast();
+    } 
+    else 
+    {
+        _read_data_through_address();
+    }
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
