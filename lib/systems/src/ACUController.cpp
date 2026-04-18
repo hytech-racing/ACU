@@ -123,15 +123,19 @@ float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
 {
     static constexpr size_t table_size = 101;
 
-    if (min_cell_voltage >= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[0]) {
+    if (min_cell_voltage >= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[0]) 
+    {
         return 1.0f;
     }
-    if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[table_size - 1]) {
+    if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[table_size - 1]) 
+    {
         return 0.0f;
     }
 
-    for (size_t i = 0; i < table_size - 1; i++) {
-        if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i] && min_cell_voltage > SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]) { //NOLINT
+    for (size_t i = 0; i < table_size - 1; i++) 
+    {
+        if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i] && min_cell_voltage > SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]) //NOLINT
+        { 
             float v_high = SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
             float v_low = SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
             float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
@@ -146,13 +150,18 @@ float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
 
 float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis, bool voltage_is_fresh)
 {
-    if (!_ekf_initialized) {
-        if (!voltage_is_fresh) {
+    if (!_ekf_initialized) 
+    {
+        if (!voltage_is_fresh) 
+        {
             return _acu_state.SoC;
         }
-        if (min_cell_voltage < acu_controller_default_parameters::MIN_CELL_VOLTAGE_FOR_SOC) {
+        if (min_cell_voltage < acu_controller_default_parameters::MIN_CELL_VOLTAGE_FOR_SOC) 
+        {
             return 0.0f; 
-        } else {
+        } 
+        else 
+        {
             _soc_ekf.init(min_cell_voltage);
             _ekf_initialized = true;
             _acu_state.SoC = _soc_ekf.get_soc();
@@ -162,27 +171,32 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
 
     float dt = static_cast<float>(delta_time_ms) / _ms_to_seconds; // in seconds
     
-
     // we will use coulomb counting for the normal implementation of getting state of charge
     // whenever the car has been at rest (em voltage and em current at 0) for 30 mins, then we can correct the SoC to the voltage look up table value
     // we will reset the soc with the voltage look up value
     // we want to then start coulomb counting from this point, we also want to restart a 30 min timer, so we can set the start time to now
 
     bool is_stabilized = (fabs(em_current) <= STABILIZED_CURRENT_THRESH);
-    if (is_stabilized) {
-        if (_acu_state.first_zero_current_time_stamp == 0) {
+    if (is_stabilized) 
+    {
+        if (_acu_state.first_zero_current_time_stamp == 0) 
+        {
             _acu_state.first_zero_current_time_stamp = current_millis;
         }
         // we have another 0 current, so we need to see if we have rested for long enough
-        if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) {
-            if (voltage_is_fresh) {
+        if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) 
+        {
+            if (voltage_is_fresh) 
+            {
                 _acu_state.SoC = _get_soc_from_voltage(min_cell_voltage);
                 _soc_ekf.reset_soc(_acu_state.SoC);
 
                 return _acu_state.SoC;
             }
         }
-    } else {
+    } 
+    else 
+    {
         _acu_state.first_zero_current_time_stamp = 0;
     }
 
