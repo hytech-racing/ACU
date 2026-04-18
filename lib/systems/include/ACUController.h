@@ -218,7 +218,7 @@ private:
      * @brief Minimum current and voltage thresholds for the car to be considered stabilized
      * 
      */
-    static constexpr float STABILIZED_CURRENT_THRESH = 0.05; // Absolute value threshold
+    static constexpr float STABILIZED_CURRENT_THRESH = 0.5f; // Absolute value threshold
     static constexpr uint32_t MIN_STABILIZED_CURRENT_DURATION_MS = 1800000;  // 30 minutes in milliseconds
 };
 
