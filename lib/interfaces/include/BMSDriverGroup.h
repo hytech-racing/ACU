@@ -10,6 +10,7 @@
 #include <cstdint>
 #include "etl/optional.h"
 #include <numeric>
+#include <atomic>
 
 #include "etl/singleton.h"
 
@@ -323,6 +324,15 @@ public:
         return _config;
     }
 
+    /**
+     * @brief Runs atomic fetch and clear so it does everything in one atomic operation on the new voltage for fresh flag
+     * @return true if the voltage data is fresh (only happens once per good cycle)
+     * @return false if the voltage data is not fresh
+     */
+    bool check_clear_voltage_ready() {
+        return _new_voltage_data_ready.exchange(false, std::memory_order_acquire);
+    }
+
 private:
 
     ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
@@ -522,6 +532,9 @@ private:
     array<uint8_t, cmd_and_data_buffer_size> _rx_read_buffer;
     array<uint8_t, cmd_only_buffer_size> _tx_write_buffer;
     array<uint8_t, cmd_only_buffer_size> _rx_write_buffer;
+
+    // Says if voltage data is fresh for the state of charge estimator
+    std::atomic<bool> _new_voltage_data_ready{false};
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>

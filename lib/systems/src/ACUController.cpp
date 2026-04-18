@@ -17,7 +17,7 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.bms_ok = true;
 }
 
-ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells)
+ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells, bool voltage_is_fresh)
 {   
     // _acu_state.charging_enabled = input_state.charging_enabled;
     
@@ -28,7 +28,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     }
 
     volt min_cell_voltage = input_state.min_cell_voltage;
-    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, min_cell_voltage, current_millis);
+    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, min_cell_voltage, current_millis, voltage_is_fresh);
     // Cell balancing calculations
     bool previously_balancing = _acu_state.balancing_enabled;
 
@@ -144,9 +144,12 @@ float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
     return 0.0f;
 }
 
-float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis)
+float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis, bool voltage_is_fresh)
 {
     if (!_ekf_initialized) {
+        if (!voltage_is_fresh) {
+            return _acu_state.SoC;
+        }
         if (min_cell_voltage < acu_controller_default_parameters::MIN_CELL_VOLTAGE_FOR_SOC) {
             return 0.0f; 
         } else {
@@ -172,16 +175,18 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
         }
         // we have another 0 current, so we need to see if we have rested for long enough
         if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) {
-            _acu_state.SoC = _get_soc_from_voltage(min_cell_voltage);
-            _soc_ekf.reset_soc(_acu_state.SoC);
+            if (voltage_is_fresh) {
+                _acu_state.SoC = _get_soc_from_voltage(min_cell_voltage);
+                _soc_ekf.reset_soc(_acu_state.SoC);
 
-            return _acu_state.SoC;
+                return _acu_state.SoC;
+            }
         }
     } else {
         _acu_state.first_zero_current_time_stamp = 0;
     }
 
-    EKFState_s ekf_state = _soc_ekf.update(-em_current, min_cell_voltage, dt);
+    EKFState_s ekf_state = _soc_ekf.update(-em_current, min_cell_voltage, dt, voltage_is_fresh);
     _acu_state.SoC = ekf_state.soc;
     return _acu_state.SoC;
 

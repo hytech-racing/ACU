@@ -37,7 +37,7 @@ void SOCKalmanFilter::init(float initial_voltage) {
     _PMatrix[1][1] = soc_ekf_constants::P_V1_INITIAL;
 }
 
-EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
+EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt, bool voltage_is_fresh) {
     // If the time delta is too small, then we don't update the state
     if (dt <= 0.0f) {
         return _state;
@@ -68,6 +68,10 @@ EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt) {
     _PMatrix[0][1] = FP01 * F11;
     _PMatrix[1][0] = FP10;
     _PMatrix[1][1] = FP11 * F11 + soc_ekf_constants::Q_V1;
+
+    if (!voltage_is_fresh) {
+        return _state;
+    }
 
     // Update - corrects state estimation based on voltage measurement
     float ocv = _get_ocv_from_soc(_state.soc);

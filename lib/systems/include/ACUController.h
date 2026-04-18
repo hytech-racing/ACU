@@ -122,7 +122,7 @@ public:
      * @post updates configuration bytes and sends configuration command
      * @param pack_current current flowing from the pack in amps (negative during discharge, positive during charge)
      */
-    ACUControllerData_s evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &bms_core_data, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells);
+    ACUControllerData_s evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &bms_core_data, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells, bool voltage_is_fresh = false);
 
         /**
      * Calculate Cell Balancing values
@@ -135,7 +135,7 @@ public:
     /**
      * @return state of charge - float from 0.0 to 1.0, representing a percentage from 0 to 100%
      */
-    float get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis);
+    float get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis, bool voltage_is_fresh);
 
     ACUControllerData_s get_status() const { return _acu_state; };
 

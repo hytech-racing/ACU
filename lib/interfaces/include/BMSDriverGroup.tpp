@@ -68,6 +68,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
         SPI1.endTransaction();
         static_cast<BMSDriverGroup*>(ref.getContext())->_dma_callback();
     });
+
+    _new_voltage_data_ready = false;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -123,6 +125,18 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
             _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
             _max_min_reference.min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE;
             _max_min_reference.max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE;
+
+            bool all_cv_valid = true;
+            for (const auto &p : _bms_data.valid_read_packets) {
+                if (!(p.valid_read_cells_1_to_3 && p.valid_read_cells_4_to_6 && p.valid_read_cells_7_to_9 && p.valid_read_cells_10_to_12)) {
+                    all_cv_valid = false;
+                    break;
+                }
+            }
+
+            if (all_cv_valid) {
+                _new_voltage_data_ready = true;
+            }
         }
         if (_current_read_group == ReadGroup_e::AUX_GROUP_B) 
         {

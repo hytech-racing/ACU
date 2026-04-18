@@ -42,7 +42,7 @@ TEST(SOCKalmanFilterTesting, coulomb_counting_accuracy) {
     float ir_drop = current * soc_ekf_constants::R0; 
     float input_voltage = start_ocv - ir_drop;
 
-    ekf.update(current, input_voltage, dt);
+    ekf.update(current, input_voltage, dt, true);
 
     float expected_delta = (current * dt) / soc_ekf_constants::CAPACITY_AS;
 
@@ -64,7 +64,7 @@ TEST(SOCKalmanFilterTesting, v1_dynamics_time_constant) {
 
     
 
-    EKFState_s state = ekf.update(current, input_voltage, dt);
+    EKFState_s state = ekf.update(current, input_voltage, dt, true);
 
     EXPECT_NEAR(state.v1, expected_v1, 0.05f);
 }
@@ -73,10 +73,10 @@ TEST(SOCKalmanFilterTesting, safety_clamping_bounds) {
     SOCKalmanFilter ekf;
     
     ekf.init(4.2f);
-    ekf.update(-100.0f, 4.5f, 3600.0f); 
+    ekf.update(-100.0f, 4.5f, 3600.0f, true); 
     EXPECT_LE(ekf.get_soc(), 1.0f);
 
     ekf.init(3.0f);
-    ekf.update(100.0f, 2.0f, 3600.0f); 
+    ekf.update(100.0f, 2.0f, 3600.0f, true); 
     EXPECT_GE(ekf.get_soc(), 0.0f);
 }
