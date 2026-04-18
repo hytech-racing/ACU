@@ -29,8 +29,9 @@ enum class SPIState_e
     IDLE = 0,
     WAIT_WRITE_COMPLETE = 1,
     WAIT_POLL_ADC_COMPLETE = 2,
-    WAIT_CONVERSION = 3,
-    WAIT_READ_COMPLETE = 4,
+    START_CONVERSION = 3,
+    WAIT_CONVERSION = 4,
+    WAIT_READ_COMPLETE = 5,
 };
 
 // Command Codes

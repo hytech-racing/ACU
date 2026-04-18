@@ -105,7 +105,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
         _current_cs_index++;
         if (_current_cs_index < num_chip_selects)
         {
-            _read_data_through_broadcast();
+            _spi_state = SPIState_e::IDLE;
             return;
         }
         // Reset chip select and address indexing state variables
@@ -133,17 +133,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
             _max_min_reference.max_cell_temp  = ref_max_min_defaults::MAX_CELL_TEMP;
             _max_min_reference.max_board_temp = ref_max_min_defaults::MAX_BOARD_TEMP;
         }
-        ReadGroup_e just_finished = _current_read_group;
-        _current_read_group = advance_read_group(_current_read_group);
 
-        if (just_finished == ReadGroup_e::AUX_GROUP_B) 
+        _current_read_group = advance_read_group(_current_read_group);
+        if (_current_read_group == ReadGroup_e::CV_GROUP_A || _current_read_group == ReadGroup_e::AUX_GROUP_A)
         {
-            _start_GPIO_ADC_conversion();
-            return;
-        }
-        if (just_finished == ReadGroup_e::CV_GROUP_D) 
-        { 
-            _start_cell_voltage_ADC_conversion();
+            _spi_state = SPIState_e::START_CONVERSION;
             return;
         }
     }
@@ -242,6 +236,20 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
         return;
     }
 
+    if (_spi_state == SPIState_e::START_CONVERSION)
+    {
+        if (_current_read_group == ReadGroup_e::CV_GROUP_A) 
+        { 
+            _start_cell_voltage_ADC_conversion();
+            return;
+        }
+        if (_current_read_group == ReadGroup_e::AUX_GROUP_A) 
+        {
+            _start_GPIO_ADC_conversion();
+            return;
+        }
+    }
+
     if (_spi_state == SPIState_e::WAIT_CONVERSION && _conversion_timer > _config.cv_adc_conversion_time_ms)
     {
         _spi_state = SPIState_e::IDLE;
@@ -251,15 +259,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
     {
         return;
     }
-
-    if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
-    {
-        _read_data_through_broadcast();
-    }
-    else
-    {
-        _read_data_through_address();
-    }
+    
+    _read_data_through_broadcast();
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
