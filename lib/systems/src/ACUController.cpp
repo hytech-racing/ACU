@@ -10,7 +10,7 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.last_time_pack_uv_fault_not_present = system_start_time;
     _acu_state.last_time_invalid_packet_present = system_start_time;
     _acu_state.prev_bms_time_stamp = system_start_time;
-    // _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
+    _acu_state.SoC = -1;
     _acu_state.balancing_enabled = false;
     _acu_state.high_side_contactor_welded = false;
     _acu_state.low_side_contactor_welded = false;
