@@ -13,10 +13,10 @@
 
 namespace acu_controller_default_parameters
 {
-    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 50; // Same as voltage fault count
+    constexpr const size_t MAX_INVALID_PACKET_FAULT_COUNT = 1000; // Same as voltage fault count
     constexpr const time_ms MAX_VOLTAGE_FAULT_DUR = 1000;            // At 15 Hz, we'll know if there is an error within 3 seconds of startup
     constexpr const time_ms MAX_TEMP_FAULT_DUR = 1000;
-    constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 500; // In cases in EMI, we will need more leniency with invalid packet faults
+    constexpr const time_ms MAX_INVALID_PACKET_FAULT_DUR = 1000; // In cases in EMI, we will need more leniency with invalid packet faults
 
     constexpr const float PACK_NOMINAL_CAPACITY_AH = 13.5;  // nominal pack capacity in amp * hours
     constexpr const float PACK_MAX_VOLTAGE = 529.2;         // from data sheet https://wiki.hytechracing.org/books/ht09-design/page/molicel-pack-investigation
