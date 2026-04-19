@@ -68,6 +68,9 @@ bool initialize_all_systems()
                                     disable_n_latch_en,
                                     sys_time::hal_millis());
 
+
+    TempSensorDriverInstance::create();
+
     return true;
 }
 
@@ -87,5 +90,12 @@ HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const H
 {
     ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+::HT_TASK::TaskResponse sample_em_temp_sensors(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
+{
+    TempSensorDriverInstance::instance().get_temps();
+    
     return HT_TASK::TaskResponse::YIELD;
 }

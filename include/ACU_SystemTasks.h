@@ -7,6 +7,7 @@
 /* Local System Includes */
 #include "ACUController.h"
 #include "ACUStateMachine.h"
+#include "TempSensorDriver.h"
 
 /* Interface Function Dependencies */
 #include "WatchdogInterface.h"
@@ -40,6 +41,8 @@ extern ::etl::delegate<void()> reset_latch;
 ::HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
 ::HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
+
+::HT_TASK::TaskResponse sample_em_temp_sensors(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
 
 
