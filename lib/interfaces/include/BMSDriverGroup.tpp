@@ -73,7 +73,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
 {
-    ltc_spi_interface::write_and_delay_high(_chip_select[_current_cs_index], 1);
+    ltc_spi_interface::write_and_delay_high(_chip_select[_current_cs_index], 2);
 
     // reset dma_busy var
     ltc_spi_interface::set_dma_idle();
@@ -342,6 +342,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
     // First 4 bytes are the command echo — skip them
     array<uint8_t, data_size> spi_data;
     copy_n(_rx_read_buffer.begin() + 4, data_size, spi_data.begin());
+
+    // Clear the valid read packets buffer
+    _bms_data.valid_read_packets.fill({}); 
 
     for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++) 
     {
@@ -810,7 +813,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
         array<uint8_t, 4> cmd_and_pec;
         copy(cmd_code.data(), cmd_code.data() + 2, cmd_and_pec.data()); // Copy first two bytes (cmd)
         copy(pec.data(), pec.data() + 2, cmd_and_pec.data() + 2);       // Copy next two bytes (pec)
-
 
         adc_conversion_command(_chip_select_per_chip[i], cmd_and_pec, 0);
     }
