@@ -307,82 +307,82 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
 template <typename bms_data>
 void print_bms_data(bms_data data)
 {
-    Serial.print("Total Voltage: ");
-    Serial.print(data.total_voltage, 4);
-    Serial.println("V");
+    // Serial.print("Total Voltage: ");
+    // Serial.print(data.total_voltage, 4);
+    // Serial.println("V");
 
-    Serial.print("Minimum Voltage: ");
-    Serial.print(data.min_cell_voltage, 4);
-    Serial.print("V\tLocation of Minimum Voltage: ");
-    Serial.println(data.min_cell_voltage_id);
+    // Serial.print("Minimum Voltage: ");
+    // Serial.print(data.min_cell_voltage, 4);
+    // Serial.print("V\tLocation of Minimum Voltage: ");
+    // Serial.println(data.min_cell_voltage_id);
 
-    Serial.print("Maximum Voltage: ");
-    Serial.print(data.max_cell_voltage, 4);
-    Serial.print("V\tLocation of Maximum Voltage: ");
-    Serial.println(data.max_cell_voltage_id);
+    // Serial.print("Maximum Voltage: ");
+    // Serial.print(data.max_cell_voltage, 4);
+    // Serial.print("V\tLocation of Maximum Voltage: ");
+    // Serial.println(data.max_cell_voltage_id);
 
-    Serial.print("Average Voltage: ");
-    Serial.print(data.total_voltage / ACUConstants::NUM_CELLS, 4);
-    Serial.println("V");
-    Serial.println();
+    // Serial.print("Average Voltage: ");
+    // Serial.print(data.total_voltage / ACUConstants::NUM_CELLS, 4);
+    // Serial.println("V");
+    // Serial.println();
 
-    size_t chip_index = 1;
-    for (auto chip_voltages : data.voltages)
-    {
-        Serial.print("Cell ");
-        Serial.print (chip_index); Serial.print(" ");
-        if (chip_voltages)
-        {
-            Serial.print((chip_voltages), 4);
-            Serial.print("V  ");
-        }
-        chip_index++;
-        if ((chip_index - 1) % ACUConstants::NUM_CHIPS == 0)
-        {
-            Serial.println();
-        }
-        // Serial.println();
-    }
-    Serial.println();
+    // size_t chip_index = 1;
+    // for (auto chip_voltages : data.voltages)
+    // {
+    //     Serial.print("Cell ");
+    //     Serial.print (chip_index); Serial.print(" ");
+    //     if (chip_voltages)
+    //     {
+    //         Serial.print((chip_voltages), 4);
+    //         Serial.print("V  ");
+    //     }
+    //     chip_index++;
+    //     if ((chip_index - 1) % ACUConstants::NUM_CHIPS == 0)
+    //     {
+    //         Serial.println();
+    //     }
+    //     // Serial.println();
+    // }
+    // Serial.println();
 
-    int cti = 0;
-    for (auto temp : data.cell_temperatures)
-    {
-        Serial.print("temp id ");
-        Serial.print(cti);
-        Serial.print(" val ");
-        Serial.print(temp);
-        Serial.print("\t");
-        if (cti % 4 == 3)
-            Serial.println();
-        cti++;
-    }
-    Serial.println();
+    // int cti = 0;
+    // for (auto temp : data.cell_temperatures)
+    // {
+    //     Serial.print("temp id ");
+    //     Serial.print(cti);
+    //     Serial.print(" val ");
+    //     Serial.print(temp);
+    //     Serial.print("\t");
+    //     if (cti % 4 == 3)
+    //         Serial.println();
+    //     cti++;
+    // }
+    // Serial.println();
 
-    int temp_index = 0;
-    for (auto bt : data.board_temperatures)
-    {
-        Serial.print("board temp id ");
-        Serial.print(temp_index);
-        Serial.print(" val ");
-        Serial.print("");
-        Serial.print(bt);
-        Serial.print("\t");
-        if (temp_index % 4 == 3)
-            Serial.println();
-        temp_index++;
-    }
+    // int temp_index = 0;
+    // for (auto bt : data.board_temperatures)
+    // {
+    //     Serial.print("board temp id ");
+    //     Serial.print(temp_index);
+    //     Serial.print(" val ");
+    //     Serial.print("");
+    //     Serial.print(bt);
+    //     Serial.print("\t");
+    //     if (temp_index % 4 == 3)
+    //         Serial.println();
+    //     temp_index++;
+    // }
 
-    chip_index = 0;
-    Serial.println("Balancing status : ");
-    for(bool status : check_and_get_balancing_status()) {
-        if (status)
-        {
-            Serial.print("Chip "); Serial.print(chip_index); Serial.print(" DISC\t");
-        }
-        chip_index++;
-    }
-    Serial.println();
+    // chip_index = 0;
+    // Serial.println("Balancing status : ");
+    // for(bool status : check_and_get_balancing_status()) {
+    //     if (status)
+    //     {
+    //         Serial.print("Chip "); Serial.print(chip_index); Serial.print(" DISC\t");
+    //     }
+    //     chip_index++;
+    // }
+    // Serial.println();
 
     Serial.print("Number of Global Faults: ");
     auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
@@ -390,11 +390,22 @@ void print_bms_data(bms_data data)
     
     Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
 
+    Serial.println("FAULTS DURING THIS BMS SAMPLE");
+    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++)
+    {
+        ValidPacketData_s v = data.valid_read_packets[c];
+        Serial.print("CHIP #"); Serial.print(c); Serial.print(": ");
+        Serial.print(v.valid_read_cells_1_to_3); Serial.print(" ");
+        Serial.print(v.valid_read_cells_4_to_6); Serial.print(" ");
+        Serial.print(v.valid_read_cells_7_to_9); Serial.print(" ");
+        Serial.print(v.valid_read_cells_10_to_12); Serial.print(" ");
+        Serial.print(v.valid_read_gpios_1_to_3); Serial.print(" ");
+        Serial.print(v.valid_read_gpios_4_to_6); Serial.println();
+    }
+
     Serial.println("Number of Consecutive Faults Per Chip: ");
     for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-        Serial.print("CHIP ");
-        Serial.print(c);
-        Serial.print(": ");
+        Serial.print("CHIP #"); Serial.print(c); Serial.print(": ");
 
         Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
         Serial.print(" ");
@@ -407,9 +418,9 @@ void print_bms_data(bms_data data)
         Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
         Serial.print(" ");
         Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
-        Serial.print("\t");
+        Serial.println();
     }
-    Serial.println();
+
     Serial.println();
 }
 

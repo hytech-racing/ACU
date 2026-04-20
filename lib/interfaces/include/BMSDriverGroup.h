@@ -29,8 +29,9 @@ enum class SPIState_e
     IDLE = 0,
     WAIT_WRITE_COMPLETE = 1,
     WAIT_POLL_ADC_COMPLETE = 2,
-    WAIT_CONVERSION = 3,
-    WAIT_READ_COMPLETE = 4,
+    START_CONVERSION = 3,
+    WAIT_CONVERSION = 4,
+    WAIT_READ_COMPLETE = 5,
 };
 
 // Command Codes
@@ -94,8 +95,8 @@ namespace bms_driver_defaults
     constexpr const uint16_t OVER_VOLTAGE_THRESHOLD = 2625;  // 4.2V (datasheet formula) Comparison Voltage = VOV • 16 • 100μV
     constexpr const uint16_t GPIO_ENABLE = 0x1F;
     constexpr const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
-    constexpr const float CV_ADC_CONVERSION_TIME_MS = 1.2f;
-    constexpr const float GPIO_ADC_CONVERSION_TIME_MS = 1.2f;
+    constexpr const uint16_t CV_ADC_CONVERSION_TIME_US = 2000;
+    constexpr const uint16_t GPIO_ADC_CONVERSION_TIME_US = 2000;
     constexpr const float CV_ADC_LSB_VOLTAGE = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
 }
 
@@ -168,8 +169,8 @@ struct BMSDriverGroupConfig_s
     uint16_t over_voltage_threshold;
     uint16_t gpio_enable;
     uint16_t CRC15_POLY;
-    float cv_adc_conversion_time_ms;
-    float gpio_adc_conversion_time_ms;
+    float cv_adc_conversion_time_us;
+    float gpio_adc_conversion_time_us;
     float cv_adc_lsb_voltage;
 };
 
@@ -516,7 +517,7 @@ private:
     size_t _current_cs_index = 0;
     size_t _current_chip_address_index = 0;
 
-    elapsedMillis _conversion_timer;
+    elapsedMicros _conversion_timer;
 
     array<uint8_t, cmd_and_data_buffer_size> _tx_read_buffer;
     array<uint8_t, cmd_and_data_buffer_size> _rx_read_buffer;
