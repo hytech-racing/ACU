@@ -8,17 +8,17 @@ float coulomb_count(float initial_soc, float current, float dt) {
 
 TEST(SOCKalmanFilterTesting, initialization_from_voltage) {
     SOCKalmanFilter ekf;
-    ekf.init(4.197f);
+    ekf.init(4.181f);
     float soc = ekf.get_soc();
     EXPECT_NEAR(soc, 1.0f, 0.01f);
 
     SOCKalmanFilter ekf2;
-    ekf2.init(3.828f);
+    ekf2.init(3.823f);
     float soc2 = ekf2.get_soc();
     EXPECT_NEAR(soc2, 0.5f, 0.1f);
 
     SOCKalmanFilter ekf3;
-    ekf3.init(3.585f);
+    ekf3.init(3.318f);
     float soc3 = ekf3.get_soc();
     EXPECT_NEAR(soc3, 0.0f, 0.01f);
 }
