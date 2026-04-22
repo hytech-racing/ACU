@@ -244,7 +244,9 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_data()
 {   
+    // noInterrupts();
     return _bms_data;
+    // interrupts();
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -436,15 +438,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
         }
     }
 
-    if (_current_read_group == ReadGroup_e::CV_GROUP_D)
-    {
-        Serial.print(get_current_read_group_name()); Serial.print(" ");
-        for (int i = 0; i < data_size+4; i++)
-        {
-            Serial.print(_rx_read_buffer[i], HEX); Serial.print(" ");
-        }
-        Serial.println();
-    }
+    // if (_current_read_group == ReadGroup_e::CV_GROUP_D)
+    // {
+    //     Serial.print(get_current_read_group_name()); Serial.print(" ");
+    //     for (int i = 0; i < data_size+4; i++)
+    //     {
+    //         Serial.print(_rx_read_buffer[i], HEX); Serial.print(" ");
+    //     }
+    //     Serial.println();
+    // }
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>

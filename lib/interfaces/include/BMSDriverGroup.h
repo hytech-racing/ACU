@@ -96,8 +96,8 @@ namespace bms_driver_defaults
     constexpr const uint16_t OVER_VOLTAGE_THRESHOLD = 2625;  // 4.2V (datasheet formula) Comparison Voltage = VOV • 16 • 100μV
     constexpr const uint16_t GPIO_ENABLE = 0x1F;
     constexpr const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
-    constexpr const uint16_t CV_ADC_CONVERSION_TIME_US = 1500;
-    constexpr const uint16_t GPIO_ADC_CONVERSION_TIME_US = 1500;
+    constexpr const uint16_t CV_ADC_CONVERSION_TIME_US = 1250;
+    constexpr const uint16_t GPIO_ADC_CONVERSION_TIME_US = 1250;
     constexpr const float CV_ADC_LSB_VOLTAGE = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
 }
 

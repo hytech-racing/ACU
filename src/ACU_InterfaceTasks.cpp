@@ -81,31 +81,6 @@ void initialize_all_interfaces()
                                     ACUInterfaces::SW_NOT_OK_PIN});
     WatchdogInstance::instance().init();
 
-    /* Fault Latch Manager */
-    FaultLatchManagerInstance::create();
-    FaultLatchManagerInstance::instance().set_shdn_out_latched(true); // Start shdn out latch cleared
-
-    /* BMS Driver */
-    BMSDriverInstance_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
-    BMSDriverInstance_t::instance().init();
-    /* Get Initial Pack Voltage for SoC and SoH Approximations */
-    BMSDriverInstance_t::instance().read_data();
-
-    BMSFaultDataManagerInstance_t::create();
-    // BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
-    /* Ethernet Interface */
-    ACUEthernetInterfaceInstance::create();
-    ACUEthernetInterfaceInstance::instance().init_ethernet_device();
-
-    /* CCU Interface */
-    CCUInterfaceInstance::create(sys_time::hal_millis());
-
-    /* VCR Interface */
-    VCRInterfaceInstance::create(sys_time::hal_millis());
-
-    /* EM Interface */
-    EMInterfaceInstance::create(sys_time::hal_millis());
-
     /* ADC Interface */
     ADCInterfaceInstance::create(   ADCPinout_s {ACUInterfaces::IMD_OK_PIN,
                                 ACUInterfaces::PRECHARGE_PIN,
@@ -163,6 +138,31 @@ void initialize_all_interfaces()
     );
     ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 
+    /* Fault Latch Manager */
+    FaultLatchManagerInstance::create();
+    FaultLatchManagerInstance::instance().set_shdn_out_latched(true); // Start shdn out latch cleared
+
+    /* BMS Driver */
+    BMSDriverInstance_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
+    BMSDriverInstance_t::instance().init();
+    /* Get Initial Pack Voltage for SoC and SoH Approximations */
+    BMSDriverInstance_t::instance().read_data();
+
+    BMSFaultDataManagerInstance_t::create();
+
+    /* Ethernet Interface */
+    ACUEthernetInterfaceInstance::create();
+    ACUEthernetInterfaceInstance::instance().init_ethernet_device();
+
+    /* CCU Interface */
+    CCUInterfaceInstance::create(sys_time::hal_millis());
+
+    /* VCR Interface */
+    VCRInterfaceInstance::create(sys_time::hal_millis());
+
+    /* EM Interface */
+    EMInterfaceInstance::create(sys_time::hal_millis());
+
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
 }
@@ -178,7 +178,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     auto start = sys_time::hal_micros();
     BMSDriverInstance_t::instance().read_data();
     auto data = BMSDriverInstance_t::instance().get_bms_data();
-    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
+    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets, BMSDriverInstance_t::instance().get_current_read_group());
     // print_bms_data(data);
 
     auto end = sys_time::hal_micros();
@@ -394,31 +394,19 @@ void print_bms_data(bms_data data)
     for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++)
     {
         ValidPacketData_s v = data.valid_read_packets[c];
-        Serial.print("CHIP #"); Serial.print(c); Serial.print(": ");
+        Serial.print("CHIP #"); Serial.print(c); Serial.print(":\t");
         Serial.print(v.valid_read_cells_1_to_3); Serial.print(" ");
         Serial.print(v.valid_read_cells_4_to_6); Serial.print(" ");
         Serial.print(v.valid_read_cells_7_to_9); Serial.print(" ");
         Serial.print(v.valid_read_cells_10_to_12); Serial.print(" ");
         Serial.print(v.valid_read_gpios_1_to_3); Serial.print(" ");
-        Serial.print(v.valid_read_gpios_4_to_6); Serial.println();
-    }
-
-    Serial.println("Number of Consecutive Faults Per Chip: ");
-    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-        Serial.print("CHIP #"); Serial.print(c); Serial.print(": ");
-
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
-        Serial.println();
+        Serial.print(v.valid_read_gpios_4_to_6); Serial.print("\t");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count); Serial.println();
     }
 
     Serial.println();
