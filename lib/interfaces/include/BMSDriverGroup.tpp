@@ -83,10 +83,17 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
     _tx_read_buffer.fill(0);
     _tx_write_buffer.fill(0);
 
-    if (_spi_state == SPIState_e::WAIT_POLL_ADC_COMPLETE) 
+    if (_spi_state == SPIState_e::START_CONVERSIONS)
     {
+        if (_current_cs_index + 1 < num_chip_selects)
+        {
+            _current_cs_index += 1;
+            return;
+        }
+
         _conversion_timer = 0;
         _spi_state = SPIState_e::WAIT_CONVERSION;
+        _current_cs_index = 0;
         return;
     }
 
@@ -151,7 +158,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
         _current_read_group = advance_read_group(_current_read_group);
         if (_current_read_group == ReadGroup_e::CV_GROUP_A || _current_read_group == ReadGroup_e::AUX_GROUP_A)
         {
-            _spi_state = SPIState_e::START_CONVERSION;
+            _spi_state = SPIState_e::START_CONVERSIONS;
             return;
         }
     }
@@ -250,17 +257,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
         return;
     }
 
-    if (_spi_state == SPIState_e::START_CONVERSION)
-    {
-        if (_current_read_group == ReadGroup_e::CV_GROUP_A) 
-        { 
-            _start_cell_voltage_ADC_conversion();
+    if (_spi_state == SPIState_e::START_CONVERSIONS)
+    {   
+        if (_current_cs_index > 0)
+        {
             return;
         }
-        if (_current_read_group == ReadGroup_e::AUX_GROUP_A) 
+        else
         {
-            _start_GPIO_ADC_conversion();
-            return;
+            _init_adc_conversion();
         }
     }
 
@@ -805,14 +810,11 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
     copy(cmd_and_pec.begin(), cmd_and_pec.end(), _tx_write_buffer.begin());
 
     // Needs to be sent on each chip select line
-    for (size_t cs = 0; cs < num_chip_selects; cs++) 
-    {
-        _start_wakeup_protocol(cs);
+    _start_wakeup_protocol(_current_cs_index);
 
-        SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
-        ltc_spi_interface::write_and_delay_low(_chip_select[cs], 1);
-        ltc_spi_interface::begin_transfer<cmd_only_buffer_size>(_tx_write_buffer, _rx_write_buffer, _spi_event);
-    }
+    SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
+    ltc_spi_interface::write_and_delay_low(_chip_select[_current_cs_index], 1);
+    ltc_spi_interface::begin_transfer<cmd_only_buffer_size>(_tx_write_buffer, _rx_write_buffer, _spi_event);
 }
 
 // UNUSED: LTC6811-2 ADDRESS MODE - REFERENCE ONLY
@@ -829,6 +831,21 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
         copy(pec.data(), pec.data() + 2, cmd_and_pec.data() + 2);       // Copy next two bytes (pec)
 
         adc_conversion_command(_chip_select_per_chip[i], cmd_and_pec, 0);
+    }
+}
+
+template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
+void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_init_adc_conversion()
+{
+    if (_current_read_group == ReadGroup_e::CV_GROUP_A) 
+    { 
+        _start_cell_voltage_ADC_conversion();
+        return;
+    }
+    if (_current_read_group == ReadGroup_e::AUX_GROUP_A) 
+    {
+        _start_GPIO_ADC_conversion();
+        return;
     }
 }
 

@@ -179,12 +179,11 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     BMSDriverInstance_t::instance().read_data();
     auto data = BMSDriverInstance_t::instance().get_bms_data();
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
-    // print_bms_data(data);
+    print_bms_data(data);
 
     auto end = sys_time::hal_micros();
     auto diff = end - start;
-
-    // Serial.println(diff);
+    Serial.println(diff);
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -327,24 +326,24 @@ void print_bms_data(bms_data data)
     // Serial.println("V");
     // Serial.println();
 
-    // size_t chip_index = 1;
-    // for (auto chip_voltages : data.voltages)
-    // {
-    //     Serial.print("Cell ");
-    //     Serial.print (chip_index); Serial.print(" ");
-    //     if (chip_voltages)
-    //     {
-    //         Serial.print((chip_voltages), 4);
-    //         Serial.print("V  ");
-    //     }
-    //     chip_index++;
-    //     if ((chip_index - 1) % ACUConstants::NUM_CHIPS == 0)
-    //     {
-    //         Serial.println();
-    //     }
-    //     // Serial.println();
-    // }
-    // Serial.println();
+    size_t chip_index = 1;
+    for (auto chip_voltages : data.voltages)
+    {
+        Serial.print("Cell ");
+        Serial.print (chip_index); Serial.print(" ");
+        if (chip_voltages)
+        {
+            Serial.print((chip_voltages), 4);
+            Serial.print("V  ");
+        }
+        chip_index++;
+        if ((chip_index - 1) % ACUConstants::NUM_CHIPS == 0)
+        {
+            Serial.println();
+        }
+        // Serial.println();
+    }
+    Serial.println();
 
     // int cti = 0;
     // for (auto temp : data.cell_temperatures)

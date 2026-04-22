@@ -30,7 +30,7 @@ enum class SPIState_e
     IDLE = 0,
     WAIT_WRITE_COMPLETE = 1,
     WAIT_POLL_ADC_COMPLETE = 2,
-    START_CONVERSION = 3,
+    START_CONVERSIONS = 3,
     WAIT_CONVERSION = 4,
     WAIT_READ_COMPLETE = 5,
 };
@@ -399,6 +399,8 @@ private:
      * @post packaged data transferred over SPI, need to delay before we can read
      */
     void _start_cell_voltage_ADC_conversion();
+
+    void _init_adc_conversion();
 
     /**
      * Writes command to start GPIO ADC conversion
