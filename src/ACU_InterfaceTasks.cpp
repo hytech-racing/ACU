@@ -176,14 +176,18 @@ HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT
 HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     auto start = sys_time::hal_micros();
+    // Serial.print("PREVIOUS SPI STATE: "); Serial.println(BMSDriverInstance_t::instance().get_spi_state_name());
     BMSDriverInstance_t::instance().read_data();
     auto data = BMSDriverInstance_t::instance().get_bms_data();
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets, BMSDriverInstance_t::instance().get_current_read_group());
-    // print_bms_data(data);
+    // Serial.print("CURRENT READ GROUP: "); Serial.println(BMSDriverInstance_t::instance().get_current_read_group_name());
+    // Serial.print("CURRENT SPI STATE:  "); Serial.println(BMSDriverInstance_t::instance().get_spi_state_name());
+    print_bms_data(data);
 
+    Serial.println();
     auto end = sys_time::hal_micros();
     auto diff = end - start;
-    // Serial.println(diff);
+    Serial.println(diff);
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -307,24 +311,24 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
 template <typename bms_data>
 void print_bms_data(bms_data data)
 {
-    // Serial.print("Total Voltage: ");
-    // Serial.print(data.total_voltage, 4);
-    // Serial.println("V");
+    Serial.print("Total Voltage: ");
+    Serial.print(data.total_voltage, 4);
+    Serial.println("V");
 
-    // Serial.print("Minimum Voltage: ");
-    // Serial.print(data.min_cell_voltage, 4);
-    // Serial.print("V\tLocation of Minimum Voltage: ");
-    // Serial.println(data.min_cell_voltage_id);
+    Serial.print("Minimum Voltage: ");
+    Serial.print(data.min_cell_voltage, 4);
+    Serial.print("V\tLocation of Minimum Voltage: ");
+    Serial.println(data.min_cell_voltage_id);
 
-    // Serial.print("Maximum Voltage: ");
-    // Serial.print(data.max_cell_voltage, 4);
-    // Serial.print("V\tLocation of Maximum Voltage: ");
-    // Serial.println(data.max_cell_voltage_id);
+    Serial.print("Maximum Voltage: ");
+    Serial.print(data.max_cell_voltage, 4);
+    Serial.print("V\tLocation of Maximum Voltage: ");
+    Serial.println(data.max_cell_voltage_id);
 
-    // Serial.print("Average Voltage: ");
-    // Serial.print(data.total_voltage / ACUConstants::NUM_CELLS, 4);
-    // Serial.println("V");
-    // Serial.println();
+    Serial.print("Average Voltage: ");
+    Serial.print(data.total_voltage / ACUConstants::NUM_CELLS, 4);
+    Serial.println("V");
+    Serial.println();
 
     // size_t chip_index = 1;
     // for (auto chip_voltages : data.voltages)

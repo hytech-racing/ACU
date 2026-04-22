@@ -45,6 +45,7 @@ namespace ltc_spi_interface {
     */
     void write_and_delay_high(int cs, int delay_us);
     void write_and_delay_low(int cs, int delay_us);
+    void delay_and_write_high(int cs, int delay_us);
 }
 
 #include <LTCSPIInterface.tpp>

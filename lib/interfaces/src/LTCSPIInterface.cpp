@@ -30,5 +30,11 @@ namespace ltc_spi_interface
         digitalWrite(cs, HIGH);
         delayMicroseconds(delay_us);
     }
+
+    void delay_and_write_high(int cs, int delay_us) 
+    {
+        delayMicroseconds(delay_us);
+        digitalWrite(cs, HIGH);
+    }
 }
 

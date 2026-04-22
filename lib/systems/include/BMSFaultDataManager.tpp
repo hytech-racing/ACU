@@ -44,8 +44,14 @@ void BMSFaultDataManager<num_chips>::update_from_valid_packets(
                 break;
             }
         }
-        num_valid_packets += static_cast<size_t>(valid_read_packets[chip].valid_read_cells_1_to_3 + valid_read_packets[chip].valid_read_cells_4_to_6 + valid_read_packets[chip].valid_read_cells_7_to_9 + 
-                              valid_read_packets[chip].valid_read_cells_10_to_12 + valid_read_packets[chip].valid_read_gpios_1_to_3 + valid_read_packets[chip].valid_read_gpios_4_to_6);
+        num_valid_packets += static_cast<size_t>(
+            (_bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count == 0) +
+            (_bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count == 0) +
+            (_bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count == 0) +
+            (_bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count == 0) +
+            (_bms_fault_data.chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count == 0) +
+            (_bms_fault_data.chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count == 0)
+        );
 
         temp = {
             _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count,
