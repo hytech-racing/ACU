@@ -65,7 +65,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
     _spi_event.setContext(this);
     _spi_event.attachImmediate([](EventResponderRef ref) 
     {
-        SPI1.endTransaction();
         static_cast<BMSDriverGroup*>(ref.getContext())->_dma_callback();
     });
 
@@ -76,6 +75,7 @@ template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
 {
     ltc_spi_interface::write_and_delay_high(_chip_select[_current_cs_index], 2);
+    SPI1.endTransaction();
 
     // reset dma_busy var
     ltc_spi_interface::set_dma_idle();
@@ -435,7 +435,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
             _load_auxillaries(_bms_data, _max_min_reference, spi_response, chip_index, start_index);
         }
     }
-    
+
     if (_current_read_group == ReadGroup_e::CV_GROUP_D)
     {
         Serial.print(get_current_read_group_name()); Serial.print(" ");
