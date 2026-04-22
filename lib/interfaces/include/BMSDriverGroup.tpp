@@ -435,6 +435,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
             _load_auxillaries(_bms_data, _max_min_reference, spi_response, chip_index, start_index);
         }
     }
+    
     if (_current_read_group == ReadGroup_e::CV_GROUP_D)
     {
         Serial.print(get_current_read_group_name()); Serial.print(" ");
@@ -560,7 +561,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_cell_voltages
 {
     array<uint8_t, 2> data_in_cell_voltage;
 
-    uint8_t cell_global_offset = (chip_index / 2) * 21 + (chip_index % 2) * 12;
+    uint8_t cell_global_offset = (chip_index / 2) * 21 + (chip_index % 2) * num_chips;
 
     for (int cell_index = start_cell_index; cell_index < start_cell_index+3; cell_index++)
     {
