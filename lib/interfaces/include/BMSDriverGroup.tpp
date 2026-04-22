@@ -87,13 +87,12 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
     {
         if (_current_cs_index + 1 < num_chip_selects)
         {
-            _current_cs_index += 1;
+            _current_cs_index++;
             return;
         }
-
         _conversion_timer = 0;
-        _spi_state = SPIState_e::WAIT_CONVERSION;
         _current_cs_index = 0;
+        _spi_state = SPIState_e::WAIT_CONVERSION;
         return;
     }
 
@@ -259,14 +258,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
 
     if (_spi_state == SPIState_e::START_CONVERSIONS)
     {   
-        if (_current_cs_index > 0)
-        {
-            return;
-        }
-        else
-        {
-            _init_adc_conversion();
-        }
+        _init_adc_conversion();
     }
 
     if (_spi_state == SPIState_e::WAIT_CONVERSION && _conversion_timer > _config.cv_adc_conversion_time_us)
@@ -416,9 +408,10 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
                 __builtin_unreachable();
             }
         }
+        
 
         if (!current_group_valid || (_current_read_group == ReadGroup_e::CV_GROUP_D && cells_per_chip == 9)) 
-        {
+        {   
             continue;
         }
 
@@ -441,6 +434,15 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
         {
             _load_auxillaries(_bms_data, _max_min_reference, spi_response, chip_index, start_index);
         }
+    }
+    if (_current_read_group == ReadGroup_e::CV_GROUP_D)
+    {
+        Serial.print(get_current_read_group_name()); Serial.print(" ");
+        for (int i = 0; i < data_size+4; i++)
+        {
+            Serial.print(_rx_read_buffer[i], HEX); Serial.print(" ");
+        }
+        Serial.println();
     }
 }
 
@@ -776,7 +778,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_cell_voltage
     {
         _start_ADC_conversion_through_address(cmd);
     }
-    _spi_state = SPIState_e::WAIT_POLL_ADC_COMPLETE;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -795,7 +796,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_GPIO_ADC_con
     {
         _start_ADC_conversion_through_address(cmd);
     }
-    _spi_state = SPIState_e::WAIT_POLL_ADC_COMPLETE;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
