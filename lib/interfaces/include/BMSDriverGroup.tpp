@@ -420,17 +420,17 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
             }
         }
         
-        if (!current_group_valid)
-        {
-            Serial.print(get_current_read_group_name()); Serial.print(" ");
-            Serial.print(chip); Serial.print(" ");
-            Serial.print(_chip_select[_current_cs_index]); Serial.print(" ");
-            for (int i = 0; i < data_size+4; i++)
-            {
-                Serial.print(_rx_read_buffer[i], HEX); Serial.print(" ");
-            }
-            Serial.println();
-        }
+        // if (!current_group_valid)
+        // {
+        //     Serial.print(get_current_read_group_name()); Serial.print(" ");
+        //     Serial.print(chip); Serial.print(" ");
+        //     Serial.print(_chip_select[_current_cs_index]); Serial.print(" ");
+        //     for (int i = 0; i < data_size+4; i++)
+        //     {
+        //         Serial.print(_rx_read_buffer[i], HEX); Serial.print(" ");
+        //     }
+        //     Serial.println();
+        // }
 
         if (!current_group_valid || (_current_read_group == ReadGroup_e::CV_GROUP_D && cells_per_chip == 9)) 
         {   
