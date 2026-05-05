@@ -182,12 +182,12 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets, BMSDriverInstance_t::instance().get_current_read_group());
     // Serial.print("CURRENT READ GROUP: "); Serial.println(BMSDriverInstance_t::instance().get_current_read_group_name());
     // Serial.print("CURRENT SPI STATE:  "); Serial.println(BMSDriverInstance_t::instance().get_spi_state_name());
-    print_bms_data(data);
+    // print_bms_data(data);
 
-    Serial.println();
-    auto end = sys_time::hal_micros();
-    auto diff = end - start;
-    Serial.println(diff);
+    // Serial.println();
+    // auto end = sys_time::hal_micros();
+    // auto diff = end - start;
+    // Serial.println(diff);
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -481,39 +481,39 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println("V");
     Serial.println();
 
-    Serial.print("Is charging enabled: "); Serial.print(ACUControllerInstance::instance().get_status().balancing_enabled ? "YES" : "NO"); Serial.println(" Balancing status : ");
-    for(bool status : check_and_get_balancing_status()) {
-        Serial.print(status);
-        Serial.print(" ");
-    }
-    Serial.println();
+    // Serial.print("Is charging enabled: "); Serial.print(ACUControllerInstance::instance().get_status().balancing_enabled ? "YES" : "NO"); Serial.println(" Balancing status : ");
+    // for(bool status : check_and_get_balancing_status()) {
+    //     Serial.print(status);
+    //     Serial.print(" ");
+    // }
+    // Serial.println();
 
     Serial.print("Number of Global Faults: ");
     auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
     Serial.println(faults.max_consecutive_invalid_packet_count);
     Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
-    Serial.println("Number of Consecutive Faults Per Chip: ");
-    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-       Serial.print("CHIP ");
-        Serial.print(c);
-        Serial.print(": ");
-        Serial.print(faults.consecutive_invalid_packet_counts[c]);
-        Serial.print(" ");
+    // Serial.println("Number of Consecutive Faults Per Chip: ");
+    // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
+    //    Serial.print("CHIP ");
+    //     Serial.print(c);
+    //     Serial.print(": ");
+    //     Serial.print(faults.consecutive_invalid_packet_counts[c]);
+    //     Serial.print(" ");
         
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
-        Serial.print("\t");
-        Serial.print(" ");
-    }
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
+    //     Serial.print("\t");
+    //     Serial.print(" ");
+    // }
     Serial.println();
 
     Serial.println("\nMAX114X Output:");

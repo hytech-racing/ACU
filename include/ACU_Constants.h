@@ -24,7 +24,7 @@ namespace ACUSystems
     constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02;  // differential with lowest cell voltage to enable cell balancing for a cell
     constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
     constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
-    constexpr const volt TS_ISOLATION_VOLTAGE = 50; // Volts
+    constexpr const volt TS_ISOLATION_VOLTAGE = 100; // Volts
 }
 
 namespace ACUInterfaces {
@@ -120,7 +120,7 @@ namespace ACUConstants
     constexpr uint32_t TICK_SM_PRIORITY = 9;
     constexpr uint32_t KICK_WATCHDOG_PERIOD_US = 4000UL; // 10 000 us = 100 Hz
     constexpr uint32_t WATCHDOG_PRIORITY = 1;
-    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 10000UL; // 5 000 us = 200 Hz (since we are reading by group)
+    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 20000UL; // 5 000 us = 200 Hz (since we are reading by group)
     constexpr uint32_t SAMPLE_BMS_PRIORITY = 2;
     constexpr uint32_t EVAL_ACC_PERIOD_US = 20000UL; // 20 000 us = 50 Hz (problem for soc if this is running faster than voltage)
     constexpr uint32_t EVAL_ACC_PRIORITY = 10;

@@ -18,7 +18,7 @@ void BMSFaultDataManager<num_chips>::update_from_valid_packets(
             case ReadGroup_e::CV_GROUP_A:
             {
                 _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!valid_read_packets[chip].valid_read_cells_1_to_3) ? _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
-it ad                break;
+                break;
             }
             case ReadGroup_e::CV_GROUP_B:
             {
