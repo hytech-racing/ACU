@@ -54,6 +54,14 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message() {
     CAN_util::enqueue_msg(&detailed_msg, &Pack_BMS_DETAILED_VOLTAGES_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
 } 
 
+void CCUInterface::handle_enqueue_acu_SoC_CAN_message() {
+    STATE_OF_CHARGE_t msg = {};
+    msg.charge_percentage_ro = HYTECH_charge_percentage_ro_toS(_acu_all_data.SoC * 100);
+    msg.min_cell_voltage_est_ro = 0;
+    msg.charge_coulombs_ro = 0;
+    CAN_util::enqueue_msg(&msg, &Pack_STATE_OF_CHARGE_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
+}
+
 void CCUInterface::handle_enqueue_acu_temps_CAN_message() {
     BMS_DETAILED_TEMPS_t detailed_msg = {};
     detailed_msg.ic_id = static_cast<uint8_t>(_curr_data.detailed_temps_ic_id);

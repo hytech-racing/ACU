@@ -77,8 +77,9 @@ HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const
         sys_time::hal_millis(), 
         BMSDriverInstance_t::instance().get_bms_core_data(), 
         BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count,
-        EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_current,
-        ACUConstants::NUM_CELLS
+        ADCInterfaceInstance::instance().read_shunt_current(),
+        ACUConstants::NUM_CELLS,
+        BMSDriverInstance_t::instance().check_clear_voltage_ready()
     );
     return HT_TASK::TaskResponse::YIELD;
 }

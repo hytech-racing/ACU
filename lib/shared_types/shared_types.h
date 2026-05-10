@@ -59,8 +59,13 @@ struct BMSCoreData_s {
  */
 
 enum ReadGroup_e {
-    CV_GROUP_A = 0, CV_GROUP_B, CV_GROUP_C, CV_GROUP_D,
-    AUX_GROUP_A,   AUX_GROUP_B, NUM_GROUPS
+    CV_GROUP_A = 0, 
+    CV_GROUP_B, 
+    CV_GROUP_C, 
+    CV_GROUP_D,
+    AUX_GROUP_A,   
+    AUX_GROUP_B, 
+    NUM_GROUPS
 };
 
 

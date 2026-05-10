@@ -10,13 +10,14 @@ void ACUController::init(time_ms system_start_time, volt pack_voltage)
     _acu_state.last_time_pack_uv_fault_not_present = system_start_time;
     _acu_state.last_time_invalid_packet_present = system_start_time;
     _acu_state.prev_bms_time_stamp = system_start_time;
-    _acu_state.SoC = (pack_voltage <= _acu_parameters.pack_specs.pack_min_voltage) ? 0.0f : ((pack_voltage - _acu_parameters.pack_specs.pack_min_voltage) / (_acu_parameters.pack_specs.pack_max_voltage - _acu_parameters.pack_specs.pack_min_voltage));
+    _acu_state.SoC = -1;
     _acu_state.balancing_enabled = false;
     _acu_state.high_side_contactor_welded = false;
     _acu_state.low_side_contactor_welded = false;
+    _acu_state.bms_ok = true;
 }
 
-ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells)
+ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells, bool voltage_is_fresh)
 {   
     // _acu_state.charging_enabled = input_state.charging_enabled;
     
@@ -25,8 +26,9 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     { // meaning that at least one of the packets is invalid
         has_invalid_packet = true;
     }
-    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp);
-    
+
+    volt min_cell_voltage = input_state.min_cell_voltage;
+    _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, min_cell_voltage, current_millis, voltage_is_fresh);
     // Cell balancing calculations
     bool previously_balancing = _acu_state.balancing_enabled;
 
@@ -95,7 +97,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     _acu_state.has_fault = _check_faults(current_millis);
 
     // Determine if bms is ok
-    _acu_state.bms_ok = _check_bms_ok(current_millis);
+    _acu_state.bms_ok = _is_bms_ok(current_millis);
 
     return _acu_state;
 }
@@ -117,34 +119,112 @@ void ACUController::calculate_cell_balance_statuses(bool* output, const volt* vo
     }
 }
 
-
-float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms)
+float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
 {
-    float delta_ah = (em_current) * (static_cast<float>(delta_time_ms) / _ms_to_hours);  // amp hours
-    _acu_state.SoC += delta_ah / _acu_parameters.pack_specs.pack_nominal_capacity; // should be -= but EM inverted
-    if (_acu_state.SoC < 0.0)
-        _acu_state.SoC = 0;
-    if (_acu_state.SoC > 1.0)
-        _acu_state.SoC = 1;
+    static constexpr size_t table_size = 101;
+
+    if (min_cell_voltage >= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[0]) 
+    {
+        return 1.0f;
+    }
+    if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[table_size - 1]) 
+    {
+        return 0.0f;
+    }
+
+    for (size_t i = 0; i < table_size - 1; i++) 
+    {
+        if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i] && min_cell_voltage > SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]) //NOLINT
+        { 
+            float v_high = SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
+            float v_low = SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
+            float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
+            float soc_low = (float)(table_size - 1 - (i + 1)) / (table_size - 1);
+            
+            return soc_low + (min_cell_voltage - v_low) / (v_high - v_low) * (soc_high - soc_low);
+        }
+    }
+
+    return 0.0f;
+}
+
+float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis, bool voltage_is_fresh)
+{
+    if (!_ekf_initialized) 
+    {
+        if (!voltage_is_fresh) 
+        {
+            return _acu_state.SoC;
+        }
+        if (min_cell_voltage < acu_controller_default_parameters::MIN_CELL_VOLTAGE_FOR_SOC) 
+        {
+            return 0.0f; 
+        } 
+        else 
+        {
+            _soc_ekf.init(min_cell_voltage);
+            _ekf_initialized = true;
+            _acu_state.SoC = _soc_ekf.get_soc();
+            return _acu_state.SoC;
+        }
+    }
+
+    float dt = static_cast<float>(delta_time_ms) / _ms_to_seconds; // in seconds
+    
+    // we will use coulomb counting for the normal implementation of getting state of charge
+    // whenever the car has been at rest (em voltage and em current at 0) for 30 mins, then we can correct the SoC to the voltage look up table value
+    // we will reset the soc with the voltage look up value
+    // we want to then start coulomb counting from this point, we also want to restart a 30 min timer, so we can set the start time to now
+
+    bool is_stabilized = (fabs(em_current) <= STABILIZED_CURRENT_THRESH);
+    if (is_stabilized) 
+    {
+        if (_acu_state.first_zero_current_time_stamp == 0) 
+        {
+            _acu_state.first_zero_current_time_stamp = current_millis;
+        }
+        // we have another 0 current, so we need to see if we have rested for long enough
+        if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) 
+        {
+            if (voltage_is_fresh) 
+            {
+                _acu_state.SoC = _get_soc_from_voltage(min_cell_voltage);
+                _soc_ekf.reset_soc(_acu_state.SoC);
+
+                return _acu_state.SoC;
+            }
+        }
+    } 
+    else 
+    {
+        _acu_state.first_zero_current_time_stamp = 0;
+    }
+
+    EKFState_s ekf_state = _soc_ekf.update(em_current, min_cell_voltage, dt, voltage_is_fresh);
+    _acu_state.SoC = ekf_state.soc;
+
     return _acu_state.SoC;
 }
 
 
-bool ACUController::_check_bms_ok(time_ms current_millis)
+bool ACUController::_is_bms_ok(time_ms current_millis)
 {   
-   if (_acu_state.has_fault) {
-        _acu_state.bms_ok = !_acu_state.has_fault;
+    if (_acu_state.has_fault) 
+    {
         _acu_state.last_bms_not_ok_eval = current_millis;
-    } else if (!_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) {
-        _acu_state.bms_ok = true;
+        return false;
+    } 
+    else if (!_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) 
+    {
+       return true;
     }
+
     return _acu_state.bms_ok;
 }
 
 
 bool ACUController::_check_faults(time_ms current_millis)
 {
-    
     return _check_voltage_faults(current_millis) || _check_temperature_faults(current_millis) || _check_invalid_packet_faults(current_millis);
 }
 

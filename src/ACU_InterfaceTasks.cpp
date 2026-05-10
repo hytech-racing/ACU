@@ -81,31 +81,6 @@ void initialize_all_interfaces()
                                     ACUInterfaces::SW_NOT_OK_PIN});
     WatchdogInstance::instance().init();
 
-    /* Fault Latch Manager */
-    FaultLatchManagerInstance::create();
-    FaultLatchManagerInstance::instance().set_shdn_out_latched(true); // Start shdn out latch cleared
-
-    /* BMS Driver */
-    BMSDriverInstance_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
-    BMSDriverInstance_t::instance().init();
-    /* Get Initial Pack Voltage for SoC and SoH Approximations */
-    BMSDriverInstance_t::instance().read_data();
-
-    BMSFaultDataManagerInstance_t::create();
-    // BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
-    /* Ethernet Interface */
-    ACUEthernetInterfaceInstance::create();
-    ACUEthernetInterfaceInstance::instance().init_ethernet_device();
-
-    /* CCU Interface */
-    CCUInterfaceInstance::create(sys_time::hal_millis());
-
-    /* VCR Interface */
-    VCRInterfaceInstance::create(sys_time::hal_millis());
-
-    /* EM Interface */
-    EMInterfaceInstance::create(sys_time::hal_millis());
-
     /* ADC Interface */
     ADCInterfaceInstance::create(   ADCPinout_s {ACUInterfaces::IMD_OK_PIN,
                                 ACUInterfaces::PRECHARGE_PIN,
@@ -154,14 +129,39 @@ void initialize_all_interfaces()
                                 ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
                                 ACUInterfaces::TS_OUT_FILTERED_OFFSET,
                                 ACUInterfaces::PACK_OUT_FILTERED_OFFSET},
-                                    MAX114XChannels_s {CHANNEL_TYPE_e::INV_DIFFERENTIAL,
+                                    MAX114XChannels_s {CHANNEL_TYPE_e::NOT_USED,
                                 CHANNEL_TYPE_e::SINGLE,
-                                CHANNEL_TYPE_e::DIFFERENTIAL,
-                                CHANNEL_TYPE_e::SINGLE},
+                                CHANNEL_TYPE_e::NOT_USED,
+                                CHANNEL_TYPE_e::NOT_USED},
                                     ACUInterfaces::ADC0_SPEED,
                                     ACUInterfaces::BIT_RESOLUTION
     );
     ADCInterfaceInstance::instance().init(sys_time::hal_millis());
+
+    /* Fault Latch Manager */
+    FaultLatchManagerInstance::create();
+    FaultLatchManagerInstance::instance().set_shdn_out_latched(true); // Start shdn out latch cleared
+
+    /* BMS Driver */
+    BMSDriverInstance_t::create(ACUConstants::CS, ACUConstants::CS_PER_CHIP, ACUConstants::ADDR);
+    BMSDriverInstance_t::instance().init();
+    /* Get Initial Pack Voltage for SoC and SoH Approximations */
+    BMSDriverInstance_t::instance().read_data();
+
+    BMSFaultDataManagerInstance_t::create();
+
+    /* Ethernet Interface */
+    ACUEthernetInterfaceInstance::create();
+    ACUEthernetInterfaceInstance::instance().init_ethernet_device();
+
+    /* CCU Interface */
+    CCUInterfaceInstance::create(sys_time::hal_millis());
+
+    /* VCR Interface */
+    VCRInterfaceInstance::create(sys_time::hal_millis());
+
+    /* EM Interface */
+    EMInterfaceInstance::create(sys_time::hal_millis());
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
@@ -176,15 +176,18 @@ HT_TASK::TaskResponse run_kick_watchdog(const unsigned long &sysMicros, const HT
 HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     auto start = sys_time::hal_micros();
+    // Serial.print("PREVIOUS SPI STATE: "); Serial.println(BMSDriverInstance_t::instance().get_spi_state_name());
     BMSDriverInstance_t::instance().read_data();
     auto data = BMSDriverInstance_t::instance().get_bms_data();
-    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets);
-    print_bms_data(data);
+    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets, BMSDriverInstance_t::instance().get_current_read_group());
+    // Serial.print("CURRENT READ GROUP: "); Serial.println(BMSDriverInstance_t::instance().get_current_read_group_name());
+    // Serial.print("CURRENT SPI STATE:  "); Serial.println(BMSDriverInstance_t::instance().get_spi_state_name());
+    // print_bms_data(data);
 
-    auto end = sys_time::hal_micros();
-    auto diff = end - start;
-
-    Serial.println(diff);
+    // Serial.println();
+    // auto end = sys_time::hal_micros();
+    // auto diff = end - start;
+    // Serial.println(diff);
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -268,6 +271,7 @@ HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, 
     CCUInterfaceInstance::instance().set_ACU_data<ACUConstants::NUM_CELLS, ACUConstants::NUM_CELL_TEMPS, ACUConstants::NUM_CHIPS>(data);
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
+    CCUInterfaceInstance::instance().handle_enqueue_acu_SoC_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -307,24 +311,24 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
 template <typename bms_data>
 void print_bms_data(bms_data data)
 {
-    // Serial.print("Total Voltage: ");
-    // Serial.print(data.total_voltage, 4);
-    // Serial.println("V");
+    Serial.print("Total Voltage: ");
+    Serial.print(data.total_voltage, 4);
+    Serial.println("V");
 
-    // Serial.print("Minimum Voltage: ");
-    // Serial.print(data.min_cell_voltage, 4);
-    // Serial.print("V\tLocation of Minimum Voltage: ");
-    // Serial.println(data.min_cell_voltage_id);
+    Serial.print("Minimum Voltage: ");
+    Serial.print(data.min_cell_voltage, 4);
+    Serial.print("V\tLocation of Minimum Voltage: ");
+    Serial.println(data.min_cell_voltage_id);
 
-    // Serial.print("Maximum Voltage: ");
-    // Serial.print(data.max_cell_voltage, 4);
-    // Serial.print("V\tLocation of Maximum Voltage: ");
-    // Serial.println(data.max_cell_voltage_id);
+    Serial.print("Maximum Voltage: ");
+    Serial.print(data.max_cell_voltage, 4);
+    Serial.print("V\tLocation of Maximum Voltage: ");
+    Serial.println(data.max_cell_voltage_id);
 
-    // Serial.print("Average Voltage: ");
-    // Serial.print(data.total_voltage / ACUConstants::NUM_CELLS, 4);
-    // Serial.println("V");
-    // Serial.println();
+    Serial.print("Average Voltage: ");
+    Serial.print(data.total_voltage / ACUConstants::NUM_CELLS, 4);
+    Serial.println("V");
+    Serial.println();
 
     // size_t chip_index = 1;
     // for (auto chip_voltages : data.voltages)
@@ -384,9 +388,9 @@ void print_bms_data(bms_data data)
     // }
     // Serial.println();
 
-    Serial.print("Number of Global Faults: ");
+    // Serial.print("Number of Global Faults: ");
     auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
-    Serial.println(faults.max_consecutive_invalid_packet_count);
+    // Serial.println(faults.max_consecutive_invalid_packet_count);
     
     Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
 
@@ -394,31 +398,19 @@ void print_bms_data(bms_data data)
     for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++)
     {
         ValidPacketData_s v = data.valid_read_packets[c];
-        Serial.print("CHIP #"); Serial.print(c); Serial.print(": ");
+        Serial.print("CHIP #"); Serial.print(c); Serial.print(":\t");
         Serial.print(v.valid_read_cells_1_to_3); Serial.print(" ");
         Serial.print(v.valid_read_cells_4_to_6); Serial.print(" ");
         Serial.print(v.valid_read_cells_7_to_9); Serial.print(" ");
         Serial.print(v.valid_read_cells_10_to_12); Serial.print(" ");
         Serial.print(v.valid_read_gpios_1_to_3); Serial.print(" ");
-        Serial.print(v.valid_read_gpios_4_to_6); Serial.println();
-    }
-
-    Serial.println("Number of Consecutive Faults Per Chip: ");
-    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-        Serial.print("CHIP #"); Serial.print(c); Serial.print(": ");
-
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
-        Serial.println();
+        Serial.print(v.valid_read_gpios_4_to_6); Serial.print("\t");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count); Serial.print(" ");
+        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count); Serial.println();
     }
 
     Serial.println();
@@ -489,39 +481,39 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     Serial.println("V");
     Serial.println();
 
-    Serial.print("Is charging enabled: "); Serial.print(ACUControllerInstance::instance().get_status().balancing_enabled ? "YES" : "NO"); Serial.println(" Balancing status : ");
-    for(bool status : check_and_get_balancing_status()) {
-        Serial.print(status);
-        Serial.print(" ");
-    }
-    Serial.println();
+    // Serial.print("Is charging enabled: "); Serial.print(ACUControllerInstance::instance().get_status().balancing_enabled ? "YES" : "NO"); Serial.println(" Balancing status : ");
+    // for(bool status : check_and_get_balancing_status()) {
+    //     Serial.print(status);
+    //     Serial.print(" ");
+    // }
+    // Serial.println();
 
     Serial.print("Number of Global Faults: ");
     auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
     Serial.println(faults.max_consecutive_invalid_packet_count);
     Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
-    Serial.println("Number of Consecutive Faults Per Chip: ");
-    for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
-       Serial.print("CHIP ");
-        Serial.print(c);
-        Serial.print(": ");
-        Serial.print(faults.consecutive_invalid_packet_counts[c]);
-        Serial.print(" ");
+    // Serial.println("Number of Consecutive Faults Per Chip: ");
+    // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
+    //    Serial.print("CHIP ");
+    //     Serial.print(c);
+    //     Serial.print(": ");
+    //     Serial.print(faults.consecutive_invalid_packet_counts[c]);
+    //     Serial.print(" ");
         
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
-        Serial.print(" ");
-        Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
-        Serial.print("\t");
-        Serial.print(" ");
-    }
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_7_to_9_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_10_to_12_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_1_to_3_count);
+    //     Serial.print(" ");
+    //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_gpio_4_to_6_count);
+    //     Serial.print("\t");
+    //     Serial.print(" ");
+    // }
     Serial.println();
 
     Serial.println("\nMAX114X Output:");

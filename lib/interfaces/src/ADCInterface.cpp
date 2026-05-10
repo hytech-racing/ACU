@@ -33,7 +33,7 @@ bool ADCInterface::read_imd_ok(uint32_t curr_millis)
     if (_in_imd_startup_period) 
     {
         if ((curr_millis - _init_millis) >= _adc_parameters.configs.imd_startup_time) 
-        {   // give 2 seconds for IMD to startup
+        {   // give time for IMD to startup
             _in_imd_startup_period = false;
         }
         return true;

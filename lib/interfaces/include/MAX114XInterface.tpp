@@ -60,13 +60,58 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::init()
     digitalWrite(_spiPinCS, HIGH);
     pinMode(_adc_not_shdn_pin, OUTPUT);
     digitalWrite(_adc_not_shdn_pin, HIGH);
+
+    _dma_busy = false;
+
+    _spi_event.setContext(this);
+    _spi_event.attachImmediate([](EventResponderRef ref) 
+    {
+        SPI1.endTransaction();
+        static_cast<MAX114XInterface*>(ref.getContext())->_dma_callback();
+    });
+
+    _tx_buf.fill(0);
+    _rx_buf.fill(0);
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::tick()
 {
+    if (_dma_busy)
+    {
+        return;
+    }
+
     _sample();
-    this->_convert();
+}
+
+template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
+void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_dma_callback()
+{
+    digitalWrite(_spiPinCS, HIGH);
+    SPI.endTransaction();
+
+    // First two bits of b1 are filler
+    uint8_t b1 = _rx_buf[1];
+    uint8_t b2 = _rx_buf[2];
+    
+    uint16_t value = ((b1 & 0x3F) << 8) | (b2 & 0xFF);
+    
+    /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the lower of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 1 holds the return value. */
+    MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = value;
+
+    // Increments channel ID if the pair is differential or inverse differential
+    CHANNEL_TYPE_e channelType = _channelTypes[_currentChannel / 2];
+    if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL || channelType == CHANNEL_TYPE_e::INV_DIFFERENTIAL)
+    {
+        _currentChannel++;
+        MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = value;
+    }
+    _currentChannel++;    
+
+    _dma_busy = false;
+
+    this -> _convert();
 }
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
@@ -84,7 +129,7 @@ float MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::get_last_sampl
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>
 void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
 {
-    uint8_t command, b0, b1, b2;
+    uint8_t command;
     uint8_t selNum;
 
     // Resets loop after last channel is reached
@@ -98,26 +143,34 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
     */
     CHANNEL_TYPE_e channelType = _channelTypes[_currentChannel / 2];
 
-    switch (channelType) {
+    switch (channelType) 
+    {
         case CHANNEL_TYPE_e::SINGLE:
-        
+        {
             // The channel selection bits for single mode follows this array
             selNum = (_single_end_channel_to_select_map[_currentChannel]);
             break;
-
+        }
         case CHANNEL_TYPE_e::DIFFERENTIAL:
-        
+        {
             // The channel selection bits for differential mode is the channel number halved and then truncated
             // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
             selNum = (_currentChannel / 2);
             break;
-            
+        }    
         case CHANNEL_TYPE_e::INV_DIFFERENTIAL:
-
+        {
             // The channel selection bits for inversed differential mode is the channel number halved, truncated, and with a 1 in the MSB
             // The channelId is post-incremented so the sample() function does not send the same command byte for the other channel in the differential pair
             selNum = ((_currentChannel / 2) | 0b100);
             break;
+        }
+        case CHANNEL_TYPE_e::NOT_USED:
+        {
+            // assumes that the channels not being used is in pairs - works for acu rev 10 application
+            _currentChannel += 2;
+            return;
+        }
     }
     
     /* Page 14 of datasheet 
@@ -130,30 +183,14 @@ void MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_sample()
                 (0x01 << 1) |                                                   // external clock mode
                 (0x01);                                                         // ^
     
-    // initialize SPI bus. REQUIRED: call SPI.begin() before this
     SPI.beginTransaction(SPISettings(_spiSpeed, MSBFIRST, SPI_MODE0));
 
     digitalWrite(_spiPinCS, LOW); 
 
-    b0 = SPI.transfer(command);
-    b1 = SPI.transfer(0x00); // dummy bytes to clock out data from the ADC
-    b2 = SPI.transfer(0x00); // ^
+    _tx_buf[0] = command;
+    _rx_buf.fill(0);
+    SPI.transfer(_tx_buf.data(), _rx_buf.data(), buffer_size, _spi_event);
 
-    digitalWrite(_spiPinCS, HIGH);
-
-    SPI.endTransaction();
-
-    // First two bits of b1 are filler
-    uint16_t value = ((b1 & 0x3F) << 8) | (b2 & 0xFF);
-    
-    /* Stores return bytes (14 bit ADC conversion) in lastSample member of analog channel class corresponding to the channel. FOR DIFFERENTIAL: data for the pair is stored in the lower of the two channels. Ex: 1 & 2 are a differential pair, the object for channel 1 holds the return value. */
-    MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = value;
-
-    // Increments channel ID if the pair is differential or inverse differential
-    if (channelType == CHANNEL_TYPE_e::DIFFERENTIAL || channelType == CHANNEL_TYPE_e::INV_DIFFERENTIAL)
-    {
-        _currentChannel++;
-        MAX114XInterface<MAX114X_ADC_NUM_CHANNELS, MAX114xVersion>::_channels[_currentChannel].lastSample = value;
-    }
-    _currentChannel++;
+    // set the dma busy flag
+    _dma_busy = true;
 }

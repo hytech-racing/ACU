@@ -10,6 +10,7 @@
 #include <cstdint>
 #include "etl/optional.h"
 #include <numeric>
+#include <atomic>
 
 #include "etl/singleton.h"
 
@@ -29,7 +30,7 @@ enum class SPIState_e
     IDLE = 0,
     WAIT_WRITE_COMPLETE = 1,
     WAIT_POLL_ADC_COMPLETE = 2,
-    START_CONVERSION = 3,
+    START_CONVERSIONS = 3,
     WAIT_CONVERSION = 4,
     WAIT_READ_COMPLETE = 5,
 };
@@ -95,8 +96,8 @@ namespace bms_driver_defaults
     constexpr const uint16_t OVER_VOLTAGE_THRESHOLD = 2625;  // 4.2V (datasheet formula) Comparison Voltage = VOV • 16 • 100μV
     constexpr const uint16_t GPIO_ENABLE = 0x1F;
     constexpr const uint16_t CRC15_POLY = 0x4599; // Used for calculating the PEC table for LTC6811
-    constexpr const uint16_t CV_ADC_CONVERSION_TIME_US = 2000;
-    constexpr const uint16_t GPIO_ADC_CONVERSION_TIME_US = 2000;
+    constexpr const uint16_t CV_ADC_CONVERSION_TIME_US = 1200;
+    constexpr const uint16_t GPIO_ADC_CONVERSION_TIME_US = 1200;
     constexpr const float CV_ADC_LSB_VOLTAGE = 0.0001f; // Cell voltage ADC resolution: 100μV per LSB (1/10000 V)
 }
 
@@ -281,6 +282,8 @@ public:
      */
     const char* get_current_read_group_name();
 
+    const char* get_spi_state_name();
+
     /**
      * @brief Get validity status for all chips from last read
      * @return Const reference to validity data array (no copy overhead)
@@ -324,11 +327,20 @@ public:
         return _config;
     }
 
+    /**
+     * @brief Runs atomic fetch and clear so it does everything in one atomic operation on the new voltage for fresh flag
+     * @return true if the voltage data is fresh (only happens once per good cycle)
+     * @return false if the voltage data is not fresh
+     */
+    bool check_clear_voltage_ready() {
+        return _new_voltage_data_ready.exchange(false, std::memory_order_acquire);
+    }
+
 private:
 
     ReadGroup_e _current_read_group = ReadGroup_e::CV_GROUP_A;
 
-    SPIState_e _spi_state = SPIState_e::IDLE;
+    SPIState_e _spi_state = SPIState_e::START_CONVERSIONS;
 
     /**
      * PEC:
@@ -389,6 +401,8 @@ private:
      * @post packaged data transferred over SPI, need to delay before we can read
      */
     void _start_cell_voltage_ADC_conversion();
+
+    void _init_adc_conversion();
 
     /**
      * Writes command to start GPIO ADC conversion
@@ -523,6 +537,9 @@ private:
     array<uint8_t, cmd_and_data_buffer_size> _rx_read_buffer;
     array<uint8_t, cmd_only_buffer_size> _tx_write_buffer;
     array<uint8_t, cmd_only_buffer_size> _rx_write_buffer;
+
+    // Says if voltage data is fresh for the state of charge estimator
+    std::atomic<bool> _new_voltage_data_ready{false};
 };
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
