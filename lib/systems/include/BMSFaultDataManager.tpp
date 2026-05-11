@@ -4,15 +4,23 @@
 template <size_t num_chips>
 void BMSFaultDataManager<num_chips>::update_from_valid_packets(
     const std::array<ValidPacketData_s, num_chips>& valid_read_packets,
-    const ReadGroup_e read_group)
+    const ReadGroup_e read_group,
+    const size_t chip_select_index)
 {
     size_t num_total_bms_packets = num_chips * sizeof(BMSFaultCountData_s);
     std::array<size_t, num_chips> chip_max_invalid_cmd_counts = {};
     std::array<size_t, sizeof(BMSFaultCountData_s)> temp = {};
     size_t num_valid_packets = 0;
     
-    for (size_t chip = 0; chip < valid_read_packets.size(); chip++)
+    for (size_t chip = 0; chip < num_chips; chip++)
     {
+        // _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count = (!valid_read_packets[chip].valid_read_cells_1_to_3) ? _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count+1 : 0;
+        // _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count = (!valid_read_packets[chip].valid_read_cells_4_to_6) ? _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count+1 : 0;
+        // _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count = (!valid_read_packets[chip].valid_read_cells_7_to_9) ? _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_7_to_9_count+1 : 0;
+        // _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count = (!valid_read_packets[chip].valid_read_cells_10_to_12) ? _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_10_to_12_count+1 : 0;
+        // _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count = (!valid_read_packets[chip].valid_read_gpios_1_to_3) ? _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_gpio_1_to_3_count+1 : 0;
+        // _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count = (!valid_read_packets[chip].valid_read_gpios_4_to_6) ? _bms_fault_data.chip_invalid_cmd_counts[chip].invalid_gpio_4_to_6_count+1 : 0;
+
         switch (read_group)
         {
             case ReadGroup_e::CV_GROUP_A:
@@ -50,6 +58,7 @@ void BMSFaultDataManager<num_chips>::update_from_valid_packets(
                 break;
             }
         }
+
         num_valid_packets += static_cast<size_t>(
             (_bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_1_to_3_count == 0) +
             (_bms_fault_data.chip_invalid_cmd_counts[chip].invalid_cell_4_to_6_count == 0) +

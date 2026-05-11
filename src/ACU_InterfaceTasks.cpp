@@ -179,7 +179,10 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     // Serial.print("PREVIOUS SPI STATE: "); Serial.println(BMSDriverInstance_t::instance().get_spi_state_name());
     BMSDriverInstance_t::instance().read_data();
     auto data = BMSDriverInstance_t::instance().get_bms_data();
-    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets, BMSDriverInstance_t::instance().get_current_read_group());
+    BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets,
+                                                                        BMSDriverInstance_t::instance().get_current_read_group(),
+                                                                        data.cs_index);
+    
     // Serial.print("CURRENT READ GROUP: "); Serial.println(BMSDriverInstance_t::instance().get_current_read_group_name());
     // Serial.print("CURRENT SPI STATE:  "); Serial.println(BMSDriverInstance_t::instance().get_spi_state_name());
     // print_bms_data(data);
@@ -192,9 +195,11 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     return HT_TASK::TaskResponse::YIELD;
 }
 
-std::array<bool, ACUConstants::NUM_CELLS> check_and_get_balancing_status() {
+std::array<bool, ACUConstants::NUM_CELLS> check_and_get_balancing_status() 
+{
     std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses = {false};
-    if(ACUControllerInstance::instance().get_status().balancing_enabled) {
+    if(ACUControllerInstance::instance().get_status().balancing_enabled) 
+    {
         ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), BMSDriverInstance_t::instance().get_bms_data().voltages.data(), ACUConstants::NUM_CELLS, BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage);
     }
     return cell_balancing_statuses;
@@ -202,7 +207,7 @@ std::array<bool, ACUConstants::NUM_CELLS> check_and_get_balancing_status() {
 
 HT_TASK::TaskResponse write_cell_balancing_config(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    BMSDriverInstance_t::instance().write_configuration(check_and_get_balancing_status());
+    BMSDriverInstance_t::instance().request_write_configuration(check_and_get_balancing_status());
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -330,52 +335,56 @@ void print_bms_data(bms_data data)
     Serial.println("V");
     Serial.println();
 
-    // size_t chip_index = 1;
-    // for (auto chip_voltages : data.voltages)
-    // {
-    //     Serial.print("Cell ");
-    //     Serial.print (chip_index); Serial.print(" ");
-    //     if (chip_voltages)
-    //     {
-    //         Serial.print((chip_voltages), 4);
-    //         Serial.print("V  ");
-    //     }
-    //     chip_index++;
-    //     if ((chip_index - 1) % ACUConstants::NUM_CHIPS == 0)
-    //     {
-    //         Serial.println();
-    //     }
-    //     // Serial.println();
-    // }
-    // Serial.println();
+    size_t chip_index = 1;
+    for (auto chip_voltages : data.voltages)
+    {
+        Serial.print("Cell ");
+        Serial.print (chip_index); Serial.print(" ");
+        if (chip_voltages)
+        {
+            Serial.print((chip_voltages), 4);
+            Serial.print("V  ");
+        }
+        else
+        {
+            Serial.print("The voltage at "); Serial.print(chip_index); Serial.println(" is not valid. ");
+        }
+        chip_index++;
+        if ((chip_index - 1) % ACUConstants::NUM_CHIPS == 0)
+        {
+            Serial.println();
+        }
+        // Serial.println();
+    }
+    Serial.println();
 
-    // int cti = 0;
-    // for (auto temp : data.cell_temperatures)
-    // {
-    //     Serial.print("temp id ");
-    //     Serial.print(cti);
-    //     Serial.print(" val ");
-    //     Serial.print(temp);
-    //     Serial.print("\t");
-    //     if (cti % 4 == 3)
-    //         Serial.println();
-    //     cti++;
-    // }
-    // Serial.println();
+    int cti = 0;
+    for (auto temp : data.cell_temperatures)
+    {
+        Serial.print("temp id ");
+        Serial.print(cti);
+        Serial.print(" val ");
+        Serial.print(temp);
+        Serial.print("\t");
+        if (cti % 4 == 3)
+            Serial.println();
+        cti++;
+    }
+    Serial.println();
 
-    // int temp_index = 0;
-    // for (auto bt : data.board_temperatures)
-    // {
-    //     Serial.print("board temp id ");
-    //     Serial.print(temp_index);
-    //     Serial.print(" val ");
-    //     Serial.print("");
-    //     Serial.print(bt);
-    //     Serial.print("\t");
-    //     if (temp_index % 4 == 3)
-    //         Serial.println();
-    //     temp_index++;
-    // }
+    int temp_index = 0;
+    for (auto bt : data.board_temperatures)
+    {
+        Serial.print("board temp id ");
+        Serial.print(temp_index);
+        Serial.print(" val ");
+        Serial.print("");
+        Serial.print(bt);
+        Serial.print("\t");
+        if (temp_index % 4 == 3)
+            Serial.println();
+        temp_index++;
+    }
 
     // chip_index = 0;
     // Serial.println("Balancing status : ");
@@ -388,9 +397,9 @@ void print_bms_data(bms_data data)
     // }
     // Serial.println();
 
-    // Serial.print("Number of Global Faults: ");
+    Serial.print("Number of Global Faults: ");
     auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
-    // Serial.println(faults.max_consecutive_invalid_packet_count);
+    Serial.println(faults.max_consecutive_invalid_packet_count);
     
     Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
 

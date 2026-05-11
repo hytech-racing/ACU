@@ -16,9 +16,12 @@
 #include "FaultLatchManager.h"
 #include "SystemTimeInterface.h"
 #include "MAX114XInterface.h"
+#include "ACUController.h"
+
 /* For Debugging */
 #include "ACUStateMachine.h"
 
+/* Scheduling */
 #include <ht_task.hpp>
 #include <chrono>
 

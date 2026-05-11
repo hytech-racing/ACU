@@ -47,6 +47,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
         pinMode(cs, OUTPUT);
         digitalWrite(cs, HIGH);
     }
+
+    _requested_write_configuration = false;
     
     _bms_data.voltages.fill(0);
     _bms_data.cell_temperatures.fill(0);
@@ -69,6 +71,8 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
     });
 
     _new_voltage_data_ready = false;
+
+    _start_wakeup_protocol();
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -175,25 +179,42 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_proto
 {
     for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
-        _start_wakeup_protocol(cs);
+        _start_wakeup_protocol(_chip_select[cs]);
     }
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_wakeup_protocol(size_t cs)
 {
+    array<uint8_t, 4> read_configuration_cmd_and_pec;
+    read_configuration_cmd_and_pec = _generate_CMD_PEC(CMD_CODES_e::READ_CONFIG, -1);
+    
     if constexpr (chip_type == LTC6811_Type_e::LTC6811_1)
     {
-        for (size_t pulse_index = 0; pulse_index < ((num_chips) / num_chip_selects); pulse_index++)
+        for (size_t i = 0; i < (num_chips / num_chip_selects); i++)
         {
-            ltc_spi_interface::write_and_delay_low(_chip_select[cs], 10);
-            ltc_spi_interface::write_and_delay_high(_chip_select[cs], 10);
+            ltc_spi_interface::write_and_delay_low(cs, 2);
+            SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
+            
+            for (int i = 0 ; i < 4; i++)
+            {
+                SPI1.transfer(read_configuration_cmd_and_pec[i]);
+            }
+
+            SPI1.endTransaction();
+            ltc_spi_interface::delay_and_write_high(cs, 2);
         }
+
+        // for (size_t pulse_index = 0; pulse_index < ((num_chips) / num_chip_selects) * 2; pulse_index++)
+        // {
+        //     ltc_spi_interface::write_and_delay_low(cs, 10);
+        //     ltc_spi_interface::write_and_delay_high(cs, 10);
+        // }
     }
     else
     {
-        ltc_spi_interface::write_and_delay_low(_chip_select[cs], 10);
-        ltc_spi_interface::write_and_delay_high(_chip_select[cs], 10); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
+        ltc_spi_interface::write_and_delay_low(cs, 10);
+        ltc_spi_interface::write_and_delay_high(cs, 10); // t_wake is 400 microseconds; wait that long to ensure device has turned on.
     }
 }
 
@@ -251,6 +272,7 @@ typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_data()
 {   
     noInterrupts();
+    // _bms_data.cs_index = _current_cs_index;
     auto copy = _bms_data;
     interrupts();
     return copy;
@@ -263,6 +285,12 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
     if (ltc_spi_interface::is_busy())
     {
         return;
+    }
+
+    if (_requested_write_configuration)
+    {
+        _requested_write_configuration = false;
+        write_configuration(_requested_cell_balance_flags);
     }
 
     if (_spi_state == SPIState_e::START_CONVERSIONS)
@@ -345,7 +373,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_
 
     // initiate SPI transfers
     _rx_read_buffer.fill(0);
-    _start_wakeup_protocol(_current_cs_index);
+    _start_wakeup_protocol(_chip_select[_current_cs_index]);
     SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
     ltc_spi_interface::write_and_delay_low(cs, 5);
     ltc_spi_interface::begin_transfer<cmd_and_data_buffer_size>(_tx_read_buffer, _rx_read_buffer, _spi_event);
@@ -364,7 +392,10 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
     copy_n(_rx_read_buffer.begin() + 4, data_size, spi_data.begin());
 
     // Clear the valid read packets buffer
-    _bms_data.valid_read_packets.fill({}); 
+    // if (_current_cs_index == 0)
+    // {
+    //     _bms_data.valid_read_packets.fill({});
+    // }
 
     // Serial.println("PROCESSING READ RX BUFFER");
 
@@ -677,11 +708,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_store_temperature_
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration(const array<bool, num_cells> &cell_balance_statuses)
 {
-    if (_spi_state != SPIState_e::IDLE)
-    {
-        return;
-    }
-
     array<uint16_t, num_chips> cb;
     size_t global_cell_index = 0;
     for (size_t chip = 0; chip < num_chips; chip++)
@@ -699,9 +725,9 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::write_configuration
         cb[chip] = chip_cb;
     }
 
-    write_configuration(_config.dcto_write, cb);
+    write_configuration(_config.dcto_read, cb);
 
-    // _spi_state = SPIState_e::WAIT_WRITE_COMPLETE;
+    _spi_state = SPIState_e::WAIT_WRITE_COMPLETE;
 }
 
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
@@ -752,17 +778,10 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_write_config_throu
         copy(cmd_and_pec.begin(), cmd_and_pec.end(), _tx_read_buffer.begin());
         copy(full_buffer.begin(), full_buffer.end(), _tx_read_buffer.begin() + 4);
 
-        _start_wakeup_protocol(cs);
-
+        _start_wakeup_protocol(_chip_select[cs]);
         SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
-        ltc_spi_interface::write_and_delay_low(_chip_select[cs], 1);
-        for (int i = 0; i < cmd_and_data_buffer_size; i++)
-        {
-            SPI1.transfer(_tx_read_buffer[i]);
-        }
-        SPI1.endTransaction();
-        ltc_spi_interface::delay_and_write_high(_chip_select[cs], 2);
-        // ltc_spi_interface::begin_transfer<cmd_and_data_buffer_size>(_tx_read_buffer, _rx_read_buffer, _spi_event);
+        ltc_spi_interface::write_and_delay_low(_chip_select[cs], 5);
+        ltc_spi_interface::begin_transfer<cmd_and_data_buffer_size>(_tx_read_buffer, _rx_read_buffer, _spi_event);
     }
 }
 
@@ -842,7 +861,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
     copy(cmd_and_pec.begin(), cmd_and_pec.end(), _tx_write_buffer.begin());
 
     // Needs to be sent on each chip select line
-    _start_wakeup_protocol(_current_cs_index);
+    _start_wakeup_protocol(_chip_select[_current_cs_index]);
 
     SPI1.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE3));
     ltc_spi_interface::write_and_delay_low(_chip_select[_current_cs_index], 2);
