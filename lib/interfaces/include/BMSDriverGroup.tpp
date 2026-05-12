@@ -396,9 +396,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
     // {
     //     _bms_data.valid_read_packets.fill({});
     // }
-
-    // Serial.println("PROCESSING READ RX BUFFER");
-
+    
     for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++) 
     {
         size_t chip_index  = chip + (_current_cs_index * (num_chips / num_chip_selects));
