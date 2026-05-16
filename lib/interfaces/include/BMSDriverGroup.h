@@ -543,7 +543,8 @@ private:
 
     EventResponder _spi_event;
 
-    size_t _current_cs_index = 0;
+    size_t _current_read_cs_index = 0;
+    size_t _current_write_cs_index = 0;
     size_t _current_chip_address_index = 0;
 
     elapsedMicros _conversion_timer;
