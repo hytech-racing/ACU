@@ -31,12 +31,14 @@ struct ACUParams_s {
 class ACUEthernetInterface
 {
 public:
-  ACUEthernetInterface(ACUParams_s params = {
-                            .num_cells = acu_ethernet_params::NUM_CELLS,
-                            .num_celltemps = acu_ethernet_params::NUM_CELLTEMPS,
-                            .num_chips = acu_ethernet_params::NUM_CHIPS,
-                        }
-                    ) : _acu_params{params} {};
+    ACUEthernetInterface(
+        ACUParams_s params = 
+        {
+            .num_cells = acu_ethernet_params::NUM_CELLS,
+            .num_celltemps = acu_ethernet_params::NUM_CELLTEMPS,
+            .num_chips = acu_ethernet_params::NUM_CHIPS,
+        }
+    ) : _acu_params{params} {};
 
   void init_ethernet_device();
 

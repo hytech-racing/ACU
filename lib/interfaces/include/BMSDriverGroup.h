@@ -141,6 +141,8 @@ struct BMSData_s
     volt total_voltage;
     volt avg_cell_voltage;
     celsius average_cell_temperature;
+
+    size_t cs_index;
 };
 
 struct ReferenceMaxMin_s
@@ -314,7 +316,8 @@ public:
      * @note Each bit represents one cell's balance enable status
      * @note Useful for verifying write_configuration() worked correctly
      */
-    const array<uint16_t, num_chips>& get_cell_discharge_enable() {
+    const array<uint16_t, num_chips>& get_cell_discharge_enable() 
+    {
         return _cell_discharge_en;
     }
 
@@ -323,7 +326,8 @@ public:
      * @return Const reference to driver config struct
      * @note Useful for verifying hardware settings match expectations
      */
-    const BMSDriverGroupConfig_s& get_config() {
+    const BMSDriverGroupConfig_s& get_config() 
+    {
         return _config;
     }
 
@@ -332,8 +336,19 @@ public:
      * @return true if the voltage data is fresh (only happens once per good cycle)
      * @return false if the voltage data is not fresh
      */
-    bool check_clear_voltage_ready() {
+    bool check_clear_voltage_ready() 
+    {
         return _new_voltage_data_ready.exchange(false, std::memory_order_acquire);
+    }
+
+    /**
+     * @brief request cell balance configuration
+     * @param cell_balance_flags is the array of bools of size num_cells that defines whether a cell should be discharging or not
+    */
+    void request_write_configuration(const array<bool, num_cells> cell_balance_flags)
+    {
+        _requested_write_configuration = true;
+        _requested_cell_balance_flags = cell_balance_flags;
     }
 
 private:
@@ -528,7 +543,8 @@ private:
 
     EventResponder _spi_event;
 
-    size_t _current_cs_index = 0;
+    size_t _current_read_cs_index = 0;
+    size_t _current_write_cs_index = 0;
     size_t _current_chip_address_index = 0;
 
     elapsedMicros _conversion_timer;
@@ -537,6 +553,9 @@ private:
     array<uint8_t, cmd_and_data_buffer_size> _rx_read_buffer;
     array<uint8_t, cmd_only_buffer_size> _tx_write_buffer;
     array<uint8_t, cmd_only_buffer_size> _rx_write_buffer;
+
+    bool _requested_write_configuration;
+    array<bool, num_cells> _requested_cell_balance_flags; 
 
     // Says if voltage data is fresh for the state of charge estimator
     std::atomic<bool> _new_voltage_data_ready{false};
