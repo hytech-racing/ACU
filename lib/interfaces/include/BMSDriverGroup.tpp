@@ -92,6 +92,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
         if (_current_write_cs_index + 1 < num_chip_selects)
         {
             _current_write_cs_index++;
+            write_configuration(_config.dcto_read, _cell_discharge_en);
             return;
         }
         _current_write_cs_index = 0;
@@ -290,6 +291,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
     if (_spi_state == SPIState_e::START_CONVERSIONS)
     {   
         _init_adc_conversion();
+        return;
     }
 
     if (_spi_state == SPIState_e::WAIT_CONVERSION && _conversion_timer > _config.cv_adc_conversion_time_us)
@@ -297,7 +299,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::read_data()
         _spi_state = SPIState_e::IDLE;
     }
 
-    if (_requested_write_configuration || _spi_state == SPIState_e::WAIT_WRITE_COMPLETE)
+    if (_requested_write_configuration)
     {
         write_configuration(_requested_cell_balance_flags);
         _requested_write_configuration = false;
@@ -863,12 +865,10 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_init_adc_conversio
     if (_current_read_group == ReadGroup_e::CV_GROUP_A) 
     { 
         _start_cell_voltage_ADC_conversion();
-        return;
     }
     if (_current_read_group == ReadGroup_e::AUX_GROUP_A) 
     {
         _start_GPIO_ADC_conversion();
-        return;
     }
 }
 
