@@ -872,7 +872,6 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_init_adc_conversio
     }
 }
 
-
 /* -------------------- GETTER FUNCTIONS -------------------- */
 
 // This implementation is taken directly from the data sheet linked here: https://www.analog.com/media/en/technical-documentation/data-sheets/LTC6811-1-6811-2.pdf
