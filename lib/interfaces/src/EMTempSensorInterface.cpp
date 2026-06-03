@@ -170,8 +170,12 @@ const EMTempSensorParams_s& EMTempSensorInterface::get_params() const
 // ---------------------------------------------------------------------------
 bool EMTempSensorInterface::_start_conversion_all()
 {
-    if (!_bus.reset()) return false;
-
+    if (!_bus.reset()) 
+    {
+        Serial.println("BUS RESET IN CONVERSION FAILED");
+        return false;
+    }
+    
     _bus.skip();
     _bus.write(DS18B20_CONVERT_T);
 
