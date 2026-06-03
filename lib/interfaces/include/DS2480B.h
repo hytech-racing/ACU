@@ -53,9 +53,10 @@
 #define DS2480B_BAUD            9600
 
 // Timeout for waiting on a reply byte from the DS2480B (milliseconds).
-// Increase only if your bus is very slow / heavily loaded.
+// At 9600 baud a single byte takes ~1.04 ms to arrive; the DS2480B also needs
+// time to execute the 1-Wire reset pulse.  50 ms is conservative and safe.
 #ifndef DS2480B_REPLY_TIMEOUT_MS
-    #define DS2480B_REPLY_TIMEOUT_MS 10
+    #define DS2480B_REPLY_TIMEOUT_MS 50
 #endif
 
 // ---------------------------------------------------------------------------
@@ -97,15 +98,26 @@ public:
 
     // -----------------------------------------------------------------------
     // begin
-    // Opens the serial port at DS2480B_BAUD and sends the initialisation
-    // byte.  Must be called once before any other method.
+    // Opens the serial port at DS2480B_BAUD and puts the DS2480B into a
+    // known command-mode state.  Must be called once before any other method.
     // -----------------------------------------------------------------------
     void begin()
     {
         _port.begin(DS2480B_BAUD);
-        delay(100);                         // DS2480B power-on / baud-detect settle
-        _port.write(DS2480B_RESET_CMD);     // put DS2480B into a known state
+
+        // Allow the DS2480B time to power on and auto-detect the baud rate.
+        // The chip requires at least one character at the target baud before
+        // it locks in; 500 ms is conservative but reliable across cold starts.
+        delay(500);
+
+        // Send the master reset command to put the DS2480B into a known
+        // command mode state.
+        _port.write(DS2480B_RESET_CMD);
         _is_cmd_mode = true;
+
+        // Drain the response byte so it does not sit in the RX buffer and
+        // corrupt the very first reset() call.
+        if (_wait_for_reply()) _port.read();
     }
 
     // -----------------------------------------------------------------------

@@ -111,8 +111,8 @@
 // DS2480B + DS18B20 — Teensy hardware serial test
 //
 // Wiring:
-//   DS2480B TX  →  Teensy Serial1 RX  (pin 0)
-//   DS2480B RX  →  Teensy Serial1 TX  (pin 1)
+//   DS2480B TX  →  Teensy Serial2 RX  (pin 7)
+//   DS2480B RX  →  Teensy Serial2 TX  (pin 8)
 //   DS2480B GND →  Teensy GND
 //   DS2480B VCC →  3.3 V
 //
@@ -135,7 +135,29 @@ void setup()
     ds.begin();
 
     Serial.println("[TEST] DS2480B + DS18B20 bus scan started");
-    Serial.println("[TEST] Using Serial1 (RX=pin0, TX=pin1) at 9600 baud");
+    Serial.println("[TEST] Using Serial2 (RX=pin7, TX=pin8) at 9600 baud");
+    Serial.println();
+
+    // Verify the DS2480B is alive by issuing one reset and printing the raw
+    // response byte.  Expected: 0xCD (device present) or 0xE3 (no device but
+    // bus OK).  Anything else (0x00, timeout) means a wiring or baud problem.
+    Serial2.write(0xC1);
+    uint32_t t = millis();
+    while (!Serial2.available() && (millis() - t) < 100) {}
+    if (Serial2.available())
+    {
+        uint8_t resp = Serial2.read();
+        Serial.print("[TEST] Raw reset response: 0x");
+        if (resp < 0x10) Serial.print("0");
+        Serial.print(resp, HEX);
+        if      (resp == 0xCD) Serial.println("  -> OK: device(s) present");
+        else if (resp == 0xE3) Serial.println("  -> OK: bus present, no device");
+        else                   Serial.println("  -> UNEXPECTED — check wiring/baud");
+    }
+    else
+    {
+        Serial.println("[TEST] No response to reset — check TX/RX wiring and VCC");
+    }
     Serial.println();
 }
 
