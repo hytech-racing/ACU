@@ -191,6 +191,7 @@ bool EMTempSensorInterface::_read_sensor(uint8_t sensor_index)
 
     if (!_bus.reset())
     {
+        Serial.print("SENSOR INDEX "); Serial.print(sensor_index); Serial.println(" FAILED TO RESET");
         _read_ok[sensor_index] = false;
         return false;
     }

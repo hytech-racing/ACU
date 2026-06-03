@@ -3,24 +3,6 @@
 #include "DS2480B.h"
 #include "EMTempSensorInterface.h"
 
-// =============================================================================
-// main.cpp
-//
-// Entry point for the EM temperature monitoring subsystem on Teensy 4.x.
-//
-// Wiring:
-//   DS2480B TX  →  Teensy Serial1 RX  (pin 0)
-//   DS2480B RX  →  Teensy Serial1 TX  (pin 1)
-//   DS2480B GND →  Teensy GND
-//   DS2480B VCC →  3.3 V (check your DS2480B module's regulator rating)
-//
-// Build system note:
-//   Arduino-based build systems (Teensyduino, PlatformIO) automatically call
-//   setup() and loop() from their generated main().  If you are compiling
-//   outside that environment, replace setup()/loop() with a standard main()
-//   and insert a while(1) loop around the loop() body.
-// =============================================================================
-
 // ---------------------------------------------------------------------------
 static DS2480B_Teensy bus(Serial2);
 
