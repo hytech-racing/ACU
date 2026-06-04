@@ -738,6 +738,11 @@ bool parseSearchResponse(uint8_t* responseData)
     return true;
 }
 
+constexpr int MAX_SENSORS = 6;
+
+uint8_t foundROMs[MAX_SENSORS][8];
+int sensorCount = 0;
+
 
 /**
  *  Finds the next device on the 1-Wire bus
@@ -831,28 +836,42 @@ bool OWSearch()
 
 void OWSearchAll()
 {
+    sensorCount = 0;
+
     Serial.println("Searching for all 1-Wire devices...");
-    int count = 0;
 
     while (OWSearch())
     {
-        count++;
-        Serial.print("Device ");
-        Serial.print(count);
-        Serial.print(": ");
-        for (int i = 0; i < 8; i++)
+        if (sensorCount < MAX_SENSORS)
         {
-            if (ROM_NO[i] < 0x10) Serial.print('0');
-            Serial.print(ROM_NO[i], HEX);
-            if (i < 7) Serial.print(":");
-        }
-        Serial.println();
+            memcpy(foundROMs[sensorCount], ROM_NO, 8);
 
-        if (LastDeviceFlag) break;
+            Serial.print("Device ");
+            Serial.print(sensorCount);
+            Serial.print(": ");
+
+            for (int i = 0; i < 8; i++)
+            {
+                if (ROM_NO[i] < 0x10)
+                    Serial.print('0');
+
+                Serial.print(ROM_NO[i], HEX);
+
+                if (i < 7)
+                    Serial.print(":");
+            }
+
+            Serial.println();
+
+            sensorCount++;
+        }
+
+        if (LastDeviceFlag)
+            break;
     }
 
     Serial.print("Found ");
-    Serial.print(count);
+    Serial.print(sensorCount);
     Serial.println(" device(s)");
 }
 
@@ -867,6 +886,29 @@ bool OWMatchROM(const uint8_t rom[8])
         OWWriteByte(rom[i]);
 
     return true;
+}
+
+bool CheckCRC(const uint8_t* data, int len)
+{
+    uint8_t crc = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        uint8_t byte = data[i];
+
+        for (int j = 0; j < 8; j++)
+        {
+            uint8_t mix = (crc ^ byte) & 0x01;
+            crc >>= 1;
+
+            if (mix)
+                crc ^= 0x8C;
+
+            byte >>= 1;
+        }
+    }
+
+    return crc == 0;
 }
 
 void ReadFirstFoundSensor()
@@ -946,40 +988,158 @@ void ReadFirstFoundSensor()
     Serial.println(" C");
 }
 
+
+bool StartTemperatureConversion()
+{
+    if (OWReset() != RESET_PRESENCE)
+        return false;
+
+    OWWriteByte(SKIP_ROM);
+    OWWriteByte(CONVERT);
+
+    Serial.println("Conversion started");
+
+    return true;
+}
+
+// bool ReadTemperature(
+//     const uint8_t rom[8],
+//     float& temperatureC)
+// {
+//     if (!OWMatchROM(rom))
+//     {
+//         Serial.println("Match ROM failed");
+//         return false;
+//     }
+
+//     OWWriteByte(READ_SCRATCHPAD);
+
+//     uint8_t scratchpad[9];
+
+//     for (int i = 0; i < 9; i++)
+//     {
+//         int b = OWReadByte();
+
+//         if (b < 0)
+//         {
+//             Serial.println("Scratchpad read failed");
+//             return false;
+//         }
+
+//         scratchpad[i] = (uint8_t)b;
+//     }
+
+//     Serial.print("Scratchpad: ");
+
+//     for (int i = 0; i < 9; i++)
+//     {
+//         if (scratchpad[i] < 0x10)
+//             Serial.print('0');
+
+//         Serial.print(scratchpad[i], HEX);
+//         Serial.print(' ');
+//     }
+
+//     Serial.println();
+
+//     int16_t raw =
+//         ((int16_t)scratchpad[1] << 8) |
+//         scratchpad[0];
+
+//     temperatureC = raw / 16.0f;
+
+//     return true;
+// }
+bool ReadTemperature(
+    const uint8_t rom[8],
+    float& temperatureC)
+{
+
+    if (!OWMatchROM(rom))
+        return false;
+
+    OWWriteByte(CONVERT);
+
+    delay(1000);
+
+    if (!OWMatchROM(rom))
+        return false;
+
+    OWWriteByte(READ_SCRATCHPAD);
+
+    uint8_t scratchpad[9];
+
+    for (int i = 0; i < 9; i++)
+        scratchpad[i] = OWReadByte();
+
+    Serial.print("Scratchpad: ");
+
+    for (int i = 0; i < 9; i++)
+    {
+        if (scratchpad[i] < 0x10) Serial.print('0');
+        Serial.print(scratchpad[i], HEX);
+        Serial.print(' ');
+    }
+
+    Serial.println();
+
+    int16_t raw =
+        ((int16_t)scratchpad[1] << 8) |
+        scratchpad[0];
+
+    temperatureC = raw / 16.0f;
+
+    if (!CheckCRC(scratchpad, 9))
+    {
+        Serial.println("Scratchpad CRC failed");
+        return false;
+    }
+
+    return true;
+}
+
+void ReadAllTemperatures()
+{
+    for (int i = 0; i < sensorCount; i++)
+    {
+        float tempC;
+
+        if (!ReadTemperature(foundROMs[i], tempC))
+        {
+            Serial.print("Sensor ");
+            Serial.print(i);
+            Serial.println(" failed");
+            continue;
+        }
+
+        Serial.print("Sensor ");
+        Serial.print(i);
+        Serial.print(" = ");
+        Serial.print(tempC);
+        Serial.println(" C");
+    }
+
+    Serial.println();
+}
 void setup()
 {
     Serial.begin(115200);
     Serial2.begin(9600);
-    delay(2500);
 
-    while (true)
+    while (!DS2480B_Detect())
     {
-        if (!DS2480B_Detect())
-        {
-            Serial.println("DS2480B Detect Failed");
-            delay(1000);
-            continue;
-        }
-
-        Serial.println("DS2480B OK");
-
-        int result = OWReset();
-
-        Serial.print("Reset Result = ");
-        Serial.println(result);
-
-        if (result == RESET_PRESENCE)
-        {
-            Serial.println("Device Found!");
-            break;
-        }
-
+        Serial.println("DS2480B Detect Failed");
         delay(1000);
     }
+
+    Serial.println("DS2480B OK");
 
     OWSearchAll();
 }
 
 void loop()
 {
+    ReadAllTemperatures();
+
+    delay(2000);
 }
