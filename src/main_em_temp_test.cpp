@@ -329,6 +329,20 @@
 #define RESET_ALARM         0x02
 #define RESET_NO_PRESENCE   0x03
 
+// DS18B20 ROM Commands
+#define SEARCH_ROM          0xF0
+#define READ_ROM            0x33
+#define MATCH_ROM           0x55
+#define SKIP_ROM            0xCC
+#define ALARM_SEARCH        0xEC
+
+// DS18B20 Function Commands
+#define CONVERT             0x44  // Initiates a single temperature conversion. Resulting data is stored in the 2-byte temperature register
+#define WRITE_SCRATCHPAD    0x4E  // LSB. All three bytes MUST be written before the master issues a reset
+#define READ_SCRATCHPAD     0xBE
+#define COPY_SCRATCHPAD     0x48  // Copies ontents of bytes 2, 3 and 4 to EEPROM
+
+
 // State
 enum DS2480B_Mode
 {   COMMAND_MODE,
@@ -550,7 +564,7 @@ int OWWriteByte(uint8_t data)
     return b;
 }
 
-int OWWriteByte(uint8_t data)
+int OWWriteBytes(uint8_t data)
 {
     ensureDataMode();
     flushRXBuffer();
@@ -840,4 +854,132 @@ void OWSearchAll()
     Serial.print("Found ");
     Serial.print(count);
     Serial.println(" device(s)");
+}
+
+bool OWMatchROM(const uint8_t rom[8])
+{
+    if (OWReset() != RESET_PRESENCE)
+        return false;
+
+    OWWriteByte(MATCH_ROM);
+
+    for (int i = 0; i < 8; i++)
+        OWWriteByte(rom[i]);
+
+    return true;
+}
+
+void ReadFirstFoundSensor()
+{
+    if (!OWSearch())
+    {
+        Serial.println("No sensor found");
+        return;
+    }
+
+    uint8_t rom[8];
+    memcpy(rom, ROM_NO, 8);
+
+    Serial.print("Using ROM: ");
+    for (int i = 0; i < 8; i++)
+    {
+        if (rom[i] < 0x10) Serial.print('0');
+        Serial.print(rom[i], HEX);
+        Serial.print(':');
+    }
+    Serial.println();
+
+    // Start conversion
+    if (!OWMatchROM(rom))
+    {
+        Serial.println("Match ROM failed");
+        return;
+    }
+
+    OWWriteByte(CONVERT);
+
+    delay(750);
+
+    // Read scratchpad
+    if (!OWMatchROM(rom))
+    {
+        Serial.println("Match ROM failed");
+        return;
+    }
+
+    OWWriteByte(READ_SCRATCHPAD);
+
+    uint8_t scratchpad[9];
+
+    for (int i = 0; i < 9; i++)
+    {
+        int b = OWReadByte();
+
+        if (b < 0)
+        {
+            Serial.println("Read failed");
+            return;
+        }
+
+        scratchpad[i] = (uint8_t)b;
+    }
+
+    Serial.print("Scratchpad: ");
+
+    for (int i = 0; i < 9; i++)
+    {
+        if (scratchpad[i] < 0x10) Serial.print('0');
+        Serial.print(scratchpad[i], HEX);
+        Serial.print(' ');
+    }
+
+    Serial.println();
+
+    int16_t raw =
+        ((int16_t)scratchpad[1] << 8) |
+        scratchpad[0];
+
+    float tempC = raw / 16.0f;
+
+    Serial.print("Temperature = ");
+    Serial.print(tempC);
+    Serial.println(" C");
+}
+
+void setup()
+{
+    Serial.begin(115200);
+    Serial2.begin(9600);
+    delay(2500);
+
+    while (true)
+    {
+        if (!DS2480B_Detect())
+        {
+            Serial.println("DS2480B Detect Failed");
+            delay(1000);
+            continue;
+        }
+
+        Serial.println("DS2480B OK");
+
+        int result = OWReset();
+
+        Serial.print("Reset Result = ");
+        Serial.println(result);
+
+        if (result == RESET_PRESENCE)
+        {
+            Serial.println("Device Found!");
+            break;
+        }
+
+        delay(1000);
+    }
+
+    OWSearchAll();
+}
+
+void loop()
+{
 }
