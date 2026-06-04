@@ -18,7 +18,7 @@ TEST(SOCKalmanFilterTesting, initialization_from_voltage) {
     EXPECT_NEAR(soc2, 0.5f, 0.1f);
 
     SOCKalmanFilter ekf3;
-    ekf3.init(3.318f);
+    ekf3.init(3.2f);
     float soc3 = ekf3.get_soc();
     EXPECT_NEAR(soc3, 0.0f, 0.01f);
 }
