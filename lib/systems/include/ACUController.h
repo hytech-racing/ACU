@@ -221,6 +221,8 @@ private:
 
     static constexpr float _ms_to_seconds = 1000.0f;
 
+    static constexpr double _seconds_per_hour = 3600.0;
+
     /**
      * @brief ACU Controller Parameters holder
      */

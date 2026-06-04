@@ -43,7 +43,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
 
     // State of Health via Ah throughput model
     float dt = static_cast<float>(current_millis - _acu_state.prev_bms_time_stamp) / _ms_to_seconds;
-    float ah_step = (fabs((double)em_current) * dt) / 3600.0;
+    double ah_step = (fabs(static_cast<double>(em_current)) * static_cast<double>(dt)) / _seconds_per_hour;
     _acu_state.lifetime_ah_throughput += ah_step;
 
     _acu_state.SoH = compute_soh_from_throughput(_acu_state.lifetime_ah_throughput);
