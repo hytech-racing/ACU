@@ -16,6 +16,7 @@
 #include "FaultLatchManager.h"
 #include "SystemTimeInterface.h"
 #include "MAX114XInterface.h"
+#include "SoHPersistenceInterface.h"
 #include "ACUController.h"
 
 /* For Debugging */
@@ -65,6 +66,10 @@ void initialize_all_interfaces();
 ::HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+::HT_TASK::TaskResponse init_soh_persistence(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+::HT_TASK::TaskResponse persist_soh_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
 ::HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 

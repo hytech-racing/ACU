@@ -37,6 +37,10 @@ struct ACUControllerData_s
     time_ms prev_em_time_stamp;
     time_ms first_zero_current_time_stamp;
     float SoC;
+    double lifetime_ah_throughput;
+    float SoH;
+    float SoE_percentage;
+    float remaining_pack_wh;
     bool has_fault;
     bool bms_ok;
     uint32_t last_bms_not_ok_eval;
@@ -114,8 +118,26 @@ public:
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
+     * @note Sets lifetime_ah_throughput to 0.0f as the unprovisioned default
      */
     void init(time_ms system_start_time, volt pack_voltage);
+
+    /**
+     * @brief Restore the lifetime Ah throughput accumulator from persistent storage and recompute SoH
+     * @param restored_ah lifetime Amp-hours processed, as restored from persistent storage
+     */
+    void restore_lifetime_throughput(double restored_ah);
+
+    /**
+     * @brief Compute State of Health from lifetime Ah throughput
+     * @param lifetime_ah_throughput lifetime Amp-hours processed
+     * @return State of Health
+     */
+    static float compute_soh_from_throughput(double lifetime_ah_throughput)
+    {
+        float soh = 1.0f - (float)(SOH_FADE_PER_AH * lifetime_ah_throughput);
+        return fmaxf(SOH_MIN, fminf(SOH_MAX, soh));
+    }
 
     /**
      * @pre voltage data has been recorded
@@ -220,6 +242,14 @@ private:
      */
     static constexpr float STABILIZED_CURRENT_THRESH = 0.5f; // Absolute value threshold
     static constexpr uint32_t MIN_STABILIZED_CURRENT_DURATION_MS = 1800000;  // 30 minutes in milliseconds
+
+    /**
+     * @brief State of Health linear fade model parameters
+     * SOH_FADE_PER_AH: conservative 95% upper-bound capacity fade per Ah processed (from degradation test)
+     */
+    static constexpr float SOH_FADE_PER_AH = 0.0000048f;
+    static constexpr float SOH_MIN = 0.8f;
+    static constexpr float SOH_MAX = 1.0f;
 };
 
 using ACUControllerInstance = etl::singleton<ACUController>;

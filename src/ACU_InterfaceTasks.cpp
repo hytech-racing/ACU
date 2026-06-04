@@ -163,6 +163,10 @@ void initialize_all_interfaces()
     /* EM Interface */
     EMInterfaceInstance::create(sys_time::hal_millis());
 
+    /* SoH Persistence Interface (lifetime Ah throughput in EEPROM) */
+    SoHPersistenceInterfaceInstance::create();
+    SoHPersistenceInterfaceInstance::instance().init();
+
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
 }
@@ -309,7 +313,27 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
         ADCInterfaceInstance::instance().read_ts_out_filtered(),
         ADCInterfaceInstance::instance().read_shdn_voltage(),
         sys_time::hal_millis());
-    FaultLatchManagerInstance::instance().update_shdn_out_latch(WatchdogMetricsInstance::instance().is_shdn_out_voltage_invalid(sys_time::hal_millis()));    
+    FaultLatchManagerInstance::instance().update_shdn_out_latch(WatchdogMetricsInstance::instance().is_shdn_out_voltage_invalid(sys_time::hal_millis()));
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse init_soh_persistence(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    // One-time setup (runs once at task registration, after both init phases complete): restore the
+    // persisted lifetime Ah throughput into the controller so SoH is valid before the first eval tick.
+    // The interface pushes restored data into the system; the system never depends on the interface.
+    ACUControllerInstance::instance().restore_lifetime_throughput(
+        SoHPersistenceInterfaceInstance::instance().get_lifetime_ah_throughput());
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse persist_soh_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    // Throttled persist of lifetime Ah throughput; the interface guards EEPROM endurance internally
+    // and pulls the value from the controller's published status (interface-reads-system data flow).
+    SoHPersistenceInterfaceInstance::instance().save(
+        ACUControllerInstance::instance().get_status().lifetime_ah_throughput,
+        sys_time::hal_millis());
     return HT_TASK::TaskResponse::YIELD;
 }
 /* Print Functions */

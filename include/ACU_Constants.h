@@ -156,6 +156,9 @@ namespace ACUConstants
     constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
 
+    constexpr uint32_t SOH_PERSIST_PERIOD_US = 1000000UL; // 1 000 000 us = 1 Hz
+    constexpr uint32_t SOH_PERSIST_PRIORITY = 19;
+
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
     const uint32_t EM_CAN_baudrate = 500000;
