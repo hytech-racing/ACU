@@ -94,20 +94,7 @@ bool DS2480BInterface::OWReset()
     return true;
 }
 
-// uint8_t readByte(uint8_t timeout_ms)
-// {
-//     uint32_t start = millis();
-//     while (Serial2.available() == 0)
-//     {
-//         if (millis() - start > timeout_ms)
-//         {
-//             return -1;
-//         }
-//     }
-//     return Serial2.read();
-// }
-
-void DS2480BInterface::OWWriteByte(uint8_t data)
+int DS2480BInterface::OWWriteByte(uint8_t data)
 {
     _ensureDataMode();
     _flushRXBuffer();
@@ -115,14 +102,23 @@ void DS2480BInterface::OWWriteByte(uint8_t data)
     // If data == 0xE3 it must be sent twice
     Serial2.write(data);
     if (data == 0xE3) Serial2.write(data);
+
+    uint32_t timeout = millis() + 10;  // 10ms timeout
+    while (!Serial2.available())
+    {
+        if (millis() > timeout)
+        {
+            return -1;
+        }
+    }
+
+    return Serial2.read();
 }
 
-void DS2480BInterface::OWReadByte()
+int DS2480BInterface::OWReadByte()
 {
     return OWWriteByte(0xFF);
 }
-
-
 
 void DS2480BInterface::_flushRXBuffer()
 {

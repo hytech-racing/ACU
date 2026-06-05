@@ -51,7 +51,7 @@ struct DS2480BCommands_s
 struct DS2480BInterfaceParams_s
 {
     DS2480BCommands_s commands;
-    uint8_t baud_rate;
+    uint16_t baud_rate;
 };
 
 enum class DS2480B_Mode
@@ -64,7 +64,7 @@ enum class DS2480B_Mode
 class DS2480BInterface
 {
 public:
-    DS2480BInterface(uint8_t baud_rate = 9600,
+    DS2480BInterface(uint16_t baud_rate = 9600,
                  DS2480BCommands_s commands =
                  {
                     .break_cmd = ds2480b_default_parameters::BREAK_CMD,
@@ -112,19 +112,16 @@ public:
     bool OWReset();
 
     /**
-     * @brief Read a single byte with timeout, returns -1 on timeout
-     */
-    uint8_t readByte(uint8_t timeout_ms);
-
-    /**
      *  @brief Sends a single byte in Data Mode.
+     *  @return -1 if the bus is hung
      */
-    void OWWriteByte(uint8_t data);
+    int OWWriteByte(uint8_t data);
 
     /**
      *  @brief Read is done by writing 0xFF and sampling the response.
+     *  @return -1 if the bus is hung
      */
-    void OWReadByte();
+    int OWReadByte();
 
 
 private:
