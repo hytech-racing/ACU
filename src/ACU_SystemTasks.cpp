@@ -28,13 +28,13 @@ bool initialize_all_systems()
 
     etl::delegate<bool()> contactor_welded = etl::delegate<bool()>::create([]() -> bool
                                                                                 { return ACUControllerInstance::instance().check_is_contactor_welded(ADCInterfaceInstance::instance().read_pack_out_filtered(), ADCInterfaceInstance::instance().read_ts_out_filtered()); });
-    
+
     etl::delegate<void()> set_sw_not_ok_pin_high = etl::delegate<void()>::create([]() -> void
                                                                                 { WatchdogInstance::instance().set_sw_not_ok_pin_high(); });
-    
+
     etl::delegate<void()> set_sw_not_ok_pin_low = etl::delegate<void()>::create([]() -> void
                                                                                 { WatchdogInstance::instance().set_sw_not_ok_pin_low(); });
-    
+
     etl::delegate<void()> disable_watchdog = etl::delegate<void()>::create<WatchdogInterface, &WatchdogInterface::set_teensy_ok_low>(WatchdogInstance::instance());
 
     etl::delegate<bool()> received_valid_shdn_out = etl::delegate<bool()>::create<ADCInterface, &ADCInterface::read_shdn_out>(ADCInterfaceInstance::instance());
@@ -68,17 +68,14 @@ bool initialize_all_systems()
                                     disable_n_latch_en,
                                     sys_time::hal_millis());
 
-
-    TempSensorDriverInstance::create();
-
     return true;
 }
 
 HT_TASK::TaskResponse evaluate_accumulator(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     ACUControllerInstance::instance().evaluate_accumulator(
-        sys_time::hal_millis(), 
-        BMSDriverInstance_t::instance().get_bms_core_data(), 
+        sys_time::hal_millis(),
+        BMSDriverInstance_t::instance().get_bms_core_data(),
         BMSFaultDataManagerInstance_t::instance().get_fault_data().max_consecutive_invalid_packet_count,
         EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).em_current,
         ACUConstants::NUM_CELLS
@@ -90,12 +87,5 @@ HT_TASK::TaskResponse tick_state_machine(const unsigned long &sysMicros, const H
 {
     ACUStateMachineInstance::instance().tick_state_machine(sys_time::hal_millis());
 
-    return HT_TASK::TaskResponse::YIELD;
-}
-
-::HT_TASK::TaskResponse sample_em_temp_sensors(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
-{
-    TempSensorDriverInstance::instance().get_temps();
-    
     return HT_TASK::TaskResponse::YIELD;
 }

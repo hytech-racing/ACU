@@ -477,22 +477,22 @@ int OWReset()
     {
         case RESET_SHORTED:
         {
-            Serial.println("OWReset: 1-Wire shorted");
+            //Serial.println("OWReset: 1-Wire shorted");
             break;
         }
         case RESET_PRESENCE:
         {
-            Serial.println("OWReset: presence detected");
+            //Serial.println("OWReset: presence detected");
             break;
         }
         case RESET_ALARM:
         {
-            Serial.println("OWReset: alarming presence");
+            //Serial.println("OWReset: alarming presence");
             break;
         }
         case RESET_NO_PRESENCE:
         {
-            Serial.println("OWReset: no presence");
+            //Serial.println("OWReset: no presence");
             break;
         }
         default:
@@ -989,15 +989,40 @@ void ReadFirstFoundSensor()
 }
 
 
+// bool StartTemperatureConversion()
+// {
+//     if (OWReset() != RESET_PRESENCE)
+//         return false;
+
+//     OWWriteByte(SKIP_ROM);
+//     OWWriteByte(CONVERT);
+
+//     return true;
+// }
+
 bool StartTemperatureConversion()
 {
-    if (OWReset() != RESET_PRESENCE)
+    Serial.println("Starting broadcast conversion");
+
+    int reset = OWReset();
+
+    Serial.print("Reset result = ");
+    Serial.println(reset);
+
+    if (reset != RESET_PRESENCE)
         return false;
 
-    OWWriteByte(SKIP_ROM);
-    OWWriteByte(CONVERT);
+    int resp;
 
-    Serial.println("Conversion started");
+    resp = OWWriteByte(SKIP_ROM);
+
+    Serial.print("SKIP_ROM response = 0x");
+    Serial.println(resp, HEX);
+
+    resp = OWWriteByte(CONVERT);
+
+    Serial.print("CONVERT response = 0x");
+    Serial.println(resp, HEX);
 
     return true;
 }
@@ -1007,40 +1032,22 @@ bool StartTemperatureConversion()
 //     float& temperatureC)
 // {
 //     if (!OWMatchROM(rom))
-//     {
-//         Serial.println("Match ROM failed");
 //         return false;
-//     }
+
+//     // Start conversion on THIS sensor only
+//     OWWriteByte(CONVERT);
+
+//     delay(1000);
+
+//     if (!OWMatchROM(rom))
+//         return false;
 
 //     OWWriteByte(READ_SCRATCHPAD);
 
 //     uint8_t scratchpad[9];
 
 //     for (int i = 0; i < 9; i++)
-//     {
-//         int b = OWReadByte();
-
-//         if (b < 0)
-//         {
-//             Serial.println("Scratchpad read failed");
-//             return false;
-//         }
-
-//         scratchpad[i] = (uint8_t)b;
-//     }
-
-//     Serial.print("Scratchpad: ");
-
-//     for (int i = 0; i < 9; i++)
-//     {
-//         if (scratchpad[i] < 0x10)
-//             Serial.print('0');
-
-//         Serial.print(scratchpad[i], HEX);
-//         Serial.print(' ');
-//     }
-
-//     Serial.println();
+//         scratchpad[i] = OWReadByte();
 
 //     int16_t raw =
 //         ((int16_t)scratchpad[1] << 8) |
@@ -1048,35 +1055,49 @@ bool StartTemperatureConversion()
 
 //     temperatureC = raw / 16.0f;
 
+//     if (!CheckCRC(scratchpad, 9))
+//     {
+//         Serial.println("Scratchpad CRC failed");
+//         return false;
+//     }
+
 //     return true;
 // }
+
 bool ReadTemperature(
     const uint8_t rom[8],
     float& temperatureC)
 {
-
     if (!OWMatchROM(rom))
+    {
+        Serial.println("Match ROM failed");
         return false;
-
-    OWWriteByte(CONVERT);
-
-    delay(1000);
-
-    if (!OWMatchROM(rom))
-        return false;
+    }
 
     OWWriteByte(READ_SCRATCHPAD);
 
     uint8_t scratchpad[9];
 
     for (int i = 0; i < 9; i++)
-        scratchpad[i] = OWReadByte();
+    {
+        int b = OWReadByte();
+
+        if (b < 0)
+        {
+            Serial.println("Scratchpad read failed");
+            return false;
+        }
+
+        scratchpad[i] = (uint8_t)b;
+    }
 
     Serial.print("Scratchpad: ");
 
     for (int i = 0; i < 9; i++)
     {
-        if (scratchpad[i] < 0x10) Serial.print('0');
+        if (scratchpad[i] < 0x10)
+            Serial.print('0');
+
         Serial.print(scratchpad[i], HEX);
         Serial.print(' ');
     }
@@ -1100,27 +1121,436 @@ bool ReadTemperature(
 
 void ReadAllTemperatures()
 {
+    float temperatures[MAX_SENSORS];
+
+    // Start conversion on ALL sensors simultaneously
+    if (!StartTemperatureConversion())
+    {
+        Serial.println("Conversion Start Failed");
+        return;
+    }
+
+    // Wait for conversion to complete
+    delay(1000);
+
+    // Read every sensor and store result
     for (int i = 0; i < sensorCount; i++)
     {
-        float tempC;
-
-        if (!ReadTemperature(foundROMs[i], tempC))
+        if (!ReadTemperature(foundROMs[i], temperatures[i]))
         {
-            Serial.print("Sensor ");
-            Serial.print(i);
-            Serial.println(" failed");
-            continue;
+            temperatures[i] = NAN;
         }
+    }
 
+    // Print everything together
+    Serial.println();
+    Serial.println("====================================");
+
+    for (int i = 0; i < sensorCount; i++)
+    {
         Serial.print("Sensor ");
         Serial.print(i);
         Serial.print(" = ");
-        Serial.print(tempC);
-        Serial.println(" C");
+
+        if (isnan(temperatures[i]))
+        {
+            Serial.println("READ FAILED");
+        }
+        else
+        {
+            Serial.print(temperatures[i], 2);
+            Serial.println(" C");
+        }
+    }
+
+    Serial.println("====================================");
+    Serial.println();
+}
+
+void CheckPowerMode()
+{
+    Serial.println();
+    Serial.println("Checking DS18B20 power mode...");
+
+    if (OWReset() != RESET_PRESENCE)
+    {
+        Serial.println("No devices present");
+        return;
+    }
+
+    // SKIP ROM
+    OWWriteByte(SKIP_ROM);
+
+    // READ POWER SUPPLY command
+    OWWriteByte(0xB4);
+
+    // Read result bit
+    int bit = OWReadBit();
+
+    Serial.print("Power mode bit = ");
+    Serial.println(bit);
+
+    if (bit == 0)
+    {
+        Serial.println(">>> PARASITE POWER DETECTED <<<");
+    }
+    else if (bit == 1)
+    {
+        Serial.println(">>> EXTERNALLY POWERED <<<");
+    }
+    else
+    {
+        Serial.println("Read failed");
     }
 
     Serial.println();
 }
+
+// void setup()
+// {
+//     Serial.begin(115200);
+//     Serial2.begin(9600);
+
+//     while (!DS2480B_Detect())
+//     {
+//         Serial.println("DS2480B Detect Failed");
+//         delay(1000);
+//     }
+
+//     Serial.println("DS2480B OK");
+
+//     OWSearchAll();
+// }
+bool StartTemperatureConversionStrongPullup()
+{
+    Serial.println();
+    Serial.println("===== STRONG PULLUP TEST =====");
+
+    int reset = OWReset();
+
+    Serial.print("Reset result = ");
+    Serial.println(reset);
+
+    if (reset != RESET_PRESENCE)
+        return false;
+
+    // ------------------------------------------------------
+    // Send SKIP ROM normally
+    // ------------------------------------------------------
+    ensureDataMode();
+
+    Serial2.write(SKIP_ROM);
+
+    int b = readByte();
+
+    Serial.print("SKIP_ROM returned 0x");
+    Serial.println(b, HEX);
+
+    // ------------------------------------------------------
+    // ARM strong pullup
+    // ------------------------------------------------------
+    ensureCommandMode();
+
+    Serial.println("Sending ARM (0xEF)");
+
+    Serial2.write(0xEF);
+
+    delay(2);
+
+    // ------------------------------------------------------
+    // Enter data mode manually
+    // ------------------------------------------------------
+    Serial.println("Entering DATA MODE");
+
+    Serial2.write(SET_DATA_MODE);   // 0xE1
+    currentMode = DATA_MODE;
+
+    delay(2);
+
+    // ------------------------------------------------------
+    // Send CONVERT directly
+    // ------------------------------------------------------
+    Serial.println("Sending raw CONVERT (0x44)");
+
+    Serial2.write(CONVERT);
+
+    // IMPORTANT:
+    // NO readByte()
+    // NO OWWriteByte()
+    // NO flushRXBuffer()
+
+    Serial.println("Waiting 1000ms...");
+
+    delay(1000);
+
+    // ------------------------------------------------------
+    // Back to command mode
+    // ------------------------------------------------------
+    Serial.println("Returning to COMMAND MODE");
+
+    Serial2.write(SET_CMD_MODE);    // 0xE3
+    currentMode = COMMAND_MODE;
+
+    delay(2);
+
+    // ------------------------------------------------------
+    // DISARM pulse
+    // ------------------------------------------------------
+    Serial.println("Sending DISARM (0xED)");
+
+    Serial2.write(0xED);
+
+    delay(10);
+
+    // ------------------------------------------------------
+    // Re-sync DS2480B
+    // ------------------------------------------------------
+    Serial.println("Re-detecting DS2480B...");
+
+    if (!DS2480B_Detect())
+    {
+        Serial.println("DS2480B re-detect FAILED");
+        return false;
+    }
+
+    Serial.println("DS2480B re-detect OK");
+
+    reset = OWReset();
+
+    Serial.print("Reset after pulse = ");
+    Serial.println(reset);
+
+    Serial.println("===== END TEST =====");
+    Serial.println();
+
+    return (reset == RESET_PRESENCE);
+}
+
+uint8_t testROM[8] =
+{
+    0x28, 0xE0, 0xF4, 0x70,
+    0x11, 0x00, 0x00, 0xC7
+};
+
+void TestSingleSensorStrongPullup()
+{
+    float temp;
+
+    Serial.println();
+    Serial.println("===== SINGLE SENSOR TEST =====");
+
+    // Match ROM
+    if (!OWMatchROM(testROM))
+    {
+        Serial.println("MATCH ROM FAILED");
+        return;
+    }
+
+    Serial.println("Sending ARM (0xEF)");
+    ensureCommandMode();
+    Serial2.write(0xEF);
+
+    delay(2);
+
+    Serial.println("Entering DATA MODE");
+    Serial2.write(0xE1);
+
+    delay(2);
+
+    Serial.println("Sending CONVERT");
+    Serial2.write(0x44);
+
+    delay(1000);
+
+    Serial.println("Back to COMMAND MODE");
+    Serial2.write(0xE3);
+
+    delay(2);
+
+    Serial.println("Sending DISARM (0xED)");
+    Serial2.write(0xED);
+
+    delay(2);
+
+    DS2480B_Detect();
+
+    if (ReadTemperature(testROM, temp))
+    {
+        Serial.print("Temperature = ");
+        Serial.print(temp);
+        Serial.println(" C");
+    }
+    else
+    {
+        Serial.println("READ FAILED");
+    }
+
+    Serial.println("==============================");
+}
+
+void TestSingleSensorNormal()
+{
+    Serial.println();
+    Serial.println("===== SINGLE SENSOR NORMAL TEST =====");
+
+    float tempC;
+
+    // Start conversion on sensor 0
+    if (!OWMatchROM(foundROMs[0]))
+    {
+        Serial.println("Match ROM failed");
+        return;
+    }
+
+    Serial.println("Sending CONVERT");
+
+    int resp = OWWriteByte(CONVERT);
+
+    Serial.print("CONVERT response = 0x");
+    Serial.println(resp, HEX);
+
+    delay(1000);
+
+    // Read scratchpad
+    if (!OWMatchROM(foundROMs[0]))
+    {
+        Serial.println("Match ROM failed");
+        return;
+    }
+
+    OWWriteByte(READ_SCRATCHPAD);
+
+    uint8_t scratchpad[9];
+
+    for (int i = 0; i < 9; i++)
+    {
+        int b = OWReadByte();
+
+        if (b < 0)
+        {
+            Serial.println("Read failed");
+            return;
+        }
+
+        scratchpad[i] = (uint8_t)b;
+    }
+
+    Serial.print("Scratchpad: ");
+
+    for (int i = 0; i < 9; i++)
+    {
+        if (scratchpad[i] < 0x10)
+            Serial.print('0');
+
+        Serial.print(scratchpad[i], HEX);
+        Serial.print(' ');
+    }
+
+    Serial.println();
+
+    if (!CheckCRC(scratchpad, 9))
+    {
+        Serial.println("CRC FAILED");
+        return;
+    }
+
+    int16_t raw =
+        ((int16_t)scratchpad[1] << 8) |
+        scratchpad[0];
+
+    tempC = raw / 16.0f;
+
+    Serial.print("Temperature = ");
+    Serial.print(tempC);
+    Serial.println(" C");
+
+    Serial.println("==============================");
+    Serial.println();
+}
+void BroadcastConvertSingleRead()
+{
+    Serial.println();
+    Serial.println("===== BROADCAST TEST =====");
+
+    OWReset();
+
+    OWWriteByte(SKIP_ROM);
+
+    int resp = OWWriteByte(CONVERT);
+
+    Serial.print("CONVERT response = 0x");
+    Serial.println(resp, HEX);
+
+    delay(1000);
+
+    float temp;
+
+    if (ReadTemperature(foundROMs[0], temp))
+    {
+        Serial.print("Sensor0 = ");
+        Serial.println(temp);
+    }
+    else
+    {
+        Serial.println("Sensor0 FAILED");
+    }
+
+    Serial.println("==========================");
+}
+
+void BroadcastReadScratchpad()
+{
+    Serial.println();
+    Serial.println("===== SKIP ROM TEST =====");
+
+    if (OWReset() != RESET_PRESENCE)
+    {
+        Serial.println("Reset failed");
+        return;
+    }
+
+    int resp;
+
+    resp = OWWriteByte(SKIP_ROM);
+
+    Serial.print("SKIP_ROM response = 0x");
+    Serial.println(resp, HEX);
+
+    resp = OWWriteByte(READ_SCRATCHPAD);
+
+    Serial.print("READ_SCRATCHPAD response = 0x");
+    Serial.println(resp, HEX);
+
+    uint8_t scratchpad[9];
+
+    for (int i = 0; i < 9; i++)
+    {
+        int b = OWReadByte();
+
+        if (b < 0)
+        {
+            Serial.println("Read failed");
+            return;
+        }
+
+        scratchpad[i] = b;
+    }
+
+    Serial.print("Scratchpad: ");
+
+    for (int i = 0; i < 9; i++)
+    {
+        if (scratchpad[i] < 0x10)
+            Serial.print('0');
+
+        Serial.print(scratchpad[i], HEX);
+        Serial.print(' ');
+    }
+
+    Serial.println();
+    Serial.println("=========================");
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -1135,11 +1565,70 @@ void setup()
     Serial.println("DS2480B OK");
 
     OWSearchAll();
+
+    CheckPowerMode();   // <--- ADD THIS
 }
+// void loop()
+// {
+//     float tempC;
+
+//     if (ReadTemperature(foundROMs[0], tempC))
+//     {
+//         Serial.print("Sensor0 = ");
+//         Serial.println(tempC);
+//     }
+
+//     delay(2000);
+// }
+
 
 void loop()
 {
-    ReadAllTemperatures();
+    Serial.println();
+    Serial.println("===== SEQUENTIAL CONVERT TEST =====");
 
-    delay(2000);
+    for (int i = 0; i < sensorCount; i++)
+    {
+        float tempC;
+
+        Serial.print("Converting sensor ");
+        Serial.println(i);
+
+        // Select one sensor
+        if (!OWMatchROM(foundROMs[i]))
+        {
+            Serial.println("Match ROM failed");
+            continue;
+        }
+
+        // Start conversion
+        int resp = OWWriteByte(CONVERT);
+
+        Serial.print("CONVERT response = 0x");
+        Serial.println(resp, HEX);
+
+        // Wait for conversion
+        delay(1000);
+
+        // Read temperature
+        if (ReadTemperature(foundROMs[i], tempC))
+        {
+            Serial.print("Sensor ");
+            Serial.print(i);
+            Serial.print(" = ");
+            Serial.print(tempC, 2);
+            Serial.println(" C");
+        }
+        else
+        {
+            Serial.print("Sensor ");
+            Serial.print(i);
+            Serial.println(" FAILED");
+        }
+
+        Serial.println();
+    }
+
+    Serial.println("==============================");
+    delay(3000);
 }

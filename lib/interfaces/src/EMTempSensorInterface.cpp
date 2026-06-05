@@ -1,19 +1,91 @@
 #include "EMTempSensorInterface.h"
 
-// ---------------------------------------------------------------------------
-// Known ROM IDs
-// Order must match the physical harness — sensor 0 is the first in the chain,
-// sensor 5 is the last.  Update if sensors are replaced or rewired.
-// ---------------------------------------------------------------------------
-const uint8_t EMTempSensorInterface::_sensor_ids[NUM_EM_TEMP_SENSORS][8] =
+bool EMTempSensorInterface::_startTempConversion()
 {
-    { 0x28, 0xA6, 0xF5, 0x10, 0x11, 0x00, 0x00, 0x5D },  // sensor 0
-    { 0x28, 0xF9, 0x5A, 0x71, 0x11, 0x00, 0x00, 0x14 },  // sensor 1
-    { 0x28, 0x75, 0x42, 0x11, 0x11, 0x00, 0x00, 0x51 },  // sensor 2
-    { 0x28, 0x6B, 0xCE, 0x70, 0x11, 0x00, 0x00, 0xEC },  // sensor 3
-    { 0x28, 0xE0, 0xF4, 0x70, 0x11, 0x00, 0x00, 0xC7 },  // sensor 4
-    { 0x28, 0xC8, 0x92, 0x70, 0x11, 0x00, 0x00, 0x5D },  // sensor 5
-};
+    if (_DS2480B.OWReset() != ds2480b_default_parameters::RESET_PRESENCE)
+    {
+        return false;
+    }
+
+    _DS2480B.OWWriteByte(_EMtemp_params.commands.skip_rom);
+    _DS2480B.OWWriteByte(_EMtemp_params.commands.convert);
+
+    return true;
+}
+
+bool EMTempSensorInterface::_ReadTemperature(const ROMID_t& ROM_ID, celsius temperature_c)
+{
+    // if (!OWMatchROM(ROM_ID.data()))
+    //     return false;
+
+    _DS2480B.OWWriteByte(_EMtemp_params.commands.read_scratchpad);
+
+    uint8_t scratchpad[9];
+
+    for (int i = 0; i < 9; i++)
+    {
+        int b = OWReadByte();
+
+        if (b < 0)
+            return false;
+
+        scratchpad[i] = static_cast<uint8_t>(b);
+    }
+
+    if (!_CheckCRC(scratchpad, 9))
+    {
+        Serial.println("Scratchpad CRC failed");
+        return false;
+    }
+
+    int16_t raw =
+        ((int16_t)scratchpad[1] << 8) |
+         scratchpad[0];
+
+    temperatureC = raw / 16.0f;
+
+    return true;
+}
+
+bool EMTempSensorInterface::_OWMatchROM(const uint8_t ROM_IDs[8])
+{
+    _DS2480B.OWWriteByte(_EMtemp_params.commands.match_rom);
+
+    for (uint8_t byte : ROM_IDs)
+    {
+        OWWriteByte(ROM_IDs[id]);
+    }
+
+    return true;
+}
+
+
+bool CheckCRC(const uint8_t* data, int len)
+{
+    uint8_t crc = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        uint8_t byte = data[i];
+
+        for (int j = 0; j < 8; j++)
+        {
+            uint8_t mix = (crc ^ byte) & 0x01;
+            crc >>= 1;
+
+            if (mix)
+                crc ^= 0x8C;
+
+            byte >>= 1;
+        }
+    }
+
+    return crc == 0;
+}
+
+
+
+
 
 // ---------------------------------------------------------------------------
 // Constructor
@@ -170,12 +242,12 @@ const EMTempSensorParams_s& EMTempSensorInterface::get_params() const
 // ---------------------------------------------------------------------------
 bool EMTempSensorInterface::_start_conversion_all()
 {
-    if (!_bus.reset()) 
+    if (!_bus.reset())
     {
         Serial.println("BUS RESET IN CONVERSION FAILED");
         return false;
     }
-    
+
     _bus.skip();
     _bus.write(DS18B20_CONVERT_T);
 
@@ -241,4 +313,10 @@ celsius EMTempSensorInterface::_raw_to_celsius(uint8_t lsb, uint8_t msb) const
 {
     int16_t raw = static_cast<int16_t>((static_cast<uint16_t>(msb) << 8) | lsb);
     return static_cast<celsius>(raw) / 16.0f;
+}
+
+
+EMTempData_s EMTempSensorInterface::getCurrentData()
+{
+    return _curr_data;
 }

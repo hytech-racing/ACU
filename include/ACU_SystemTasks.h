@@ -7,7 +7,6 @@
 /* Local System Includes */
 #include "ACUController.h"
 #include "ACUStateMachine.h"
-#include "TempSensorDriver.h"
 
 /* Interface Function Dependencies */
 #include "WatchdogInterface.h"
@@ -46,4 +45,4 @@ extern ::etl::delegate<void()> reset_latch;
 
 
 
-#endif 
+#endif
