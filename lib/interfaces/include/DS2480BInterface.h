@@ -106,8 +106,7 @@ public:
 
     /**
      * @brief Sends 1-Wire reset and checks for presence pulse.
-     *
-     *  @return RESET_PRESENCE, RESET_ALARM, RESET_SHORTED, RESET_NO_PRESENCE, or -1 on failure.
+     * @return true if a device presence pulse was detected, false otherwise
      */
     bool OWReset();
 
@@ -142,8 +141,6 @@ private:
      *
      */
     void _ensureDataMode();
-
-
 };
 
 

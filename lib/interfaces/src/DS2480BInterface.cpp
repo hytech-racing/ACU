@@ -1,5 +1,11 @@
 #include "DS2480BInterface.h"
 
+void DS2480BInterface::init()
+{
+    Serial2.begin(_ds2480b_params.baud_rate);
+    delay(10);
+    OWDetect();
+}
 
 bool DS2480BInterface::OWDetect()
 {
@@ -12,7 +18,7 @@ bool DS2480BInterface::OWDetect()
     delay(2);
 
     Serial2.end();
-    Serial2.begin(9600);
+    Serial2.begin(_ds2480b_params.baud_rate);
     delay(2);
     _flushRXBuffer();
 
@@ -29,9 +35,19 @@ bool DS2480BInterface::OWDetect()
     }
 
     // Read and validate 5-byte response
-    for (uint8_t expected_resp : _ds2480b_params.commands.detect_sequence)
+    for (uint8_t expected_resp : _ds2480b_params.commands.detect_response)
     {
-        uint8_t response = Serial2.read();
+        uint32_t timeout = millis() + 10;
+        while (!Serial2.available())
+        {
+            if (millis() > timeout)
+            {
+                Serial.println("OWDetect: timeout waiting for response");
+                return false;
+            }
+        }
+
+        uint8_t response = static_cast<uint8_t>(Serial2.read());
 
         if (response != expected_resp)
         {
@@ -55,43 +71,27 @@ bool DS2480BInterface::OWReset()
 
     Serial2.write(_ds2480b_params.commands.reset_cmd);  // reset at standard/flex speed
 
+    uint32_t timeout = millis() + 10;
+    while (!Serial2.available())
+    {
+        if (millis() > timeout)
+        {
+            Serial.println("OWReset: timeout waiting for response");
+            return false;
+        }
+
+    }
+
     uint8_t response = Serial2.read();
     uint8_t reset_bits = response & 0x03;  // bits 1:0 = presence result
 
-    switch (reset_bits)
+    if (reset_bits == ds2480b_default_parameters::RESET_PRESENCE)
     {
-        case ds2480b_default_parameters::RESET_SHORTED:
-        {
-            //Serial.println("OWReset: 1-Wire shorted");
-            return false;
-            break;
-        }
-        case ds2480b_default_parameters::RESET_PRESENCE:
-        {
-            //Serial.println("OWReset: presence detected");
-            break;
-        }
-        case ds2480b_default_parameters::RESET_ALARM:
-        {
-            //Serial.println("OWReset: alarming presence");
-            return false;
-            break;
-        }
-        case ds2480b_default_parameters::RESET_NO_PRESENCE:
-        {
-            //Serial.println("OWReset: no presence");
-            return false;
-            break;
-        }
-        default:
-        {
-            //Serial.println("OWReset: no matching output");
-            return false;
-            break;
-        }
+        return true;
     }
 
-    return true;
+
+    return false;
 }
 
 int DS2480BInterface::OWWriteByte(uint8_t data)
