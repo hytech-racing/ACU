@@ -10,15 +10,13 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
     {
         case ACUState_e::STARTUP: 
         {   
-            if (current_millis - _last_state_changed_time < precharge_delay_ms)
+            if (current_millis - _last_state_changed_time > precharge_delay_ms)
             {
-                break;
-            }
-
-            if (_received_valid_shdn_out())
-            {
-                _set_state(ACUState_e::WELDCHECK, current_millis);
-                break;
+                if (_received_valid_shdn_out())
+                {
+                    _set_state(ACUState_e::WELDCHECK, current_millis);
+                    break;
+                }
             }
 
             if (_has_bms_fault() || _has_imd_fault()) 
