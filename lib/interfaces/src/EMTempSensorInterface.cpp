@@ -44,11 +44,46 @@ void EMTempSensorInterface::init()
 
 void EMTempSensorInterface::tick(uint32_t curr_millis)
 {
-    for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
+    switch (_state)
     {
-        _ReadOneTemperature(i);
+        case State::IDLE:
+        {
+            if (_StartAllTempConversions())
+            {
+                _conversion_start_ms = curr_millis;
+                _state = State::CONVERTING;
+            }
+            break;
+        }
+
+        case State::CONVERTING:
+        {
+            if ((curr_millis - _conversion_start_ms) >= EMtemp_default_parameters::CONVERSION_TIME_MS)
+                _state = State::READING;
+            break;
+        }
+
+        case State::READING:
+        {
+            for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
+                _ReadOneTemperature(i);
+
+            _state = State::IDLE;
+            break;
+        }
+
+        default:
+            _state = State::IDLE;
+            break;
     }
 }
+// void EMTempSensorInterface::tick(uint32_t curr_millis)
+// {
+//     for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
+//     {
+//         _ReadOneTemperature(i);
+//     }
+// }
 
 celsius EMTempSensorInterface::get_temperature(uint8_t sensor_index) const
 {
@@ -97,7 +132,7 @@ const EMTempSensorData_s& EMTempSensorInterface::get_current_data() const
 
 bool EMTempSensorInterface::_StartAllTempConversions()
 {
-    if (_DS2480B.OWReset() != ds2480b_default_parameters::RESET_PRESENCE)
+    if (!_DS2480B.OWReset())
     {
         return false;
     }
@@ -110,12 +145,13 @@ bool EMTempSensorInterface::_StartAllTempConversions()
 
 bool EMTempSensorInterface::_ReadOneTemperature(uint8_t sensor_index)
 {
-    const ROMID_t& rom_id = _params.sensor_rom_ids[sensor_index];
 
     if (sensor_index >= EMtemp_default_parameters::NUM_TEMP_SENSORS)
     {
         return false;
     }
+
+    const ROMID_t& rom_id = _params.sensor_rom_ids[sensor_index];
 
     if (!_OWMatchROM(rom_id))
     {
@@ -124,7 +160,6 @@ bool EMTempSensorInterface::_ReadOneTemperature(uint8_t sensor_index)
     }
 
     _DS2480B.OWWriteByte(_params.commands.read_scratchpad);
-    delay(800);
 
     uint8_t scratchpad[EMtemp_default_parameters::SCRATCHPAD_BYTES];
 
@@ -162,7 +197,7 @@ bool EMTempSensorInterface::_ReadOneTemperature(uint8_t sensor_index)
 
 bool EMTempSensorInterface::_OWMatchROM(const ROMID_t& rom_id)
 {
-    if (_DS2480B.OWReset() != ds2480b_default_parameters::RESET_PRESENCE)
+    if (!_DS2480B.OWReset())
     {
         return false;
     }

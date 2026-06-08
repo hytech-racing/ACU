@@ -28,9 +28,11 @@ void loop()
     // Print temperatures once per second
     static uint32_t last_print_ms = 0;
 
-    if (now - last_print_ms >= 1000)
+    if (now - last_print_ms >= 500)
     {
         last_print_ms = now;
+
+        uint32_t print_start = micros();
 
         Serial.println("====================================");
 
@@ -61,6 +63,12 @@ void loop()
         Serial.print("Overtemp: ");
         Serial.println(EMTempSensorInterfaceInstance::instance().is_overtemp() ? "YES" : "NO");
 
-        Serial.println("====================================");
+        uint32_t print_elapsed = micros() - print_start;
+
+        Serial.print("Print overhead: ");
+        Serial.print(print_elapsed);
+        Serial.println(" us");
+
+         Serial.println("");
     }
 }
