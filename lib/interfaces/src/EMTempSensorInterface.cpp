@@ -41,6 +41,7 @@ void EMTempSensorInterface::init()
 //             break;
 //     }
 //}
+
 void EMTempSensorInterface::tick(uint32_t curr_millis)
 {
     for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)

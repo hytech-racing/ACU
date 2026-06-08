@@ -3,7 +3,7 @@
 void DS2480BInterface::init()
 {
     Serial2.begin(_ds2480b_params.baud_rate);
-    delay(10);
+    delayMicroseconds(10);
     OWDetect();
 }
 
@@ -13,7 +13,7 @@ bool DS2480BInterface::OWDetect()
     // switching to a slower baud rate and sending a zero byte can simulate a break"
     // Send break via null byte at 4800 bau
     Serial2.end();
-    Serial2.begin(4800);
+    Serial2.begin(_ds2480b_params.baud_rate / 2);
     Serial2.write(_ds2480b_params.commands.break_cmd);
     delay(2);
 

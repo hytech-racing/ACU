@@ -7,6 +7,8 @@
 
 namespace ds2480b_default_parameters
 {
+    constexpr const uint32_t BAUDRATE = 9600;
+
     constexpr const uint8_t BREAK_CMD = 0x00;
 
     constexpr const uint8_t RESET_CMD = 0xC5;
@@ -64,7 +66,7 @@ enum class DS2480B_Mode
 class DS2480BInterface
 {
 public:
-    DS2480BInterface(uint16_t baud_rate = 9600,
+    DS2480BInterface(uint16_t baud_rate = ds2480b_default_parameters::BAUDRATE,
                  DS2480BCommands_s commands =
                  {
                     .break_cmd = ds2480b_default_parameters::BREAK_CMD,
