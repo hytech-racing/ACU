@@ -22,7 +22,7 @@
 HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
 ::HT_TASK::Task tick_state_machine_task(HT_TASK::DUMMY_FUNCTION, tick_state_machine, ACUConstants::TICK_SM_PRIORITY, ACUConstants::TICK_SM_PERIOD_US);
-::HT_TASK::Task kick_watchdog_task(HT_TASK::DUMMY_FUNCTION, run_kick_watchdog, ACUConstants::WATCHDOG_PRIORITY, ACUConstants::KICK_WATCHDOG_PERIOD_US); 
+::HT_TASK::Task kick_watchdog_task(HT_TASK::DUMMY_FUNCTION, run_kick_watchdog, ACUConstants::WATCHDOG_PRIORITY, ACUConstants::KICK_WATCHDOG_PERIOD_US);
 ::HT_TASK::Task sample_bms_data_task(HT_TASK::DUMMY_FUNCTION, sample_bms_data, ACUConstants::SAMPLE_BMS_PRIORITY, ACUConstants::SAMPLE_BMS_PERIOD_US);
 ::HT_TASK::Task eval_accumulator_task(HT_TASK::DUMMY_FUNCTION, evaluate_accumulator, ACUConstants::EVAL_ACC_PRIORITY, ACUConstants::EVAL_ACC_PERIOD_US);
 ::HT_TASK::Task write_cell_balancing_config_task(HT_TASK::DUMMY_FUNCTION, write_cell_balancing_config, ACUConstants::WRITE_CELL_BALANCE_PRIORITY, ACUConstants::WRITE_CELL_BALANCE_PERIOD_US);
@@ -40,6 +40,7 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 ::HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 ::HT_TASK::Task sample_adc_task(HT_TASK::DUMMY_FUNCTION, sample_adc, ACUConstants::SAMPLE_ADC_PRIORITY, ACUConstants::SAMPLE_ADC_PERIOD_US);
 ::HT_TASK::Task soh_persistence_task(init_soh_persistence, persist_soh_data, ACUConstants::SOH_PERSIST_PRIORITY, ACUConstants::SOH_PERSIST_PERIOD_US);
+::HT_TASK::Task run_datalogger_task(HT_TASK::DUMMY_FUNCTION, run_data_logging, ACUConstants::DATA_LOG_PRIORITY, ACUConstants::DATA_LOG_PERIOD_US);
 
 FlexCAN_t<CAN2> ACUCANInterfaceImpl::CCU_CAN;
 FlexCAN_t<CAN3> ACUCANInterfaceImpl::EM_CAN;
@@ -69,17 +70,18 @@ void setup()
 
     scheduler.schedule(sample_CAN_task);
     scheduler.schedule(idle_sample_task);
-    
+
     scheduler.schedule(sample_adc_task);
     scheduler.schedule(soh_persistence_task);
+    scheduler.schedule(run_datalogger_task);
 
-    // scheduler.schedule(debug_prints_task);
+    scheduler.schedule(debug_prints_task);
 
     handle_CAN_setup(ACUCANInterfaceImpl::CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
     handle_CAN_setup(ACUCANInterfaceImpl::EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
 }
 
 void loop()
-{  
+{
     scheduler.run();
 }
