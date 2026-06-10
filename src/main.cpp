@@ -40,6 +40,7 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 ::HT_TASK::Task debug_prints_task(HT_TASK::DUMMY_FUNCTION, debug_print, ACUConstants::DEBUG_PRINT_PRIORITY, ACUConstants::DEBUG_PRINT_PERIOD_US);
 ::HT_TASK::Task sample_adc_task(HT_TASK::DUMMY_FUNCTION, sample_adc, ACUConstants::SAMPLE_ADC_PRIORITY, ACUConstants::SAMPLE_ADC_PERIOD_US);
 ::HT_TASK::Task soh_persistence_task(init_soh_persistence, persist_soh_data, ACUConstants::SOH_PERSIST_PRIORITY, ACUConstants::SOH_PERSIST_PERIOD_US);
+::HT_TASK::Task run_datalogger_task(HT_TASK::DUMMY_FUNCTION, run_data_logging, ACUConstants::DATA_LOG_PRIORITY, ACUConstants::DATA_LOG_PERIOD_US);
 
 FlexCAN_t<CAN2> ACUCANInterfaceImpl::CCU_CAN;
 FlexCAN_t<CAN3> ACUCANInterfaceImpl::EM_CAN;
@@ -72,6 +73,7 @@ void setup()
 
     scheduler.schedule(sample_adc_task);
     scheduler.schedule(soh_persistence_task);
+    scheduler.schedule(run_datalogger_task);
 
     scheduler.schedule(debug_prints_task);
 

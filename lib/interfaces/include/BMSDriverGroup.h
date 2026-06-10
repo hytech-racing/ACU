@@ -197,8 +197,8 @@ public:
     constexpr static size_t num_cells = (num_chips / 2) * 21;
     constexpr static size_t num_cell_temps = (num_chips * 4);
     constexpr static size_t num_board_temps = num_chips;
-    constexpr static size_t cmd_and_data_buffer_size = (chip_type == LTC6811_Type_e::LTC6811_1) ? 
-                                                        4 + ((num_chips / num_chip_selects) * 8) : 
+    constexpr static size_t cmd_and_data_buffer_size = (chip_type == LTC6811_Type_e::LTC6811_1) ?
+                                                        4 + ((num_chips / num_chip_selects) * 8) :
                                                         ((12 * num_chips)); // 4 (cmd+pec) + 8 (data+pec) = 12 total bytes per chip per command
     constexpr static size_t cmd_only_buffer_size = 4;
 
@@ -210,7 +210,7 @@ public:
         const array<int, num_chips>& addr,
         const BMSDriverGroupConfig_s default_params
     );
-    
+
 
 public:
     /* -------------------- SETUP FUNCTIONS -------------------- */
@@ -316,7 +316,7 @@ public:
      * @note Each bit represents one cell's balance enable status
      * @note Useful for verifying write_configuration() worked correctly
      */
-    const array<uint16_t, num_chips>& get_cell_discharge_enable() 
+    const array<uint16_t, num_chips>& get_cell_discharge_enable()
     {
         return _cell_discharge_en;
     }
@@ -326,7 +326,7 @@ public:
      * @return Const reference to driver config struct
      * @note Useful for verifying hardware settings match expectations
      */
-    const BMSDriverGroupConfig_s& get_config() 
+    const BMSDriverGroupConfig_s& get_config()
     {
         return _config;
     }
@@ -336,7 +336,7 @@ public:
      * @return true if the voltage data is fresh (only happens once per good cycle)
      * @return false if the voltage data is not fresh
      */
-    bool check_clear_voltage_ready() 
+    bool check_clear_voltage_ready()
     {
         return _new_voltage_data_ready.exchange(false, std::memory_order_acquire);
     }
@@ -495,7 +495,7 @@ private:
      * Reset only at the start of each new cycle (when _current_read_group == CURRENT_GROUP_A).
      */
     ReferenceMaxMin_s _max_min_reference;
-    
+
     /**
      * We will need this for both models of the IC
      * This determines where we get our signals from on the Arduino
@@ -503,7 +503,7 @@ private:
      * NOTE: needs to be initialized
      */
     const array<int, num_chip_selects> _chip_select;
-    
+
     /**
      * We will need this for both models of the IC
      * This determines where we get our signals from on the Arduino
@@ -511,7 +511,7 @@ private:
      * NOTE: needs to be initialized
      */
     const array<int, num_chips> _chip_select_per_chip;
-    
+
     /**
      * We will only end up using the address if this is a LTC6811-2
      * NOTE: But if we are, we need to call a setup function to instatiate each with the correct addresses
@@ -521,25 +521,25 @@ private:
      * Will have IC addresses: 0,1,6,7,8,9 | The rest are for chip_select 10
      */
     const array<int, num_chips> _address; // constant
-    
+
     /**
      * REPLACING SEPARATE CONFIGURATION FILE
-     * NOTE: THIS SHOULD BE TREATED AS THE INTERFACE'S DEFAULT PARAMTERS    
+     * NOTE: THIS SHOULD BE TREATED AS THE INTERFACE'S DEFAULT PARAMTERS
      */
     const BMSDriverGroupConfig_s _config;
-    
+
     /**
      * Pointer to the PEC table we will use to calculate new PEC tables
      */
     // uint16_t _pec15Table[256];
     const array<uint16_t, 256> _pec15Table; //must be below _config to be initialized after it
-    
+
     /**
      * Stores the balance statuses for all the chips
      * We only use 12 bits to represent a 1 (discharge) or 0 (charge)
      * out of the 16 bits
      */
-    array<uint16_t, num_chips> _cell_discharge_en = {}; // not const  
+    array<uint16_t, num_chips> _cell_discharge_en = {}; // not const
 
     EventResponder _spi_event;
 
@@ -555,7 +555,7 @@ private:
     array<uint8_t, cmd_only_buffer_size> _rx_write_buffer;
 
     bool _requested_write_configuration;
-    array<bool, num_cells> _requested_cell_balance_flags; 
+    array<bool, num_cells> _requested_cell_balance_flags;
 
     // Says if voltage data is fresh for the state of charge estimator
     std::atomic<bool> _new_voltage_data_ready{false};

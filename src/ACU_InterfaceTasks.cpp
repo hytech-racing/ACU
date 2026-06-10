@@ -452,6 +452,12 @@ void print_bms_data(bms_data data)
     Serial.println();
 }
 
+::HT_TASK::TaskResponse run_data_logging(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    DataLoggingInterfaceInstance::instance().log_data();
+    return HT_TASK::TaskResponse::YIELD;
+}
+
 HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
     // if (ACUControllerInstance::instance().get_status().bms_ok)
