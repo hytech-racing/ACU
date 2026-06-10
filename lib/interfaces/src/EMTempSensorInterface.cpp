@@ -45,7 +45,6 @@ void EMTempSensorInterface::tick(uint32_t curr_micros)
     }
 }
 
-
 celsius EMTempSensorInterface::get_temperature(uint8_t sensor_index) const
 {
     if (sensor_index >= EMtemp_default_parameters::NUM_TEMP_SENSORS)
@@ -72,6 +71,11 @@ celsius EMTempSensorInterface::get_max_temperature() const
     }
 
     return max_temp;
+}
+
+uint8_t EMTempSensorInterface::get_current_sensor_index() const
+{
+    return _curr_sensor_index;
 }
 
 bool EMTempSensorInterface::is_overtemp() const
@@ -148,20 +152,24 @@ void EMTempSensorInterface::_handle_idle()
     }
 
     _DS2480B.OWWriteByte(_params.commands.convert);
-    _conversion_start_us = _curr_micros;
+    _conversion_start_us = micros();   // capture AFTER the convert command completes
     _state = State::CONVERTING;
 }
 
 
 void EMTempSensorInterface::_handle_converting()
 {
-    if ((_curr_micros - _conversion_start_us) >= EMtemp_default_parameters::CONVERSION_TIME_US)
+    if ((micros() - _conversion_start_us) >= EMtemp_default_parameters::CONVERSION_TIME_US)
     {
         _state = State::READING;
     }
 }
+
 void EMTempSensorInterface::_handle_reading()
 {
+    // Serial.print("Elapsed us: ");
+    // Serial.println(_curr_micros - _conversion_start_us);
+
     const ROMID_t& rom_id = _params.sensor_rom_ids[_curr_sensor_index];
 
     if (!_OWMatchROM(rom_id))
@@ -192,8 +200,34 @@ void EMTempSensorInterface::_handle_reading()
         return;
     }
 
-    _curr_data.all_temp_data[_curr_sensor_index] = _parse_temperature(scratchpad);
+    // _curr_data.all_temp_data[_curr_sensor_index] = _parse_temperature(scratchpad);
+    // _curr_sensor_index = (_curr_sensor_index + 1) % EMtemp_default_parameters::NUM_TEMP_SENSORS;
+    // _state = State::IDLE;
+
+    celsius temp = _parse_temperature(scratchpad);
+
+    Serial.print("[TEMP UPDATE] Sensor ");
+    Serial.print(_curr_sensor_index);
+
+    Serial.print(" RawBytes=");
+    if (scratchpad[1] < 0x10) Serial.print('0');
+    Serial.print(scratchpad[1], HEX);
+
+    Serial.print(" ");
+    if (scratchpad[0] < 0x10) Serial.print('0');
+    Serial.print(scratchpad[0], HEX);
+
+    Serial.print(" Temp=");
+    Serial.print(temp, 4);
+
+    Serial.print(" C @ ");
+    Serial.print(millis());
+    Serial.println(" ms");
+
+    _curr_data.all_temp_data[_curr_sensor_index] = temp;
+
     _curr_sensor_index = (_curr_sensor_index + 1) % EMtemp_default_parameters::NUM_TEMP_SENSORS;
+
     _state = State::IDLE;
 }
 
@@ -211,14 +245,14 @@ bool EMTempSensorInterface::_read_scratchpad(uint8_t* scratchpad)
         scratchpad[i] = static_cast<uint8_t>(received_byte);
     }
 
-    Serial.print("Scratchpad: ");
-    for (uint8_t i = 0; i < EMtemp_default_parameters::SCRATCHPAD_BYTES; i++)
-    {
-        if (scratchpad[i] < 0x10) Serial.print('0');
-        Serial.print(scratchpad[i], HEX);
-        Serial.print(' ');
-    }
-    Serial.println();
+    // Serial.print("Scratchpad: ");
+    // for (uint8_t i = 0; i < EMtemp_default_parameters::SCRATCHPAD_BYTES; i++)
+    // {
+    //     if (scratchpad[i] < 0x10) Serial.print('0');
+    //     Serial.print(scratchpad[i], HEX);
+    //     Serial.print(' ');
+    // }
+    // Serial.println();
 
     return true;
 }

@@ -16,6 +16,8 @@
 #include "FaultLatchManager.h"
 #include "SystemTimeInterface.h"
 #include "MAX114XInterface.h"
+#include "DS2480BInterface.h"
+#include "EMTempSensorInterface.h"
 /* For Debugging */
 #include "ACUStateMachine.h"
 
@@ -63,10 +65,12 @@ void initialize_all_interfaces();
 
 ::HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
+::HT_TASK::TaskResponse sample_em_temp_sensor(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
 ::HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
 
 template <typename bms_data>
 void print_bms_data(bms_data data);
 
-#endif 
+#endif

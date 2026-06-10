@@ -49,7 +49,7 @@ namespace ACUInterfaces {
     constexpr int SHUNT_CURRENT_N_CHANNEL    = 5;
     constexpr int TS_OUT_FILTERED_CHANNEL    = 6;
     constexpr int PACK_OUT_FILTERED_CHANNEL  = 7;
-    
+
     /* SCALE/OFFSETS on ADC */
     const float ISO_PACK_N_SCALE = 0.0656553030302;
     const float ISO_PACK_P_SCALE = 0.0656553030302;
@@ -72,11 +72,11 @@ namespace ACUInterfaces {
     constexpr const size_t WD_KICK_PIN = 4;       // > Needs to flip at 100 Hz to keep BMS_OK high
         constexpr const size_t SW_NOT_OK_PIN = 5;  // should be HIGH by default, and then set LOW after traversing state machine
     constexpr const size_t N_FAULTED_STATE_PIN = 6;    // > Input to Safety Light, true when teensy is not in FAULT state
-       
+
     constexpr const size_t BSPD_CURRENT_PIN = 15;
     constexpr const size_t SHDN_OUT_PIN = 16; // < READ from SHDN hardware, can leave FAULT state if goes to HIGH to signify car startup
     constexpr const size_t PRECHARGE_PIN = 17; // READ from PRECHARGE
-    constexpr const size_t HV_PLUS_OUT_OK_PIN = 19; // READ from HV OUT OK 
+    constexpr const size_t HV_PLUS_OUT_OK_PIN = 19; // READ from HV OUT OK
     constexpr const size_t MAIN_OK_PIN = 20;
     constexpr const size_t MAIN_UNDER_THRESH_PIN = 21;
     constexpr const size_t PRECHARGE_THRESH_PIN = 22;
@@ -102,7 +102,7 @@ namespace ACUInterfaces {
 }
 
 namespace ACUConstants
-{  
+{
     constexpr size_t NUM_CELLS = 126;
     constexpr size_t NUM_CHIPS = 12;
     constexpr size_t NUM_CELL_TEMPS = 48;
@@ -110,7 +110,7 @@ namespace ACUConstants
 
     const float VALID_SHDN_OUT_MIN_VOLTAGE_THRESHOLD = 12.0F;
     const uint32_t MIN_ALLOWED_INVALID_SHDN_OUT_MS = 10;  // 10 ms -- requies 100 Hz samp freq.
-    
+
     // Initialize chip_select, chip_select_per_chip, and address
     constexpr std::array<int, NUM_CHIP_SELECTS> CS = {36, 38};
     constexpr std::array<int, NUM_CHIPS> CS_PER_CHIP = {36, 36, 36, 36, 36, 36, 38, 38, 38, 38, 38, 38};
@@ -131,7 +131,7 @@ namespace ACUConstants
     constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 5;
     constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 4000UL; // 20 000 us = 50 Hz
     constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 4;
-    
+
     constexpr uint32_t SAMPLE_ADC_PRIORITY = 20;
     constexpr uint32_t SAMPLE_ADC_PERIOD_US = 5000UL; // 10 000 us = 100 Hz
 
@@ -156,6 +156,9 @@ namespace ACUConstants
 
     constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 200UL; // 1 000 us = 100 Hz
     constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
+
+    static constexpr uint32_t EM_TEMP_SENSOR_PERIOD_US = 1000;
+    static constexpr uint32_t EM_TEMP_SENSOR_PRIORITY = 14;
 
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;

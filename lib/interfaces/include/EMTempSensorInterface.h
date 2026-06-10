@@ -10,7 +10,7 @@
  using ROMID_t = std::array<uint8_t, 8>;
 namespace EMtemp_default_parameters
 {
-    constexpr const uint16_t CONVERSION_TIME_US = 800000; // conversion time at 12-bit resolution  maximum is 750 ms; add a small margin.
+    constexpr const uint32_t CONVERSION_TIME_US = 800000; // conversion time at 12-bit resolution  maximum is 750 ms; add a small margin.
     constexpr const uint8_t NUM_TEMP_SENSORS = 6;
 
     constexpr const celsius MIN_VALID_TEMP_C = -10.0f;
@@ -123,6 +123,12 @@ public:
      * @return highest temperature across 6 sensors
      */
     celsius get_max_temperature() const;
+
+    /**
+     *
+     */
+    // header
+    uint8_t get_current_sensor_index() const;
 
     /**
      * @return true if any sensor exceeds the overtemp threshold

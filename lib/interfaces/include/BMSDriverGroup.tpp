@@ -47,7 +47,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
         pinMode(cs, OUTPUT);
         digitalWrite(cs, HIGH);
     }
-    
+
     _bms_data.voltages.fill(0);
     _bms_data.cell_temperatures.fill(0);
     _bms_data.board_temperatures.fill(0);
@@ -63,7 +63,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::init()
                         };
 
     _spi_event.setContext(this);
-    _spi_event.attachImmediate([](EventResponderRef ref) 
+    _spi_event.attachImmediate([](EventResponderRef ref)
     {
         SPI1.endTransaction();
         static_cast<BMSDriverGroup*>(ref.getContext())->_dma_callback();
@@ -81,7 +81,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
     _tx_read_buffer.fill(0);
     _tx_write_buffer.fill(0);
 
-    if (_spi_state == SPIState_e::WAIT_POLL_ADC_COMPLETE) 
+    if (_spi_state == SPIState_e::WAIT_POLL_ADC_COMPLETE)
     {
         _conversion_timer = 0;
         _spi_state = SPIState_e::WAIT_CONVERSION;
@@ -100,7 +100,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
         {
             _process_addressed_read_rx_buffer();
         }
-        
+
         // After postprocessing, we need to continue sending broadcast commands if there are other chip selects available
         _current_cs_index++;
         if (_current_cs_index < num_chip_selects)
@@ -112,19 +112,19 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
         _current_cs_index = 0;
         _current_chip_address_index = 0;
 
-        // Complete update 
+        // Complete update
         _bms_data.total_voltage             = _max_min_reference.total_voltage;
         _bms_data.avg_cell_voltage          = _bms_data.total_voltage / num_cells;
         _bms_data.average_cell_temperature  = _max_min_reference.total_thermistor_temps / (4 * num_chips);
 
-        if (_current_read_group == ReadGroup_e::CV_GROUP_D) 
+        if (_current_read_group == ReadGroup_e::CV_GROUP_D)
         {
             _bms_data.min_cell_voltage = _max_min_reference.min_cell_voltage;
             _bms_data.max_cell_voltage = _max_min_reference.max_cell_voltage;
             _max_min_reference.min_cell_voltage = ref_max_min_defaults::MIN_CELL_VOLTAGE;
             _max_min_reference.max_cell_voltage = ref_max_min_defaults::MAX_CELL_VOLTAGE;
         }
-        if (_current_read_group == ReadGroup_e::AUX_GROUP_B) 
+        if (_current_read_group == ReadGroup_e::AUX_GROUP_B)
         {
             _bms_data.max_cell_temp  = _max_min_reference.max_cell_temp;
             _bms_data.min_cell_temp  = _max_min_reference.min_cell_temp;
@@ -136,13 +136,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_dma_callback()
         ReadGroup_e just_finished = _current_read_group;
         _current_read_group = advance_read_group(_current_read_group);
 
-        if (just_finished == ReadGroup_e::AUX_GROUP_B) 
+        if (just_finished == ReadGroup_e::AUX_GROUP_B)
         {
             _start_GPIO_ADC_conversion();
             return;
         }
-        if (just_finished == ReadGroup_e::CV_GROUP_D) 
-        { 
+        if (just_finished == ReadGroup_e::CV_GROUP_D)
+        {
             _start_cell_voltage_ADC_conversion();
             return;
         }
@@ -214,7 +214,7 @@ BMSCoreData_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_co
     // Basic voltages
     out.min_cell_voltage = _bms_data.min_cell_voltage;
     out.max_cell_voltage = _bms_data.max_cell_voltage;
-    out.pack_voltage = _bms_data.total_voltage; 
+    out.pack_voltage = _bms_data.total_voltage;
 
     // Temps
     out.max_cell_temp  = _bms_data.max_cell_temp;
@@ -229,7 +229,7 @@ BMSCoreData_s BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_co
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 typename BMSDriverGroup<num_chips, num_chip_selects, chip_type>::BMSDriverData
 BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_bms_data()
-{   
+{
     return _bms_data;
 }
 
@@ -335,13 +335,13 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
     array<uint8_t, data_size> spi_data;
     copy_n(_rx_read_buffer.begin() + 4, data_size, spi_data.begin());
 
-    for (int i = 0; i < data_size; i++)
-    {
-        Serial.print(spi_data[i]); Serial.print(" ");
-    }
-    Serial.println();
+    // for (int i = 0; i < data_size; i++)
+    // {
+    //     Serial.print(spi_data[i]); Serial.print(" ");
+    // }
+    // Serial.println();
 
-    for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++) 
+    for (size_t chip = 0; chip < num_chips / num_chip_selects; chip++)
     {
         size_t chip_index  = chip + (_current_cs_index * (num_chips / num_chip_selects));
         int cells_per_chip = (chip_index % 2 == 0) ? 12 : 9;
@@ -349,42 +349,42 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
         uint8_t start_index;
         bool current_group_valid = _check_if_valid_packet(spi_data, 8 * chip);
 
-        switch (_current_read_group) 
+        switch (_current_read_group)
         {
             case ReadGroup_e::CV_GROUP_A:
             {
                 _bms_data.valid_read_packets[chip_index].valid_read_cells_1_to_3 = current_group_valid;
-                start_index = 0; 
+                start_index = 0;
                 break;
             }
             case ReadGroup_e::CV_GROUP_B:
             {
                 _bms_data.valid_read_packets[chip_index].valid_read_cells_4_to_6 = current_group_valid;
-                start_index = 3; 
+                start_index = 3;
                 break;
             }
             case ReadGroup_e::CV_GROUP_C:
             {
                 _bms_data.valid_read_packets[chip_index].valid_read_cells_7_to_9 = current_group_valid;
-                start_index = 6; 
+                start_index = 6;
                 break;
             }
             case ReadGroup_e::CV_GROUP_D:
             {
                 _bms_data.valid_read_packets[chip_index].valid_read_cells_10_to_12 = current_group_valid;
-                start_index = 9; 
+                start_index = 9;
                 break;
             }
             case ReadGroup_e::AUX_GROUP_A:
             {
                 _bms_data.valid_read_packets[chip_index].valid_read_gpios_1_to_3 = current_group_valid;
-                start_index = 0; 
+                start_index = 0;
                 break;
             }
             case ReadGroup_e::AUX_GROUP_B:
             {
                 _bms_data.valid_read_packets[chip_index].valid_read_gpios_4_to_6 = current_group_valid;
-                start_index = 3; 
+                start_index = 3;
                 break;
             }
             default:
@@ -393,27 +393,27 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_process_broadcast_
             }
         }
 
-        if (!current_group_valid || (_current_read_group == ReadGroup_e::CV_GROUP_D && cells_per_chip == 9)) 
+        if (!current_group_valid || (_current_read_group == ReadGroup_e::CV_GROUP_D && cells_per_chip == 9))
         {
             continue;
         }
 
         array<uint8_t, 6> spi_response;
-        if (_current_read_group == ReadGroup_e::AUX_GROUP_B) 
+        if (_current_read_group == ReadGroup_e::AUX_GROUP_B)
         {
             copy_n(spi_data.begin() + (8 * chip), 4, spi_response.begin());
             fill(spi_response.begin() + 4, spi_response.end(), 0);
-        } 
-        else 
+        }
+        else
         {
             copy_n(spi_data.begin() + (8 * chip), 6, spi_response.begin());
         }
 
-        if (_current_read_group <= ReadGroup_e::CV_GROUP_D) 
+        if (_current_read_group <= ReadGroup_e::CV_GROUP_D)
         {
             _load_cell_voltages(_bms_data, _max_min_reference, spi_response, chip_index, start_index);
-        } 
-        else 
+        }
+        else
         {
             _load_auxillaries(_bms_data, _max_min_reference, spi_response, chip_index, start_index);
         }
@@ -518,7 +518,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_read_data_through_
     _bms_data.avg_cell_voltage = _bms_data.total_voltage / num_cells;
 
     // Avoid divide by zero - skip calculation if no GPIOs were read
-    if (gpio_count > 0) 
+    if (gpio_count > 0)
     {
         _bms_data.average_cell_temperature = max_min_reference.total_thermistor_temps / gpio_count;
     }
@@ -558,7 +558,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_load_auxillaries(B
     {
         array<uint8_t, 2> data_in_gpio_voltage;
         copy_n(data_in_gpio_group.begin() + (gpio_index - start_gpio_index) * 2, 2, data_in_gpio_voltage.begin());
-        
+
         uint16_t gpio_in = data_in_gpio_voltage[1] << 8 | data_in_gpio_voltage[0];
         _store_temperature_humidity_data(bms_data, max_min_ref, gpio_in, gpio_index, chip_index);
     }
@@ -781,7 +781,7 @@ void BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_start_ADC_conversi
     copy(cmd_and_pec.begin(), cmd_and_pec.end(), _tx_write_buffer.begin());
 
     // Needs to be sent on each chip select line
-    for (size_t cs = 0; cs < num_chip_selects; cs++) 
+    for (size_t cs = 0; cs < num_chip_selects; cs++)
     {
         _start_wakeup_protocol(cs);
 
@@ -878,7 +878,7 @@ bool BMSDriverGroup<num_chips, num_chip_selects, chip_type>::_check_if_valid_pac
 template <size_t num_chips, size_t num_chip_selects, LTC6811_Type_e chip_type>
 const char* BMSDriverGroup<num_chips, num_chip_selects, chip_type>::get_current_read_group_name()
 {
-    switch (_current_read_group) 
+    switch (_current_read_group)
     {
         case ReadGroup_e::CV_GROUP_A:
             return "GROUP_A";

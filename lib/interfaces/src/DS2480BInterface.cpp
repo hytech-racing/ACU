@@ -42,7 +42,7 @@ bool DS2480BInterface::OWDetect()
         {
             if (millis() > timeout)
             {
-                Serial.println("OWDetect: timeout waiting for response");
+                //Serial.println("OWDetect: timeout waiting for response");
                 return false;
             }
         }
@@ -51,11 +51,11 @@ bool DS2480BInterface::OWDetect()
 
         if (response != expected_resp)
         {
-            Serial.print("DS2480B_Detect: bad byte ");
-            Serial.print(" got 0x");
-            Serial.print(response, HEX);
-            Serial.print(" expected 0x");
-            Serial.println(expected_resp, HEX);
+            // Serial.print("DS2480B_Detect: bad byte ");
+            // Serial.print(" got 0x");
+            // Serial.print(response, HEX);
+            // Serial.print(" expected 0x");
+            // Serial.println(expected_resp, HEX);
             return false;
         }
     }
@@ -145,6 +145,6 @@ void DS2480BInterface::_ensureDataMode()
     {
         Serial2.write(_ds2480b_params.commands.set_data_mode);
         _curr_mode = DS2480B_Mode::DATA_MODE;
-        delay(2); // Don't flush bc in data mode we are constantly getting responses.
+        delay(2);
     }
 }
