@@ -10,7 +10,7 @@
  using ROMID_t = std::array<uint8_t, 8>;
 namespace EMtemp_default_parameters
 {
-    constexpr const uint16_t CONVERSION_TIME_MS = 800; // conversion time at 12-bit resolution  maximum is 750 ms; add a small margin.
+    constexpr const uint16_t CONVERSION_TIME_US = 800000; // conversion time at 12-bit resolution  maximum is 750 ms; add a small margin.
     constexpr const uint8_t NUM_TEMP_SENSORS = 6;
 
     constexpr const celsius MIN_VALID_TEMP_C = -10.0f;
@@ -112,7 +112,7 @@ public:
 
     // Call every loop iteration.  Drives the internal state machine;
     // never blocks for more than a few microseconds per call.
-    void tick(uint32_t curr_millis);
+    void tick(uint32_t curr_micros);
 
     /**
      *  Returns last valid temperature for a sensor, or NAN if not yet read
@@ -147,7 +147,9 @@ private:
     };
 
     State _state = State::IDLE;
-    uint32_t _conversion_start_ms = 0;
+    uint8_t  _curr_sensor_index = 0;
+    uint32_t _curr_micros = 0;
+    uint32_t _conversion_start_us = 0;
 
     /**
      *
@@ -160,7 +162,32 @@ private:
      *
      * @return true if the temperature can be read and CRC valid
      */
-    bool _read_one_temperature(uint8_t sensor_index);
+    //bool _read_one_temperature(uint8_t sensor_index);
+
+    /**
+     *
+     */
+    void _handle_idle();
+
+    /**
+     *
+     */
+    void _handle_converting();
+
+    /**
+     *
+     */
+    void _handle_reading();
+
+    /**
+     *
+     */
+    bool _read_scratchpad(uint8_t* scratchpad);
+
+    /**
+     *
+     */
+    celsius _parse_temperature(const uint8_t* scratchpad);
 
     /**
      * @brief matches the ROM ID

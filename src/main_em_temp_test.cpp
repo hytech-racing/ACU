@@ -18,54 +18,32 @@ void setup()
 
 void loop()
 {
-    uint32_t now = millis();
+    uint32_t now = micros();
 
     EMTempSensorInterfaceInstance::instance().tick(now);
 
-    // Print temperatures once per second
-    static uint32_t last_print_ms = 0;
-
-    if (now - last_print_ms >= 500)
+    Serial.println();
+    for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
     {
-        last_print_ms = now;
+        celsius temp = EMTempSensorInterfaceInstance::instance().get_temperature(i);
 
-        uint32_t print_start = micros();
+        Serial.print("Sensor ");
+        Serial.print(i);
+        Serial.print(": ");
 
-        Serial.println("====================================");
-
-        celsius temp = 0.0f;
-        celsius max_temp = 0.0f;
-
-        for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
+        if (isnan(temp))
+            Serial.println("NO READ");
+        else
         {
-            temp = EMTempSensorInterfaceInstance::instance().get_temperature(i);
-
-            Serial.print("Sensor ");
-            Serial.print(i);
-            Serial.print(": ");
-
-            if (isnan(temp))
-                Serial.println("NO READ");
-            else
-            {
-                Serial.print(temp, 2);
-                Serial.println(" C");
-            }
+            Serial.print(temp, 2);
+            Serial.println(" C");
         }
-
-        max_temp = EMTempSensorInterfaceInstance::instance().get_max_temperature();
-        Serial.print("Max: ");
-        isnan(max_temp) ? Serial.println("NO READ") : (Serial.print(max_temp, 2), Serial.println(" C"));
-
-        Serial.print("Overtemp: ");
-        Serial.println(EMTempSensorInterfaceInstance::instance().is_overtemp() ? "YES" : "NO");
-
-        uint32_t print_elapsed = micros() - print_start;
-
-        Serial.print("Print overhead: ");
-        Serial.print(print_elapsed);
-        Serial.println(" us");
-
-         Serial.println("");
     }
+
+    celsius max_temp = EMTempSensorInterfaceInstance::instance().get_max_temperature();
+    Serial.print("Max: ");
+    isnan(max_temp) ? Serial.println("NO READ") : (Serial.print(max_temp, 2), Serial.println(" C"));
+
+    Serial.print("Overtemp: ");
+    Serial.println(EMTempSensorInterfaceInstance::instance().is_overtemp() ? "YES" : "NO");
 }
