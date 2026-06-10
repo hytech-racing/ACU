@@ -83,6 +83,14 @@ public:
     }
 
     /**
+     * @brief Get the voltage object
+     * @return float voltage
+     */
+    float get_voltage() const {
+        return _state.v1;
+    }
+
+    /**
      * @brief Get the State of Energy (SoE) as a percentage of usable energy remaining
      * @return float SoE percentage (0.0 to 100.0)
      */

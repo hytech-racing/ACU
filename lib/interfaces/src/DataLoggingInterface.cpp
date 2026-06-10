@@ -7,7 +7,7 @@ const int DataLoggingInterface::eeprom_counter_address;
 const int DataLoggingInterface::eeprom_magic_address;
 const uint32_t DataLoggingInterface::magic_number;
 
-static const char* CSV_HEADER = "timestamp_ms,em_current_A,min_cell_v," "soc_pct,lifetime_ah,soh,soe_pct,remaining_wh";
+static const char* CSV_HEADER = "timestamp_ms,em_current_A,min_cell_v," "soc_pct,lifetime_ah,soh,soe_pct,v1,remaining_wh";
 
 bool DataLoggingInterface::init()
 {
@@ -74,6 +74,7 @@ void DataLoggingInterface::log_data()
     data_file.print((float)status.lifetime_ah_throughput, 2); data_file.print(",");
     data_file.print(status.SoH, 4); data_file.print(",");
     data_file.print(status.SoE_percentage, 2); data_file.print(",");
+    data_file.print(status.V1, 4); data_file.print(",");
     data_file.println(status.remaining_pack_wh, 1);
 
     data_file.close();

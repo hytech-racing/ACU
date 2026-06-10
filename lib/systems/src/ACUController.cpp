@@ -40,6 +40,7 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
 
     volt min_cell_voltage = input_state.min_cell_voltage;
     _acu_state.SoC = get_state_of_charge(em_current, current_millis - _acu_state.prev_bms_time_stamp, min_cell_voltage, current_millis, voltage_is_fresh);
+    _acu_state.V1 = _soc_ekf.get_voltage();
 
     // State of Health via Ah throughput model
     float dt = static_cast<float>(current_millis - _acu_state.prev_bms_time_stamp) / _ms_to_seconds;

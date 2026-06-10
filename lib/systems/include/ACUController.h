@@ -40,6 +40,7 @@ struct ACUControllerData_s
     double lifetime_ah_throughput;
     float SoH;
     float SoE_percentage;
+    float V1;
     float remaining_pack_wh;
     bool has_fault;
     bool bms_ok;
