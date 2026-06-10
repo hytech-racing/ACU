@@ -6,13 +6,10 @@ const uint32_t baudrate = 115200;
 void setup()
 {
     Serial.begin(baudrate);
-    while (!Serial) {}  // wait for serial monitor to open
+    while (!Serial) {}
 
-    // Create the DS2480B singleton first — EMTempSensor depends on it
     DS2480BInterfaceInstance::create();
-    DS2480BInterfaceInstance::instance().init();
 
-    // Create the temp sensor singleton, passing the DS2480B instance as the bus
     EMTempSensorInterfaceInstance::create(DS2480BInterfaceInstance::instance());
     EMTempSensorInterfaceInstance::instance().init();
 

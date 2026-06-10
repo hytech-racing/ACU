@@ -152,7 +152,7 @@ private:
     /**
      *
      */
-    bool _StartAllTempConversions();
+    //bool _start_all_temp_conversions();
 
     /**
      * @brief Reads and converts temperature from a sensor. Addresses the sensor by ROM ID, reads its 9-byte scratchpad, validates
@@ -160,7 +160,7 @@ private:
      *
      * @return true if the temperature can be read and CRC valid
      */
-    bool _ReadOneTemperature(uint8_t sensor_index);
+    bool _read_one_temperature(uint8_t sensor_index);
 
     /**
      * @brief matches the ROM ID

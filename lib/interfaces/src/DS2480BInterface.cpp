@@ -37,7 +37,7 @@ bool DS2480BInterface::OWDetect()
     // Read and validate 5-byte response
     for (uint8_t expected_resp : _ds2480b_params.commands.detect_response)
     {
-        uint32_t timeout = millis() + 10;
+        uint32_t timeout = millis() + 20;
         while (!Serial2.available())
         {
             if (millis() > timeout)

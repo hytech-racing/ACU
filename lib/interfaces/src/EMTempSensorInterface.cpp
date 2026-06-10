@@ -2,81 +2,22 @@
 
 void EMTempSensorInterface::init()
 {
+    _DS2480B.init();
+
     _state = State::IDLE;
     _curr_data.all_temp_data.fill(NAN);
 }
 
-// void EMTempSensorInterface::tick(uint32_t curr_millis)
-// {
-//     switch (_state)
-//     {
-//         case State::IDLE:
-//         {
-//             if (_StartAllTempConversions())
-//             {
-//                 _conversion_start_ms = curr_millis;
-//                 _state = State::CONVERTING;
-//             }
-//             break;
-//         }
-
-//         case State::CONVERTING:
-//         {
-//             if ((curr_millis - _conversion_start_ms) >= EMtemp_default_parameters::CONVERSION_TIME_MS)
-//                 _state = State::READING;
-//             break;
-//         }
-
-//         case State::READING:
-//         {
-//             for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
-//                 _ReadOneTemperature(i);
-
-//             _state = State::IDLE;
-//             break;
-//         }
-
-//         default:
-//             _state = State::IDLE;
-//             break;
-//     }
-//}
-
 void EMTempSensorInterface::tick(uint32_t curr_millis)
 {
-    switch (_state)
+    (void)curr_millis;
+
+    for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
     {
-        case State::IDLE:
-        {
-            if (_StartAllTempConversions())
-            {
-                _conversion_start_ms = curr_millis;
-                _state = State::CONVERTING;
-            }
-            break;
-        }
-
-        case State::CONVERTING:
-        {
-            if ((curr_millis - _conversion_start_ms) >= EMtemp_default_parameters::CONVERSION_TIME_MS)
-                _state = State::READING;
-            break;
-        }
-
-        case State::READING:
-        {
-            for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
-                _ReadOneTemperature(i);
-
-            _state = State::IDLE;
-            break;
-        }
-
-        default:
-            _state = State::IDLE;
-            break;
+        _read_one_temperature(i);
     }
 }
+
 // void EMTempSensorInterface::tick(uint32_t curr_millis)
 // {
 //     for (uint8_t i = 0; i < EMtemp_default_parameters::NUM_TEMP_SENSORS; i++)
@@ -130,28 +71,73 @@ const EMTempSensorData_s& EMTempSensorInterface::get_current_data() const
     return _curr_data;
 }
 
-bool EMTempSensorInterface::_StartAllTempConversions()
+// bool EMTempSensorInterface::_start_all_temp_conversions()
+// {
+//     if (!_DS2480B.OWReset())
+//     {
+//         return false;
+//     }
+
+
+//     Serial.println("START CONVERT");
+
+//     int resp;
+
+//     resp = _DS2480B.OWWriteByte(_params.commands.skip_rom);
+
+//     Serial.print("SKIP_ROM = 0x");
+//     Serial.println(resp, HEX);
+
+//     resp = _DS2480B.OWWriteByte(_params.commands.convert);
+
+//     Serial.print("CONVERT = 0x");
+//     Serial.println(resp, HEX);
+
+//     // _DS2480B.OWWriteByte(_params.commands.skip_rom);
+//     // _DS2480B.OWWriteByte(_params.commands.convert);
+
+//     return true;
+// }
+// bool EMTempSensorInterface::_start_all_temp_conversions()
+// {
+//     const ROMID_t& rom_id = _params.sensor_rom_ids[0];
+
+//     if (!_OWMatchROM(rom_id))
+//     {
+//         return false;
+//     }
+
+//     int resp = _DS2480B.OWWriteByte(_params.commands.convert);
+
+//     Serial.print("CONVERT response = 0x");
+//     Serial.println(resp, HEX);
+
+//     return true;
+// }
+
+bool EMTempSensorInterface::_read_one_temperature(uint8_t sensor_index)
 {
-    if (!_DS2480B.OWReset())
-    {
-        return false;
-    }
-
-    _DS2480B.OWWriteByte(_params.commands.skip_rom);
-    _DS2480B.OWWriteByte(_params.commands.convert);
-
-    return true;
-}
-
-bool EMTempSensorInterface::_ReadOneTemperature(uint8_t sensor_index)
-{
-
     if (sensor_index >= EMtemp_default_parameters::NUM_TEMP_SENSORS)
     {
         return false;
     }
 
     const ROMID_t& rom_id = _params.sensor_rom_ids[sensor_index];
+
+    if (!_OWMatchROM(rom_id))
+    {
+        _curr_data.all_temp_data[sensor_index] = NAN;
+        return false;
+    }
+
+    int response = _DS2480B.OWWriteByte(_params.commands.convert);
+
+    Serial.print("Sensor ");
+    Serial.print(sensor_index);
+    Serial.print(" convert resp = 0x");
+    Serial.println(response, HEX);
+
+    delay(1000);
 
     if (!_OWMatchROM(rom_id))
     {
@@ -176,16 +162,29 @@ bool EMTempSensorInterface::_ReadOneTemperature(uint8_t sensor_index)
         scratchpad[i] = static_cast<uint8_t>(recieved_byte);
     }
 
+    Serial.print("Scratchpad: ");
+
+    for (uint8_t i = 0; i < 9; i++)
+    {
+        if (scratchpad[i] < 0x10)
+            Serial.print('0');
+
+        Serial.print(scratchpad[i], HEX);
+        Serial.print(' ');
+    }
+
+    Serial.println();
+
     if (!_CheckCRC(scratchpad, EMtemp_default_parameters::SCRATCHPAD_BYTES))
     {
+        _curr_data.all_temp_data[sensor_index] = NAN;
         return false;
     }
 
     int16_t raw = (static_cast<int16_t>(scratchpad[1]) << 8) | scratchpad[0]; // 2 temp bytes, the bottom 4 bits are the fractional parts
     celsius temp_c = raw / 16.0f;
 
-    if (temp_c < _params.thresholds.min_valid_temp_c ||
-        temp_c > _params.thresholds.max_valid_temp_c)
+    if (temp_c < _params.thresholds.min_valid_temp_c || temp_c > _params.thresholds.max_valid_temp_c)
     {
         _curr_data.all_temp_data[sensor_index] = NAN;
         return false;
