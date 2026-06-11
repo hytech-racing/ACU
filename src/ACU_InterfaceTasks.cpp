@@ -163,6 +163,10 @@ void initialize_all_interfaces()
     /* EM Interface */
     EMInterfaceInstance::create(sys_time::hal_millis());
 
+    /* Datalogger */
+    DataLoggingInterfaceInstance::create();
+    DataLoggingInterfaceInstance::instance().init();
+
     /* SoH Persistence Interface (lifetime Ah throughput in EEPROM) */
     SoHPersistenceInterfaceInstance::create();
     SoHPersistenceInterfaceInstance::instance().init();
@@ -586,23 +590,23 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     // Serial.print(ACUControllerInstance::instance().get_status().remaining_pack_wh, 1); Serial.println(" Wh");
 
     // Print CSV header once
-    static bool header_printed = false;
-    if (!header_printed) {
-        Serial.println("timestamp_ms|em_current_A|min_cell_v|soc_pct|lifetime_ah|soh|soe_pct|remaining_wh");
-        header_printed = true;
-    }
+    // static bool header_printed = false;
+    // if (!header_printed) {
+    //     Serial.println("timestamp_ms|em_current_A|min_cell_v|soc_pct|lifetime_ah|soh|soe_pct|remaining_wh");
+    //     header_printed = true;
+    // }
 
-    auto status  = ACUControllerInstance::instance().get_status();
-    auto em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
+    // auto status  = ACUControllerInstance::instance().get_status();
+    // auto em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
 
-    Serial.print(sys_time::hal_millis());                                               Serial.print("|");
-    Serial.print(em_data.em_current, 4);                                                Serial.print("|");
-    Serial.print(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);   Serial.print("|");
-    Serial.print(status.SoC * 100.0f, 2);                                               Serial.print("|");
-    Serial.print((float)status.lifetime_ah_throughput, 2);                              Serial.print("|");
-    Serial.print(status.SoH, 4);                                                        Serial.print("|");
-    Serial.print(status.SoE_percentage, 2);                                             Serial.print("|");
-    Serial.println(status.remaining_pack_wh, 1);
+    // Serial.print(sys_time::hal_millis());                                               Serial.print("|");
+    // Serial.print(em_data.em_current, 4);                                                Serial.print("|");
+    // Serial.print(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);   Serial.print("|");
+    // Serial.print(status.SoC * 100.0f, 2);                                               Serial.print("|");
+    // Serial.print((float)status.lifetime_ah_throughput, 2);                              Serial.print("|");
+    // Serial.print(status.SoH, 4);                                                        Serial.print("|");
+    // Serial.print(status.SoE_percentage, 2);                                             Serial.print("|");
+    // Serial.println(status.remaining_pack_wh, 1);
 
     return HT_TASK::TaskResponse::YIELD;
 }
