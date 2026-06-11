@@ -11,6 +11,8 @@ static const char* CSV_HEADER = "timestamp_ms,em_current_A,min_cell_v," "soc_pct
 
 bool DataLoggingInterface::init()
 {
+    Serial.println(" INIT CALLED ");
+
     if (!SD.begin(BUILTIN_SDCARD))
     {
         return false;
@@ -52,10 +54,10 @@ void DataLoggingInterface::log_data()
     // Only write a row when the BMS has completed a fresh full voltage cycle.
     // check_clear_voltage_ready() atomically reads-and-clears the flag so
     // calling log_data() every task tick will not produce duplicate rows.
-    if (!BMSDriverInstance_t::instance().check_clear_voltage_ready())
-    {
-        return;
-    }
+    // if (!BMSDriverInstance_t::instance().check_clear_voltage_ready())
+    // {
+    //     return;
+    // }
 
     auto status = ACUControllerInstance::instance().get_status();
     auto em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
