@@ -159,8 +159,8 @@ namespace ACUConstants
     constexpr uint32_t SOH_PERSIST_PERIOD_US = 1000000UL; // 1 000 000 us = 1 Hz
     constexpr uint32_t SOH_PERSIST_PRIORITY = 19;
 
-    constexpr uint32_t DATA_LOG_PERIOD_US  = 500000UL; // 500 000 us = 2 Hz
-    constexpr uint32_t DATA_LOG_PRIORITY   = 18;
+    constexpr uint32_t DATA_LOG_PERIOD_US = 500000UL; // 500 000 us = 2 Hz
+    constexpr uint32_t DATA_LOG_PRIORITY = 18;
 
     /* Message Interface */
     const uint32_t Veh_CAN_baudrate = 1000000;
