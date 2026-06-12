@@ -171,8 +171,9 @@ void initialize_all_interfaces()
     SoHPersistenceInterfaceInstance::create();
     SoHPersistenceInterfaceInstance::instance().init();
 
-    double historical_ah_throughput = 963.2;
-    SoHPersistenceInterfaceInstance::instance().save(historical_ah_throughput, sys_time::hal_millis(), true);
+    /* Only run for INITIALIZING THE AH THROUGHPUT FROM EXTERNAL ANALYSIS */
+    // double historical_ah_throughput = 963.2;
+    // SoHPersistenceInterfaceInstance::instance().save(historical_ah_throughput, sys_time::hal_millis(), true);
 
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());

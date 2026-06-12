@@ -68,7 +68,6 @@ void setup()
     scheduler.schedule(enqueue_ACU_OK_CAN_task);
     scheduler.schedule(enqueue_EM_measurement_CAN_task);
     
-
     scheduler.schedule(sample_CAN_task);
     scheduler.schedule(idle_sample_task);
 
