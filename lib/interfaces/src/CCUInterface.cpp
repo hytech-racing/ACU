@@ -78,6 +78,7 @@ void CCUInterface::handle_enqueue_acu_SoH_CAN_message()
     msg.remaining_pack_wh_ro = HYTECH_remaining_pack_wh_ro_toS(_acu_all_data.remaining_pack_wh);
     msg.SoH_ro = HYTECH_SoH_ro_toS(_acu_all_data.SoH * 100);
     msg.SoE_ro = HYTECH_SoE_ro_toS(_acu_all_data.SoE_percentage);
+    msg.V1_ro = HYTECH_V1_ro_toS(_acu_all_data.V1);
     CAN_util::enqueue_msg(&msg, &Pack_STATE_OF_ENERGY_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);   
 }
 

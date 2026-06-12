@@ -55,6 +55,12 @@ static ACUAllDataType_s make_acu_all_data()
     auto ACUStatus = ACUControllerInstance::instance().get_status();
 
     out.SoC = ACUStatus.SoC;
+    out.SoH = ACUStatus.SoH;
+    out.SoE_percentage = ACUStatus.SoE_percentage;
+    out.lifetime_ah_throughput = ACUStatus.lifetime_ah_throughput;
+    out.V1 = ACUStatus.V1;
+    out.remaining_pack_wh = ACUStatus.remaining_pack_wh;
+    
     out.core_data.high_side_contactor_welded = ACUStatus.high_side_contactor_welded;
     out.core_data.low_side_contactor_welded = ACUStatus.low_side_contactor_welded;
 
