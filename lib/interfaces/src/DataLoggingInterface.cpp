@@ -24,7 +24,6 @@ bool DataLoggingInterface::init()
     EEPROM.get(eeprom_magic_address, magic_check);
     if (magic_check != magic_number) 
     {
-
         file_counter = 0;
         EEPROM.put(eeprom_magic_address,   magic_number);
         EEPROM.put(eeprom_counter_address, file_counter);
