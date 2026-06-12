@@ -101,6 +101,11 @@ public:
         _acu_all_data.core_data.min_cell_temp = input.core_data.min_cell_temp;
         _acu_all_data.core_data.max_cell_temp = input.core_data.max_cell_temp;
         _acu_all_data.SoC = input.SoC;
+        _acu_all_data.SoH = input.SoH;
+        _acu_all_data.SoE_percentage = input.SoE_percentage;
+        _acu_all_data.lifetime_ah_throughput = input.lifetime_ah_throughput;
+        _acu_all_data.remaining_pack_wh = input.remaining_pack_wh;
+        _acu_all_data.V1 = input.V1;
     }
 
     void handle_enqueue_acu_status_CAN_message();
@@ -108,6 +113,7 @@ public:
     void handle_enqueue_acu_voltages_CAN_message();
     void handle_enqueue_acu_temps_CAN_message();
     void handle_enqueue_acu_SoC_CAN_message();
+    void handle_enqueue_acu_SoH_CAN_message();
 
 private:
     CCUCANInterfaceData_s _curr_data;

@@ -16,7 +16,9 @@
 #include "FaultLatchManager.h"
 #include "SystemTimeInterface.h"
 #include "MAX114XInterface.h"
+#include "SoHPersistenceInterface.h"
 #include "ACUController.h"
+#include "DataLoggingInterface.h"
 
 /* For Debugging */
 #include "ACUStateMachine.h"
@@ -66,10 +68,16 @@ void initialize_all_interfaces();
 
 ::HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
 
+::HT_TASK::TaskResponse init_soh_persistence(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+::HT_TASK::TaskResponse persist_soh_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
+::HT_TASK::TaskResponse run_data_logging(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo);
+
 ::HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo);
 
 
 template <typename bms_data>
 void print_bms_data(bms_data data);
 
-#endif 
+#endif

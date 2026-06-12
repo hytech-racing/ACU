@@ -37,14 +37,16 @@ void SOCKalmanFilter::init(float initial_voltage) {
     _PMatrix[1][1] = soc_ekf_constants::P_V1_INITIAL;
 }
 
-EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt, bool voltage_is_fresh) {
-    // If the time delta is too small, then we don't update the state
+EKFState_s SOCKalmanFilter::update(float current, float voltage, float dt, bool voltage_is_fresh, float current_soh) {
     if (dt <= 0.0f) {
         return _state;
     }
 
+    // Calculate the degraded capacity
+    float effective_capacity_as = soc_ekf_constants::CAPACITY_AS * current_soh;
+
     // Prediction
-    float soc_rate = -current / soc_ekf_constants::CAPACITY_AS;
+    float soc_rate = -current / effective_capacity_as;
     _state.soc += soc_rate * dt;
 
     float decay_factor = expf(-dt / soc_ekf_constants::TIME_CONSTANT);
@@ -178,6 +180,31 @@ float SOCKalmanFilter::_get_ocv_from_soc(float soc) const {
 
     float fraction = index_float - (float)idx_low;
     return VOLTAGE_LOOKUP_TABLE[idx_low] + fraction * (VOLTAGE_LOOKUP_TABLE[idx_high] - VOLTAGE_LOOKUP_TABLE[idx_low]); //NOLINT
+}
+
+float SOCKalmanFilter::get_soe_percentage() const {
+    static constexpr size_t table_size = 101;
+
+    float soc = _state.soc;
+
+    if (soc >= 1.0f) {
+        return ENERGY_LOOKUP_TABLE[table_size - 1];
+    }
+    if (soc <= 0.0f) {
+        return ENERGY_LOOKUP_TABLE[0];
+    }
+
+    float index_float = soc * 100.0f;
+    size_t idx_low = (size_t)index_float;
+    size_t idx_high = idx_low + 1;
+
+    if (idx_high >= table_size) {
+        idx_high = table_size - 1;
+        idx_low = idx_high - 1;
+    }
+
+    float fraction = index_float - (float)idx_low;
+    return ENERGY_LOOKUP_TABLE[idx_low] + fraction * (ENERGY_LOOKUP_TABLE[idx_high] - ENERGY_LOOKUP_TABLE[idx_low]); //NOLINT
 }
 
 float SOCKalmanFilter::_get_docv_dsoc(float soc) const {

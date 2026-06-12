@@ -42,7 +42,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.core_data.min_measured_glv = watchdog.min_measured_glv;
     out.core_data.min_measured_pack_out_voltage = watchdog.min_measured_pack_out_voltage;
     out.core_data.min_measured_ts_out_voltage = watchdog.min_measured_ts_out_voltage;
-    out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage; 
+    out.core_data.min_shdn_out_voltage = watchdog.min_shdn_out_voltage;
     out.core_data.hv_plus_out_voltage = ADCInterfaceInstance::instance().read_hv_plus_out_ok_voltage();
     out.core_data.main_ok_voltage = ADCInterfaceInstance::instance().read_main_ok_voltage();
     out.core_data.precharge_ok_voltage = ADCInterfaceInstance::instance().read_precharge_voltage();
@@ -55,6 +55,12 @@ static ACUAllDataType_s make_acu_all_data()
     auto ACUStatus = ACUControllerInstance::instance().get_status();
 
     out.SoC = ACUStatus.SoC;
+    out.SoH = ACUStatus.SoH;
+    out.SoE_percentage = ACUStatus.SoE_percentage;
+    out.lifetime_ah_throughput = ACUStatus.lifetime_ah_throughput;
+    out.V1 = ACUStatus.V1;
+    out.remaining_pack_wh = ACUStatus.remaining_pack_wh;
+    
     out.core_data.high_side_contactor_welded = ACUStatus.high_side_contactor_welded;
     out.core_data.low_side_contactor_welded = ACUStatus.low_side_contactor_welded;
 
@@ -77,7 +83,7 @@ void initialize_all_interfaces()
     /* Watchdog Interface */
     WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
                                     ACUInterfaces::WD_KICK_PIN,
-                                    ACUInterfaces::N_FAULTED_STATE_PIN, 
+                                    ACUInterfaces::N_FAULTED_STATE_PIN,
                                     ACUInterfaces::SW_NOT_OK_PIN});
     WatchdogInstance::instance().init();
 
@@ -96,7 +102,7 @@ void initialize_all_interfaces()
                                 ACUInterfaces::ADC0_CS,
                                 ACUInterfaces::ADC0_MOSI,
                                 ACUInterfaces::ADC0_MISO,
-                                ACUInterfaces::ADC0_CLK, 
+                                ACUInterfaces::ADC0_CLK,
                                 ACUInterfaces::ADC0_NOT_SHDN},
                                     ADCConversions_s {ACUInterfaces::SHUTDOWN_CONV_FACTOR,
                                 ACUInterfaces::PRECHARGE_CONV_FACTOR,
@@ -163,6 +169,18 @@ void initialize_all_interfaces()
     /* EM Interface */
     EMInterfaceInstance::create(sys_time::hal_millis());
 
+    /* Datalogger */
+    DataLoggingInterfaceInstance::create();
+    DataLoggingInterfaceInstance::instance().init();
+
+    /* SoH Persistence Interface (lifetime Ah throughput in EEPROM) */
+    SoHPersistenceInterfaceInstance::create();
+    SoHPersistenceInterfaceInstance::instance().init();
+
+    /* Only run for INITIALIZING THE AH THROUGHPUT FROM EXTERNAL ANALYSIS */
+    // double historical_ah_throughput = 963.2;
+    // SoHPersistenceInterfaceInstance::instance().save(historical_ah_throughput, sys_time::hal_millis(), true);
+
     /* CAN Interfaces Construct */
     CANInterfacesInstance::create(CCUInterfaceInstance::instance(), EMInterfaceInstance::instance());
 }
@@ -182,7 +200,7 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     BMSFaultDataManagerInstance_t::instance().update_from_valid_packets(data.valid_read_packets,
                                                                         BMSDriverInstance_t::instance().get_current_read_group(),
                                                                         data.cs_index);
-    
+
     // Serial.print("CURRENT READ GROUP: "); Serial.println(BMSDriverInstance_t::instance().get_current_read_group_name());
     // Serial.print("CURRENT SPI STATE:  "); Serial.println(BMSDriverInstance_t::instance().get_spi_state_name());
     // print_bms_data(data);
@@ -195,10 +213,10 @@ HT_TASK::TaskResponse sample_bms_data(const unsigned long &sysMicros, const HT_T
     return HT_TASK::TaskResponse::YIELD;
 }
 
-std::array<bool, ACUConstants::NUM_CELLS> check_and_get_balancing_status() 
+std::array<bool, ACUConstants::NUM_CELLS> check_and_get_balancing_status()
 {
     std::array<bool, ACUConstants::NUM_CELLS> cell_balancing_statuses = {false};
-    if(ACUControllerInstance::instance().get_status().balancing_enabled) 
+    if(ACUControllerInstance::instance().get_status().balancing_enabled)
     {
         ACUControllerInstance::instance().calculate_cell_balance_statuses(cell_balancing_statuses.data(), BMSDriverInstance_t::instance().get_bms_data().voltages.data(), ACUConstants::NUM_CELLS, BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage);
     }
@@ -218,10 +236,10 @@ HT_TASK::TaskResponse sample_adc(const unsigned long& sysMicros, const HT_TASK::
 }
 
 HT_TASK::TaskResponse handle_send_ACU_core_ethernet_data(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
-{ 
+{
     auto data = make_acu_all_data();
     ACUEthernetInterfaceInstance::instance().handle_send_ethernet_acu_core_data(ACUEthernetInterfaceInstance::instance().make_acu_core_data_msg(data.core_data));
-    
+
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -261,7 +279,7 @@ HT_TASK::TaskResponse enqueue_ACU_ok_CAN_data(const unsigned long& sysMicros, co
     return HT_TASK::TaskResponse::YIELD;
 }
 
-HT_TASK::TaskResponse enqueue_EM_measurement_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) 
+HT_TASK::TaskResponse enqueue_EM_measurement_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
     EM_MEASUREMENT_t msg = {};
     msg.em_current_ro = HYTECH_em_current_ro_toS(ADCInterfaceInstance::instance().read_shunt_current());
@@ -277,6 +295,7 @@ HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, 
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_SoC_CAN_message();
+    CCUInterfaceInstance::instance().handle_enqueue_acu_SoH_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -297,8 +316,8 @@ HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMic
 
 HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
     etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
-    process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
-    process_ring_buffer(ACUCANInterfaceImpl::em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv); 
+    process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv);
+    process_ring_buffer(ACUCANInterfaceImpl::em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -309,7 +328,27 @@ HT_TASK::TaskResponse idle_sample_interfaces(const unsigned long& sysMicros, con
         ADCInterfaceInstance::instance().read_ts_out_filtered(),
         ADCInterfaceInstance::instance().read_shdn_voltage(),
         sys_time::hal_millis());
-    FaultLatchManagerInstance::instance().update_shdn_out_latch(WatchdogMetricsInstance::instance().is_shdn_out_voltage_invalid(sys_time::hal_millis()));    
+    FaultLatchManagerInstance::instance().update_shdn_out_latch(WatchdogMetricsInstance::instance().is_shdn_out_voltage_invalid(sys_time::hal_millis()));
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse init_soh_persistence(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    // One-time setup (runs once at task registration, after both init phases complete): restore the
+    // persisted lifetime Ah throughput into the controller so SoH is valid before the first eval tick.
+    // The interface pushes restored data into the system; the system never depends on the interface.
+    ACUControllerInstance::instance().restore_lifetime_throughput(
+        SoHPersistenceInterfaceInstance::instance().get_lifetime_ah_throughput());
+    return HT_TASK::TaskResponse::YIELD;
+}
+
+HT_TASK::TaskResponse persist_soh_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    // Throttled persist of lifetime Ah throughput; the interface guards EEPROM endurance internally
+    // and pulls the value from the controller's published status (interface-reads-system data flow).
+    SoHPersistenceInterfaceInstance::instance().save(
+        ACUControllerInstance::instance().get_status().lifetime_ah_throughput,
+        sys_time::hal_millis());
     return HT_TASK::TaskResponse::YIELD;
 }
 /* Print Functions */
@@ -400,7 +439,7 @@ void print_bms_data(bms_data data)
     Serial.print("Number of Global Faults: ");
     auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
     Serial.println(faults.max_consecutive_invalid_packet_count);
-    
+
     Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
 
     Serial.println("FAULTS DURING THIS BMS SAMPLE");
@@ -425,70 +464,76 @@ void print_bms_data(bms_data data)
     Serial.println();
 }
 
+::HT_TASK::TaskResponse run_data_logging(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
+{
+    DataLoggingInterfaceInstance::instance().log_data();
+    return HT_TASK::TaskResponse::YIELD;
+}
+
 HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK::TaskInfo &taskInfo)
 {
-    if (ACUControllerInstance::instance().get_status().bms_ok)
-    {
-        Serial.print("BMS is OK\n");
-    }
-    else
-    {
-        Serial.print("BMS is NOT OK\n");
-    }
+    // if (ACUControllerInstance::instance().get_status().bms_ok)
+    // {
+    //     Serial.print("BMS is OK\n");
+    // }
+    // else
+    // {
+    //     Serial.print("BMS is NOT OK\n");
+    // }
 
-    Serial.printf("IMD OK: %d\n", ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()));
+    // Serial.printf("IMD OK: %d\n", ADCInterfaceInstance::instance().read_imd_ok(sys_time::hal_millis()));
 
-    Serial.print("SHDN VOLTAGE: "); Serial.print(ADCInterfaceInstance::instance().read_shdn_voltage());
-    Serial.printf("\tSHDN OUT: %d\n", ADCInterfaceInstance::instance().read_shdn_out());
+    // Serial.print("SHDN VOLTAGE: "); Serial.print(ADCInterfaceInstance::instance().read_shdn_voltage());
+    // Serial.printf("\tSHDN OUT: %d\n", ADCInterfaceInstance::instance().read_shdn_out());
 
-    Serial.printf("PRECHARGE VOLTAGE: %d\t", ADCInterfaceInstance::instance().read_precharge_voltage());
-    Serial.printf("PRECHARGE OUT: %d\n", ADCInterfaceInstance::instance().read_precharge_out());
+    // Serial.printf("PRECHARGE VOLTAGE: %d\t", ADCInterfaceInstance::instance().read_precharge_voltage());
+    // Serial.printf("PRECHARGE OUT: %d\n", ADCInterfaceInstance::instance().read_precharge_out());
 
-    Serial.print("TS OUT Filtered: ");
-    Serial.println(ADCInterfaceInstance::instance().read_ts_out_filtered(), 4);
-    Serial.print("PACK OUT Filtered: ");
-    Serial.println(ADCInterfaceInstance::instance().read_pack_out_filtered(), 4);
+    // Serial.print("TS OUT Filtered: ");
+    // Serial.println(ADCInterfaceInstance::instance().read_ts_out_filtered(), 4);
+    // Serial.print("PACK OUT Filtered: ");
+    // Serial.println(ADCInterfaceInstance::instance().read_pack_out_filtered(), 4);
 
-    Serial.print("HV PLUS OUT OK VOLTAGE: ");
-    Serial.println(ADCInterfaceInstance::instance().read_hv_plus_out_ok_voltage(), 4);
+    // Serial.print("HV PLUS OUT OK VOLTAGE: ");
+    // Serial.println(ADCInterfaceInstance::instance().read_hv_plus_out_ok_voltage(), 4);
 
-    Serial.print("MAIN OK VOLTAGE: ");
-    Serial.println(ADCInterfaceInstance::instance().read_main_ok_voltage(), 4);
+    // Serial.print("MAIN OK VOLTAGE: ");
+    // Serial.println(ADCInterfaceInstance::instance().read_main_ok_voltage(), 4);
 
-    Serial.print("MAIN UNDER THRESHOLD VOLTAGE: ");
-    Serial.println(ADCInterfaceInstance::instance().read_main_under_threshold_voltage(), 4);
+    // Serial.print("MAIN UNDER THRESHOLD VOLTAGE: ");
+    // Serial.println(ADCInterfaceInstance::instance().read_main_under_threshold_voltage(), 4);
 
-    Serial.print("PRECHARGE UNDER THRESHOLD VOLTAGE: ");
-    Serial.println(ADCInterfaceInstance::instance().read_precharge_under_threshold_voltage(), 4);
+    // Serial.print("PRECHARGE UNDER THRESHOLD VOLTAGE: ");
+    // Serial.println(ADCInterfaceInstance::instance().read_precharge_under_threshold_voltage(), 4);
 
-    Serial.println();
+    // Serial.println();
 
-    Serial.print("Pack Voltage: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().total_voltage, 4);
+    // Serial.print("Pack Voltage: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().total_voltage, 4);
 
-    Serial.print("Minimum Cell Voltage: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);
+    // Serial.print("Minimum Cell Voltage: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);
 
-    Serial.print("Maximum Cell Voltage: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_voltage, 4);
+    // Serial.print("Maximum Cell Voltage: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_voltage, 4);
 
-    Serial.print("Maximum Board Temp: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_board_temp, 4);
+    // Serial.print("Maximum Board Temp: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_board_temp, 4);
 
-    Serial.print("Maximum Cell Temp: ");
-    Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
+    // Serial.print("Maximum Cell Temp: ");
+    // Serial.println(BMSDriverInstance_t::instance().get_bms_data().max_cell_temp, 4);
 
-    Serial.print("ACU State: ");
-    Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
+    // Serial.print("ACU State: ");
+    // Serial.println(static_cast<int>(ACUStateMachineInstance::instance().get_state()));
 
-    Serial.print("CCU Charging Requested? : ");
-    Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
-    Serial.print("State of Charge: ");
-    Serial.print(ACUControllerInstance::instance().get_status().SoC * 100, 3);
-    Serial.println("%");
-    Serial.print("Measured GLV: "); Serial.print(ADCInterfaceInstance::instance().read_global_lv_value());
-    Serial.println("V");
-    Serial.println();
+    // Serial.print("CCU Charging Requested? : ");
+    // Serial.println(CCUInterfaceInstance::instance().get_latest_data(sys_time::hal_millis()).charging_requested);
+    // Serial.print("State of Charge: ");
+    // Serial.print(ACUControllerInstance::instance().get_status().SoC * 100, 3);
+    // Serial.println("%");
+    // Serial.print("Measured GLV: "); Serial.print(ADCInterfaceInstance::instance().read_global_lv_value());
+    // Serial.println("V");
+    // Serial.println();
 
     // Serial.print("Is charging enabled: "); Serial.print(ACUControllerInstance::instance().get_status().balancing_enabled ? "YES" : "NO"); Serial.println(" Balancing status : ");
     // for(bool status : check_and_get_balancing_status()) {
@@ -497,10 +542,10 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     // }
     // Serial.println();
 
-    Serial.print("Number of Global Faults: ");
-    auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
-    Serial.println(faults.max_consecutive_invalid_packet_count);
-    Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
+    // Serial.print("Number of Global Faults: ");
+    // auto faults = BMSFaultDataManagerInstance_t::instance().get_fault_data();
+    // Serial.println(faults.max_consecutive_invalid_packet_count);
+    // Serial.print("Valid Packet Rate: "); Serial.println(faults.valid_packet_rate);
     // Serial.println("Number of Consecutive Faults Per Chip: ");
     // for (size_t c = 0; c < ACUConstants::NUM_CHIPS; c++) {
     //    Serial.print("CHIP ");
@@ -508,7 +553,7 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     //     Serial.print(": ");
     //     Serial.print(faults.consecutive_invalid_packet_counts[c]);
     //     Serial.print(" ");
-        
+
     //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_1_to_3_count);
     //     Serial.print(" ");
     //     Serial.print(faults.chip_invalid_cmd_counts[c].invalid_cell_4_to_6_count);
@@ -523,22 +568,53 @@ HT_TASK::TaskResponse debug_print(const unsigned long &sysMicros, const HT_TASK:
     //     Serial.print("\t");
     //     Serial.print(" ");
     // }
-    Serial.println();
+    // Serial.println();
 
-    Serial.println("\nMAX114X Output:");
-    Serial.print(" CH 0&1: ");
-    Serial.print(ADCInterfaceInstance::instance().read_iso_pack());
-    Serial.print(" CH 2: ");
-    Serial.print(ADCInterfaceInstance::instance().read_pack_voltage_sense());
-    Serial.print(" CH 3:");
-    Serial.print(ADCInterfaceInstance::instance().read_shunt_current());
-    Serial.print(" CH 4&5: ");
-    Serial.print(ADCInterfaceInstance::instance().read_differential_shunt_current());
-    Serial.print(" CH 6: ");
-    Serial.print(ADCInterfaceInstance::instance().read_ts_out_filtered());
-    Serial.print(" CH 7: ");
-    Serial.print(ADCInterfaceInstance::instance().read_pack_out_filtered());
-    Serial.println();
+    // Serial.println("\nMAX114X Output:");
+    // Serial.print(" CH 0&1: ");
+    // Serial.print(ADCInterfaceInstance::instance().read_iso_pack());
+    // Serial.print(" CH 2: ");
+    // Serial.print(ADCInterfaceInstance::instance().read_pack_voltage_sense());
+    // Serial.print(" CH 3:");
+    // Serial.print(ADCInterfaceInstance::instance().read_shunt_current());
+    // Serial.print(" CH 4&5: ");
+    // Serial.print(ADCInterfaceInstance::instance().read_differential_shunt_current());
+    // Serial.print(" CH 6: ");
+    // Serial.print(ADCInterfaceInstance::instance().read_ts_out_filtered());
+    // Serial.print(" CH 7: ");
+    // Serial.print(ADCInterfaceInstance::instance().read_pack_out_filtered());
+    // Serial.println();
+
+    // Serial.println("\nSoC SoH SoE Info:");
+    // Serial.print("SoH (0-1):   ");
+    // Serial.println(ACUControllerInstance::instance().get_status().SoH, 3);
+    // Serial.print("Lifetime Ah: ");
+    // Serial.println(ACUControllerInstance::instance().get_status().lifetime_ah_throughput, 2);
+    // Serial.print("SoC:         ");
+    // Serial.print(ACUControllerInstance::instance().get_status().SoC * 100.0f, 1); Serial.println("%");
+    // Serial.print("SoE:         ");
+    // Serial.print(ACUControllerInstance::instance().get_status().SoE_percentage, 1); Serial.println("%");
+    // Serial.print("Remaining:   ");
+    // Serial.print(ACUControllerInstance::instance().get_status().remaining_pack_wh, 1); Serial.println(" Wh");
+
+    // Print CSV header once
+    // static bool header_printed = false;
+    // if (!header_printed) {
+    //     Serial.println("timestamp_ms|em_current_A|min_cell_v|soc_pct|lifetime_ah|soh|soe_pct|remaining_wh");
+    //     header_printed = true;
+    // }
+
+    // auto status  = ACUControllerInstance::instance().get_status();
+    // auto em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
+
+    // Serial.print(sys_time::hal_millis());                                               Serial.print("|");
+    // Serial.print(em_data.em_current, 4);                                                Serial.print("|");
+    // Serial.print(BMSDriverInstance_t::instance().get_bms_data().min_cell_voltage, 4);   Serial.print("|");
+    // Serial.print(status.SoC * 100.0f, 2);                                               Serial.print("|");
+    // Serial.print((float)status.lifetime_ah_throughput, 2);                              Serial.print("|");
+    // Serial.print(status.SoH, 4);                                                        Serial.print("|");
+    // Serial.print(status.SoE_percentage, 2);                                             Serial.print("|");
+    // Serial.println(status.remaining_pack_wh, 1);
 
     return HT_TASK::TaskResponse::YIELD;
 }
