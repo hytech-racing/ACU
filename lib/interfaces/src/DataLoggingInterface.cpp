@@ -43,7 +43,6 @@ bool DataLoggingInterface::init()
     }
     data_file.close();
 
-    EEPROM.put(eeprom_counter_address, file_counter + 1);
     return true;
 }
 
