@@ -108,6 +108,7 @@ public:
     void handle_enqueue_acu_voltages_CAN_message();
     void handle_enqueue_acu_temps_CAN_message();
     void handle_enqueue_acu_SoC_CAN_message();
+    void handle_enqueue_acu_SoH_CAN_message();
 
 private:
     CCUCANInterfaceData_s _curr_data;

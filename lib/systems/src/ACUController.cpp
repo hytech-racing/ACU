@@ -56,10 +56,12 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     // Cell balancing calculations
     bool previously_balancing = _acu_state.balancing_enabled;
 
-    bool balance_enableable = ((previously_balancing && (input_state.max_board_temp < _acu_parameters.thresholds.balance_temp_limit_c)) ||
-                               (!previously_balancing && (input_state.max_board_temp < _acu_parameters.thresholds.balance_enable_temp_c)));
+    bool balance_enableable = (
+        (previously_balancing && (input_state.max_board_temp < _acu_parameters.thresholds.balance_temp_limit_c)) ||
+        (!previously_balancing && (input_state.max_board_temp < _acu_parameters.thresholds.balance_enable_temp_c))
+    );
 
-    bool allow_balancing = ((balance_enableable && _acu_state.charging_enabled));
+    bool allow_balancing = (balance_enableable && _acu_state.charging_enabled);
 
     if (allow_balancing)
     {

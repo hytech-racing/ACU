@@ -288,6 +288,7 @@ HT_TASK::TaskResponse enqueue_ACU_core_CAN_data(const unsigned long& sysMicros, 
     CCUInterfaceInstance::instance().handle_enqueue_acu_status_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_core_voltages_CAN_message();
     CCUInterfaceInstance::instance().handle_enqueue_acu_SoC_CAN_message();
+    CCUInterfaceInstance::instance().handle_enqueue_acu_SoH_CAN_message();
     return HT_TASK::TaskResponse::YIELD;
 }
 

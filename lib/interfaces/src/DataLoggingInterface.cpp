@@ -1,6 +1,6 @@
 #include "DataLoggingInterface.h"
 #include "ACUController.h"
-#include "EMInterface.h"
+#include "ADCInterface.h"
 #include "SystemTimeInterface.h"
 
 const int DataLoggingInterface::eeprom_counter_address;
@@ -59,7 +59,7 @@ void DataLoggingInterface::log_data()
     // }
 
     auto status = ACUControllerInstance::instance().get_status();
-    auto em_data = EMInterfaceInstance::instance().get_latest_data(sys_time::hal_millis());
+    auto ts_current = ADCInterfaceInstance::instance().read_shunt_current();
     auto bms_data = BMSDriverInstance_t::instance().get_bms_data();
 
     data_file = SD.open(file_name.c_str(), FILE_WRITE);
@@ -69,7 +69,7 @@ void DataLoggingInterface::log_data()
     }
 
     data_file.print(sys_time::hal_millis()); data_file.print(",");
-    data_file.print(em_data.em_current, 4); data_file.print(",");
+    data_file.print(ts_current, 4); data_file.print(",");
     data_file.print(bms_data.min_cell_voltage, 4); data_file.print(",");
     data_file.print(status.SoC * 100.0f, 2); data_file.print(",");
     data_file.print((float)status.lifetime_ah_throughput, 2); data_file.print(",");
