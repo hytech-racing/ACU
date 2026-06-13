@@ -170,8 +170,8 @@ void initialize_all_interfaces()
     EMInterfaceInstance::create(sys_time::hal_millis());
 
     /* Datalogger */
-    DataLoggingInterfaceInstance::create();
-    DataLoggingInterfaceInstance::instance().init();
+    // DataLoggingInterfaceInstance::create();
+    // DataLoggingInterfaceInstance::instance().init();
 
     /* SoH Persistence Interface (lifetime Ah throughput in EEPROM) */
     SoHPersistenceInterfaceInstance::create();
