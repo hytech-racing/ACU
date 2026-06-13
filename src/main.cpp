@@ -73,7 +73,7 @@ void setup()
 
     scheduler.schedule(sample_adc_task);
     scheduler.schedule(soh_persistence_task);
-    scheduler.schedule(run_datalogger_task);
+    // scheduler.schedule(run_datalogger_task);
 
     // scheduler.schedule(debug_prints_task);
 
