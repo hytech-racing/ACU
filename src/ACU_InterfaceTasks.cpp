@@ -60,7 +60,7 @@ static ACUAllDataType_s make_acu_all_data()
     out.lifetime_ah_throughput = ACUStatus.lifetime_ah_throughput;
     out.V1 = ACUStatus.V1;
     out.remaining_pack_wh = ACUStatus.remaining_pack_wh;
-    
+
     out.core_data.high_side_contactor_welded = ACUStatus.high_side_contactor_welded;
     out.core_data.low_side_contactor_welded = ACUStatus.low_side_contactor_welded;
 
@@ -264,7 +264,7 @@ HT_TASK::TaskResponse handle_send_ACU_all_ethernet_data(const unsigned long &sys
 HT_TASK::TaskResponse handle_send_all_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo)
 {
     CCUInterfaceInstance::instance().set_system_latch_state(sys_time::hal_millis(), ADCInterfaceInstance::instance().read_shdn_out());
-    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceImpl::ccu_can_tx_buffer, &ACUCANInterfaceImpl::CCU_CAN);
+    ACUCANInterfaceImpl::send_all_CAN_msgs(ACUCANInterfaceInstance::instance().ccu_can_tx_buffer, &ACUCANInterfaceInstance::instance().CCU_CAN);
     return HT_TASK::TaskResponse::YIELD;
 }
 
@@ -284,7 +284,7 @@ HT_TASK::TaskResponse enqueue_EM_measurement_CAN_data(const unsigned long& sysMi
     EM_MEASUREMENT_t msg = {};
     msg.em_current_ro = HYTECH_em_current_ro_toS(ADCInterfaceInstance::instance().read_shunt_current());
     msg.em_voltage_ro = HYTECH_em_voltage_ro_toS(ADCInterfaceInstance::instance().read_pack_voltage_sense());
-    CAN_util::enqueue_msg(&msg, &Pack_EM_MEASUREMENT_hytech, ACUCANInterfaceImpl::ccu_can_tx_buffer);
+    CAN_util::enqueue_msg(&msg, &Pack_EM_MEASUREMENT_hytech, ACUCANInterfaceInstance::instance().ccu_can_tx_buffer);
 
     return HT_TASK::TaskResponse::YIELD;
 }
@@ -315,9 +315,8 @@ HT_TASK::TaskResponse enqueue_ACU_all_temps_CAN_data(const unsigned long& sysMic
 }
 
 HT_TASK::TaskResponse sample_CAN_data(const unsigned long& sysMicros, const HT_TASK::TaskInfo& taskInfo) {
-    etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)> main_can_recv = etl::delegate<void(CANInterfaces_s &, const CAN_message_t &, unsigned long)>::create<ACUCANInterfaceImpl::acu_CAN_recv>();
-    process_ring_buffer(ACUCANInterfaceImpl::ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv);
-    process_ring_buffer(ACUCANInterfaceImpl::em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), main_can_recv);
+    process_ring_buffer(ACUCANInterfaceInstance::instance().ccu_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), ACUCANInterfaceInstance::instance().can_recv_switch, CANInterfaceType_e::CCU);
+    process_ring_buffer(ACUCANInterfaceInstance::instance().em_can_rx_buffer, CANInterfacesInstance::instance(), sys_time::hal_millis(), ACUCANInterfaceInstance::instance().can_recv_switch, CANInterfaceType_e::EM);
     return HT_TASK::TaskResponse::YIELD;
 }
 

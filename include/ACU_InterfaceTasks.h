@@ -6,22 +6,27 @@
 #include "SharedFirmwareTypes.h"
 
 /* Interface Library Includes */
+#include "ACUCANInterfaceImpl.h"
+#include "ACUEthernetInterface.h"
+#include "ADCInterface.h"
 #include "BMSDriverGroup.h"
 #include "BMSFaultDataManager.h"
-#include "WatchdogInterface.h"
-#include "WatchdogMetrics.h"
-#include "ACUEthernetInterface.h"
-#include "ACUCANInterfaceImpl.h"
-#include "ADCInterface.h"
-#include "FaultLatchManager.h"
-#include "SystemTimeInterface.h"
-#include "MAX114XInterface.h"
-#include "SoHPersistenceInterface.h"
-#include "ACUController.h"
 #include "DataLoggingInterface.h"
+#include "MAX114XInterface.h"
+#include "WatchdogInterface.h"
+#include "SoHPersistenceInterface.h"
+#include "SystemTimeInterface.h"
+
+/* */
+#include "ACUController.h"
+#include "FaultLatchManager.h"
+#include "WatchdogMetrics.h"
+
+#include "VCRInterface.h"
 
 /* For Debugging */
 #include "ACUStateMachine.h"
+
 
 /* Scheduling */
 #include <ht_task.hpp>

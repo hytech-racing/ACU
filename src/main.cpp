@@ -42,9 +42,6 @@ HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 ::HT_TASK::Task soh_persistence_task(init_soh_persistence, persist_soh_data, ACUConstants::SOH_PERSIST_PRIORITY, ACUConstants::SOH_PERSIST_PERIOD_US);
 ::HT_TASK::Task run_datalogger_task(HT_TASK::DUMMY_FUNCTION, run_data_logging, ACUConstants::DATA_LOG_PRIORITY, ACUConstants::DATA_LOG_PERIOD_US);
 
-FlexCAN_t<CAN2> ACUCANInterfaceImpl::CCU_CAN;
-FlexCAN_t<CAN3> ACUCANInterfaceImpl::EM_CAN;
-
 void setup()
 {
     /* Interface and System initialization */
@@ -67,7 +64,7 @@ void setup()
     scheduler.schedule(enqueue_CCU_all_temps_CAN_task);
     scheduler.schedule(enqueue_ACU_OK_CAN_task);
     scheduler.schedule(enqueue_EM_measurement_CAN_task);
-    
+
     scheduler.schedule(sample_CAN_task);
     scheduler.schedule(idle_sample_task);
 
@@ -77,8 +74,8 @@ void setup()
 
     // scheduler.schedule(debug_prints_task);
 
-    handle_CAN_setup(ACUCANInterfaceImpl::CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
-    handle_CAN_setup(ACUCANInterfaceImpl::EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
+    handle_CAN_setup(ACUCANInterfaceInstance::instance().CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
+    handle_CAN_setup(ACUCANInterfaceInstance::instance().EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
 }
 
 void loop()
