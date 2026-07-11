@@ -1,43 +1,33 @@
 #ifndef ACU_CONSTANTS
 #define ACU_CONSTANTS
 
-#include <cstddef>
+/* Standard Library */
 #include <stddef.h>
 #include <stdio.h>
+
+/* External Includes */
+#include "SharedFirmwareTypes.h"
+#include <cstddef>
 #include <iostream>
 #include <array>
 #include <algorithm>
-#include "shared_types.h"
 
-using volt = float;
-using celsius = float;
-using time_ms = uint32_t;
+using pin = uint8_t;
+using time_us = uint32_t;
 
-namespace ACUSystems
+
+namespace ACUInterfaces
 {
-    constexpr const volt MIN_DISCHARGE_VOLTAGE_THRESH = 3.8F; // Minimum voltage for a cell to be discharged
-    constexpr const volt CELL_OVERVOLTAGE_THRESH = 4.2;   // Cell overvoltage threshold in Volts
-    constexpr const volt CELL_UNDERVOLTAGE_THRESH = 3.05; // Cell undervoltage threshold in Volts
-    constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0;  // Volts
-    constexpr const celsius CHARGING_OT_THRESH = 60.0;    // Celsius
-    constexpr const celsius RUNNING_OT_THRESH = 60.0;     // Celsius
-    constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02;  // differential with lowest cell voltage to enable cell balancing for a cell
-    constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
-    constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
-    constexpr const volt TS_ISOLATION_VOLTAGE = 100; // Volts
-}
+    /* General Interface Constants */
+    const uint8_t ANALOG_READ_RESOLUTION = 12;
+    const uint32_t SERIAL_BAUDRATE = 115200;
 
-namespace ACUInterfaces {
-    /* Interface Constants */
-    const size_t ANALOG_READ_RESOLUTION = 12;
-    const size_t SERIAL_BAUDRATE = 115200;
-
-    constexpr int ADC0_NOT_SHDN = 9;
-    constexpr int ADC0_CS = 10;
-    constexpr int ADC0_MOSI = 11;
-    constexpr int ADC0_MISO = 12;
-    constexpr int ADC0_CLK = 13;
-    constexpr int ADC0_SPEED = 1000000; // 1 MHz
+    constexpr pin ADC0_NOT_SHDN_PIN = 9;
+    constexpr pin ADC0_CS_PIN = 10;
+    constexpr pin ADC0_MOSI_PIN = 11;
+    constexpr pin ADC0_MISO_PIN = 12;
+    constexpr pin ADC0_CLK_PIN = 13;
+    constexpr uint32_t ADC0_SPEED = 1000000; // 1 MHz
 
     /* ADC Versions*/
     /* Channels on ADC */
@@ -100,6 +90,20 @@ namespace ACUInterfaces {
 
     constexpr const float BIT_RESOLUTION = 4096.0F;
 }
+
+namespace ACUSystems
+{
+    constexpr const volt MIN_DISCHARGE_VOLTAGE_THRESH = 3.8F; // Minimum voltage for a cell to be discharged
+    constexpr const volt CELL_OVERVOLTAGE_THRESH = 4.2;   // Cell overvoltage threshold in Volts
+    constexpr const volt CELL_UNDERVOLTAGE_THRESH = 3.05; // Cell undervoltage threshold in Volts
+    constexpr const volt MIN_PACK_TOTAL_VOLTAGE = 420.0;  // Volts
+    constexpr const celsius CHARGING_OT_THRESH = 60.0;    // Celsius
+    constexpr const celsius RUNNING_OT_THRESH = 60.0;     // Celsius
+    constexpr const volt VOLTAGE_DIFF_TO_INIT_CB = 0.02;  // differential with lowest cell voltage to enable cell balancing for a cell
+    constexpr const celsius BALANCE_TEMP_LIMIT_C = 50.0;
+    constexpr const celsius BALANCE_ENABLE_TEMP_THRESH_C = 35.0; // Celsius
+    constexpr const volt TS_ISOLATION_VOLTAGE = 100; // Volts
+}
 namespace ACUConstants
 {
     constexpr size_t NUM_CELLS = 126;
@@ -116,55 +120,66 @@ namespace ACUConstants
     constexpr std::array<int, NUM_CHIPS> ADDR = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // only for addressable bms chips
 
     /* Task Times */
-    constexpr uint32_t TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
-    constexpr uint32_t TICK_SM_PRIORITY = 9;
-    constexpr uint32_t KICK_WATCHDOG_PERIOD_US = 4000UL; // 10 000 us = 100 Hz
-    constexpr uint32_t WATCHDOG_PRIORITY = 1;
-    constexpr uint32_t SAMPLE_BMS_PERIOD_US = 2500UL; // 5 000 us = 200 Hz (since we are reading by group)
-    constexpr uint32_t SAMPLE_BMS_PRIORITY = 2;
-    constexpr uint32_t EVAL_ACC_PERIOD_US = 20000UL; // 20 000 us = 50 Hz (problem for soc if this is running faster than voltage)
-    constexpr uint32_t EVAL_ACC_PRIORITY = 10;
-    constexpr uint32_t WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr uint32_t WRITE_CELL_BALANCE_PRIORITY = 15;
-    constexpr uint32_t ALL_DATA_ETHERNET_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr uint32_t ALL_DATA_ETHERNET_PRIORITY = 5;
-    constexpr uint32_t CORE_DATA_ETHERNET_PERIOD_US = 8000UL; // 8 000 us = 125 Hz
-    constexpr uint32_t CORE_DATA_ETHERNET_PRIORITY = 4;
+    constexpr uint8_t IDLE_SAMPLE_PRIORITY = 0;
+    constexpr time_us IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
 
-    constexpr uint32_t SAMPLE_ADC_PRIORITY = 11;
-    constexpr uint32_t SAMPLE_ADC_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+    constexpr uint8_t WATCHDOG_PRIORITY = 1;
+    constexpr time_us KICK_WATCHDOG_PERIOD_US = 4000UL; // 10 000 us = 100 Hz
 
-    constexpr uint32_t CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr uint32_t CCU_SEND_PRIORITY = 14;
-    constexpr uint32_t ACU_OK_CAN_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
-    constexpr uint32_t ACU_OK_CAN_PRIORITY = 3;
-    constexpr uint32_t CCU_SEND_A_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr uint32_t CCU_SEND_A_PRIORITY = 12;
-    constexpr uint32_t CCU_SEND_B_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
-    constexpr uint32_t CCU_SEND_B_PRIORITY = 13;
-    constexpr uint32_t EM_MEASUREMENT_SEND_PERIOD_US = 4000UL; // 4 000 us = 250 Hz
-    constexpr uint32_t EM_MEASUREMENT_SEND_PRIORITY = 6;
+    constexpr uint8_t SAMPLE_BMS_PRIORITY = 2;
+    constexpr time_us SAMPLE_BMS_PERIOD_US = 2500UL; // 5 000 us = 200 Hz (since we are reading by group)
 
-    constexpr uint32_t SEND_CAN_PERIOD_US = 4000UL; // 40 000 us = 250 Hz
-    constexpr uint32_t SEND_CAN_PRIORITY = 8;
-    constexpr uint32_t RECV_CAN_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
-    constexpr uint32_t RECV_CAN_PRIORITY = 7;
+    constexpr uint8_t ACU_OK_CAN_PRIORITY = 3;
+    constexpr time_us ACU_OK_CAN_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
 
-    constexpr uint32_t DEBUG_PRINT_PERIOD_US = 2000000UL; //250000UL; // 250 000 us = 4 Hz
-    constexpr uint32_t DEBUG_PRINT_PRIORITY = 20;
+    constexpr uint8_t CORE_DATA_ETHERNET_PRIORITY = 4;
+    constexpr time_us CORE_DATA_ETHERNET_PERIOD_US = 8000UL; // 8 000 us = 125 Hz
 
-    constexpr uint32_t IDLE_SAMPLE_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
-    constexpr uint32_t IDLE_SAMPLE_PRIORITY = 0;
+    constexpr uint8_t ALL_DATA_ETHERNET_PRIORITY = 5;
+    constexpr time_us ALL_DATA_ETHERNET_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
 
-    constexpr uint32_t SOH_PERSIST_PERIOD_US = 1000000UL; // 1 000 000 us = 1 Hz
-    constexpr uint32_t SOH_PERSIST_PRIORITY = 19;
+    constexpr uint8_t EM_MEASUREMENT_SEND_PRIORITY = 6;
+    constexpr time_us EM_MEASUREMENT_SEND_PERIOD_US = 4000UL; // 4 000 us = 250 Hz
 
-    constexpr uint32_t DATA_LOG_PERIOD_US = 500000UL; // 500 000 us = 2 Hz
-    constexpr uint32_t DATA_LOG_PRIORITY = 18;
+    constexpr uint8_t RECV_CAN_PRIORITY = 7;
+    constexpr time_us RECV_CAN_PERIOD_US = 50000UL; // 50 000 us = 20 Hz
 
-    /* Message Interface */
-    const uint32_t Veh_CAN_baudrate = 1000000;
-    const uint32_t EM_CAN_baudrate = 500000;
+    constexpr uint8_t SEND_CAN_PRIORITY = 8;
+    constexpr time_us SEND_CAN_PERIOD_US = 4000UL; // 40 000 us = 250 Hz
+
+    constexpr uint8_t TICK_SM_PRIORITY = 9;
+    constexpr time_us TICK_SM_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+
+    constexpr uint8_t EVAL_ACC_PRIORITY = 10;
+    constexpr time_us EVAL_ACC_PERIOD_US = 20000UL; // 20 000 us = 50 Hz (problem for soc if this is running faster than voltage)
+
+    constexpr uint8_t SAMPLE_ADC_PRIORITY = 11;
+    constexpr time_us SAMPLE_ADC_PERIOD_US = 1000UL; // 1 000 us = 1000 Hz
+
+    constexpr uint8_t CCU_SEND_A_PRIORITY = 12;
+    constexpr time_us CCU_SEND_A_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+
+    constexpr uint8_t CCU_SEND_B_PRIORITY = 13;
+    constexpr time_us CCU_SEND_B_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+
+    constexpr uint8_t CCU_SEND_PRIORITY = 14;
+    constexpr time_us CCU_SEND_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+
+    constexpr uint8_t WRITE_CELL_BALANCE_PRIORITY = 15;
+    constexpr time_us WRITE_CELL_BALANCE_PERIOD_US = 100000UL; // 100 000 us = 10 Hz
+
+    constexpr uint8_t DATA_LOG_PRIORITY = 18;
+    constexpr time_us DATA_LOG_PERIOD_US = 500000UL; // 500 000 us = 2 Hz
+
+    constexpr uint8_t SOH_PERSIST_PRIORITY = 19;
+    constexpr time_us SOH_PERSIST_PERIOD_US = 1000000UL; // 1 000 000 us = 1 Hz
+
+    constexpr uint8_t DEBUG_PRINT_PRIORITY = 20;
+    constexpr time_us DEBUG_PRINT_PERIOD_US = 2000000UL; //250000UL; // 250 000 us = 4 Hz
+
+    /* CAN Constants */
+    const uint32_t VEH_CAN_BAUDRATE = 1000000;
+    const uint32_t EM_CAN_BAUDRATE = 500000;
 }
 
 #endif

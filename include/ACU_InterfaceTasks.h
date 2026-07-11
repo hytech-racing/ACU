@@ -2,10 +2,12 @@
 #define ACU_INTERFACETASKS
 
 #include "ACU_Constants.h"
-#include "shared_types.h"
-#include "SharedFirmwareTypes.h"
 
-/* Interface Library Includes */
+/* External Includes */
+#include <ht_task.hpp>
+#include "CANInterface.h"
+
+/* Local Interface Includes */
 #include "ACUCANInterfaceImpl.h"
 #include "ACUEthernetInterface.h"
 #include "ADCInterface.h"
@@ -16,17 +18,15 @@
 #include "WatchdogInterface.h"
 #include "SoHPersistenceInterface.h"
 #include "SystemTimeInterface.h"
+#include "VCRInterface.h"
 
-/* */
+/* Local System Includes */
 #include "ACUController.h"
 #include "FaultLatchManager.h"
 #include "WatchdogMetrics.h"
 
-#include "VCRInterface.h"
-
 /* For Debugging */
 #include "ACUStateMachine.h"
-
 
 /* Scheduling */
 #include <ht_task.hpp>
@@ -35,8 +35,9 @@
 using chip_type = LTC6811_Type_e;
 using BMSDriverInstance_t = BMSDriverInstance<ACUConstants::NUM_CHIPS, ACUConstants::NUM_CHIP_SELECTS, chip_type::LTC6811_1>;
 using BMSFaultDataManagerInstance_t = BMSFaultDataManagerInstance<ACUConstants::NUM_CHIPS>;
-
 // using MAX1148ADCInstance_t = MAX114XInterfaceInstance<ACUConstants::NUM_MAX1148_CHANNELS, ACUInterfaces::MAX114X_VERSION>;
+
+
 /**
  * Init Functions - to be called in setup@
  */

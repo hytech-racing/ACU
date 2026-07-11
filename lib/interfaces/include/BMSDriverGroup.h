@@ -1,6 +1,11 @@
 #ifndef BMSDriverGroup_H
 #define BMSDriverGroup_H
 
+/* ETL Library */
+#include "etl/optional.h"
+#include "etl/singleton.h"
+
+/* External Includes */
 #include "LTCSPIInterface.h"
 
 #include <Arduino.h>
@@ -8,16 +13,14 @@
 #include <EventResponder.h>
 #include <stdio.h>
 #include <cstdint>
-#include "etl/optional.h"
 #include <numeric>
 #include <atomic>
-
-#include "etl/singleton.h"
 
 #include "SharedFirmwareTypes.h"
 #include "shared_types.h"
 
 using namespace std;
+
 
 enum class LTC6811_Type_e
 {
@@ -264,7 +267,8 @@ public:
      * @return Current read group (CURRENT_GROUP_A through CURRENT_GROUP_AUX_B)
      * @note Useful for verifying state machine advancement and cycle tracking
      */
-    ReadGroup_e get_current_read_group() {
+    ReadGroup_e get_current_read_group()
+    {
         return _current_read_group;
     }
 
@@ -273,7 +277,8 @@ public:
      * @return true if next call reads GROUP_A (starts new ADC conversion cycle)
      * @note Useful for detecting cycle boundaries and synchronization points
      */
-    bool is_cycle_start() {
+    bool is_cycle_start()
+    {
         return _current_read_group == ReadGroup_e::CV_GROUP_A;
     }
 
@@ -292,7 +297,8 @@ public:
      * @note Each chip has 6 validity flags (cells 1-3, 4-6, 7-9, 10-12, GPIO 1-3, 4-6)
      * @note Useful for fault detection and EMI resilience monitoring
      */
-    const array<ValidPacketData_s, num_chips>& get_validity_data() {
+    const array<ValidPacketData_s, num_chips>& get_validity_data()
+    {
         return _bms_data.valid_read_packets;
     }
 

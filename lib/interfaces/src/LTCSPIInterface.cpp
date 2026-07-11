@@ -1,11 +1,7 @@
-/* Interface Includes */
 #include "LTCSPIInterface.h"
-#include "SPI.h"
-#include <Arduino.h>
-#include <array>
-#include <cstdint>
 
-namespace ltc_spi_interface 
+
+namespace ltc_spi_interface
 {
     static volatile bool _dma_busy = false;
 
@@ -19,19 +15,19 @@ namespace ltc_spi_interface
         _dma_busy = false;
     }
 
-    void write_and_delay_low(int cs, int delay_us) 
+    void write_and_delay_low(int cs, int delay_us)
     {
         digitalWrite(cs, LOW);
         delayMicroseconds(delay_us);
     }
 
-    void write_and_delay_high(int cs, int delay_us) 
+    void write_and_delay_high(int cs, int delay_us)
     {
         digitalWrite(cs, HIGH);
         delayMicroseconds(delay_us);
     }
 
-    void delay_and_write_high(int cs, int delay_us) 
+    void delay_and_write_high(int cs, int delay_us)
     {
         delayMicroseconds(delay_us);
         digitalWrite(cs, HIGH);

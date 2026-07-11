@@ -1,5 +1,6 @@
 #include "SoHPersistenceInterface.h"
 
+
 void SoHPersistenceInterface::init()
 {
     uint32_t magic_check = 0;

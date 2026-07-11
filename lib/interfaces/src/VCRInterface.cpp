@@ -1,6 +1,6 @@
 #include "VCRInterface.h"
-
 #include "ACUCANInterfaceImpl.h"
+#include "hytech.h"
 
 void VCRInterface::set_monitoring_data(bool imd_ok, bool bms_ok, bool latch_ok) {
     _curr_data.imd_ok = imd_ok;

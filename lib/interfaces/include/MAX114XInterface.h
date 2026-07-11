@@ -1,16 +1,21 @@
 #ifndef MAX114XINTERFACE_H
 #define MAX114XINTERFACE_H
 
+/* External Includes */
 #include "AnalogSensorsInterface.h"
-#include <SPI.h>
 #include <Arduino.h>
+#include <array>
+#include <SPI.h>
+#include <stdexcept>
 
 using namespace std;
+
 
 /**
  * Enum representing the different channel configurations in MAX114X ADCs (SINGLE, DIFFERENTIAL, or INV_DIFFERENTIAL)
  */
-enum class CHANNEL_TYPE_e{
+enum class CHANNEL_TYPE_e
+{
     SINGLE, ///< single channel
     DIFFERENTIAL, ///< +- differential pair
     INV_DIFFERENTIAL, ///< -+ differential pair
@@ -48,29 +53,18 @@ public:
      * Calls sample() and convert(). After calling tick(), this MCP_ADC's data can be accessed using the get() command.
      */
     void tick() override;
-    
+
     /**
      * Gets raw 14 bit value of a channel for a sample
      */
     uint16_t get_last_sample_raw(int index) const;
-    
+
     /**
      * Gets real value (current/voltage) of a channel for a sample
      */
     float get_last_sample_converted(int index) const;
-    
+
 private:
-
-    /**
-     * Samples the MCP_ADC over SPI. Samples all eight channels and, in accordance with the AnalogMultiSensor's function
-     * contract, stores the raw sampled values into each AnalogChannel's lastSample instance variable.
-     */
-    void _sample() override;
-
-    /**
-     * Callback function for DMA SPI reads
-    */
-    void _dma_callback();
 
     /**
      * Channel configuration is defined per channel pair (two physical channels).
@@ -79,7 +73,7 @@ private:
      * SINGLE indicates both channels in the pair are single-ended inputs and operate separately.
      */
     const std::array<CHANNEL_TYPE_e, MAX114X_ADC_NUM_CHANNELS / 2> _channelTypes;
-    
+
     const int _spiPinCS;
     const int _spiPinSDI;
     const int _spiPinSDO;
@@ -93,12 +87,24 @@ private:
 
     array<uint8_t, buffer_size> _tx_buf;
     array<uint8_t, buffer_size> _rx_buf;
-    
+
     /**
      * The select bits for single-ended channels are all over the place and do not follow a logical mapping.
-     * This array stores the specific single-ended select-bit mapping for each channel as defined in the datasheet. 
+     * This array stores the specific single-ended select-bit mapping for each channel as defined in the datasheet.
      */
     std::array<uint8_t, MAX114X_ADC_NUM_CHANNELS> _single_end_channel_to_select_map;
+
+    /**
+     * Samples the MCP_ADC over SPI. Samples all eight channels and, in accordance with the AnalogMultiSensor's function
+     * contract, stores the raw sampled values into each AnalogChannel's lastSample instance variable.
+     */
+    void _sample() override;
+
+    /**
+     * Callback function for DMA SPI reads
+    */
+    void _dma_callback();
+
 };
 
 template <int MAX114X_ADC_NUM_CHANNELS, int MAX114xVersion>

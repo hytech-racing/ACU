@@ -1,19 +1,24 @@
 #ifndef FAULT_LATCH_MANAGER_INTERFACE_H
 #define FAULT_LATCH_MANAGER_INTERFACE_H
 
-
+/* ETL Library */
 #include <etl/singleton.h>
+
+/* External Includes */
 #include <stdint.h>
 
 
-struct FaultLatches {
+struct FaultLatches
+{
   bool bms_fault_latched = false;
   bool imd_fault_latched = false;
   bool shdn_out_latched = true;
 };
 
-class FaultLatchManager {
+class FaultLatchManager
+{
 public:
+
   // Clear latches whenever we are NOT in FAULTED (i.e., after recovery)
   void clear_if_not_faulted(bool is_faulted);
 
@@ -23,13 +28,18 @@ public:
   void update_shdn_out_latch(bool shdn_out_invalid);
 
   void set_bms_fault_latched(bool latched) { _latches.bms_fault_latched = latched; }
+
   void set_imd_fault_latched(bool latched) { _latches.imd_fault_latched = latched; }
+
   void set_shdn_out_latched(bool latched) { _latches.shdn_out_latched = latched; }
+
   // Snapshot for publishing
   FaultLatches get_latches() const { return _latches; }
 
-private:  
+private:
+
   FaultLatches _latches;
+
 };
 
 using FaultLatchManagerInstance = etl::singleton<FaultLatchManager>;

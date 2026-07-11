@@ -1,11 +1,17 @@
 #ifndef WATCHDOG_INTERFACE_H
 #define WATCHDOG_INTERFACE_H
 
-#include <Arduino.h>
-#include "SharedFirmwareTypes.h"
-#include "etl/singleton.h"
+/* ETL Library */
+#include <etl/singleton.h>
 
-using pin = size_t;
+/* External Includes */
+#include <Arduino.h>
+
+/* Local Interface Includes */
+#include "SystemTimeInterface.h"
+
+using pin = uint8_t;
+
 
 namespace watchdog_default_parameters
 {
@@ -14,7 +20,7 @@ namespace watchdog_default_parameters
 
 struct WatchdogPinout_s
 {
-    pin teensy_ok_pin; 
+    pin teensy_ok_pin;
     pin teensy_wd_kick_pin;
     pin teensy_n_latch_en_pin;
     pin teensy_sw_not_ok_pin;
@@ -29,46 +35,49 @@ class WatchdogInterface
 {
 public:
     WatchdogInterface(WatchdogPinout_s pinout,
-                        uint32_t watchdog_kick_interval = watchdog_default_parameters::WATCHDOG_KICK_INTERVAL
-    ): _watchdog_parameters { 
-            pinout, 
-            watchdog_kick_interval} {}
-    
+                    uint32_t watchdog_kick_interval = watchdog_default_parameters::WATCHDOG_KICK_INTERVAL
+    ): _watchdog_parameters {
+            pinout,
+            watchdog_kick_interval
+        }
+    {};
+
     /**
      * @pre constructor called and instance created
      * @post Pins on Teensy configured and written as IN/OUT
-    */ 
+     */
     void init();
 
     /**
      * Get/update watchdog state
      * @param curr_millis time of ACU time
      * @post IF reach interval, _watchdog_time updated and state switched
-    */
+     */
     bool update_watchdog_state(uint32_t curr_millis);
 
     /**
      * Sets Teensy_OK LOW
      * @pre ACU Controller discovers bms voltage/temp fault
-    */
+     */
     void set_teensy_ok_low();
     void set_teensy_ok_high();
 
     /**
      * Sets n_latch_en low
      * @pre that there is a fault of some sort
-    */
+     */
     void set_n_latch_en_low();
     void set_n_latch_en_high();
 
     /**
      * Set sw not ok
      * @pre there is a weld detected
-    */
+     */
     void set_sw_not_ok_pin_low();
     void set_sw_not_ok_pin_high();
 
 private:
+
     const WatchdogInterfaceParams_s _watchdog_parameters = {};
 
     // @brief timestamp of the last watchdog kick

@@ -1,14 +1,18 @@
 #ifndef SOC_KALMAN_FILTER_H
 #define SOC_KALMAN_FILTER_H
 
+/* ETL Library */
+#include "etl/singleton.h"
+
+/* External Includes */
+#include "SharedFirmwareTypes.h"
+#include "shared_types.h"
 #include <array>
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <cstdint>
-#include "etl/singleton.h"
-#include "SharedFirmwareTypes.h"
-#include "shared_types.h"
+
 
 namespace soc_ekf_constants
 {
@@ -55,6 +59,7 @@ struct EKFState_s
 class SOCKalmanFilter
 {
 public:
+
     SOCKalmanFilter();
 
     /**
@@ -78,17 +83,13 @@ public:
      * @brief Get the soc object
      * @return float state of charge
      */
-    float get_soc() const {
-        return _state.soc;
-    }
+    float get_soc() const { return _state.soc; }
 
     /**
      * @brief Get the voltage object
      * @return float voltage
      */
-    float get_voltage() const {
-        return _state.v1;
-    }
+    float get_voltage() const { return _state.v1; }
 
     /**
      * @brief Get the State of Energy (SoE) as a percentage of usable energy remaining
@@ -100,9 +101,7 @@ public:
      * @brief Get current state
      * @return Complete state vector
      */
-    EKFState_s get_state() const {
-        return _state;
-    }
+    EKFState_s get_state() const { return _state; }
 
     /**
      * @brief Reset SoC estimate
@@ -142,6 +141,14 @@ public:
     };
 
 private:
+
+    EKFState_s _state; // The system state (SoC, V_polarization)
+
+    // Covariance Matrix P (2x2)
+    // Tracks the uncertainty of our estimate.
+    // P[0][0] = var(SoC), P[1][1] = var(V1)
+    float _PMatrix[2][2];
+
     /**
      * @brief Get the OCV from the SoC estimate using linear interpolation of lookup table
      * @param soc State of charge
@@ -161,13 +168,6 @@ private:
      */
     void _clamp_state();
 
-private:
-    EKFState_s _state; // The system state (SoC, V_polarization)
-
-    // Covariance Matrix P (2x2)
-    // Tracks the uncertainty of our estimate.
-    // P[0][0] = var(SoC), P[1][1] = var(V1)
-    float _PMatrix[2][2];
 };
 
 #endif

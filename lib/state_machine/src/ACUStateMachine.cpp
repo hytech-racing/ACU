@@ -1,15 +1,12 @@
 #include "ACUStateMachine.h"
-#include <iostream>
-
-using namespace std;
 
 
-void ACUStateMachine::tick_state_machine(unsigned long current_millis) 
+void ACUStateMachine::tick_state_machine(unsigned long current_millis)
 {
-    switch(_current_state) 
+    switch(_current_state)
     {
-        case ACUState_e::STARTUP: 
-        {   
+        case ACUState_e::STARTUP:
+        {
             if (current_millis - _last_state_changed_time > precharge_delay_ms)
             {
                 if (_received_valid_shdn_out())
@@ -19,99 +16,106 @@ void ACUStateMachine::tick_state_machine(unsigned long current_millis)
                 }
             }
 
-            if (_has_bms_fault() || _has_imd_fault()) 
+            if (_has_bms_fault() || _has_imd_fault())
             {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
-            
+
             break;
         }
         case ACUState_e::WELDCHECK:
         {
             if (current_millis - _last_state_changed_time > precharge_delay_ms)
             {
-                if (_contactor_welded()) 
+                if (_contactor_welded())
                 {
                     _set_state(ACUState_e::WELDED, current_millis);
                     break;
                 }
-                else 
+                else
                 {
                     _set_state(ACUState_e::ACTIVE, current_millis);
                     break;
                 }
             }
-            
+
             break;
         }
         case ACUState_e::WELDED:
         {
-            if (_has_bms_fault() || _has_imd_fault()) 
+            if (_has_bms_fault() || _has_imd_fault())
             {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
+            
             break;
         }
-        
-        case ACUState_e::ACTIVE: 
+        case ACUState_e::ACTIVE:
         {
-            if (_charge_state_requested()) 
+            if (_charge_state_requested())
             {
                 _set_state(ACUState_e::CHARGING, current_millis);
                 break;
             }
-            if (_has_bms_fault() || _has_imd_fault()) 
+
+            if (_has_bms_fault() || _has_imd_fault())
             {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
-            if (!_received_valid_shdn_out()) 
+
+            if (!_received_valid_shdn_out())
             {
                 _set_state(ACUState_e::STARTUP, current_millis);
                 break;
             }
+
             break;
         }
-        case ACUState_e::CHARGING: 
-        {   
-            if (!_charge_state_requested()) 
+        case ACUState_e::CHARGING:
+        {
+            if (!_charge_state_requested())
             {
                 _set_state(ACUState_e::ACTIVE, current_millis);
                 break;
             }
-            if (_has_bms_fault() || _has_imd_fault()) 
+
+            if (_has_bms_fault() || _has_imd_fault())
             {
                 _set_state(ACUState_e::FAULTED, current_millis);
                 break;
             }
-            if (!_received_valid_shdn_out()) 
+
+            if (!_received_valid_shdn_out())
             {
                 _set_state(ACUState_e::STARTUP, current_millis);
                 break;
             }
+
             break;
         }
-        case ACUState_e::FAULTED: 
-        {   
+        case ACUState_e::FAULTED:
+        {
 
-            if ((current_millis - _last_state_changed_time > 1000) && !(_has_bms_fault())) 
+            if ((current_millis - _last_state_changed_time > 1000) && !(_has_bms_fault()))
             {
                 _reinitialize_watchdog();
             }
 
-            if (_received_valid_shdn_out() && !(_has_bms_fault() || _has_imd_fault())) 
+            if (_received_valid_shdn_out() && !(_has_bms_fault() || _has_imd_fault()))
             {
                 _set_state(ACUState_e::STARTUP, current_millis);
                 break;
             }
+
             break;
         }
-        default: 
+        default:
         {
             break;
-        }   
+        }
     }
 }
 
@@ -127,14 +131,14 @@ void ACUStateMachine::_set_state(ACUState_e new_state, unsigned long curr_millis
 
 void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long curr_millis)
 {
-    switch(prev_state) 
+    switch(prev_state)
     {
-        case ACUState_e::CHARGING: 
+        case ACUState_e::CHARGING:
         {
             _disable_cell_balancing();
             break;
         }
-        case ACUState_e::FAULTED: 
+        case ACUState_e::FAULTED:
         {
             _set_n_latch_en_high();
             _reinitialize_watchdog();
@@ -151,9 +155,9 @@ void ACUStateMachine::_handle_exit_logic(ACUState_e prev_state, unsigned long cu
 
 void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long curr_millis)
 {
-    switch(new_state) 
+    switch(new_state)
     {
-        case ACUState_e::STARTUP: 
+        case ACUState_e::STARTUP:
         {
             _set_sw_not_ok_pin_high();
             _reinitialize_watchdog();
@@ -168,13 +172,13 @@ void ACUStateMachine::_handle_entry_logic(ACUState_e new_state, unsigned long cu
             _set_sw_not_ok_pin_high();
             break;
         }
-        case ACUState_e::CHARGING: 
-        {   
+        case ACUState_e::CHARGING:
+        {
             _enable_cell_balancing();
             break;
         }
-        case ACUState_e::FAULTED: 
-        {   
+        case ACUState_e::FAULTED:
+        {
             _disable_watchdog();
             _set_n_latch_en_low();
             _last_state_changed_time = curr_millis;

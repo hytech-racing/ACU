@@ -1,24 +1,16 @@
-/* ACU Dependent */
 #include "ACU_Constants.h"
 #include "ACU_InterfaceTasks.h"
 #include "ACU_SystemTasks.h"
-
-/* Interface Includes */
-#include <Arduino.h>
-#include "BMSDriverGroup.h"
-#include "WatchdogInterface.h"
-#include "ACUCANInterfaceImpl.h"
-
-/* System Includes */
-#include "ACUController.h"
-#include "ACUStateMachine.h"
 
 /* Schedular Dependencies */
 #include "ht_sched.hpp"
 #include "ht_task.hpp"
 
+/* Systems */
+namespace qn = qindesign::network; // setup of qn namespace
+qn::EthernetUDP udp; // setup of qn namespace
 
-/* Scheduler setup */
+/* Scheduler Setup */
 HT_SCHED::Scheduler& scheduler = HT_SCHED::Scheduler::getInstance();
 
 ::HT_TASK::Task tick_state_machine_task(HT_TASK::DUMMY_FUNCTION, tick_state_machine, ACUConstants::TICK_SM_PRIORITY, ACUConstants::TICK_SM_PERIOD_US);
@@ -74,8 +66,8 @@ void setup()
 
     // scheduler.schedule(debug_prints_task);
 
-    handle_CAN_setup(ACUCANInterfaceInstance::instance().CCU_CAN, ACUConstants::Veh_CAN_baudrate, &ACUCANInterfaceImpl::on_ccu_can_receive);
-    handle_CAN_setup(ACUCANInterfaceInstance::instance().EM_CAN, ACUConstants::EM_CAN_baudrate, &ACUCANInterfaceImpl::on_em_can_receive);
+    handle_CAN_setup(ACUCANInterfaceInstance::instance().CCU_CAN, ACUConstants::VEH_CAN_BAUDRATE, &ACUCANInterfaceImpl::on_ccu_can_receive);
+    handle_CAN_setup(ACUCANInterfaceInstance::instance().EM_CAN, ACUConstants::EM_CAN_BAUDRATE, &ACUCANInterfaceImpl::on_em_can_receive);
 }
 
 void loop()

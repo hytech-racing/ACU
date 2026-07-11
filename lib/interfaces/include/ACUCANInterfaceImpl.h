@@ -9,9 +9,9 @@
 #include "etl/singleton.h"
 
 /* External Includes */
-#include "FlexCAN_T4.h"
-#include "CANInterface.h"
 #include "SharedFirmwareTypes.h"
+#include "CANInterface.h"
+#include "FlexCAN_T4.h"
 #include "hytech.h"
 
 /* Local Interface Includes */
@@ -26,15 +26,13 @@ using CANTXBuffer_t = Circular_Buffer<uint8_t, (uint32_t)128, CAN_MSG_SIZE>;
 template <CAN_DEV_TABLE CAN_DEV>
 using FlexCAN_t = FlexCAN_T4<CAN_DEV, RX_SIZE_256, TX_SIZE_16>;
 
+
 /**
  * @brief This struct holds references to the interface objects that use decoded CAN messages. References only!
  */
 struct CANInterfaces_s
 {
-    explicit CANInterfaces_s(
-        CCUInterface &ccu_int,
-        EMInterface &em_int
-    ) :
+    explicit CANInterfaces_s(CCUInterface &ccu_int, EMInterface &em_int) :
         ccu_interface(ccu_int),
         em_interface(em_int)
     {}

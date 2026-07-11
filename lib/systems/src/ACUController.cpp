@@ -29,9 +29,9 @@ void ACUController::restore_lifetime_throughput(double restored_ah)
 }
 
 ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, const BMSCoreData_s &input_state, size_t max_consecutive_invalid_packet_count, float em_current, size_t num_of_voltage_cells, bool voltage_is_fresh)
-{   
+{
     // _acu_state.charging_enabled = input_state.charging_enabled;
-    
+
     bool has_invalid_packet = false;
     if (max_consecutive_invalid_packet_count != 0)
     { // meaning that at least one of the packets is invalid
@@ -128,8 +128,6 @@ ACUControllerData_s ACUController::evaluate_accumulator(time_ms current_millis, 
     return _acu_state;
 }
 
-
-
 void ACUController::calculate_cell_balance_statuses(bool* output, const volt* voltages, size_t num_of_voltage_cells, volt min_voltage)
 {
     for (size_t cell = 0; cell < num_of_voltage_cells; cell++)
@@ -138,7 +136,7 @@ void ACUController::calculate_cell_balance_statuses(bool* output, const volt* vo
         if (((cell_voltage - min_voltage) > _acu_parameters.thresholds.v_diff_to_init_cb) && (cell_voltage > _acu_parameters.thresholds.min_discharge_voltage_thresh))
         {
             output[cell] = true; //NOLINT
-        } else 
+        } else
         {
             output[cell] = false; //NOLINT
         }
@@ -149,24 +147,24 @@ float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
 {
     static constexpr size_t table_size = 101;
 
-    if (min_cell_voltage >= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[0]) 
+    if (min_cell_voltage >= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[0])
     {
         return 1.0f;
     }
-    if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[table_size - 1]) 
+    if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[table_size - 1])
     {
         return 0.0f;
     }
 
-    for (size_t i = 0; i < table_size - 1; i++) 
+    for (size_t i = 0; i < table_size - 1; i++)
     {
         if (min_cell_voltage <= SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i] && min_cell_voltage > SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]) //NOLINT
-        { 
+        {
             float v_high = SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i]; //NOLINT
             float v_low = SOCKalmanFilter::VOLTAGE_LOOKUP_TABLE[i + 1]; //NOLINT
             float soc_high = (float)(table_size - 1 - i) / (table_size - 1);
             float soc_low = (float)(table_size - 1 - (i + 1)) / (table_size - 1);
-            
+
             return soc_low + (min_cell_voltage - v_low) / (v_high - v_low) * (soc_high - soc_low);
         }
     }
@@ -176,17 +174,17 @@ float ACUController::_get_soc_from_voltage(volt min_cell_voltage)
 
 float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_ms, volt min_cell_voltage, time_ms current_millis, bool voltage_is_fresh)
 {
-    if (!_ekf_initialized) 
+    if (!_ekf_initialized)
     {
-        if (!voltage_is_fresh) 
+        if (!voltage_is_fresh)
         {
             return _acu_state.SoC;
         }
-        if (min_cell_voltage < acu_controller_default_parameters::MIN_CELL_VOLTAGE_FOR_SOC) 
+        if (min_cell_voltage < acu_controller_default_parameters::MIN_CELL_VOLTAGE_FOR_SOC)
         {
-            return 0.0f; 
-        } 
-        else 
+            return 0.0f;
+        }
+        else
         {
             _soc_ekf.init(min_cell_voltage);
             _ekf_initialized = true;
@@ -196,23 +194,23 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
     }
 
     float dt = static_cast<float>(delta_time_ms) / _ms_to_seconds; // in seconds
-    
+
     // we will use coulomb counting for the normal implementation of getting state of charge
     // whenever the car has been at rest (em voltage and em current at 0) for 30 mins, then we can correct the SoC to the voltage look up table value
     // we will reset the soc with the voltage look up value
     // we want to then start coulomb counting from this point, we also want to restart a 30 min timer, so we can set the start time to now
 
     bool is_stabilized = (fabs(em_current) <= STABILIZED_CURRENT_THRESH);
-    if (is_stabilized) 
+    if (is_stabilized)
     {
-        if (_acu_state.first_zero_current_time_stamp == 0) 
+        if (_acu_state.first_zero_current_time_stamp == 0)
         {
             _acu_state.first_zero_current_time_stamp = current_millis;
         }
         // we have another 0 current, so we need to see if we have rested for long enough
-        if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS) 
+        if ((current_millis - _acu_state.first_zero_current_time_stamp) >= MIN_STABILIZED_CURRENT_DURATION_MS)
         {
-            if (voltage_is_fresh) 
+            if (voltage_is_fresh)
             {
                 _acu_state.SoC = _get_soc_from_voltage(min_cell_voltage);
                 _soc_ekf.reset_soc(_acu_state.SoC);
@@ -220,8 +218,8 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
                 return _acu_state.SoC;
             }
         }
-    } 
-    else 
+    }
+    else
     {
         _acu_state.first_zero_current_time_stamp = 0;
     }
@@ -234,13 +232,13 @@ float ACUController::get_state_of_charge(float em_current, uint32_t delta_time_m
 
 
 bool ACUController::_is_bms_ok(time_ms current_millis)
-{   
-    if (_acu_state.has_fault) 
+{
+    if (_acu_state.has_fault)
     {
         _acu_state.last_bms_not_ok_eval = current_millis;
         return false;
-    } 
-    else if (!_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms)) 
+    }
+    else if (!_acu_state.bms_ok && (current_millis - _acu_state.last_bms_not_ok_eval > _bms_not_ok_hold_time_ms))
     {
        return true;
     }
@@ -278,8 +276,8 @@ bool ACUController::_check_invalid_packet_faults(time_ms current_millis)
     return invalid_packet_fault;
 }
 
-bool ACUController::check_is_contactor_welded(volt pack_voltage_adc, volt ts_voltage_adc) 
-{    
+bool ACUController::check_is_contactor_welded(volt pack_voltage_adc, volt ts_voltage_adc)
+{
     _acu_state.low_side_contactor_welded = pack_voltage_adc > _acu_parameters.thresholds.ts_isolation_voltage;
     _acu_state.high_side_contactor_welded = ts_voltage_adc > _acu_parameters.thresholds.ts_isolation_voltage;
 

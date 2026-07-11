@@ -1,28 +1,32 @@
 #ifndef ACU_ETHERNET_INTERFACE_H
 #define ACU_ETHERNET_INTERFACE_H
 
-/* External Libraries */
-#include "hytech_msgs.pb.h"
-#include "QNEthernet.h"
-#include "EthernetAddressDefs.h"
-#include "ProtobufMsgInterface.h"
-
-#include "SharedFirmwareTypes.h"
-#include "shared_types.h"
-
-#include "device_fw_version.h"
-
+/* ETL Library */
 #include <etl/singleton.h>
+
+/* External Includes */
+#include "Arduino.h"
+#include <algorithm>
+#include "SharedFirmwareTypes.h"
+#include "hytech_msgs.pb.h"
+#include "ProtobufMsgInterface.h"
+#include "EthernetAddressDefs.h"
+#include <QNEthernet.h>
+#include "ht_can_version.h"
+#include "device_fw_version.h"
 
 using namespace qindesign::network;
 
-namespace acu_ethernet_params {
+
+namespace acu_ethernet_params
+{
   constexpr const uint8_t NUM_CELLS = 126;
   constexpr const uint8_t NUM_CELLTEMPS = 48;
   constexpr const uint8_t NUM_CHIPS = 12;
 };
 
-struct ACUParams_s {
+struct ACUParams_s
+{
   uint8_t num_cells;
   uint8_t num_celltemps;
   uint8_t num_chips;
@@ -31,45 +35,47 @@ struct ACUParams_s {
 class ACUEthernetInterface
 {
 public:
-    ACUEthernetInterface(
-        ACUParams_s params = 
-        {
-            .num_cells = acu_ethernet_params::NUM_CELLS,
-            .num_celltemps = acu_ethernet_params::NUM_CELLTEMPS,
-            .num_chips = acu_ethernet_params::NUM_CHIPS,
-        }
-    ) : _acu_params{params} {};
 
-  void init_ethernet_device();
+	ACUEthernetInterface(ACUParams_s params = {
+							.num_cells = acu_ethernet_params::NUM_CELLS,
+							.num_celltemps = acu_ethernet_params::NUM_CELLTEMPS,
+							.num_chips = acu_ethernet_params::NUM_CHIPS,
+						}
+	) : _acu_params{params}
+	{};
 
-  void handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData &data);
+	void init_ethernet_device();
 
-  void handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData &data);
+	void handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData &data);
 
-  /**
-   * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUCoreData_s.
-   *
-   * @param shared_state Minimum data ACU must send for car to run.
-   * @return A populated instance of the outgoing protoc struct.
-   */
-  hytech_msgs_ACUCoreData make_acu_core_data_msg(const ACUCoreData_s &shared_state);
+	void handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData &data);
 
-  /**
-   * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUAllData_s.
-   *
-   * @param shared_state Detailed, unprocessed data from ACU sensors.
-   * @return A populated instance of the outgoing protoc struct.
-   */
-  hytech_msgs_ACUAllData make_acu_all_data_msg(const ACUAllDataType_s &shared_state);
+	/**
+	 * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUCoreData_s.
+	 *
+	 * @param shared_state Minimum data ACU must send for car to run.
+	 * @return A populated instance of the outgoing protoc struct.
+	 */
+	hytech_msgs_ACUCoreData make_acu_core_data_msg(const ACUCoreData_s &shared_state);
+
+	/**
+	 * Function to transform our struct from shared_data_types into the protoc struct hytech_msgs_ACUAllData_s.
+	 *
+	 * @param shared_state Detailed, unprocessed data from ACU sensors.
+	 * @return A populated instance of the outgoing protoc struct.
+	 */
+	hytech_msgs_ACUAllData make_acu_all_data_msg(const ACUAllDataType_s &shared_state);
 
 private:
-  /* Ethernet Sockets */
-  EthernetUDP _acu_core_data_send_socket;
-  EthernetUDP _acu_all_data_send_socket;
-  EthernetUDP _vcr_data_recv_socket;
-  EthernetUDP _db_data_recv_socket;
 
-  const ACUParams_s _acu_params = {};
+	const ACUParams_s _acu_params = {};
+
+	/* Ethernet Sockets */
+	EthernetUDP _acu_core_data_send_socket;
+	EthernetUDP _acu_all_data_send_socket;
+	EthernetUDP _vcr_data_recv_socket;
+	EthernetUDP _db_data_recv_socket;
+
 };
 
 using ACUEthernetInterfaceInstance = etl::singleton<ACUEthernetInterface>;

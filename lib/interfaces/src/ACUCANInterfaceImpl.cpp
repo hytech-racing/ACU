@@ -1,5 +1,6 @@
 #include "ACUCANInterfaceImpl.h"
 
+
 void ACUCANInterfaceImpl::on_ccu_can_receive(const CAN_message_t &msg)
 {
     std::array<uint8_t, CAN_MSG_SIZE> buf;

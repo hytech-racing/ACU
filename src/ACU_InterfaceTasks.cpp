@@ -81,66 +81,81 @@ void initialize_all_interfaces()
     Serial.begin(ACUInterfaces::SERIAL_BAUDRATE);
     analogReadResolution(ACUInterfaces::ANALOG_READ_RESOLUTION);
     /* Watchdog Interface */
-    WatchdogInstance::create(WatchdogPinout_s {ACUInterfaces::TEENSY_OK_PIN,
-                                    ACUInterfaces::WD_KICK_PIN,
-                                    ACUInterfaces::N_FAULTED_STATE_PIN,
-                                    ACUInterfaces::SW_NOT_OK_PIN});
+    WatchdogInstance::create(WatchdogPinout_s {
+                                ACUInterfaces::TEENSY_OK_PIN,
+                                ACUInterfaces::WD_KICK_PIN,
+                                ACUInterfaces::N_FAULTED_STATE_PIN,
+                                ACUInterfaces::SW_NOT_OK_PIN
+                            }
+    );
     WatchdogInstance::instance().init();
 
     /* ADC Interface */
-    ADCInterfaceInstance::create(   ADCPinout_s {ACUInterfaces::IMD_OK_PIN,
-                                ACUInterfaces::PRECHARGE_PIN,
-                                ACUInterfaces::SHDN_OUT_PIN,
-                                ACUInterfaces::HV_PLUS_OUT_OK_PIN,
-                                ACUInterfaces::MAIN_OK_PIN,
-                                ACUInterfaces::MAIN_UNDER_THRESH_PIN,
-                                ACUInterfaces::PRECHARGE_THRESH_PIN,
-                                ACUInterfaces::TS_OUT_FILTERED_PIN,
-                                ACUInterfaces::PACK_OUT_FILTERED_PIN,
-                                ACUInterfaces::BSPD_CURRENT_PIN,
-                                ACUInterfaces::SCALED_24V_PIN,
-                                ACUInterfaces::ADC0_CS,
-                                ACUInterfaces::ADC0_MOSI,
-                                ACUInterfaces::ADC0_MISO,
-                                ACUInterfaces::ADC0_CLK,
-                                ACUInterfaces::ADC0_NOT_SHDN},
-                                    ADCConversions_s {ACUInterfaces::SHUTDOWN_CONV_FACTOR,
-                                ACUInterfaces::PRECHARGE_CONV_FACTOR,
-                                ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
-                                ACUInterfaces::SHDN_OUT_CONV_FACTOR,
-                                ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
-                                ACUInterfaces::GLV_CONV_FACTOR,
-                                ACUInterfaces::STD_5V_3V3_CONVERSION_FACTOR},
-                                    ADCChannels_s {ACUInterfaces::ISO_PACK_N_CHANNEL,
-                                ACUInterfaces::ISO_PACK_P_CHANNEL,
-                                ACUInterfaces::PACK_VOLTAGE_SENSE_CHANNEL,
-                                ACUInterfaces::SHUNT_CURRENT_OUT_CHANNEL,
-                                ACUInterfaces::SHUNT_CURRENT_P_CHANNEL,
-                                ACUInterfaces::SHUNT_CURRENT_N_CHANNEL,
-                                ACUInterfaces::TS_OUT_FILTERED_CHANNEL,
-                                ACUInterfaces::PACK_OUT_FILTERED_CHANNEL},
-                                    ADCScales_s {ACUInterfaces::ISO_PACK_N_SCALE,
-                                ACUInterfaces::ISO_PACK_P_SCALE,
-                                ACUInterfaces::PACK_VOLTAGE_SENSE_SCALE,
-                                ACUInterfaces::SHUNT_CURRENT_OUT_SCALE,
-                                ACUInterfaces::SHUNT_CURRENT_P_SCALE,
-                                ACUInterfaces::SHUNT_CURRENT_N_SCALE,
-                                ACUInterfaces::TS_OUT_FILTERED_SCALE,
-                                ACUInterfaces::PACK_OUT_FILTERED_SCALE},
-                                    ADCOffsets_s {ACUInterfaces::ISO_PACK_N_OFFSET,
-                                ACUInterfaces::ISO_PACK_P_OFFSET,
-                                ACUInterfaces::PACK_VOLTAGE_SENSE_OFFSET,
-                                ACUInterfaces::SHUNT_CURRENT_OUT_OFFSET,
-                                ACUInterfaces::SHUNT_CURRENT_P_OFFSET,
-                                ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
-                                ACUInterfaces::TS_OUT_FILTERED_OFFSET,
-                                ACUInterfaces::PACK_OUT_FILTERED_OFFSET},
-                                    MAX114XChannels_s {CHANNEL_TYPE_e::NOT_USED,
-                                CHANNEL_TYPE_e::SINGLE,
-                                CHANNEL_TYPE_e::NOT_USED,
-                                CHANNEL_TYPE_e::NOT_USED},
-                                    ACUInterfaces::ADC0_SPEED,
-                                    ACUInterfaces::BIT_RESOLUTION
+    ADCInterfaceInstance::create(ADCPinout_s {
+                                    ACUInterfaces::IMD_OK_PIN,
+                                    ACUInterfaces::PRECHARGE_PIN,
+                                    ACUInterfaces::SHDN_OUT_PIN,
+                                    ACUInterfaces::HV_PLUS_OUT_OK_PIN,
+                                    ACUInterfaces::MAIN_OK_PIN,
+                                    ACUInterfaces::MAIN_UNDER_THRESH_PIN,
+                                    ACUInterfaces::PRECHARGE_THRESH_PIN,
+                                    ACUInterfaces::TS_OUT_FILTERED_PIN,
+                                    ACUInterfaces::PACK_OUT_FILTERED_PIN,
+                                    ACUInterfaces::BSPD_CURRENT_PIN,
+                                    ACUInterfaces::SCALED_24V_PIN,
+                                    ACUInterfaces::ADC0_CS_PIN,
+                                    ACUInterfaces::ADC0_MOSI_PIN,
+                                    ACUInterfaces::ADC0_MISO_PIN,
+                                    ACUInterfaces::ADC0_CLK_PIN,
+                                    ACUInterfaces::ADC0_NOT_SHDN_PIN
+                                },
+                                ADCChannels_s {
+                                    ACUInterfaces::ISO_PACK_N_CHANNEL,
+                                    ACUInterfaces::ISO_PACK_P_CHANNEL,
+                                    ACUInterfaces::PACK_VOLTAGE_SENSE_CHANNEL,
+                                    ACUInterfaces::SHUNT_CURRENT_OUT_CHANNEL,
+                                    ACUInterfaces::SHUNT_CURRENT_P_CHANNEL,
+                                    ACUInterfaces::SHUNT_CURRENT_N_CHANNEL,
+                                    ACUInterfaces::TS_OUT_FILTERED_CHANNEL,
+                                    ACUInterfaces::PACK_OUT_FILTERED_CHANNEL
+                                },
+                                ADCConversions_s {
+                                    ACUInterfaces::SHUTDOWN_CONV_FACTOR,
+                                    ACUInterfaces::PRECHARGE_CONV_FACTOR,
+                                    ACUInterfaces::PACK_AND_TS_OUT_CONV_FACTOR,
+                                    ACUInterfaces::SHDN_OUT_CONV_FACTOR,
+                                    ACUInterfaces::BSPD_CURRENT_CONV_FACTOR,
+                                    ACUInterfaces::GLV_CONV_FACTOR,
+                                    ACUInterfaces::STD_5V_3V3_CONVERSION_FACTOR
+                                },
+                                ADCScales_s {
+                                    ACUInterfaces::ISO_PACK_N_SCALE,
+                                    ACUInterfaces::ISO_PACK_P_SCALE,
+                                    ACUInterfaces::PACK_VOLTAGE_SENSE_SCALE,
+                                    ACUInterfaces::SHUNT_CURRENT_OUT_SCALE,
+                                    ACUInterfaces::SHUNT_CURRENT_P_SCALE,
+                                    ACUInterfaces::SHUNT_CURRENT_N_SCALE,
+                                    ACUInterfaces::TS_OUT_FILTERED_SCALE,
+                                    ACUInterfaces::PACK_OUT_FILTERED_SCALE
+                                },
+                                ADCOffsets_s {
+                                    ACUInterfaces::ISO_PACK_N_OFFSET,
+                                    ACUInterfaces::ISO_PACK_P_OFFSET,
+                                    ACUInterfaces::PACK_VOLTAGE_SENSE_OFFSET,
+                                    ACUInterfaces::SHUNT_CURRENT_OUT_OFFSET,
+                                    ACUInterfaces::SHUNT_CURRENT_P_OFFSET,
+                                    ACUInterfaces::SHUNT_CURRENT_N_OFFSET,
+                                    ACUInterfaces::TS_OUT_FILTERED_OFFSET,
+                                    ACUInterfaces::PACK_OUT_FILTERED_OFFSET
+                                },
+                                MAX114XChannels_s {
+                                    CHANNEL_TYPE_e::NOT_USED,
+                                    CHANNEL_TYPE_e::SINGLE,
+                                    CHANNEL_TYPE_e::NOT_USED,
+                                    CHANNEL_TYPE_e::NOT_USED
+                                },
+                                ACUInterfaces::ADC0_SPEED,
+                                ACUInterfaces::BIT_RESOLUTION
     );
     ADCInterfaceInstance::instance().init(sys_time::hal_millis());
 

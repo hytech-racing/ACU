@@ -1,36 +1,41 @@
 #include "ACUEthernetInterface.h"
-#include "SharedFirmwareTypes.h"
-#include "ht_can_version.h"
 #include "hytech_msgs_version.h"
-#include "Arduino.h"
-#include <algorithm>
 
-void ACUEthernetInterface::init_ethernet_device() {
+
+void ACUEthernetInterface::init_ethernet_device()
+{
     EthernetIPDefsInstance::create();
-    Ethernet.begin(EthernetIPDefsInstance::instance().acu_ip, EthernetIPDefsInstance::instance().car_subnet, EthernetIPDefsInstance::instance().default_gateway);
+    Ethernet.begin(EthernetIPDefsInstance::instance().acu_ip,
+                EthernetIPDefsInstance::instance().car_subnet,
+                EthernetIPDefsInstance::instance().default_gateway
+    );
     _acu_core_data_send_socket.begin(EthernetIPDefsInstance::instance().ACUCoreData_port);
     _acu_all_data_send_socket.begin(EthernetIPDefsInstance::instance().ACUAllData_port);
     _vcr_data_recv_socket.begin(EthernetIPDefsInstance::instance().VCRData_port);
     _db_data_recv_socket.begin(EthernetIPDefsInstance::instance().DBData_port);
 }
 
-void ACUEthernetInterface::handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData &data) {
-    handle_ethernet_socket_send_pb<hytech_msgs_ACUAllData_size>(EthernetIPDefsInstance::instance().drivebrain_ip, 
-                                                EthernetIPDefsInstance::instance().ACUAllData_port,
-                                                &_acu_all_data_send_socket, data, hytech_msgs_ACUAllData_fields);
+void ACUEthernetInterface::handle_send_ethernet_acu_all_data(const hytech_msgs_ACUAllData &data)
+{
+    handle_ethernet_socket_send_pb<hytech_msgs_ACUAllData_size>(EthernetIPDefsInstance::instance().drivebrain_ip,
+                                                                EthernetIPDefsInstance::instance().ACUAllData_port,
+                                                                &_acu_all_data_send_socket, data, hytech_msgs_ACUAllData_fields
+    );
 }
 
-void ACUEthernetInterface::handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData &data) {
+void ACUEthernetInterface::handle_send_ethernet_acu_core_data(const hytech_msgs_ACUCoreData &data)
+{
     // no TCP Ethernet, just UDP
-    handle_ethernet_socket_send_pb<hytech_msgs_ACUCoreData_size>(EthernetIPDefsInstance::instance().drivebrain_ip, 
-                                                EthernetIPDefsInstance::instance().ACUCoreData_port,
-                                                &_acu_core_data_send_socket, data, hytech_msgs_ACUCoreData_fields);
+    handle_ethernet_socket_send_pb<hytech_msgs_ACUCoreData_size>(EthernetIPDefsInstance::instance().drivebrain_ip,
+                                                                EthernetIPDefsInstance::instance().ACUCoreData_port,
+                                                                &_acu_core_data_send_socket, data, hytech_msgs_ACUCoreData_fields
+    );
 }
 
 hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCoreData_s &shared_state)
 {
     hytech_msgs_ACUCoreData out;
-    
+
     out.pack_voltage = shared_state.pack_voltage;
     out.min_cell_voltage = shared_state.min_cell_voltage;
     out.max_cell_voltage = shared_state.max_cell_voltage;
@@ -45,7 +50,7 @@ hytech_msgs_ACUCoreData ACUEthernetInterface::make_acu_core_data_msg(const ACUCo
     out.min_measured_pack_voltage = shared_state.min_measured_pack_out_voltage;
     out.min_measured_tractive_system_voltage = shared_state.min_measured_ts_out_voltage;
     out.min_measured_shdn_out_voltage = shared_state.min_shdn_out_voltage;
-    
+
     out.hv_plus_out_voltage = shared_state.hv_plus_out_voltage;
     out.main_ok_voltage = shared_state.main_ok_voltage;
     out.precharge_ok_voltage = shared_state.precharge_ok_voltage;
@@ -69,10 +74,10 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
 
     out.cell_voltages_count = _acu_params.num_cells;
     std::copy(shared_state.cell_voltages.data(), shared_state.cell_voltages.data() + _acu_params.num_cells, out.cell_voltages);
-    
+
     out.cell_temperatures_count = _acu_params.num_celltemps;
     std::copy(shared_state.cell_temps.data(), shared_state.cell_temps.data() + _acu_params.num_celltemps, out.cell_temperatures);
-    
+
     out.invalid_packet_chip_counts_count = _acu_params.num_chips;
     std::copy(shared_state.consecutive_invalid_packet_counts.data(), shared_state.consecutive_invalid_packet_counts.data() + _acu_params.num_chips, out.invalid_packet_chip_counts);
 
@@ -94,14 +99,14 @@ hytech_msgs_ACUAllData ACUEthernetInterface::make_acu_all_data_msg(const ACUAllD
     std::copy(fw_version_hash.begin(), fw_version_hash.end(), out.firmware_version_info.git_hash);
     out.has_msg_versions = true;
     out.msg_versions.ht_can_version = HT_CAN_LIB_VERSION;
-    
+
     // for working with bytes in nanopb
     std::string_view version_view(version);
     const size_t version_len = [&]() -> size_t {
         return std::min(version_view.size(), sizeof(out.msg_versions.ht_proto_version.bytes));
     }();
     out.msg_versions.ht_proto_version.size = version_len;
-    std::copy(version_view.begin(), version_view.begin() + version_len, std::begin(out.msg_versions.ht_proto_version.bytes));   
+    std::copy(version_view.begin(), version_view.begin() + version_len, std::begin(out.msg_versions.ht_proto_version.bytes));
 
     // temp for loc
     out.shutdown_has_gone_low = shared_state.core_data.low_side_contactor_welded;

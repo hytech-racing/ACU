@@ -1,19 +1,21 @@
 #ifndef CCU_INTERFACE_H
 #define CCU_INTERFACE_H
 
+/* ETL Library */
+#include "etl/delegate.h"
+#include "etl/singleton.h"
+
+/* External Includes */
+#include "SharedFirmwareTypes.h"
+#include "FlexCAN_T4.h"
 #include <cstdint>
 #include <tuple>
 #include <utility>
 #include <array>
 
-#include "etl/delegate.h"
-#include "etl/singleton.h"
 
-#include "FlexCAN_T4.h"
-#include "SharedFirmwareTypes.h"
-#include "shared_types.h"
-
-namespace ccu_interface_defaults{
+namespace ccu_interface_defaults
+{
     constexpr const uint16_t MIN_CHARGING_ENABLE_THRESHOLD_MS = 1000;
     constexpr const size_t NUM_CELLS = 126;
     constexpr const size_t NUM_CELLTEMPS = 48;
@@ -35,7 +37,8 @@ struct CCUCANInterfaceData_s
     size_t detailed_temps_board_id;
 };
 
-struct CCUInterfaceParams_s {
+struct CCUInterfaceParams_s
+{
     unsigned long min_charging_enable_threshold;
     size_t num_cells;
     size_t num_celltemps;
@@ -45,6 +48,7 @@ struct CCUInterfaceParams_s {
 class CCUInterface
 {
 public:
+
     CCUInterface() = delete;
 
     CCUInterface(unsigned long init_millis,
@@ -54,7 +58,7 @@ public:
                     .num_celltemps = ccu_interface_defaults::NUM_CELLTEMPS,
                     .num_chips = ccu_interface_defaults::NUM_CHIPS
                 }
-            ) : _ccu_params{params}
+    ) : _ccu_params{params}
     {
         _curr_data.last_time_charging_requested = 0;
         _curr_data.prev_ccu_msg_recv_ms = 0;
@@ -109,18 +113,24 @@ public:
     }
 
     void handle_enqueue_acu_status_CAN_message();
+
     void handle_enqueue_acu_core_voltages_CAN_message();
+
     void handle_enqueue_acu_voltages_CAN_message();
+
     void handle_enqueue_acu_temps_CAN_message();
+
     void handle_enqueue_acu_SoC_CAN_message();
+
     void handle_enqueue_acu_SoH_CAN_message();
 
 private:
+
     CCUCANInterfaceData_s _curr_data;
     ACUCoreData_s _acu_core_data;
     ACUAllData_s<ccu_interface_defaults::NUM_CELLS, ccu_interface_defaults::NUM_CELLTEMPS, ccu_interface_defaults::NUM_CHIPS> _acu_all_data;
-
     CCUInterfaceParams_s _ccu_params;
+
 };
 
 using CCUInterfaceInstance = etl::singleton<CCUInterface>;

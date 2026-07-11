@@ -1,15 +1,19 @@
 #ifndef ACUCONTROLLER_H
 #define ACUCONTROLLER_H
 
+/* ETL Library */
+#include "etl/singleton.h"
+
+/* Externl Includes */
+#include "SharedFirmwareTypes.h"
+#include "shared_types.h"
+#include "SOCKalmanFilter.h"
 #include <array>
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <cstdint>
-#include "etl/singleton.h"
-#include "SharedFirmwareTypes.h"
-#include "shared_types.h"
-#include "SOCKalmanFilter.h"
+
 
 namespace acu_controller_default_parameters
 {
@@ -92,6 +96,7 @@ class ACUController
     // using ACUData = etl::singleton<BMSCoreData_s<num_cells, num_celltemps, num_boardtemps>>;
 
 public:
+
     /**
      * ACU Controller Constructor
      * @param cell_overvoltage_thresh_v cell overvoltage threshold value | units in volts
@@ -103,19 +108,25 @@ public:
      * @param max_temp_fault_dur max number of temp faults allowed
      */
     ACUController(ACUControllerThresholds_s thresholds,
-                  size_t invalid_packet_count_thresh = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_COUNT,
-                  ACUControllerFaultDurations_s fault_durations = {
-                      .max_allowed_voltage_fault_dur = acu_controller_default_parameters::MAX_VOLTAGE_FAULT_DUR,
-                      .max_allowed_temp_fault_dur = acu_controller_default_parameters::MAX_TEMP_FAULT_DUR,
-                      .max_allowed_invalid_packet_fault_dur = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_DUR},
-                  ACUControllerPackSpecs_s pack_specs = {
+                size_t invalid_packet_count_thresh = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_COUNT,
+                ACUControllerFaultDurations_s fault_durations = {
+                    .max_allowed_voltage_fault_dur = acu_controller_default_parameters::MAX_VOLTAGE_FAULT_DUR,
+                    .max_allowed_temp_fault_dur = acu_controller_default_parameters::MAX_TEMP_FAULT_DUR,
+                    .max_allowed_invalid_packet_fault_dur = acu_controller_default_parameters::MAX_INVALID_PACKET_FAULT_DUR
+                },
+                ACUControllerPackSpecs_s pack_specs = {
                     .pack_nominal_capacity = acu_controller_default_parameters::PACK_NOMINAL_CAPACITY_AH,
                     .pack_max_voltage = acu_controller_default_parameters::PACK_MAX_VOLTAGE,
                     .pack_min_voltage = acu_controller_default_parameters::PACK_MIN_VOLTAGE,
-                    .pack_internal_resistance = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE}
-                    
-
-            ) : _acu_parameters{thresholds, invalid_packet_count_thresh, fault_durations, pack_specs} {};
+                    .pack_internal_resistance = acu_controller_default_parameters::PACK_INTERNAL_RESISTANCE
+                }
+    ) : _acu_parameters {
+            thresholds,
+            invalid_packet_count_thresh,
+            fault_durations,
+            pack_specs
+        }
+    {};
 
     /**
      * @brief Initialize the status time stamps because we don't want accidental sudden faults
@@ -166,46 +177,13 @@ public:
     {
         _acu_state.charging_enabled = true;
     }
+
     void disableCharging()
     {
         _acu_state.charging_enabled = false;
     }
 
     bool check_is_contactor_welded(volt pack_voltage_adc, volt ts_voltage_adc);
-
-private:
-
-        /**
-     * @brief Closest index that will represent the SoC of the minimum voltage on the cells
-     */
-    float _get_soc_from_voltage(volt min_cell_voltage);
-
-    /**
-     * @pre data has been gathered
-     * @return boolean, true if there exists any fault
-     */
-    bool _check_faults(time_ms current_millis);
-
-    /**
-     * @brief Update the BMS status (bms_ok) based on the time since the last fault not present
-     */
-    bool _is_bms_ok(time_ms current_millis);
-    /**
-     * @pre voltage data has been gathered
-     * @return boolean, true if there exists at least 1 voltage fault
-     */
-    bool _check_voltage_faults(time_ms current_millis);
-
-    /**
-     * @pre temperature data has been gathered
-     * @return boolean, true if there exists a temperature fault
-     */
-    bool _check_temperature_faults(time_ms current_millis);
-
-    /**
-     * @return boolean, true if there has been global invalid packets for > MAX DURATION
-     */
-    bool _check_invalid_packet_faults(time_ms current_millis);
 
 private:
 
@@ -229,7 +207,6 @@ private:
      */
     const ACUControllerParameters_s _acu_parameters = {};
 
-
     /**
      * @brief Extended Kalman Filter for SoC tracking using current and voltage measurements from pack
      * This will replace the coulomb counting method for SoC tracking and will be used to track SoC of the pack
@@ -241,7 +218,7 @@ private:
 
     /**
      * @brief Minimum current and voltage thresholds for the car to be considered stabilized
-     * 
+     *
      */
     static constexpr float STABILIZED_CURRENT_THRESH = 0.5f; // Absolute value threshold
     static constexpr uint32_t MIN_STABILIZED_CURRENT_DURATION_MS = 1800000;  // 30 minutes in milliseconds
@@ -253,6 +230,40 @@ private:
     static constexpr float SOH_FADE_PER_AH = 0.0000048f;
     static constexpr float SOH_MIN = 0.8f;
     static constexpr float SOH_MAX = 1.0f;
+
+    /**
+     * @brief Closest index that will represent the SoC of the minimum voltage on the cells
+     */
+    float _get_soc_from_voltage(volt min_cell_voltage);
+
+    /**
+     * @pre data has been gathered
+     * @return boolean, true if there exists any fault
+     */
+    bool _check_faults(time_ms current_millis);
+
+    /**
+     * @brief Update the BMS status (bms_ok) based on the time since the last fault not present
+     */
+    bool _is_bms_ok(time_ms current_millis);
+
+    /**
+     * @pre voltage data has been gathered
+     * @return boolean, true if there exists at least 1 voltage fault
+     */
+    bool _check_voltage_faults(time_ms current_millis);
+
+    /**
+     * @pre temperature data has been gathered
+     * @return boolean, true if there exists a temperature fault
+     */
+    bool _check_temperature_faults(time_ms current_millis);
+
+    /**
+     * @return boolean, true if there has been global invalid packets for > MAX DURATION
+     */
+    bool _check_invalid_packet_faults(time_ms current_millis);
+
 };
 
 using ACUControllerInstance = etl::singleton<ACUController>;

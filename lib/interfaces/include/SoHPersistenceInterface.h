@@ -1,13 +1,17 @@
 #ifndef SOH_PERSISTENCE_INTERFACE_H
 #define SOH_PERSISTENCE_INTERFACE_H
 
+/* ETL Library */
 #include <etl/singleton.h>
+
+/* External Includes */
 #include <Arduino.h>
-#include <EEPROM.h>
 #include "SharedFirmwareTypes.h"
+#include <EEPROM.h>
+
 
 /**
- * @brief Persists the battery's lifetime Amp-hour throughput to the Teensy's EEPROM non volatile memory 
+ * @brief Persists the battery's lifetime Amp-hour throughput to the Teensy's EEPROM non volatile memory
  * so that State of Health survives power cycles.
  *
  * SoH itself isn't stored, rather it is recomputed from the throughput by ACUController
@@ -15,6 +19,7 @@
 class SoHPersistenceInterface
 {
 public:
+
     SoHPersistenceInterface() = default;
 
     /**
@@ -37,6 +42,7 @@ public:
     bool save(double lifetime_ah_throughput, time_ms now, bool force = false);
 
 private:
+
     // EEPROM byte memory map
     static constexpr int EEPROM_MAGIC_ADDR = 16;
     static constexpr int EEPROM_THROUGHPUT_ADDR = 20;
@@ -48,6 +54,7 @@ private:
     double _lifetime_ah_throughput = 0.0f;
     double _last_saved_ah = 0.0f;
     time_ms _last_write_ms = 0;
+    
 };
 
 using SoHPersistenceInterfaceInstance = etl::singleton<SoHPersistenceInterface>;

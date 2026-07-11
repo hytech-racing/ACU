@@ -1,7 +1,7 @@
 #include "CCUInterface.h"
-
 #include "ACUCANInterfaceImpl.h"
 #include "hytech.h"
+
 
 void CCUInterface::receive_CCU_status_message(const CAN_message_t& msg, unsigned long curr_millis)
 {
@@ -49,14 +49,20 @@ void CCUInterface::handle_enqueue_acu_voltages_CAN_message()
     detailed_msg.voltage_1_ro = HYTECH_voltage_1_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id+1]);
     detailed_msg.voltage_2_ro = HYTECH_voltage_2_ro_toS(_acu_all_data.cell_voltages[_curr_data.detailed_voltages_cell_id+2]);
 
-    if (_curr_data.detailed_voltages_ic_id % 2 == 0) {
+    if (_curr_data.detailed_voltages_ic_id % 2 == 0)
+    {
         _curr_data.detailed_voltages_group_id = (_curr_data.detailed_voltages_group_id == 3) ? 0 : _curr_data.detailed_voltages_group_id+1;
-    } else {
+    }
+    else
+    {
         _curr_data.detailed_voltages_group_id = (_curr_data.detailed_voltages_group_id == 2) ? 0 : _curr_data.detailed_voltages_group_id+1;
     }
-    if (_curr_data.detailed_voltages_group_id == 0) {
+
+    if (_curr_data.detailed_voltages_group_id == 0)
+    {
         _curr_data.detailed_voltages_ic_id = (_curr_data.detailed_voltages_ic_id == (ccu_interface_defaults::NUM_CHIPS - 1)) ? 0 : _curr_data.detailed_voltages_ic_id+1;
     }
+
     _curr_data.detailed_voltages_cell_id = (_curr_data.detailed_voltages_cell_id == ccu_interface_defaults::NUM_CELLS - 3) ? 0 : _curr_data.detailed_voltages_cell_id+3;
 
     CAN_util::enqueue_msg(&detailed_msg, &Pack_BMS_DETAILED_VOLTAGES_hytech, ACUCANInterfaceInstance::instance().ccu_can_tx_buffer);

@@ -1,7 +1,5 @@
 #include "DataLoggingInterface.h"
-#include "ACUController.h"
-#include "ADCInterface.h"
-#include "SystemTimeInterface.h"
+
 
 const int DataLoggingInterface::eeprom_counter_address;
 const int DataLoggingInterface::eeprom_magic_address;
@@ -22,7 +20,7 @@ bool DataLoggingInterface::init()
     uint32_t magic_check  = 0;
 
     EEPROM.get(eeprom_magic_address, magic_check);
-    if (magic_check != magic_number) 
+    if (magic_check != magic_number)
     {
         file_counter = 0;
         EEPROM.put(eeprom_magic_address,   magic_number);

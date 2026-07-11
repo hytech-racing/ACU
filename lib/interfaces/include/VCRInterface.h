@@ -1,17 +1,19 @@
 #ifndef VCR_INTERFACE_H
 #define VCR_INTERFACE_H
 
+/* ETL Library */
+#include "etl/delegate.h"
+#include "etl/singleton.h"
+
+/* External Includes */
+#include "SharedFirmwareTypes.h"
+#include "FlexCAN_T4.h"
+#include "shared_types.h"
 #include <cstdint>
 #include <tuple>
 #include <utility>
 #include <array>
 
-#include "etl/delegate.h"
-#include "etl/singleton.h"
-
-#include "FlexCAN_T4.h"
-#include "SharedFirmwareTypes.h"
-#include "shared_types.h"
 
 struct VCRCANInterfaceData_s
 {
@@ -24,6 +26,7 @@ struct VCRCANInterfaceData_s
 class VCRInterface
 {
 public:
+
     VCRInterface() = delete;
 
     VCRInterface(unsigned long init_millis)
@@ -41,6 +44,7 @@ public:
     void handle_enqueue_acu_ok_CAN_message();
 
 private:
+
     VCRCANInterfaceData_s _curr_data;
 
     unsigned long _min_charging_enable_threshold;
